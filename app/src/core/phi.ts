@@ -65,6 +65,7 @@ export function gammaincLower(a: number, x: number): number {
 
 // Gamma(α, scale=1) 下侧分位数：P(G ≤ g) = p
 export function gammaQuantile(p: number, a: number): number {
+  if (!Number.isFinite(a) || a <= 0) throw new Error(`Gamma 分布形状参数 a 必须为正，收到 ${a}`);
   if (!(p > 0 && p < 1)) throw new Error(`p 必须在 (0,1)，收到 ${p}`);
   // 上界自适应扩张 + 二分收敛
   let lo = 0;
@@ -129,6 +130,7 @@ export function norminv(p: number): number {
 // P-III 离均系数 Φ
 // pExceed：水文频率（超过概率），0.01 = 1%；Cs：偏态系数
 export function phiPIII(pExceed: number, Cs: number): number {
+  if (!Number.isFinite(Cs)) throw new Error(`偏态系数 Cs 必须为有限数，收到 ${Cs}`);
   if (!(pExceed > 0 && pExceed < 1)) throw new Error(`p 必须在 (0,1)，收到 ${pExceed}`);
   if (Math.abs(Cs) < 1e-8) return norminv(1 - pExceed);
   if (Cs > 0) {

@@ -33,6 +33,7 @@ export interface RationalInput {
 }
 
 export function rationalFormula(p: RationalInput): number {
+  if (![p.Sp, p.n, p.psi, p.tau, p.F].every(Number.isFinite)) throw new Error("推理公式输入必须为有限数");
   if (p.F <= 0) throw new Error("汇水面积 F 必须为正（km²）");
   if (p.tau <= 0) throw new Error("汇流时间 τ 必须为正（h）");
   if (p.Sp <= 0) throw new Error("雨力 Sp 必须为正（mm/h）");
@@ -53,8 +54,12 @@ export interface RunoffDepthInput {
 }
 
 export function runoffDepthFormula(p: RunoffDepthInput): number {
+  if (![p.psi, p.h, p.z, p.F, p.beta, p.gamma, p.delta].every(Number.isFinite)) throw new Error("径流厚度法输入必须为有限数");
   if (p.F <= 0) throw new Error("汇水面积 F 必须为正（km²）");
   if (p.h - p.z <= 0) throw new Error("径流厚度 h 必须大于滞留厚度 z");
   if (p.psi <= 0) throw new Error("地貌系数 ψ 必须为正");
+  if (p.beta <= 0 || p.beta > 1 || p.gamma <= 0 || p.gamma > 1 || p.delta <= 0 || p.delta > 1) {
+    throw new Error("折减系数 β、γ、δ 均应在 (0,1]");
+  }
   return p.psi * Math.pow(p.h - p.z, 3 / 2) * Math.pow(p.F, 4 / 5) * p.beta * p.gamma * p.delta;
 }

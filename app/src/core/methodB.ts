@@ -25,10 +25,14 @@ export interface ManningResult {
 
 export function manningQ(s: SectionInput): ManningResult {
   const { Ac, Bc, nc, At, Bt, nt, I } = s;
+  if (![Ac, Bc, nc, At, Bt, nt, I, s.Rc ?? 0, s.Rt ?? 0].every(Number.isFinite)) {
+    throw new Error("曼宁公式输入必须为有限数");
+  }
   if (I <= 0) throw new Error("水面比降必须为正");
   if (Ac <= 0) throw new Error("河槽过水面积必须为正");
   if (nc <= 0) throw new Error("河槽糙率必须为正");
   if (At < 0) throw new Error("河滩过水面积不能为负");
+  if (At > 0 && nt <= 0) throw new Error("河滩糙率必须为正");
   // 水力半径：直接给定或宽深比>10 近似 R=A/B
   const Rc = s.Rc ?? (Bc > 0 ? Ac / Bc : NaN);
   const Rt = At > 0 ? (s.Rt ?? (Bt > 0 ? At / Bt : NaN)) : 0;
@@ -62,8 +66,11 @@ export function designFromHistory(
   phiFn: (p: number, cs: number) => number,
 ): DesignFromHistoryResult {
   if (floods.length < 2) throw new Error("利用历史洪水推算设计流量，历史洪水流量不宜少于 2 次（规范 6.3.3）");
+  if (!(pExceed > 0 && pExceed < 1)) throw new Error(`设计频率必须在 (0,1)，收到 ${pExceed}`);
+  if (!Number.isFinite(params.cv) || !Number.isFinite(params.cs)) throw new Error("地区参数 Cv、Cs 必须为有限数");
   if (params.cv <= 0) throw new Error("地区变差系数 Cv 必须为正");
   const qBars = floods.map(f => {
+    if (!Number.isFinite(f.Q) || !Number.isFinite(f.T)) throw new Error("历史洪水流量与重现期必须为有限数");
     if (f.Q <= 0 || f.T < 1) throw new Error("历史洪水流量与重现期（年）必须为正");
     const phiT = phiFn(1 / f.T, params.cs); // 重现期 T 年 → 超过概率 1/T
     const denom = 1 + phiT * params.cv;

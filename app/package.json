@@ -1,10 +1,24 @@
 {
   "name": "hydro-design-flood",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "private": true,
-  "description": "桥涵水文计算软件 — 设计流量模块（P-III 频率适线数值内核）",
+  "description": "泓算 · 桥涵设计流量推求（JTG C30-2015 设计流量模块）",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-strip-types --test src/tests/"
+    "test": "node --experimental-strip-types --test src/tests/phi.test.ts src/tests/cases.test.ts src/tests/discontinuous.test.ts src/tests/bayes.test.ts src/tests/methodB.test.ts src/tests/methodC.test.ts src/tests/guards.test.ts",
+    "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.web.json",
+    "build": "esbuild src/web/main.ts --bundle --format=iife --outfile=web/app.js --target=es2020",
+    "verify": "npm run typecheck && npm test && npm run build",
+    "verify:ui": "node scripts/verify-ui.mjs",
+    "verify:all": "npm run verify && npm run verify:ui",
+    "verify:desktop": "node scripts/verify-desktop.mjs",
+    "verify:offline": "node scripts/verify-offline.mjs",
+    "verify:release": "npm run verify:ui && npm run verify:desktop && npm run verify:offline"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2"
   }
 }

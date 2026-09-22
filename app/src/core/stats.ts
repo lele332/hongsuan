@@ -16,8 +16,12 @@ export interface SeriesStats {
 
 export function seriesStats(xs: number[]): SeriesStats {
   const n = xs.length;
-  if (n < 2) throw new Error("系列长度至少 2");
+  if (n < 3) throw new Error("系列长度至少 3（矩法 Cs 需要 n≥3）");
+  if (!xs.every((v) => Number.isFinite(v) && v >= 0)) {
+    throw new Error("实测系列必须为有限非负数");
+  }
   const mean = xs.reduce((s, v) => s + v, 0) / n;
+  if (!(mean > 0)) throw new Error("系列均值必须为正，无法计算统计参数");
   const d = xs.map((v) => v - mean);
   const s2 = d.reduce((s, v) => s + v * v, 0) / (n - 1);
   const sigma = Math.sqrt(s2);
@@ -68,6 +72,12 @@ export interface DiscontinuousStats {
 export function discontinuousStats(input: DiscontinuousInput): DiscontinuousStats {
   const { historicalExtra, measuredDesc, l, N } = input;
   const n = measuredDesc.length;
+  if (!Number.isInteger(N) || N < 3) {
+    throw new Error(`考证期 N 必须为不小于 3 的整数，收到 ${N}`);
+  }
+  if (![...historicalExtra, ...measuredDesc].every((v) => Number.isFinite(v) && v >= 0)) {
+    throw new Error("特大洪水与实测系列必须为有限非负数");
+  }
   if (!Number.isInteger(l) || l < 0 || l > n) {
     throw new Error(`l 必须是 0..${n} 的整数（实测系列长度 ${n}），收到 ${l}`);
   }
