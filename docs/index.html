@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.5.1</title>
+<title>泓算 · 桥涵设计流量推求 v0.6</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -83,6 +83,12 @@
   .metric.hl .v { color: var(--blue); }
   .metric .u { font-size: 11px; color: var(--text3); font-weight: 400; }
   .hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  .ltab { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px }
+  .ltab th { text-align:left; color:var(--text2); font-weight:500; padding:4px 6px; border-bottom:1px solid var(--line) }
+  .ltab td { padding:4px 6px; border-bottom:1px solid var(--line); color:var(--text2) }
+  .ltab td.v { text-align:right; font-variant-numeric:tabular-nums; color:var(--text) }
+  .fillBtn { font-size:11px; padding:2px 8px; border:1px solid var(--line); background:transparent; color:var(--blue); border-radius:6px; cursor:pointer; margin-left:4px }
+  .fillBtn:hover { background:var(--blue); color:#fff; border-color:var(--blue) }
   svg text { font-family: -apple-system, "PingFang SC", sans-serif; }
   .legend { display: flex; gap: 18px; font-size: 12px; color: var(--text2); margin-top: 8px; }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--blue); vertical-align: middle; margin-right: 5px; border-radius: 2px; }
@@ -101,7 +107,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.5.1</p>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.6</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -162,6 +168,40 @@
       <div><label>地区参数 C<sub>s</sub></label><input type="number" id="hbCs" value="1.0" step="0.05"></div>
     </div>
     <button class="btn" id="btnHist">计算历史洪水法设计流量</button>
+    <details id="nTable" style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue)">查糙率表：天然河道曼宁 n 值（点"填1/填2"写入对应洪水行）</summary>
+      <div class="hint" style="margin-top:10px">出处：Ven Te Chow《Open-Channel Hydraulics》糙率表（高校通行中文版）。每行给<b>最小 / 正常 / 最大</b>三值，无特别依据时取正常值；河槽类填 n꜀、滩地类填 nₜ。</div>
+      <table class="ltab">
+        <tr><th>河槽（填 n꜀）</th><th class="v">最小</th><th class="v">正常</th><th class="v">最大</th><th></th></tr>
+        <tr><td>小河·平原：清洁、顺直、无浅滩深潭</td><td class="v">0.025</td><td class="v">0.030</td><td class="v">0.033</td><td><button class="fillBtn" data-n="0.030" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.030" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：同上，石块多、杂草多</td><td class="v">0.030</td><td class="v">0.035</td><td class="v">0.040</td><td><button class="fillBtn" data-n="0.035" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.035" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：清洁、弯曲、有浅滩深潭</td><td class="v">0.033</td><td class="v">0.040</td><td class="v">0.045</td><td><button class="fillBtn" data-n="0.040" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.040" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：同上，有石块杂草</td><td class="v">0.035</td><td class="v">0.045</td><td class="v">0.050</td><td><button class="fillBtn" data-n="0.045" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.045" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：水深较浅、坡度多变、回流区多</td><td class="v">0.040</td><td class="v">0.048</td><td class="v">0.055</td><td><button class="fillBtn" data-n="0.048" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.048" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：同上，石块多</td><td class="v">0.045</td><td class="v">0.050</td><td class="v">0.060</td><td><button class="fillBtn" data-n="0.050" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.050" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：多杂草、有深潭、流动缓慢</td><td class="v">0.050</td><td class="v">0.070</td><td class="v">0.080</td><td><button class="fillBtn" data-n="0.070" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.070" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·平原：多杂草深潭、林木滩地过洪</td><td class="v">0.075</td><td class="v">0.100</td><td class="v">0.150</td><td><button class="fillBtn" data-n="0.100" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.100" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·山区：河底砾石卵石、间有孤石</td><td class="v">0.030</td><td class="v">0.040</td><td class="v">0.050</td><td><button class="fillBtn" data-n="0.040" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.040" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>小河·山区：河底卵石和大孤石</td><td class="v">0.040</td><td class="v">0.050</td><td class="v">0.070</td><td><button class="fillBtn" data-n="0.050" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.050" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>大河（洪水位水面宽&gt;30m）：断面规则整齐</td><td class="v">0.025</td><td class="v">—</td><td class="v">0.060</td><td><button class="fillBtn" data-n="0.040" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.040" data-k="nc" data-r="1">填2</button></td></tr>
+        <tr><td>大河：断面不规则、床面粗糙</td><td class="v">0.035</td><td class="v">—</td><td class="v">0.100</td><td><button class="fillBtn" data-n="0.065" data-k="nc" data-r="0">填1</button><button class="fillBtn" data-n="0.065" data-k="nc" data-r="1">填2</button></td></tr>
+      </table>
+      <table class="ltab">
+        <tr><th>滩地（填 nₜ）</th><th class="v">最小</th><th class="v">正常</th><th class="v">最大</th><th></th></tr>
+        <tr><td>草地：短草</td><td class="v">0.025</td><td class="v">0.030</td><td class="v">0.035</td><td><button class="fillBtn" data-n="0.030" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.030" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>草地：长草</td><td class="v">0.030</td><td class="v">0.035</td><td class="v">0.050</td><td><button class="fillBtn" data-n="0.035" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.035" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>耕地：未熟庄稼</td><td class="v">0.020</td><td class="v">0.030</td><td class="v">0.040</td><td><button class="fillBtn" data-n="0.030" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.030" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>耕地：已熟成行庄稼</td><td class="v">0.025</td><td class="v">0.035</td><td class="v">0.045</td><td><button class="fillBtn" data-n="0.035" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.035" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>耕地：已熟密植庄稼</td><td class="v">0.030</td><td class="v">0.040</td><td class="v">0.050</td><td><button class="fillBtn" data-n="0.040" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.040" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>矮树丛：稀疏、多杂草</td><td class="v">0.035</td><td class="v">0.050</td><td class="v">0.070</td><td><button class="fillBtn" data-n="0.050" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.050" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>矮树丛：不密、夏季</td><td class="v">0.040</td><td class="v">0.060</td><td class="v">0.080</td><td><button class="fillBtn" data-n="0.060" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.060" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>矮树丛：茂密、夏季</td><td class="v">0.070</td><td class="v">0.100</td><td class="v">0.160</td><td><button class="fillBtn" data-n="0.100" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.100" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>树木：平整田地、干树无枝</td><td class="v">0.030</td><td class="v">0.040</td><td class="v">0.050</td><td><button class="fillBtn" data-n="0.040" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.040" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>树木：干树多新枝</td><td class="v">0.050</td><td class="v">0.060</td><td class="v">0.080</td><td><button class="fillBtn" data-n="0.060" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.060" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>树木：密林、树下植物少、洪水位在枝下</td><td class="v">0.080</td><td class="v">0.100</td><td class="v">0.120</td><td><button class="fillBtn" data-n="0.100" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.100" data-k="nt" data-r="1">填2</button></td></tr>
+        <tr><td>树木：密林、洪水位淹没树枝</td><td class="v">0.100</td><td class="v">0.120</td><td class="v">0.160</td><td><button class="fillBtn" data-n="0.120" data-k="nt" data-r="0">填1</button><button class="fillBtn" data-n="0.120" data-k="nt" data-r="1">填2</button></td></tr>
+      </table>
+    </details>
     <div id="histResult" style="display:none;margin-top:14px"></div>
   </div>
 
@@ -179,8 +219,8 @@
         <div class="metric hl" style="margin-top:10px"><div class="k">推理公式 Q<sub>p</sub>（m³/s）</div><div class="v" id="rcOut">—</div></div>
       </div>
       <div>
-        <label style="font-weight:500;color:var(--text)">径流厚度法 Q = φ·(h−z)<sup>5/3</sup>·F<sup>2/3</sup>·βγδ <span style="color:var(--red);font-size:11px">⚠ 公式形式待教材核实</span></label>
-        <div class="row"><div><label>地貌系数 φ</label><input type="number" id="rdPhi" value="0.1" step="any"></div>
+        <label style="font-weight:500;color:var(--text)">径流厚度法 Q = ψ·(h−z)<sup>1.5</sup>·F<sup>0.8</sup>·βγδ <span style="color:#34c759;font-size:11px">✓ JTG/T D65-04-2007 形式，三公开算例锚定</span></label>
+        <div class="row"><div><label>地貌系数 ψ</label><input type="number" id="rdPhi" value="0.1" step="any"></div>
         <div><label>径流厚度 h（mm）</label><input type="number" id="rdH" value="44" step="any"></div>
         <div><label>滞留厚度 z（mm）</label><input type="number" id="rdZ" value="10" step="any"></div></div>
         <div class="row"><div><label>面积 F（km²）</label><input type="number" id="rdF" value="3.94" step="0.01"></div>
@@ -188,6 +228,27 @@
         <div><label>折减 γ</label><input type="number" id="rdGamma" value="1" step="0.05"></div>
         <div><label>折减 δ</label><input type="number" id="rdDelta" value="1" step="0.05"></div></div>
         <div class="metric" style="margin-top:10px"><div class="k">径流厚度法 Q<sub>p</sub>（m³/s）</div><div class="v" id="rdOut">—</div></div>
+        <details id="rdTables" style="margin-top:12px">
+          <summary style="cursor:pointer;font-size:13px;color:var(--blue)">查表辅助：ψ / h / z / β / γ / δ 取值（点行自动填入）</summary>
+          <div class="hint" style="margin-top:10px">出处：《公路涵洞设计细则》JTG/T D65-04-2007（现 JTG/T 3365-02-2020《公路涵洞设计规范》）附录 B。径流厚度 h 需查<b>暴雨分区（全国 1~18 区）× 土壤类别（Ⅰ~Ⅵ 类）× 洪水频率 × 汇流时间</b>成套表，请查纸质规范/地区水文手册（电子完整表涉版权未内置）；下列锚点值取自公开算例，点行可一键填入。</div>
+          <table class="ltab"><tr><th colspan="4">地貌系数 ψ（地形 · 坡度 · 面积）</th></tr>
+          <tr><td>平原，主河沟坡度 ~3‰，F&lt;10 km²</td><td>0.05</td><td>绥建公路算例</td><td><button data-psi="0.05" class="fillBtn">填入</button></td></tr>
+          <tr><td>平原，坡度 3.8‰，F=5.6 km²</td><td>0.07</td><td>k3+685 涵洞算例</td><td><button data-psi="0.07" class="fillBtn">填入</button></td></tr>
+          <tr><td>丘陵，J=19‰，F=25 km²</td><td>0.06</td><td>湖南算例</td><td><button data-psi="0.06" class="fillBtn">填入</button></td></tr></table>
+          <table class="ltab"><tr><th colspan="4">滞留厚度 z（植被/坑洼）</th></tr>
+          <tr><td>汇水区大部为密草（高&lt;1m）</td><td>5 mm</td><td>湖南算例</td><td><button data-z="5" class="fillBtn">填入</button></td></tr>
+          <tr><td>汇水区大部为耕地</td><td>10 mm</td><td>绥建公路算例</td><td><button data-z="10" class="fillBtn">填入</button></td></tr>
+          <tr><td>中等稠度林 + 水平带埂梯田</td><td>25 mm</td><td>k3+685 算例</td><td><button data-z="25" class="fillBtn">填入</button></td></tr></table>
+          <table class="ltab"><tr><th colspan="4">折减系数 β / γ / δ（面积大或有湖库时 &lt;1）</th></tr>
+          <tr><td>β：面积重心距桥涵 L₀&lt;1 km（平地/丘陵）</td><td>1</td><td>—</td><td><button data-beta="1" class="fillBtn">填入</button></td></tr>
+          <tr><td>β：L₀=4 km</td><td>0.85</td><td>湖南算例</td><td><button data-beta="0.85" class="fillBtn">填入</button></td></tr>
+          <tr><td>δ：湖泊率 2%</td><td>0.99</td><td>湖南算例</td><td><button data-delta="0.99" class="fillBtn">填入</button></td></tr>
+          <tr><td>δ：水库面积占比 30%</td><td>0.91</td><td>k3+685 算例</td><td><button data-delta="0.91" class="fillBtn">填入</button></td></tr>
+          <tr><td>γ：汇流时间短、面积小（&lt;1 km²）</td><td>1</td><td>绥建算例</td><td><button data-gamma="1" class="fillBtn">填入</button></td></tr></table>
+          <table class="ltab"><tr><th colspan="3">h 径流厚度锚点（查表路径示例）</th></tr>
+          <tr><td>第 5 暴雨区 · Ⅳ 类土 · P=2% · 80min</td><td>47 mm</td><td><button data-h="47" class="fillBtn">填入</button></td></tr>
+          <tr><td>第 15 暴雨区 · Ⅲ 类土 · 1/25 · 30min</td><td>23 mm</td><td><button data-h="23" class="fillBtn">填入</button></td></tr></table>
+        </details>
       </div>
     </div>
   </div>
@@ -205,15 +266,30 @@
 </div>
 
 <div class="card" id="fitCard">
-  <h2>适线调整 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——拖动滑块，曲线实时重绘</span></h2>
+  <h2>适线调整 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——拖滑块或直接键入数值，曲线实时重绘</span></h2>
   <div class="row">
     <div>
       <label>变差系数 C<sub>v</sub>：<span class="val" id="cvShow">0.30</span></label>
-      <input type="range" id="cvSlider" min="0.05" max="1.2" step="0.005" value="0.30">
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="range" id="cvSlider" min="0.05" max="1.2" step="0.005" value="0.30" style="flex:1">
+        <input type="number" id="cvIn" value="0.30" min="0.05" max="1.2" step="0.005" title="直接键入 Cv 精确值" style="width:78px">
+      </div>
     </div>
     <div>
       <label>C<sub>s</sub> / C<sub>v</sub> 倍比：<span class="val" id="ratioShow">2.0</span>（C<sub>s</sub> = <span class="val" id="csShow">0.60</span>）</label>
-      <input type="range" id="ratioSlider" min="1" max="8" step="0.5" value="2">
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="range" id="ratioSlider" min="1" max="8" step="0.5" value="2" style="flex:1">
+        <input type="number" id="ratioIn" value="2.0" min="1" max="8" step="0.1" title="直接键入 Cs/Cv 倍比" style="width:78px">
+      </div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div>
+      <label>适线均值 Q̄（m³/s，默认矩法初估，可键入微调）</label>
+      <input type="number" id="meanIn" value="1065.0" step="any" style="width:100%">
+    </div>
+    <div style="display:flex;align-items:center;color:var(--text3);font-size:12px">
+      系列重新计算时恢复矩法初估值；三参数（Q̄、C<sub>v</sub>、C<sub>s</sub>）均可按规范 6.2.5 目估适线调整。
     </div>
   </div>
   <div class="row" style="margin-top:12px">
@@ -280,7 +356,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.5
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.6
 </footer>
 
 <script src="libs/docx.umd.js"></script>
@@ -536,6 +612,10 @@ function syncParamInputs() {
   $("inMean").value = state.params.mean.toFixed(1);
   $("inCv").value = state.params.cv.toFixed(3);
   $("inCs").value = state.params.cs.toFixed(2);
+  // 适线滑块配套输入框
+  if ($("meanIn")) $("meanIn").value = state.params.mean.toFixed(1);
+  if ($("cvIn")) $("cvIn").value = state.params.cv.toFixed(3);
+  if ($("ratioIn")) $("ratioIn").value = (state.params.cs / state.params.cv).toFixed(2);
 }
 
 // ---- 事件 ----
@@ -550,6 +630,31 @@ $("ratioSlider").oninput = e => {
   const ratio = +e.target.value;
   state.params = { ...state.params, cs: state.params.cv * ratio };
   syncParamInputs(); render();
+};
+// 键入精确值：与滑块双向绑定（键入 → 钳位 → 更新滑块与参数）
+$("cvIn").oninput = e => {
+  let cv = parseFloat(e.target.value);
+  if (!Number.isFinite(cv) || cv <= 0) return;
+  cv = Math.min(1.2, Math.max(0.05, cv));
+  const ratio = +$("ratioSlider").value;
+  state.params = { ...state.params, cv, cs: cv * ratio };
+  $("cvSlider").value = cv;
+  render();
+};
+$("ratioIn").oninput = e => {
+  let ratio = parseFloat(e.target.value);
+  if (!Number.isFinite(ratio) || ratio < 1) return;
+  ratio = Math.min(8, Math.max(1, ratio));
+  state.params = { ...state.params, cs: state.params.cv * ratio };
+  $("ratioSlider").value = ratio;
+  render();
+};
+$("meanIn").oninput = e => {
+  const mean = parseFloat(e.target.value);
+  if (Number.isFinite(mean) && mean > 0) {
+    state.params = { ...state.params, mean };
+    render();
+  }
 };
 $("freqSel").onchange = e => { state.freq = +e.target.value; render(); };
 ["inMean", "inCv", "inCs"].forEach(id => {
@@ -761,6 +866,10 @@ function designFromHistoryWeb(floods, params, pExceed, phiFn) {
   return { qBars, mean, phi, kp, q: mean * kp };
 }
 $("btnHist").onclick = calcMethodB;
+// 糙率表：填入按钮
+document.querySelectorAll("#nTable .fillBtn").forEach(btn => {
+  btn.onclick = () => { $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n; };
+});
 
 // ===== 方法 C：无资料地区（与 src/core/methodC.ts 同构） =====
 function calcMethodC() {
@@ -773,8 +882,23 @@ function calcMethodC() {
   try {
     const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
     if (h - z <= 0) throw new Error("h 须大于 z");
-    $("rdOut").textContent = (phi * Math.pow(h - z, 5 / 3) * Math.pow(F2, 2 / 3) * b * g * d).toFixed(2);
+    $("rdOut").textContent = (phi * Math.pow(h - z, 1.5) * Math.pow(F2, 0.8) * b * g * d).toFixed(2);
   } catch (e) { $("rdOut").textContent = "—"; }
+  // 查表辅助：点行填入
+  document.querySelectorAll("#rdTables .fillBtn").forEach(btn => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.onclick = () => {
+      const d = btn.dataset;
+      if (d.psi) $("rdPhi").value = d.psi;
+      if (d.h) $("rdH").value = d.h;
+      if (d.z) $("rdZ").value = d.z;
+      if (d.beta) $("rdBeta").value = d.beta;
+      if (d.gamma) $("rdGamma").value = d.gamma;
+      if (d.delta) $("rdDelta").value = d.delta;
+      calcMethodC();
+    };
+  });
 }
 ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach(id => {
   $(id).oninput = calcMethodC;
