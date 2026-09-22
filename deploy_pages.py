@@ -109,7 +109,7 @@ def upload_tree(token: str) -> str:
     commit_res = requests.post(
         f"{API}/repos/{OWNER}/{REPO}/git/commits",
         headers=headers,
-        json={"message": "docs: 泓算 v0.8.0（GitHub Pages）", "tree": tree.json()["sha"], "parents": [base_commit]},
+        json={"message": "docs: 泓算 v0.8.1（GitHub Pages）", "tree": tree.json()["sha"], "parents": [base_commit]},
         timeout=30,
     )
     if commit_res.status_code != 201:

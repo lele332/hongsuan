@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v0.8.1 — 2026-09-23 网页层 strict 类型与计算书细节修复
+
+### Added
+
+- `tsconfig.web.json` 启用 strict，网页 UI 源码与计算内核保持同一类型安全基线。
+
+### Fixed
+
+- 修复 Word 计算书在连序系列下“矩法初估 Cs”无法显示的问题：SeriesStats 使用 `csMoment`，不连序系列使用 `cs`。
+- Canvas 2D 上下文为空时，Word 导出明确报错，不再触发空引用。
+- 防抖保存定时器显式处理空值，符合 strictNullChecks。
+
+### Verification
+
+- `npm run verify`：核心 strict + 网页 strict + 47 项单元测试 + esbuild，通过。
+- `npm run verify:release`：网页版、Electron 桌面版、离线单文件版三端 E2E 已通过。
+
 ## v0.8.0 — 2026-09-23 工程加固与三端发布链路
 
 ### Added

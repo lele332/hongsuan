@@ -19,7 +19,7 @@ export async function verifyAppPage(page, options) {
   await page.waitForSelector("#outQ", { state: "visible" });
 
   const title = await page.title();
-  check(results, "页面标题版本", title.includes("v0.8.0"), title);
+  check(results, "页面标题版本", title.includes("v0.8.1"), title);
 
   if (mode === "web" || mode === "electron") {
     check(results, "单一内核产物已加载", await page.evaluate(() =>

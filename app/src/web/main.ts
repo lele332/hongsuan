@@ -1,5 +1,5 @@
 import { gammaincLower, norminv, phiPIII } from "../core/phi.ts";
-import { seriesStats, discontinuousStats } from "../core/stats.ts";
+import { seriesStats, discontinuousStats, type SeriesStats, type DiscontinuousStats } from "../core/stats.ts";
 import { compareLineages } from "../core/bayes.ts";
 import { manningQ, designFromHistory } from "../core/methodB.ts";
 import { rationalFormula, runoffDepthFormula } from "../core/methodC.ts";
@@ -10,7 +10,7 @@ type EmpPoint = { p: number; q: number; kind: "hist" | "meas" };
 interface AppState {
   mode: string;
   series: number[];
-  stats: any;
+  stats: SeriesStats | DiscontinuousStats | null;
   params: FitParams;
   freq: number;
   pts: EmpPoint[];
@@ -46,10 +46,10 @@ declare global {
 const XTICKS = [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 80, 90, 95, 99, 99.9];
 const XMIN = norminv(1 - 0.999), XMAX = norminv(1 - 0.0001);
 const PL = 66, PR = 906, PT = 26, PB = 478;
-const sx = x => PL + (XMAX - x) / (XMAX - XMIN) * (PR - PL);
-const pToX = p => sx(norminv(1 - p));
+const sx = (x: number) => PL + (XMAX - x) / (XMAX - XMIN) * (PR - PL);
+const pToX = (p: number) => sx(norminv(1 - p));
 
-function niceTicks(lo, hi, n = 5) {
+function niceTicks(lo: number, hi: number, n = 5): number[] {
   const span = hi - lo, step0 = span / n;
   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
   const norm = step0 / mag, step = (norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10) * mag;
@@ -81,7 +81,7 @@ function render() {
   // ---- 绘图 ----
   // 理论曲线：在正态分位空间均匀采样（格纸上等间距，密度均匀）
   // Φ(t) = 0.5(1 + P(1/2, t²/2))，t≥0；对称 Φ(−t) = 1 − Φ(t)
-  const normCdf = t => {
+  const normCdf = (t: number) => {
     const P = gammaincLower(0.5, t * t / 2);
     return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
   };
@@ -96,7 +96,7 @@ function render() {
   const dataMin = Math.min(...pts.map(pt => pt.q), ...curvePts.map(pt => pt.q), 0);
   const qLo = Math.max(0, dataMin - (dataMax - dataMin) * 0.08);
   const qHi = dataMax + (dataMax - dataMin) * 0.06;
-  const sy2 = q => PB - (q - qLo) / (qHi - qLo) * (PB - PT);
+  const sy2 = (q: number) => PB - (q - qLo) / (qHi - qLo) * (PB - PT);
 
   let s = "";
   s += `<rect x="${PL}" y="${PT}" width="${PR - PL}" height="${PB - PT}" fill="#fdfdfd" stroke="rgba(0,0,0,0.10)" stroke-width="1"/>`;
@@ -145,7 +145,7 @@ function render() {
 
 function calcFromSeries() {
   const raw = $("series").value.split(/[\s,，;；]+/).filter(Boolean);
-  const xs = raw.map(Number).filter(v => Number.isFinite(v) && v > 0);
+  const xs = raw.map(Number).filter((v: number) => Number.isFinite(v) && v > 0);
   const errBox = $("parseErr");
   if (xs.length < 3) {
     errBox.style.display = "block";
@@ -156,12 +156,13 @@ function calcFromSeries() {
   state.series = xs;
   const sorted = [...xs].sort((a, b) => b - a);
   const n = sorted.length;
-  let st, pts;
+  let st: SeriesStats | DiscontinuousStats;
+  let pts: EmpPoint[];
   if ($("hasExtra").checked) {
     try {
       const N = Math.round(+$("inN").value);
       const l = Math.round(+$("inL").value);
-      const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter(v => Number.isFinite(v) && v > 0);
+      const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter((v: number) => Number.isFinite(v) && v > 0);
       st = discontinuousStats({ historicalExtra: extra, measuredDesc: sorted, l, N });
       const a = st.a;
       // 统一样法经验频率：特大按流量排序 M=1..a → M/(N+1)；实测一般项 m=l+1..n
@@ -174,7 +175,7 @@ function calcFromSeries() {
       $("stN").textContent = `n=${n}，a=${a}，l=${l}，N=${N}`;
     } catch (e) {
       errBox.style.display = "block";
-      errBox.textContent = "特大洪水输入有误：" + e.message;
+      errBox.textContent = "特大洪水输入有误：" + (e instanceof Error ? e.message : String(e));
       return;
     }
   } else {
@@ -192,7 +193,7 @@ function calcFromSeries() {
   $("stMean").textContent = fmt(st.mean, 1);
   $("stSigma").textContent = fmt(st.sigma, 1);
   $("stCv").textContent = st.cv.toFixed(3);
-  $("stCs").textContent = (st.csMoment ?? st.cs).toFixed(2);
+  $("stCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
   render();
 }
 
@@ -276,7 +277,7 @@ $("mNoData").onclick = () => {
   setFitCardsVisible(false); calcMethodC();
 };
 
-function setFitCardsVisible(v) {
+function setFitCardsVisible(v: boolean) {
   // 方法 B/C 无适线曲线，隐藏图卡/适线卡/比选卡/统计卡
   for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
     const el = document.querySelector(sel) as HTMLElement | null;
@@ -339,13 +340,14 @@ function runBayesCompare() {
 $("btnBayes").onclick = runBayesCompare;
 
 // ===== 方法 B：历史洪水位法（与 src/core/methodB.ts 同构） =====
-const HIST_FIELDS = [
+type HistFieldKey = "Ac" | "Bc" | "nc" | "At" | "Bt" | "nt" | "Ipermil" | "T";
+const HIST_FIELDS: Array<[HistFieldKey, string]> = [
   ["Ac", "河槽面积 A꜀（m²）"], ["Bc", "河槽水面宽 B꜀（m）"], ["nc", "河槽糙率 n꜀"],
   ["At", "河滩面积 Aₜ（m²）"], ["Bt", "河滩水面宽 Bₜ（m）"], ["nt", "河滩糙率 nₜ"],
   ["Ipermil", "比降 I（‰）"], ["T", "重现期 T（年）"],
 ];
 (function buildHistRows() {
-  const defaults = [
+  const defaults: Array<Record<HistFieldKey, number>> = [
     { Ac: 500, Bc: 100, nc: 0.03, At: 200, Bt: 200, nt: 0.05, Ipermil: 0.5, T: 100 },
     { Ac: 400, Bc: 95, nc: 0.03, At: 150, Bt: 180, nt: 0.05, Ipermil: 0.5, T: 50 },
   ];
@@ -360,7 +362,7 @@ const HIST_FIELDS = [
 
 function calcMethodB() {
   const floods = [0, 1].map(i => {
-    const g = k => +$(`hf${i}${k}`).value;
+    const g = (k: HistFieldKey) => +$(`hf${i}${k}`).value;
     const s = { Ac: g("Ac"), Bc: g("Bc"), nc: g("nc"), At: g("At"), Bt: g("Bt"), nt: g("nt"), I: g("Ipermil") / 1000 };
     const m = manningQ(s);
     return { Q: m.Q, T: g("T"), vc: m.vc, vt: m.vt };
@@ -381,7 +383,7 @@ function calcMethodB() {
         <div class="metric"><div class="k">Φ<sub>p</sub> / K<sub>p</sub></div><div class="v">${res.phi.toFixed(3)} / ${res.kp.toFixed(3)}</div></div>
         <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub>（m³/s）</div><div class="v">${res.q.toFixed(1)}</div></div>
       </div>`;
-  } catch (e) { $("histResult").style.display = ""; $("histResult").innerHTML = `<div class="err" style="display:block">${e.message}</div>`; }
+  } catch (e) { const msg = e instanceof Error ? e.message : String(e); $("histResult").style.display = ""; $("histResult").innerHTML = `<div class="err" style="display:block">${msg}</div>`; }
 }
 $("btnHist").onclick = calcMethodB;
 // 糙率表：填入按钮
@@ -392,7 +394,7 @@ document.querySelectorAll("#nTable .fillBtn").forEach(item => {
 
 // ===== 方法 C：无资料地区（与 src/core/methodC.ts 同构） =====
 function calcMethodC() {
-  const v = id => +$(id).value;
+  const v = (id: string) => +$(id).value;
   try {
     const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
     const q = rationalFormula({ Sp, n, psi, tau, F });
@@ -439,6 +441,11 @@ function svgToPngDataUrl(): Promise<string> {
         const c = document.createElement("canvas");
         c.width = 940 * 2; c.height = 520 * 2;
         const ctx = c.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error("当前浏览器不支持 Canvas 2D 上下文，无法导出适线图"));
+          return;
+        }
         ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
         ctx.drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
@@ -451,7 +458,7 @@ function svgToPngDataUrl(): Promise<string> {
 }
 
 // 稳健下载：a.click() 后立即 revokeObjectURL 在部分浏览器会中止下载（下载还没开始 blob 就被丢弃）
-function downloadBlob(blob, fileName) {
+function downloadBlob(blob: Blob, fileName: string) {
   const legacyNavigator = window.navigator as Navigator & { msSaveOrOpenBlob?: (blob: Blob, fileName: string) => void };
   if (legacyNavigator.msSaveOrOpenBlob) { // 旧版 Edge/IE 兜底
     legacyNavigator.msSaveOrOpenBlob(blob, fileName);
@@ -473,14 +480,21 @@ function buildReportDocx() {
   if (!D) { alert("docx 库未加载（web/libs/docx.umd.js）"); return; }
   const p = state.params, freq = state.freq;
   const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
-  const st = state.stats || { n: state.series.length };
+  const st: { n: number; mean?: number; cv?: number; cs?: number } = state.stats
+    ? {
+        n: state.stats.n,
+        mean: state.stats.mean,
+        cv: state.stats.cv,
+        cs: "cs" in state.stats ? state.stats.cs : state.stats.csMoment,
+      }
+    : { n: state.series.length };
   const freqLabel = { "0.0033": "1/300（特大桥）", "0.01": "1/100（大、中桥）", "0.02": "1/50", "0.04": "1/25" }[String(freq)] || (freq * 100).toFixed(2) + "%";
   const now = new Date();
-  const H1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: t, bold: true, size: 30 })] });
-  const H2 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun({ text: t, bold: true, size: 26 })] });
-  const P = (t, opt = {}) => new D.Paragraph({ children: [new D.TextRun({ text: t, size: 22, ...opt })], spacing: { after: 120 } });
-  const PB = (label, val) => new D.Paragraph({ children: [new D.TextRun({ text: label + "：", bold: true, size: 22 }), new D.TextRun({ text: val, size: 22 })], spacing: { after: 60 } });
-  const mkTable = (header, rows) => new D.Table({
+  const H1 = (t: string) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: t, bold: true, size: 30 })] });
+  const H2 = (t: string) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun({ text: t, bold: true, size: 26 })] });
+  const P = (t: string, opt: Record<string, unknown> = {}) => new D.Paragraph({ children: [new D.TextRun({ text: t, size: 22, ...opt })], spacing: { after: 120 } });
+  const PB = (label: string, val: string) => new D.Paragraph({ children: [new D.TextRun({ text: label + "：", bold: true, size: 22 }), new D.TextRun({ text: val, size: 22 })], spacing: { after: 60 } });
+  const mkTable = (header: string[], rows: Array<Array<string | number>>) => new D.Table({
     width: { size: 100, type: D.WidthType.PERCENTAGE },
     rows: [
       new D.TableRow({ tableHeader: true, children: header.map(h => new D.TableCell({ children: [new D.Paragraph({ children: [new D.TextRun({ text: h, bold: true, size: 20 })] })] })) }),
@@ -531,12 +545,12 @@ function buildReportDocx() {
           new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
           new D.Paragraph({
             border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-            children: [new D.TextRun({ text: "本计算书由泓算 v0.8.0 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+            children: [new D.TextRun({ text: "本计算书由泓算 v0.8.1 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
           }),
         ],
       }],
     });
-    return D.Packer.toBlob(doc).then(blob => {
+    return D.Packer.toBlob(doc).then((blob: Blob) => {
       console.log("DOCX_OK", blob.size);
       downloadBlob(blob, "设计流量计算书_P3适线.docx");
       const b = $("btnReport"), old = b.textContent;
@@ -544,7 +558,7 @@ function buildReportDocx() {
       b.disabled = true;
       setTimeout(() => { b.textContent = old; b.disabled = false; }, 5000);
     });
-  }).catch(e => { console.error("DOCX_FAIL", e); alert("计书生成失败：" + e.message); });
+  }).catch(e => { console.error("DOCX_FAIL", e); alert("计书生成失败：" + (e instanceof Error ? e.message : String(e))); });
 }
 $("btnReport").onclick = buildReportDocx;
 
@@ -554,7 +568,7 @@ const LEGACY_LS_KEY = "hongsuan_v07";
 const HIST_IDS = ["hf0Ac","hf0Bc","hf0nc","hf0At","hf0Bt","hf0nt","hf0Ipermil","hf0T","hf1Ac","hf1Bc","hf1nc","hf1At","hf1Bt","hf1nt","hf1Ipermil","hf1T","hbCv","hbCs"];
 const NODATA_IDS = ["rcSp","rcN","rcPsi","rcTau","rcF","rdPhi","rdH","rdZ","rdF","rdBeta","rdGamma","rdDelta"];
 function collectInputs() {
-  const pick = ids => { const o = {}; ids.forEach(id => { const el = $(id); if (el) o[id] = el.value; }); return o; };
+  const pick = (ids: string[]): Record<string, string> => { const o: Record<string, string> = {}; ids.forEach(id => { const el = $(id); if (el) o[id] = el.value; }); return o; };
   return {
     mode: state.mode,
     series: $("series").value, hasExtra: $("hasExtra").checked,
@@ -565,7 +579,7 @@ function collectInputs() {
     hist: pick(HIST_IDS), nodata: pick(NODATA_IDS),
   };
 }
-let saveTimer = null;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function markSaved() {
   const el = $("saveHint"); if (!el) return;
   el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 900);
@@ -573,12 +587,15 @@ function markSaved() {
 function saveAll() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(collectInputs())); markSaved(); } catch (e) { /* 隐私模式等场景静默 */ }
 }
-function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveAll, 400); }
+function scheduleSave() {
+  if (saveTimer !== null) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveAll, 400);
+}
 // 事件委托：任何输入控件变化都触发记忆（滑块/键入/查表填入/模式页签全覆盖）
 document.addEventListener("input", (e: any) => { if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave(); });
 document.addEventListener("change", (e: any) => { if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave(); });
 // 输入守卫：空值/非数值/越界 min~max → 红框提示（不阻断计算，由计算函数给出语义错误）
-function checkNum(el) {
+function checkNum(el: HTMLInputElement) {
   const raw = el.value.trim();
   let bad = raw === "";
   if (!bad) {
@@ -596,7 +613,7 @@ document.querySelectorAll("input[type=number]").forEach(item => {
   el.addEventListener("blur", () => { if (el.value.trim() === "") { el.classList.add("invalid"); } });
 });
 function restoreAll() {
-  let d = null;
+  let d: any = null;
   try { d = JSON.parse(localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY) || "null"); } catch (e) { d = null; }
   if (!d || typeof d !== "object") return null;
   if (typeof d.series === "string") $("series").value = d.series;
