@@ -1,0 +1,250 @@
+TAP version 13
+# Subtest: 模型识别（合成数据 · 已知真模型）：GEV 生成的样本应倾向 GEV/Gumbel 而非 P3
+ok 1 - 模型识别（合成数据 · 已知真模型）：GEV 生成的样本应倾向 GEV/Gumbel 而非 P3
+  ---
+  duration_ms: 15.5403
+  type: 'test'
+  ...
+# Subtest: 模型识别（奥卡姆剃刀行为）：强偏 P-Ⅲ（α=1.5，Cs=1.63）下 P3 应胜 Gumbel
+ok 2 - 模型识别（奥卡姆剃刀行为）：强偏 P-Ⅲ（α=1.5，Cs=1.63）下 P3 应胜 Gumbel
+  ---
+  duration_ms: 8.0262
+  type: 'test'
+  ...
+# Subtest: 参数恢复：GEV MLE 应接近真值（μ=100, σ=40, ξ=−0.15，n=200）
+ok 3 - 参数恢复：GEV MLE 应接近真值（μ=100, σ=40, ξ=−0.15，n=200）
+  ---
+  duration_ms: 10.8839
+  type: 'test'
+  ...
+# Subtest: 参数恢复：P-Ⅲ MLE（α 有已知多解性，断言 MLE 至少优于矩法初值 + 均值方差保持）
+ok 4 - 参数恢复：P-Ⅲ MLE（α 有已知多解性，断言 MLE 至少优于矩法初值 + 均值方差保持）
+  ---
+  duration_ms: 8.3194
+  type: 'test'
+  ...
+# Subtest: 后验权重归一化与设计值量级
+ok 5 - 后验权重归一化与设计值量级
+  ---
+  duration_ms: 2.8332
+  type: 'test'
+  ...
+# Subtest: Nelder-Mead 基础功能：二次函数极小化
+ok 6 - Nelder-Mead 基础功能：二次函数极小化
+  ---
+  duration_ms: 0.4577
+  type: 'test'
+  ...
+# Subtest: Gumbel Q1% 解析锚点：μ=100, σ=40 → Q = μ − σ·ln(−ln(0.99))
+ok 7 - Gumbel Q1% 解析锚点：μ=100, σ=40 → Q = μ − σ·ln(−ln(0.99))
+  ---
+  duration_ms: 3.5362
+  type: 'test'
+  ...
+# Subtest: 算例 T1 数据可跑且三模型 Q1% 量级合理
+ok 8 - 算例 T1 数据可跑且三模型 Q1% 量级合理
+  ---
+  duration_ms: 3.1508
+  type: 'test'
+  ...
+# Subtest: 算例 T1 矩法：均值/均方差/Cv（含完整数据与标准答案）
+ok 9 - 算例 T1 矩法：均值/均方差/Cv（含完整数据与标准答案）
+  ---
+  duration_ms: 2.2315
+  type: 'test'
+  ...
+# Subtest: 算例 T1 设计值（软件自算 Kp，替代题库凑数表值）
+ok 10 - 算例 T1 设计值（软件自算 Kp，替代题库凑数表值）
+  ---
+  duration_ms: 1.1334
+  type: 'test'
+  ...
+# Subtest: 算例 T2：Q̄=860、Cv=0.605、Cs=1.5 → Q1% ≈ 2593
+ok 11 - 算例 T2：Q̄=860、Cv=0.605、Cs=1.5 → Q1% ≈ 2593
+  ---
+  duration_ms: 1.7633
+  type: 'test'
+  ...
+# Subtest: 算例 T3 采用值：Q̄=5173.6、Cv=0.331、Cs=1.99 → Q1% ≈ 11345
+ok 12 - 算例 T3 采用值：Q̄=5173.6、Cv=0.331、Cs=1.99 → Q1% ≈ 11345
+  ---
+  duration_ms: 0.6343
+  type: 'test'
+  ...
+# Subtest: 算例 T3 结构：经验频率方法二（条件概率）边界行为
+ok 13 - 算例 T3 结构：经验频率方法二（条件概率）边界行为
+  ---
+  duration_ms: 0.6787
+  type: 'test'
+  ...
+# Subtest: 连序经验频率：n=10 → 第一项 P=1/11、末项 P=10/11
+ok 14 - 连序经验频率：n=10 → 第一项 P=1/11、末项 P=10/11
+  ---
+  duration_ms: 0.2403
+  type: 'test'
+  ...
+# Subtest: 算例 T4 量级校验（达板电站）：Cv≈0.32、Cs=2.5Cv 参数组合可算
+ok 15 - 算例 T4 量级校验（达板电站）：Cv≈0.32、Cs=2.5Cv 参数组合可算
+  ---
+  duration_ms: 0.9686
+  type: 'test'
+  ...
+# Subtest: 不连序矩法手算锚点：N=100, 实测内特大 1 项(800), 考证期独有特大(1000,900)
+ok 16 - 不连序矩法手算锚点：N=100, 实测内特大 1 项(800), 考证期独有特大(1000,900)
+  ---
+  duration_ms: 2.2909
+  type: 'test'
+  ...
+# Subtest: 不连序退化为连序：a=0, l=0, N=n 时与 seriesStats 一致
+ok 17 - 不连序退化为连序：a=0, l=0, N=n 时与 seriesStats 一致
+  ---
+  duration_ms: 0.6269
+  type: 'test'
+  ...
+# Subtest: 统一样法经验频率锚点：N=100, a=2, n=20, l=1
+ok 18 - 统一样法经验频率锚点：N=100, a=2, n=20, l=1
+  ---
+  duration_ms: 0.7325
+  type: 'test'
+  ...
+# Subtest: 独立样本法（方法一）保持不变：特大 M/(N+1)、实测 m/(n+1)
+ok 19 - 独立样本法（方法一）保持不变：特大 M/(N+1)、实测 m/(n+1)
+  ---
+  duration_ms: 0.9883
+  type: 'test'
+  ...
+# Subtest: 边界守卫：l>n / N≤a / 全特大
+ok 20 - 边界守卫：l>n / N≤a / 全特大
+  ---
+  duration_ms: 1.8498
+  type: 'test'
+  ...
+# Subtest: T3 场景结构检验：a=5, l=2, N=200, n=30 参数可算且量级合理
+ok 21 - T3 场景结构检验：a=5, l=2, N=200, n=30 参数可算且量级合理
+  ---
+  duration_ms: 0.5958
+  type: 'test'
+  ...
+# Subtest: 曼宁公式手算锚点：Ac=500,Bc=100,nc=0.03 / At=200,Bt=200,nt=0.05 / I=0.0005
+ok 22 - 曼宁公式手算锚点：Ac=500,Bc=100,nc=0.03 / At=200,Bt=200,nt=0.05 / I=0.0005
+  ---
+  duration_ms: 1.7272
+  type: 'test'
+  ...
+# Subtest: 曼宁：无河滩时 Q = Ac·vc，直接给 R 分支可用
+ok 23 - 曼宁：无河滩时 Q = Ac·vc，直接给 R 分支可用
+  ---
+  duration_ms: 0.4267
+  type: 'test'
+  ...
+# Subtest: 历史洪水推算设计流量（Cs=2 解析锚点全链路）
+ok 24 - 历史洪水推算设计流量（Cs=2 解析锚点全链路）
+  ---
+  duration_ms: 1.5871
+  type: 'test'
+  ...
+# Subtest: 历史洪水守卫：少于 2 次报错（规范 6.3.3）
+ok 25 - 历史洪水守卫：少于 2 次报错（规范 6.3.3）
+  ---
+  duration_ms: 1.173
+  type: 'test'
+  ...
+# Subtest: 曼宁守卫：比降/面积/糙率非法输入
+ok 26 - 曼宁守卫：比降/面积/糙率非法输入
+  ---
+  duration_ms: 0.5215
+  type: 'test'
+  ...
+# Subtest: 推理公式量纲锚点：Sp=36 mm/h（=10 mm/10min 折算）、τ=1h、n=1、ψ=1、F=1 km² → Q=10 m³/s
+ok 27 - 推理公式量纲锚点：Sp=36 mm/h（=10 mm/10min 折算）、τ=1h、n=1、ψ=1、F=1 km² → Q=10 m³/s
+  ---
+  duration_ms: 1.6273
+  type: 'test'
+  ...
+# Subtest: 推理公式代数一致性：ψ、F 线性缩放，τⁿ 反比
+ok 28 - 推理公式代数一致性：ψ、F 线性缩放，τⁿ 反比
+  ---
+  duration_ms: 0.2844
+  type: 'test'
+  ...
+# Subtest: 径流厚度法代数一致性：βγδ 乘性缩放、(h−z)^(5/3) 幂次
+ok 29 - 径流厚度法代数一致性：βγδ 乘性缩放、(h−z)^(5/3) 幂次
+  ---
+  duration_ms: 0.3189
+  type: 'test'
+  ...
+# Subtest: 方法 C 守卫：F≥100 报错（规范 6.4.2）、h≤z 报错、ψ 越界报错
+ok 30 - 方法 C 守卫：F≥100 报错（规范 6.4.2）、h≤z 报错、ψ 越界报错
+  ---
+  duration_ms: 0.8337
+  type: 'test'
+  ...
+# Subtest: Cs=2、P=1%：指数分布解析锚点 Φ = ln(100) − 1 = 3.60517
+ok 31 - Cs=2、P=1%：指数分布解析锚点 Φ = ln(100) − 1 = 3.60517
+  ---
+  duration_ms: 2.2655
+  type: 'test'
+  ...
+# Subtest: Cs=2、P=0.1%：解析锚点 Φ = ln(1000) − 1 = 5.90776
+ok 32 - Cs=2、P=0.1%：解析锚点 Φ = ln(1000) − 1 = 5.90776
+  ---
+  duration_ms: 0.4622
+  type: 'test'
+  ...
+# Subtest: Cs=0：正态分布 Φ(1%) = 2.3263
+ok 33 - Cs=0：正态分布 Φ(1%) = 2.3263
+  ---
+  duration_ms: 0.3462
+  type: 'test'
+  ...
+# Subtest: Cs=1.99、P=1%：土木在线算例 T3 → Φ = 3.604
+ok 34 - Cs=1.99、P=1%：土木在线算例 T3 → Φ = 3.604
+  ---
+  duration_ms: 1.5246
+  type: 'test'
+  ...
+# Subtest: Cs=1.5、P=1%：CSDN 算例 T2 → Φ ≈ 3.33
+ok 35 - Cs=1.5、P=1%：CSDN 算例 T2 → Φ ≈ 3.33
+  ---
+  duration_ms: 0.4235
+  type: 'test'
+  ...
+# Subtest: Cs=0 其他分位点（P=10% → 1.2816；P=0.1% → 3.0902）
+ok 36 - Cs=0 其他分位点（P=10% → 1.2816；P=0.1% → 3.0902）
+  ---
+  duration_ms: 0.2046
+  type: 'test'
+  ...
+# Subtest: Cs<0 镜像：Φ(−Cs, p) = −Φ(Cs, 1−p)
+ok 37 - Cs<0 镜像：Φ(−Cs, p) = −Φ(Cs, 1−p)
+  ---
+  duration_ms: 0.8861
+  type: 'test'
+  ...
+# Subtest: 下侧频率（P>50%）为负值：Φ(99%, Cs=0) ≈ −2.3263
+ok 38 - 下侧频率（P>50%）为负值：Φ(99%, Cs=0) ≈ −2.3263
+  ---
+  duration_ms: 0.2013
+  type: 'test'
+  ...
+# Subtest: 基础数值函数抽查：P(1,x) 不完全 Gamma 与正态分位
+ok 39 - 基础数值函数抽查：P(1,x) 不完全 Gamma 与正态分位
+  ---
+  duration_ms: 0.5404
+  type: 'test'
+  ...
+# Subtest: Kp = 1 + Φ·Cv（算例 T3：Cs=1.99、Cv=0.331 → Kp ≈ 2.193）
+ok 40 - Kp = 1 + Φ·Cv（算例 T3：Cs=1.99、Cv=0.331 → Kp ≈ 2.193）
+  ---
+  duration_ms: 0.9107
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2019.168

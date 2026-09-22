@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: 模型识别（合成数据 · 已知真模型）：GEV 生成的样本应倾向 GEV/Gumbel 而非 P3
+ok 1 - 模型识别（合成数据 · 已知真模型）：GEV 生成的样本应倾向 GEV/Gumbel 而非 P3
+  ---
+  duration_ms: 14.871
+  type: 'test'
+  ...
+# Subtest: 模型识别（奥卡姆剃刀行为）：强偏 P-Ⅲ（α=1.5，Cs=1.63）下 P3 应胜 Gumbel
+ok 2 - 模型识别（奥卡姆剃刀行为）：强偏 P-Ⅲ（α=1.5，Cs=1.63）下 P3 应胜 Gumbel
+  ---
+  duration_ms: 8.7396
+  type: 'test'
+  ...
+# Subtest: 参数恢复：GEV MLE 应接近真值（μ=100, σ=40, ξ=−0.15，n=200）
+ok 3 - 参数恢复：GEV MLE 应接近真值（μ=100, σ=40, ξ=−0.15，n=200）
+  ---
+  duration_ms: 9.7357
+  type: 'test'
+  ...
+# Subtest: 参数恢复：P-Ⅲ MLE（α 有已知多解性，断言 MLE 至少优于矩法初值 + 均值方差保持）
+ok 4 - 参数恢复：P-Ⅲ MLE（α 有已知多解性，断言 MLE 至少优于矩法初值 + 均值方差保持）
+  ---
+  duration_ms: 7.895
+  type: 'test'
+  ...
+# Subtest: 后验权重归一化与设计值量级
+ok 5 - 后验权重归一化与设计值量级
+  ---
+  duration_ms: 2.7225
+  type: 'test'
+  ...
+# Subtest: Nelder-Mead 基础功能：二次函数极小化
+ok 6 - Nelder-Mead 基础功能：二次函数极小化
+  ---
+  duration_ms: 0.4439
+  type: 'test'
+  ...
+# Subtest: Gumbel Q1% 解析锚点：μ=100, σ=40 → Q = μ − σ·ln(−ln(0.99))
+ok 7 - Gumbel Q1% 解析锚点：μ=100, σ=40 → Q = μ − σ·ln(−ln(0.99))
+  ---
+  duration_ms: 3.3025
+  type: 'test'
+  ...
+# Subtest: 算例 T1 数据可跑且三模型 Q1% 量级合理
+ok 8 - 算例 T1 数据可跑且三模型 Q1% 量级合理
+  ---
+  duration_ms: 3.8163
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 878.2954
