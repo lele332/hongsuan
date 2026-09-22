@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.5</title>
+<title>泓算 · 桥涵设计流量推求 v0.5.1</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -101,7 +101,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.5</p>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.5.1</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -803,6 +803,23 @@ function svgToPngDataUrl() {
   });
 }
 
+// 稳健下载：a.click() 后立即 revokeObjectURL 在部分浏览器会中止下载（下载还没开始 blob 就被丢弃）
+function downloadBlob(blob, fileName) {
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) { // 旧版 Edge/IE 兜底
+    window.navigator.msSaveOrOpenBlob(blob, fileName);
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+}
+
 function buildReportDocx() {
   const D = window.docx;
   if (!D) { alert("docx 库未加载（web/libs/docx.umd.js）"); return; }
@@ -873,11 +890,11 @@ function buildReportDocx() {
     });
     return D.Packer.toBlob(doc).then(blob => {
       console.log("DOCX_OK", blob.size);
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "设计流量计算书_P3适线.docx";
-      a.click();
-      URL.revokeObjectURL(a.href);
+      downloadBlob(blob, "设计流量计算书_P3适线.docx");
+      const b = $("btnReport"), old = b.textContent;
+      b.textContent = "已生成 " + Math.round(blob.size / 1024) + " KB，浏览器已开始下载（看下载栏）";
+      b.disabled = true;
+      setTimeout(() => { b.textContent = old; b.disabled = false; }, 5000);
     });
   }).catch(e => { console.error("DOCX_FAIL", e); alert("计书生成失败：" + e.message); });
 }
