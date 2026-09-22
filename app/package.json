@@ -1,0 +1,10 @@
+{
+  "name": "hydro-design-flood",
+  "version": "0.1.0",
+  "private": true,
+  "description": "桥涵水文计算软件 — 设计流量模块（P-III 频率适线数值内核）",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test src/tests/"
+  }
+}

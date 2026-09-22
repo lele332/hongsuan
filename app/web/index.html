@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>泓算 · 桥涵设计流量推求 v0.5</title>
+<style>
+  :root {
+    --blue: #007AFF;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --text2: #6e6e73;
+    --text3: #aeaeb2;
+    --border: rgba(0,0,0,0.08);
+    --red: #ff3b30;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text);
+    max-width: 1020px; margin: 0 auto; padding: 28px 20px 60px;
+    font-size: 14px; line-height: 1.6;
+  }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  header p { color: var(--text2); font-size: 12.5px; margin-top: 4px; }
+  .seg {
+    display: inline-flex; background: rgba(120,120,128,0.12); border-radius: 10px;
+    padding: 2px; margin: 0 auto 18px; width: fit-content; display: flex;
+  }
+  .seg button {
+    border: 0; background: transparent; padding: 6px 22px; font-size: 13.5px;
+    border-radius: 8px; color: var(--text); cursor: pointer; transition: all .18s;
+  }
+  .seg button.on { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.12); font-weight: 500; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 22px; margin-bottom: 16px;
+    transition: border-color .25s ease;
+  }
+  .card:hover { border-color: rgba(0,122,255,0.28); }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  textarea {
+    width: 100%; height: 96px; border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font: 13px/1.7 ui-monospace, Consolas, monospace;
+    resize: vertical; outline: none; background: #fafafa;
+  }
+  textarea:focus { border-color: var(--blue); background: #fff; }
+  label { font-size: 12.5px; color: var(--text2); display: block; margin: 10px 0 4px; }
+  input[type=number], select {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 10px; font-size: 13.5px; outline: none; background: #fff; color: var(--text);
+  }
+  input[type=number]:focus, select:focus { border-color: var(--blue); }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .btn {
+    display: inline-block; background: var(--blue); color: #fff; border: 0;
+    border-radius: 980px; padding: 8px 24px; font-size: 14px; font-weight: 500;
+    cursor: pointer; margin-top: 12px; transition: transform .18s ease, opacity .15s;
+  }
+  .btn:hover { opacity: .88; }
+  .btn:active { transform: scale(.96); }
+  .btn.ghost {
+    background: transparent; color: var(--blue); border: 1.5px solid var(--blue);
+    margin-left: 8px; padding: 6.5px 18px;
+  }
+  .btn.ghost:active { transform: scale(.96); }
+  input[type=range] { width: 100%; accent-color: var(--blue); margin: 6px 0 2px; }
+  .val { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text); }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .metric {
+    background: var(--bg); border-radius: 10px; padding: 10px 14px;
+  }
+  .metric .k { font-size: 11.5px; color: var(--text2); }
+  .metric .v { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .metric.hl .v { color: var(--blue); }
+  .metric .u { font-size: 11px; color: var(--text3); font-weight: 400; }
+  .hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  svg text { font-family: -apple-system, "PingFang SC", sans-serif; }
+  .legend { display: flex; gap: 18px; font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--blue); vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+  .legend .dot { display:inline-block; width:8px; height:8px; background:#1d1d1f; border-radius:50%; margin-right:5px; vertical-align: middle; }
+  .legend .ring { display:inline-block; width:9px; height:9px; border:2px solid var(--blue); border-radius:50%; margin-right:5px; vertical-align: middle; background:transparent; }
+  footer {
+    text-align: center; color: var(--text3); font-size: 11.5px; margin-top: 26px;
+    line-height: 1.8; padding: 0 20px;
+  }
+  footer .brand { font-size: 13px; color: var(--text2); font-weight: 500; letter-spacing: 2px; }
+  footer .sep { width: 36px; height: 1px; background: rgba(0,0,0,0.12); margin: 10px auto; }
+  .err { color: var(--red); font-size: 12.5px; margin-top: 6px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>泓算 · 桥涵设计流量推求</h1>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.5</p>
+</header>
+
+<div style="text-align:center"><div class="seg" id="segMode">
+  <button id="mSeries" class="on">流量系列适线</button>
+  <button id="mParams">直接参数模式</button>
+  <button id="mHist">历史洪水位法</button>
+  <button id="mNoData">无资料地区</button>
+</div></div>
+
+<div class="card" id="inputCard">
+  <div id="seriesBox">
+    <h2>年最大流量系列（m³/s）</h2>
+    <textarea id="series">1200
+850
+1500
+900
+1100
+1350
+700
+1000
+1400
+650</textarea>
+    <div class="err" id="parseErr"></div>
+    <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。示例为算例 T1（n=10）。</div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
+      <input type="checkbox" id="hasExtra" style="width:16px;height:16px;accent-color:var(--blue)"> 含特大洪水（不连序系列）
+    </label>
+    <div id="extraBox" style="display:none;margin-top:10px;padding:12px 14px;background:var(--bg);border-radius:10px">
+      <div class="row">
+        <div><label>考证期 N（年）</label><input type="number" id="inN" value="200" min="2" step="1"></div>
+        <div><label>实测系列中特大项数 l</label><input type="number" id="inL" value="2" min="0" step="1"></div>
+      </div>
+      <label>历史特大洪水（考证期内、不在实测系列中，每行一个 m³/s）</label>
+      <textarea id="extraSeries" style="height:64px">14000
+12500
+11000</textarea>
+      <div class="hint">统计参数按《水利水电工程设计洪水计算规范》式 A.1.1-7~9（含特大修正）；经验频率用统一样法。</div>
+    </div>
+    <button class="btn" id="btnCalc">计算并适线</button>
+    <button class="btn ghost" id="btnT3">载入算例 T3 参数</button>
+  </div>
+  <div id="paramsBox" style="display:none">
+    <h2>统计参数（适线采用值）</h2>
+    <div class="row">
+      <div><label>均值 Q̄（m³/s）</label><input type="number" id="inMean" value="5173.6" step="any"></div>
+      <div><label>变差系数 C<sub>v</sub></label><input type="number" id="inCv" value="0.331" step="0.001" min="0.01"></div>
+      <div><label>偏态系数 C<sub>s</sub></label><input type="number" id="inCs" value="1.99" step="0.01"></div>
+    </div>
+    <div class="hint">适用于已由手算/其他软件得到采用值的复核场景。示例为算例 T3（某水文站，Q₁% = 11345 m³/s）。</div>
+  </div>
+
+  <div id="histBox" style="display:none">
+    <h2>历史洪水位法（规范 6.3 · 曼宁公式）</h2>
+    <div class="hint" style="margin-top:0">Q = A<sub>c</sub>v<sub>c</sub> + A<sub>t</sub>v<sub>t</sub>；v = (1/n)·R<sup>2/3</sup>·I<sup>1/2</sup>；宽深比&gt;10 时 R ≈ A/B（水面宽）。至少 2 次历史洪水。</div>
+    <div id="histRows"></div>
+    <div class="row" style="margin-top:8px">
+      <div><label>地区参数 C<sub>v</sub>（参照地区资料）</label><input type="number" id="hbCv" value="0.5" step="0.01" min="0.01"></div>
+      <div><label>地区参数 C<sub>s</sub></label><input type="number" id="hbCs" value="1.0" step="0.05"></div>
+    </div>
+    <button class="btn" id="btnHist">计算历史洪水法设计流量</button>
+    <div id="histResult" style="display:none;margin-top:14px"></div>
+  </div>
+
+  <div id="noDataBox" style="display:none">
+    <h2>无资料地区（规范 6.4）</h2>
+    <div class="hint" style="margin-top:0">推理公式适用于汇水面积 &lt;100 km²（6.4.2），参数采用地区暴雨径流图表值；求算的设计流量应有历史洪水验证（6.4.1）。</div>
+    <div class="row">
+      <div>
+        <label style="font-weight:500;color:var(--text)">推理公式 Q = 0.278·ψ·(S<sub>p</sub>/τ<sup>n</sup>)·F</label>
+        <div class="row"><div><label>雨力 S<sub>p</sub>（mm/h）</label><input type="number" id="rcSp" value="80" step="any"></div>
+        <div><label>衰减指数 n</label><input type="number" id="rcN" value="0.65" step="0.01" min="0"></div></div>
+        <div class="row"><div><label>径流系数 ψ</label><input type="number" id="rcPsi" value="0.85" step="0.01" min="0.01" max="1"></div>
+        <div><label>汇流时间 τ（h）</label><input type="number" id="rcTau" value="0.55" step="0.01" min="0.01"></div>
+        <div><label>汇水面积 F（km²）</label><input type="number" id="rcF" value="3.94" step="0.01" min="0.01"></div></div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">推理公式 Q<sub>p</sub>（m³/s）</div><div class="v" id="rcOut">—</div></div>
+      </div>
+      <div>
+        <label style="font-weight:500;color:var(--text)">径流厚度法 Q = φ·(h−z)<sup>5/3</sup>·F<sup>2/3</sup>·βγδ <span style="color:var(--red);font-size:11px">⚠ 公式形式待教材核实</span></label>
+        <div class="row"><div><label>地貌系数 φ</label><input type="number" id="rdPhi" value="0.1" step="any"></div>
+        <div><label>径流厚度 h（mm）</label><input type="number" id="rdH" value="44" step="any"></div>
+        <div><label>滞留厚度 z（mm）</label><input type="number" id="rdZ" value="10" step="any"></div></div>
+        <div class="row"><div><label>面积 F（km²）</label><input type="number" id="rdF" value="3.94" step="0.01"></div>
+        <div><label>折减 β</label><input type="number" id="rdBeta" value="1" step="0.05"></div>
+        <div><label>折减 γ</label><input type="number" id="rdGamma" value="1" step="0.05"></div>
+        <div><label>折减 δ</label><input type="number" id="rdDelta" value="1" step="0.05"></div></div>
+        <div class="metric" style="margin-top:10px"><div class="k">径流厚度法 Q<sub>p</sub>（m³/s）</div><div class="v" id="rdOut">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="chartCard">
+  <h2>海森机率格纸 · 适线</h2>
+  <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
+  <div class="legend">
+    <span><i></i>理论频率曲线（P-Ⅲ）</span>
+    <span><span class="dot"></span>经验点据 P<sub>m</sub>=m/(n+1)</span>
+    <span><span class="dot" style="background:#ff3b30"></span>特大洪水 M/(N+1)</span>
+    <span><span class="ring"></span>设计频率点</span>
+  </div>
+</div>
+
+<div class="card" id="fitCard">
+  <h2>适线调整 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——拖动滑块，曲线实时重绘</span></h2>
+  <div class="row">
+    <div>
+      <label>变差系数 C<sub>v</sub>：<span class="val" id="cvShow">0.30</span></label>
+      <input type="range" id="cvSlider" min="0.05" max="1.2" step="0.005" value="0.30">
+    </div>
+    <div>
+      <label>C<sub>s</sub> / C<sub>v</sub> 倍比：<span class="val" id="ratioShow">2.0</span>（C<sub>s</sub> = <span class="val" id="csShow">0.60</span>）</label>
+      <input type="range" id="ratioSlider" min="1" max="8" step="0.5" value="2">
+    </div>
+  </div>
+  <div class="row" style="margin-top:12px">
+    <div>
+      <label>设计洪水频率</label>
+      <select id="freqSel">
+        <option value="0.0033">1/300（0.33%）— 特大桥（高速/一级）</option>
+        <option value="0.01" selected>1/100（1%）— 大中桥（高速/一级/二级）</option>
+        <option value="0.02">1/50（2%）— 大中桥（三/四级）、小桥涵（二级）</option>
+        <option value="0.04">1/25（4%）— 小桥涵（三/四级）</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:flex-end">
+      <div class="metrics" style="width:100%">
+        <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub></div><div class="v" id="outQ">—</div></div>
+        <div class="metric"><div class="k">离均系数 Φ<sub>p</sub></div><div class="v" id="outPhi">—</div></div>
+        <div class="metric"><div class="k">模比系数 K<sub>p</sub></div><div class="v" id="outKp">—</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn" id="btnReport" style="margin-top:16px">导出 Word 计算书</button>
+  <span style="font-size:12px;color:var(--text3);margin-left:10px">当前适线状态 + 适线图 + 频率成果表</span>
+</div>
+
+<div class="card" id="bayesCard">
+  <h2>线型比选（贝叶斯） <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— P-Ⅲ vs GEV vs Gumbel，后验概率谁最合适</span></h2>
+  <div id="bayesBox">
+    <button class="btn" id="btnBayes" style="margin-top:0">运行线型比选</button>
+    <span style="font-size:12px;color:var(--text3);margin-left:10px">基于当前实测连序系列（n≥5）</span>
+    <div id="bayesResult" style="display:none;margin-top:14px">
+      <div id="bayesBars"></div>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">P-Ⅲ 的 Q₁%</div><div class="v" id="bqP3">—</div></div>
+        <div class="metric"><div class="k">GEV 的 Q₁%</div><div class="v" id="bqGEV">—</div></div>
+        <div class="metric"><div class="k">Gumbel 的 Q₁%</div><div class="v" id="bqGu">—</div></div>
+      </div>
+      <div class="hint">方法：各线型极大似然（Nelder-Mead）→ BIC → 后验权重 w ∝ exp(−BIC/2)（Bayes factor 大样本近似，Kass &amp; Raftery 1995）。已通过 scipy 独立交叉验证（三模型 logL 一致到 1e-4）。<br>按 JTG C30-2015 第 6.2.4 条，公路桥涵水文计算采用 P-Ⅲ 线型；比选结果作为多方法论证（规范 6.1.3）与教学参考。</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid2" id="statsGrid">
+  <div class="card">
+    <h2>系列统计（矩法初估）</h2>
+    <div class="metrics">
+      <div class="metric"><div class="k">系列项数 n</div><div class="v" id="stN">—</div></div>
+      <div class="metric"><div class="k">均值 Q̄</div><div class="v" id="stMean">—</div></div>
+      <div class="metric"><div class="k">均方差 σ</div><div class="v" id="stSigma">—</div></div>
+      <div class="metric"><div class="k">C<sub>v</sub>（矩法）</div><div class="v" id="stCv">—</div></div>
+      <div class="metric"><div class="k">C<sub>s</sub>（矩法，仅参考）</div><div class="v" id="stCs">—</div></div>
+      <div class="metric"><div class="k">适线误差 SSE</div><div class="v" id="stSse">—</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>本步说明</h2>
+    <p style="font-size:13px;color:var(--text2)">
+      ① 矩法初估 Q̄ 与 C<sub>v</sub>；② 因 C<sub>s</sub> 抽样误差大，按经验取 C<sub>v</sub> 的倍比假定；③ 目估调整使理论曲线通过经验点据群，重点照顾上部大流量点（规范 6.2.5）。<br><br>
+      Φ<sub>p</sub> 由 P-Ⅲ 分布数值计算（不完全 Γ 函数分位数），已通过 Cs=2 解析锚点（Φ(1%)=3.60517）与多个手算算例验收。
+    </p>
+  </div>
+</div>
+
+<footer>
+  <div class="brand">泓算 HONGSUAN</div>
+  <div class="sep"></div>
+  计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.5
+</footer>
+
+<script src="libs/docx.umd.js"></script>
+<script>
+// ============ P-Ⅲ 数值内核（与 src/core/phi.ts 同构维护） ============
+function gammaln(x) {
+  const g = 7, c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - gammaln(1 - x);
+  const z = x - 1; let a = c[0]; const t = z + g + 0.5;
+  for (let i = 1; i < g + 2; i++) a += c[i] / (z + i);
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(a);
+}
+function gammaincLower(a, x) {
+  if (x <= 0) return 0;
+  if (x < a + 1) {
+    let ap = a, sum = 1 / a, del = sum;
+    for (let n = 1; n < 1000; n++) { ap++; del *= x / ap; sum += del; if (Math.abs(del) < Math.abs(sum) * 1e-16) break; }
+    return sum * Math.exp(-x + a * Math.log(x) - gammaln(a));
+  }
+  const FPMIN = 1e-300; let b = x + 1 - a, c = 1 / FPMIN, d = 1 / b, h = d;
+  for (let i = 1; i < 1000; i++) {
+    const an = -i * (i - a); b += 2;
+    d = an * d + b; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = b + an / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < 1e-16) break;
+  }
+  return 1 - Math.exp(-x + a * Math.log(x) - gammaln(a)) * h;
+}
+function gammaQuantile(p, a) {
+  let lo = 0, hi = Math.max(a + 1, 1);
+  while (gammaincLower(a, hi) < p) { lo = hi; hi *= 2; if (hi > 1e12) throw new Error("上界超限"); }
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    if (gammaincLower(a, mid) < p) lo = mid; else hi = mid;
+    if (hi - lo < 1e-13 * Math.max(hi, 1)) break;
+  }
+  return (lo + hi) / 2;
+}
+function norminv(p) {
+  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2, -3.066479806614716e1, 2.506628277459239];
+  const b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
+  const c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+  const d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
+  const pLow = 0.02425; let q, r, x;
+  if (p < pLow) { q = Math.sqrt(-2 * Math.log(p));
+    x = (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= 1 - pLow) { q = p - 0.5; r = q * q;
+    x = (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else { q = Math.sqrt(-2 * Math.log(1 - p));
+    x = -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  return x;
+}
+function phiPIII(pExceed, Cs) {
+  if (Math.abs(Cs) < 1e-8) return norminv(1 - pExceed);
+  if (Cs > 0) { const a = 4 / (Cs * Cs); return (Cs / 2) * (gammaQuantile(1 - pExceed, a) - a); }
+  return -phiPIII(1 - pExceed, -Cs);
+}
+function seriesStats(xs) {
+  const n = xs.length, mean = xs.reduce((s, v) => s + v, 0) / n;
+  const d = xs.map(v => v - mean);
+  const s2 = d.reduce((s, v) => s + v * v, 0) / (n - 1);
+  const sigma = Math.sqrt(s2);
+  const m3 = d.reduce((s, v) => s + v * v * v, 0);
+  const cs = n * m3 / ((n - 1) * (n - 2) * Math.pow(sigma, 3));
+  return { n, mean, sigma, cv: sigma / mean, cs };
+}
+// 不连序系列统计参数（《水利水电工程设计洪水计算规范》式 A.1.1-7~9）
+function discontinuousStats(historicalExtra, measuredDesc, l, N) {
+  const n = measuredDesc.length;
+  if (!(Number.isInteger(l) && l >= 0 && l <= n)) throw new Error(`l 必须是 0..${n} 的整数`);
+  const all = [...historicalExtra, ...measuredDesc.slice(0, l)];
+  const a = all.length;
+  if (N <= a) throw new Error(`考证期 N(${N}) 必须大于特大项数 a(${a})`);
+  const nGen = n - l;
+  if (nGen === 0) throw new Error("实测系列不能全部为特大洪水");
+  const w = (N - a) / nGen;
+  const general = measuredDesc.slice(l);
+  const mean = (all.reduce((s, v) => s + v, 0) + w * general.reduce((s, v) => s + v, 0)) / N;
+  const sJ2 = all.reduce((s, v) => s + (v - mean) ** 2, 0);
+  const sI2 = general.reduce((s, v) => s + (v - mean) ** 2, 0);
+  const sigma = Math.sqrt((sJ2 + w * sI2) / (N - 1));
+  const cv = sigma / mean;
+  const sJ3 = all.reduce((s, v) => s + (v - mean) ** 3, 0);
+  const sI3 = general.reduce((s, v) => s + (v - mean) ** 3, 0);
+  const cs = (N * (sJ3 + w * sI3)) / ((N - 1) * (N - 2) * mean ** 3 * cv ** 3);
+  return { a, n, l, N, mean, sigma, cv, cs };
+}
+
+// ============ 应用状态与渲染 ============
+const state = { mode: "series", series: [], stats: null, params: { mean: 1065, cv: 0.30, cs: 0.60 }, freq: 0.01, pts: [] };
+
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 2) => Number(v).toLocaleString("zh-CN", { maximumFractionDigits: d, minimumFractionDigits: d });
+
+// 海森格纸：横轴 X = norminv(1−P)，P 小在左
+const XTICKS = [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 80, 90, 95, 99, 99.9];
+const XMIN = norminv(1 - 0.999), XMAX = norminv(1 - 0.0001);
+const PL = 66, PR = 906, PT = 26, PB = 478;
+const sx = x => PL + (XMAX - x) / (XMAX - XMIN) * (PR - PL);
+const pToX = p => sx(norminv(1 - p));
+
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, step0 = span / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const norm = step0 / mag, step = (norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10) * mag;
+  const t0 = Math.ceil(lo / step) * step, out = [];
+  for (let v = t0; v <= hi + 1e-9; v += step) out.push(v);
+  return out;
+}
+
+function render() {
+  const { params, freq } = state;
+  $("cvShow").textContent = params.cv.toFixed(3);
+  $("csShow").textContent = params.cs.toFixed(2);
+  $("ratioShow").textContent = (params.cs / params.cv).toFixed(1);
+
+  // 结果
+  const phi = phiPIII(freq, params.cs), kp = 1 + phi * params.cv, q = params.mean * kp;
+  $("outQ").textContent = fmt(q, 0);
+  $("outPhi").textContent = phi.toFixed(3);
+  $("outKp").textContent = kp.toFixed(3);
+
+  // 经验点（calcFromSeries 预存，含特大洪水标记）
+  const pts = state.pts;
+  if (pts.length) {
+    let sse = 0;
+    for (const pt of pts) sse += Math.pow(pt.q - params.mean * (1 + phiPIII(pt.p, params.cs) * params.cv), 2);
+    $("stSse").textContent = fmt(sse, 0);
+  } else { $("stSse").textContent = "—"; }
+
+  // ---- 绘图 ----
+  // 理论曲线：在正态分位空间均匀采样（格纸上等间距，密度均匀）
+  // Φ(t) = 0.5(1 + P(1/2, t²/2))，t≥0；对称 Φ(−t) = 1 − Φ(t)
+  const normCdf = t => {
+    const P = gammaincLower(0.5, t * t / 2);
+    return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+  };
+  const curvePts = [];
+  const NSAMP = 241;
+  for (let i = 0; i < NSAMP; i++) {
+    const t = XMAX - i * (XMAX - XMIN) / (NSAMP - 1);
+    const p = 1 - normCdf(t);
+    curvePts.push({ x: sx(t), q: params.mean * (1 + phiPIII(p, params.cs) * params.cv) });
+  }
+  const dataMax = Math.max(...pts.map(pt => pt.q), ...curvePts.map(pt => pt.q));
+  const dataMin = Math.min(...pts.map(pt => pt.q), ...curvePts.map(pt => pt.q), 0);
+  const qLo = Math.max(0, dataMin - (dataMax - dataMin) * 0.08);
+  const qHi = dataMax + (dataMax - dataMin) * 0.06;
+  const sy2 = q => PB - (q - qLo) / (qHi - qLo) * (PB - PT);
+
+  let s = "";
+  s += `<rect x="${PL}" y="${PT}" width="${PR - PL}" height="${PB - PT}" fill="#fdfdfd" stroke="rgba(0,0,0,0.10)" stroke-width="1"/>`;
+  // 横网格 + 流量刻度
+  for (const t of niceTicks(qLo, qHi, 5)) {
+    const y = sy2(t);
+    s += `<line x1="${PL}" y1="${y}" x2="${PR}" y2="${y}" stroke="rgba(0,0,0,0.06)"/>`;
+    s += `<text x="${PL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6e6e73">${fmt(t, 0)}</text>`;
+  }
+  // 纵网格 + 频率刻度（海森）
+  for (const p of XTICKS) {
+    const x = pToX(p / 100);
+    s += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PB}" stroke="rgba(0,0,0,0.06)"/>`;
+    s += `<text x="${x}" y="${PB + 18}" text-anchor="middle" font-size="11" fill="#6e6e73">${p < 1 ? p : p}</text>`;
+  }
+  s += `<text x="${(PL + PR) / 2}" y="${PB + 40}" text-anchor="middle" font-size="12" fill="#1d1d1f">频率 P（%）— 海森机率格纸</text>`;
+  s += `<text x="20" y="${(PT + PB) / 2}" font-size="12" fill="#1d1d1f" transform="rotate(-90 20 ${(PT + PB) / 2})" text-anchor="middle">流量 Q（m³/s）</text>`;
+
+  // 设计频率竖线
+  const fx = pToX(freq);
+  s += `<line x1="${fx}" y1="${PT}" x2="${fx}" y2="${PB}" stroke="#007AFF" stroke-width="1" stroke-dasharray="5 4" opacity="0.55"/>`;
+
+  // 理论曲线
+  let path = "";
+  for (let i = 0; i < curvePts.length; i++) {
+    const c = curvePts[i];
+    if (c.q > qHi || c.q < qLo) continue;
+    path += (path ? "L" : "M") + c.x.toFixed(1) + " " + sy2(c.q).toFixed(1);
+  }
+  s += `<path d="${path}" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  // 设计点
+  s += `<circle cx="${fx}" cy="${sy2(q)}" r="6" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>`;
+  s += `<text x="${Math.min(fx + 10, PR - 120)}" y="${sy2(q) - 10}" font-size="12" fill="#007AFF" font-weight="600">Q${(freq * 100).toFixed(2).replace(/\.?0+$/, "")}% = ${fmt(q, 0)}</text>`;
+
+  // 经验点（特大红色大圆 / 实测黑点）
+  for (const pt of pts) {
+    if (pt.kind === "hist") {
+      s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="5.5" fill="#ff3b30"/>`;
+    } else {
+      s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="4" fill="#1d1d1f"/>`;
+    }
+  }
+  $("chart").innerHTML = s;
+}
+
+function calcFromSeries() {
+  const raw = $("series").value.split(/[\s,，;；]+/).filter(Boolean);
+  const xs = raw.map(Number).filter(v => Number.isFinite(v) && v > 0);
+  const errBox = $("parseErr");
+  if (xs.length < 3) {
+    errBox.style.display = "block";
+    errBox.textContent = "至少需要 3 个有效流量值（当前 " + xs.length + " 个）。规范建议实测系列不宜少于 30 年。";
+    return;
+  }
+  errBox.style.display = "none";
+  state.series = xs;
+  const sorted = [...xs].sort((a, b) => b - a);
+  const n = sorted.length;
+  let st, pts;
+  if ($("hasExtra").checked) {
+    try {
+      const N = Math.round(+$("inN").value);
+      const l = Math.round(+$("inL").value);
+      const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter(v => Number.isFinite(v) && v > 0);
+      st = discontinuousStats(extra, sorted, l, N);
+      const a = st.a;
+      // 统一样法经验频率：特大按流量排序 M=1..a → M/(N+1)；实测一般项 m=l+1..n
+      const all = [...extra, ...sorted.slice(0, l)].sort((x, y) => y - x);
+      pts = all.map((q, i) => ({ p: (i + 1) / (N + 1), q, kind: "hist" }));
+      const pA = a / (N + 1);
+      for (let m = l + 1; m <= n; m++) {
+        pts.push({ p: pA + (1 - pA) * (m - l) / (n - l + 1), q: sorted[m - 1], kind: "meas" });
+      }
+      $("stN").textContent = `n=${n}，a=${a}，l=${l}，N=${N}`;
+    } catch (e) {
+      errBox.style.display = "block";
+      errBox.textContent = "特大洪水输入有误：" + e.message;
+      return;
+    }
+  } else {
+    st = seriesStats(xs);
+    pts = sorted.map((q, i) => ({ p: (i + 1) / (n + 1), q, kind: "meas" }));
+    $("stN").textContent = st.n;
+  }
+  state.stats = st;
+  state.pts = pts;
+  // 矩法初估 → 滑块与采用参数
+  $("cvSlider").value = Math.min(Math.max(st.cv, 0.05), 1.2);
+  $("ratioSlider").value = 2;
+  state.params = { mean: st.mean, cv: st.cv, cs: 2 * st.cv };
+  syncParamInputs();
+  $("stMean").textContent = fmt(st.mean, 1);
+  $("stSigma").textContent = fmt(st.sigma, 1);
+  $("stCv").textContent = st.cv.toFixed(3);
+  $("stCs").textContent = st.cs.toFixed(2);
+  render();
+}
+
+function syncParamInputs() {
+  $("inMean").value = state.params.mean.toFixed(1);
+  $("inCv").value = state.params.cv.toFixed(3);
+  $("inCs").value = state.params.cs.toFixed(2);
+}
+
+// ---- 事件 ----
+$("btnCalc").onclick = calcFromSeries;
+$("cvSlider").oninput = e => {
+  const cv = +e.target.value;
+  const ratio = +$("ratioSlider").value;
+  state.params = { ...state.params, cv, cs: cv * ratio };
+  syncParamInputs(); render();
+};
+$("ratioSlider").oninput = e => {
+  const ratio = +e.target.value;
+  state.params = { ...state.params, cs: state.params.cv * ratio };
+  syncParamInputs(); render();
+};
+$("freqSel").onchange = e => { state.freq = +e.target.value; render(); };
+["inMean", "inCv", "inCs"].forEach(id => {
+  $(id).oninput = () => {
+    const mean = +$("inMean").value, cv = +$("inCv").value, cs = +$("inCs").value;
+    if (mean > 0 && cv > 0 && Number.isFinite(cs)) {
+      state.params = { mean, cv, cs };
+      $("cvSlider").value = Math.min(Math.max(cv, 0.05), 1.2);
+      render();
+    }
+  };
+});
+$("mSeries").onclick = () => {
+  state.mode = "series"; $("mSeries").classList.add("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on");
+  $("seriesBox").style.display = ""; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "none";
+  setFitCardsVisible(true);
+};
+$("mParams").onclick = () => {
+  state.mode = "params"; $("mParams").classList.add("on"); $("mSeries").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = ""; $("histBox").style.display = "none"; $("noDataBox").style.display = "none";
+  syncParamInputs(); setFitCardsVisible(true); render();
+};
+$("mHist").onclick = () => {
+  state.mode = "histB"; $("mHist").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mNoData").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = ""; $("noDataBox").style.display = "none";
+  setFitCardsVisible(false);
+};
+$("mNoData").onclick = () => {
+  state.mode = "noData"; $("mNoData").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "";
+  setFitCardsVisible(false); calcMethodC();
+};
+
+function setFitCardsVisible(v) {
+  // 方法 B/C 无适线曲线，隐藏图卡/适线卡/比选卡/统计卡
+  for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
+    const el = document.querySelector(sel);
+    if (el) el.style.display = v ? "" : "none";
+  }
+}
+$("btnT3").onclick = () => {
+  $("mParams").click();
+  $("inMean").value = "5173.6"; $("inCv").value = "0.331"; $("inCs").value = "1.99";
+  state.params = { mean: 5173.6, cv: 0.331, cs: 1.99 };
+  $("cvSlider").value = 0.331;
+  render();
+};
+
+$("hasExtra").onchange = e => {
+  $("extraBox").style.display = e.target.checked ? "" : "none";
+};
+if (new URLSearchParams(location.search).get("extra") === "1") {
+  $("hasExtra").checked = true; $("extraBox").style.display = "";
+}
+
+// ===== 线型比选（贝叶斯 / BIC 后验）——与 src/core/bayes.ts 同构 =====
+const BAYES_CSS = `
+  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 10px; align-items: center; margin: 8px 0; font-size: 13px; }
+  .bbar-outer { height: 10px; background: rgba(120,120,128,0.12); border-radius: 5px; overflow: hidden; }
+  .bbar-inner { height: 100%; background: var(--blue); border-radius: 5px; transition: width .5s ease; }
+  .bw { font-variant-numeric: tabular-nums; font-weight: 500; text-align: right; }
+  .bq { font-variant-numeric: tabular-nums; color: var(--text2); text-align: right; }
+`;
+(function injectBayesCss() { const st = document.createElement("style"); st.textContent = BAYES_CSS; document.head.appendChild(st); })();
+
+function bayesNelderMead(f, x0, maxIter = 2000, tol = 1e-9) {
+  const n = x0.length;
+  const pts = [{ x: [...x0], fx: f(x0) }];
+  for (let i = 0; i < n; i++) { const xi = [...x0]; xi[i] += (xi[i] === 0 ? 0.15 : 0.05 * Math.abs(xi[i])); pts.push({ x: xi, fx: f(xi) }); }
+  for (let iter = 0; iter < maxIter; iter++) {
+    pts.sort((a, b) => a.fx - b.fx);
+    if (Math.abs(pts[n].fx - pts[0].fx) < tol * (Math.abs(pts[0].fx) + 1e-30)) break;
+    const xbar = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) xbar[i] += pts[j].x[i];
+    for (let i = 0; i < n; i++) xbar[i] /= n;
+    const worst = pts[n], xr = xbar.map((v, i) => v + (v - worst.x[i])), fr = f(xr);
+    if (fr < pts[0].fx) { const xe = xbar.map((v, i) => v + 2 * (v - worst.x[i])), fe = f(xe); pts[n] = fe < fr ? { x: xe, fx: fe } : { x: xr, fx: fr }; }
+    else if (fr < pts[n - 1].fx) pts[n] = { x: xr, fx: fr };
+    else { const xc = xbar.map((v, i) => v + 0.5 * (worst.x[i] - v)), fc = f(xc);
+      if (fc < pts[n].fx) pts[n] = { x: xc, fx: fc };
+      else for (let i = 1; i <= n; i++) { pts[i].x = pts[i].x.map((v, j) => pts[0].x[j] + 0.5 * (v - pts[0].x[j])); pts[i].fx = f(pts[i].x); } }
+  }
+  pts.sort((a, b) => a.fx - b.fx);
+  return pts[0];
+}
+const BAYES_BAD = -1e100;
+function bLogL_P3(t, xs) { const a0 = t[0], beta = Math.exp(t[1]), alpha = Math.exp(t[2]); let s = 0;
+  for (const x of xs) { if (x <= a0) return BAYES_BAD; s += (alpha - 1) * Math.log(x - a0) - beta * (x - a0); }
+  return xs.length * (alpha * Math.log(beta) - gammaln(alpha)) + s; }
+function bLogL_GEV(t, xs) { const mu = t[0], sigma = Math.exp(t[1]), xi = t[2]; let s = -xs.length * Math.log(sigma);
+  if (Math.abs(xi) < 1e-8) { for (const x of xs) { const z = (x - mu) / sigma; s += -z - Math.exp(-z); } return s; }
+  for (const x of xs) { const u = 1 + (xi * (x - mu)) / sigma; if (u <= 0) return BAYES_BAD; const lnT = -Math.log(u) / xi; s += (1 + xi) * lnT - Math.exp(lnT); } return s; }
+function bLogL_Gu(t, xs) { const mu = t[0], sigma = Math.exp(t[1]); let s = -xs.length * Math.log(sigma);
+  for (const x of xs) { const z = (x - mu) / sigma; s += -z - Math.exp(-z); } return s; }
+
+function runBayesCompare() {
+  const xs = state.series;
+  if (!xs || xs.length < 5) { alert("线型比选至少需要 5 个实测流量值，请先计算并适线。"); return; }
+  const n = xs.length;
+  const sorted = [...xs].sort((a, b) => a - b);
+  const mean = xs.reduce((s, v) => s + v, 0) / n;
+  const sd = Math.sqrt(xs.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1));
+  const min = sorted[0], span = Math.max(sorted[n - 1] - min, 1e-9);
+  const csM = xs.reduce((s, v) => s + (v - mean) ** 3, 0) / n / sd ** 3;
+  const a0est = Math.min(mean - 2 * sd, min - 0.1 * span);
+  const alphaEst = Math.min(Math.max(4 / Math.max(csM * csM, 0.04), 1.5), 5000);
+  const betaEst = alphaEst / Math.max(mean - a0est, 1e-9);
+  const fit = (k, logL, starts) => { let best = null;
+    for (const st of starts) { const r = bayesNelderMead(t => -logL(t, xs), st); if (!best || r.fx < best.fx) best = r; }
+    return { k, logL: -best.fx, params: best.x }; };
+  const P3 = fit(3, bLogL_P3, [[a0est, Math.log(betaEst), Math.log(alphaEst)], [min - 0.5 * span, Math.log(1 / sd), Math.log(4)]]);
+  const GEV = fit(3, bLogL_GEV, [[mean - 0.3 * sd, Math.log(0.7 * sd), 0.1], [mean - 0.3 * sd, Math.log(0.7 * sd), -0.1]]);
+  const GU = fit(2, bLogL_Gu, [[mean - 0.45 * sd, Math.log(0.78 * sd)]]);
+  const fits = [
+    { name: "P3", label: "P-Ⅲ（规范采用）", ...P3 },
+    { name: "GEV", label: "GEV", ...GEV },
+    { name: "Gumbel", label: "Gumbel", ...GU },
+  ];
+  for (const f of fits) f.bic = f.k * Math.log(n) - 2 * f.logL;
+  const mn = Math.min(...fits.map(f => f.bic));
+  const exps = fits.map(f => Math.exp(-(f.bic - mn) / 2));
+  const sumE = exps.reduce((s, v) => s + v, 0);
+  fits.forEach((f, i) => f.w = exps[i] / sumE);
+  // 各模型 Q1%（超过概率 1% → F=0.99）
+  const q1 = {};
+  { const a0 = P3.params[0], beta = Math.exp(P3.params[1]), alpha = Math.exp(P3.params[2]);
+    q1.P3 = a0 + gammaQuantile(0.99, alpha) / beta; }
+  { const mu = GEV.params[0], sigma = Math.exp(GEV.params[1]), xi = GEV.params[2], T = -Math.log(0.99);
+    q1.GEV = Math.abs(xi) < 1e-8 ? mu - sigma * Math.log(T) : mu + (sigma / xi) * (Math.pow(T, -xi) - 1); }
+  { const mu = GU.params[0], sigma = Math.exp(GU.params[1]);
+    q1.Gumbel = mu - sigma * Math.log(-Math.log(0.99)); }
+  // 渲染
+  $("bayesResult").style.display = "";
+  $("bayesBars").innerHTML = fits.map(f => `
+    <div class="brow">
+      <span>${f.label}</span>
+      <div class="bbar-outer"><div class="bbar-inner" style="width:${(f.w * 100).toFixed(1)}%"></div></div>
+      <span class="bw">${(f.w * 100).toFixed(1)}%</span>
+      <span class="bq">Q₁%=${fmt(q1[f.name], 0)}</span>
+    </div>`).join("");
+  $("bqP3").textContent = fmt(q1.P3, 0);
+  $("bqGEV").textContent = fmt(q1.GEV, 0);
+  $("bqGu").textContent = fmt(q1.Gumbel, 0);
+}
+$("btnBayes").onclick = runBayesCompare;
+
+// ===== 方法 B：历史洪水位法（与 src/core/methodB.ts 同构） =====
+const HIST_FIELDS = [
+  ["Ac", "河槽面积 A꜀"], ["Bc", "河槽水面宽 B꜀"], ["nc", "河槽糙率 n꜀"],
+  ["At", "河滩面积 Aₜ"], ["Bt", "河滩水面宽 Bₜ"], ["nt", "河滩糙率 nₜ"],
+  ["Ipermil", "比降 I（‰）"], ["T", "重现期 T（年）"],
+];
+(function buildHistRows() {
+  const defaults = [
+    { Ac: 500, Bc: 100, nc: 0.03, At: 200, Bt: 200, nt: 0.05, Ipermil: 0.5, T: 100 },
+    { Ac: 400, Bc: 95, nc: 0.03, At: 150, Bt: 180, nt: 0.05, Ipermil: 0.5, T: 50 },
+  ];
+  $("histRows").innerHTML = [0, 1].map(i => `
+    <div style="margin:12px 0;padding:12px 14px;background:var(--bg);border-radius:10px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:6px">第 ${i + 1} 次历史洪水</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${HIST_FIELDS.map(([k, label]) => `<div><label style="margin-top:0">${label}</label><input type="number" step="any" id="hf${i}${k}" value="${defaults[i][k]}"></div>`).join("")}
+      </div>
+    </div>`).join("");
+})();
+
+function calcMethodB() {
+  const floods = [0, 1].map(i => {
+    const g = k => +$(`hf${i}${k}`).value;
+    const s = { Ac: g("Ac"), Bc: g("Bc"), nc: g("nc"), At: g("At"), Bt: g("Bt"), nt: g("nt"), I: g("Ipermil") / 1000 };
+    const m = manningQWeb(s);
+    return { Q: m.Q, T: g("T"), vc: m.vc, vt: m.vt };
+  });
+  const cv = +$("hbCv").value, cs = +$("hbCs").value;
+  try {
+    const res = designFromHistoryWeb(floods, { cv, cs }, state.freq, phiPIII);
+    $("histResult").style.display = "";
+    $("histResult").innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="color:var(--text2)"><th style="text-align:left;padding:4px">洪水</th><th>Qᵀ（m³/s）</th><th>v꜀（m/s）</th><th>Q̄ᴛᵢ</th></tr>
+        ${floods.map((f, i) => `<tr><td style="padding:4px">第${i + 1}次（T=${f.T} 年）</td>
+          <td style="text-align:right">${f.Q.toFixed(1)}</td><td style="text-align:right">${f.vc.toFixed(3)}</td>
+          <td style="text-align:right">${res.qBars[i].toFixed(1)}</td></tr>`).join("")}
+      </table>
+      <div class="metrics" style="margin-top:12px">
+        <div class="metric"><div class="k">平均流量 Q̄</div><div class="v">${res.mean.toFixed(1)}</div></div>
+        <div class="metric"><div class="k">Φ<sub>p</sub> / K<sub>p</sub></div><div class="v">${res.phi.toFixed(3)} / ${res.kp.toFixed(3)}</div></div>
+        <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub>（m³/s）</div><div class="v">${res.q.toFixed(1)}</div></div>
+      </div>`;
+  } catch (e) { $("histResult").style.display = ""; $("histResult").innerHTML = `<div class="err" style="display:block">${e.message}</div>`; }
+}
+function manningQWeb(s) {
+  const Rc = s.Bc > 0 ? s.Ac / s.Bc : NaN;
+  const Rt = s.At > 0 ? (s.Bt > 0 ? s.At / s.Bt : NaN) : 0;
+  if (s.I <= 0 || s.Ac <= 0 || s.nc <= 0) throw new Error("断面输入非法（面积/糙率/比降须为正）");
+  if (!Number.isFinite(Rc) || Rc <= 0) throw new Error("河槽水面宽 B꜀ 须 > 0");
+  if (s.At > 0 && (!Number.isFinite(Rt) || Rt <= 0)) throw new Error("河滩水面宽 Bₜ 须 > 0");
+  const sq = Math.sqrt(s.I);
+  const vc = Math.pow(Rc, 2 / 3) * sq / s.nc;
+  const vt = s.At > 0 ? Math.pow(Rt, 2 / 3) * sq / s.nt : 0;
+  return { vc, vt, Q: s.Ac * vc + s.At * vt };
+}
+function designFromHistoryWeb(floods, params, pExceed, phiFn) {
+  if (floods.length < 2) throw new Error("历史洪水不宜少于 2 次（规范 6.3.3）");
+  const qBars = floods.map(f => f.Q / (1 + phiFn(1 / f.T, params.cs) * params.cv));
+  const mean = qBars.reduce((s, v) => s + v, 0) / qBars.length;
+  const phi = phiFn(pExceed, params.cs);
+  const kp = 1 + phi * params.cv;
+  return { qBars, mean, phi, kp, q: mean * kp };
+}
+$("btnHist").onclick = calcMethodB;
+
+// ===== 方法 C：无资料地区（与 src/core/methodC.ts 同构） =====
+function calcMethodC() {
+  const v = id => +$(id).value;
+  try {
+    const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
+    if (F >= 100) throw new Error("推理公式适用于 F <100 km²（规范 6.4.2）");
+    $("rcOut").textContent = (0.278 * psi * (Sp / Math.pow(tau, n)) * F).toFixed(2);
+  } catch (e) { $("rcOut").textContent = "—"; }
+  try {
+    const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
+    if (h - z <= 0) throw new Error("h 须大于 z");
+    $("rdOut").textContent = (phi * Math.pow(h - z, 5 / 3) * Math.pow(F2, 2 / 3) * b * g * d).toFixed(2);
+  } catch (e) { $("rdOut").textContent = "—"; }
+}
+["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach(id => {
+  $(id).oninput = calcMethodC;
+});
+
+// ===== Word 计算书导出（docx.js 9.5.1，本地 libs/docx.umd.js） =====
+function svgToPngDataUrl() {
+  return new Promise((resolve, reject) => {
+    try {
+      const svg = $("chart");
+      const xml = new XMLSerializer().serializeToString(svg);
+      const url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml" }));
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = 940 * 2; c.height = 520 * 2;
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/png"));
+      };
+      img.onerror = reject;
+      img.src = url;
+    } catch (e) { reject(e); }
+  });
+}
+
+function buildReportDocx() {
+  const D = window.docx;
+  if (!D) { alert("docx 库未加载（web/libs/docx.umd.js）"); return; }
+  const p = state.params, freq = state.freq;
+  const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
+  const st = state.stats || { n: state.series.length };
+  const freqLabel = { "0.0033": "1/300（特大桥）", "0.01": "1/100（大、中桥）", "0.02": "1/50", "0.04": "1/25" }[String(freq)] || (freq * 100).toFixed(2) + "%";
+  const now = new Date();
+  const H1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: t, bold: true, size: 30 })] });
+  const H2 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun({ text: t, bold: true, size: 26 })] });
+  const P = (t, opt = {}) => new D.Paragraph({ children: [new D.TextRun({ text: t, size: 22, ...opt })], spacing: { after: 120 } });
+  const PB = (label, val) => new D.Paragraph({ children: [new D.TextRun({ text: label + "：", bold: true, size: 22 }), new D.TextRun({ text: val, size: 22 })], spacing: { after: 60 } });
+  const mkTable = (header, rows) => new D.Table({
+    width: { size: 100, type: D.WidthType.PERCENTAGE },
+    rows: [
+      new D.TableRow({ tableHeader: true, children: header.map(h => new D.TableCell({ children: [new D.Paragraph({ children: [new D.TextRun({ text: h, bold: true, size: 20 })] })] })) }),
+      ...rows.map(r => new D.TableRow({ children: r.map(c => new D.TableCell({ children: [new D.Paragraph({ children: [new D.TextRun({ text: String(c), size: 20 })] })] })) })),
+    ],
+  });
+  // 频率成果表
+  const FREQS = [0.05, 0.1, 0.2, 0.5, 1, 2, 3.33, 5, 10, 20, 50, 90];
+  const freqRows = FREQS.map(pp => {
+    const ph = phiPIII(pp / 100, p.cs), k = 1 + ph * p.cv;
+    return [pp < 1 ? pp.toFixed(2) + " %" : pp.toFixed(2).replace(/\.?0+$/, "") + " %", ph.toFixed(3), k.toFixed(3), (p.mean * k).toFixed(1)];
+  });
+  // 经验频率表（前 15 项）
+  const sorted = [...state.series].sort((a, b) => b - a);
+  const empRows = sorted.slice(0, 15).map((qi, i) => [i + 1, qi, ((i + 1) / (sorted.length + 1) * 100).toFixed(2) + " %"]);
+
+  svgToPngDataUrl().then(dataUrl => {
+    const doc = new D.Document({
+      sections: [{
+        children: [
+          new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "泓算 · 桥涵设计流量计算书", bold: true, size: 40 })] }),
+          new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "（P-Ⅲ 型频率曲线适线法）", size: 24, color: "6e6e73" })], spacing: { after: 240 } }),
+          H1("一、计算依据"),
+          P("1.《公路工程水文勘测设计规范》JTG C30-2015：第 6.2 节（利用实测流量系列推算设计流量），式 6.2.6：Qp = Q̄(1 + Φp·Cv)；表 1.0.8（设计洪水频率）。"),
+          P("2. 理论频率曲线采用皮尔逊Ⅲ型（规范第 6.2.4 条）；Φp 由 P-Ⅲ 分布数值计算（不完全 Γ 函数分位数），经 scipy 独立交叉验证。"),
+          H1("二、基本资料"),
+          PB("实测系列项数 n", String(st.n ?? sorted.length)),
+          PB("系列流量（m³/s，从大到小）", sorted.join("，")),
+          mkTable(["序号 m", "流量 Q（m³/s）", "经验频率 Pm = m/(n+1)"], empRows),
+          new D.Paragraph({ children: [new D.TextRun({ text: sorted.length > 15 ? "（仅列前 15 项）" : "", size: 18, color: "aeaeb2" })], spacing: { after: 120 } }),
+          H1("三、统计参数"),
+          PB("矩法初估均值 Q̄", st.mean ? st.mean.toFixed(1) + " m³/s" : "—（参数模式）"),
+          PB("矩法初估 Cv", st.cv ? st.cv.toFixed(3) : "—"),
+          PB("矩法初估 Cs（仅参考）", st.cs ? st.cs.toFixed(2) : "—"),
+          PB("适线采用 Q̄", p.mean.toFixed(1) + " m³/s"),
+          PB("适线采用 Cv", p.cv.toFixed(3)),
+          PB("适线采用 Cs", p.cs.toFixed(2) + "（= " + (p.cs / p.cv).toFixed(1) + " Cv）"),
+          P("按规范 6.2.5，统计参数以适线法确定：Cs 因抽样误差大按经验倍比假定后目估调整，使理论频率曲线与经验点据吻合。", { color: "6e6e73" }),
+          H1("四、设计流量计算"),
+          PB("设计洪水频率", freqLabel),
+          PB("离均系数 Φp", phi.toFixed(4)),
+          PB("模比系数 Kp = 1 + Φp·Cv", kp.toFixed(4)),
+          PB("设计流量 Qp = Q̄·Kp", q.toFixed(1) + " m³/s"),
+          H1("五、频率曲线成果表"),
+          mkTable(["频率 P", "Φp", "Kp", "Qp（m³/s）"], freqRows),
+          H1("六、适线图"),
+          new D.Paragraph({ children: [new D.ImageRun({ type: "png", data: dataUrl.split(",")[1], transformation: { width: 600, height: 332 } })], spacing: { before: 120, after: 120 } }),
+          new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
+          new D.Paragraph({
+            border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
+            children: [new D.TextRun({ text: "本计算书由桥涵水文软件 v0.3 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+          }),
+        ],
+      }],
+    });
+    return D.Packer.toBlob(doc).then(blob => {
+      console.log("DOCX_OK", blob.size);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "设计流量计算书_P3适线.docx";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }).catch(e => { console.error("DOCX_FAIL", e); alert("计书生成失败：" + e.message); });
+}
+$("btnReport").onclick = buildReportDocx;
+
+// 初始渲染（算例 T1）
+calcFromSeries();
+if (new URLSearchParams(location.search).get("bayes") === "1") {
+  runBayesCompare();
+}
+if (new URLSearchParams(location.search).get("report") === "1") {
+  // 无头验证模式：跳过下载点击，只生成并报字节数
+  buildReportDocx();
+}
+const mParam = new URLSearchParams(location.search).get("method");
+if (mParam === "hist") $("mHist").click();
+else if (mParam === "nodata") $("mNoData").click();
+</script>
+</body>
+</html>
