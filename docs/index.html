@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.6</title>
+<title>泓算 · 桥涵设计流量推求 v0.7</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -101,13 +101,17 @@
   footer .brand { font-size: 13px; color: var(--text2); font-weight: 500; letter-spacing: 2px; }
   footer .sep { width: 36px; height: 1px; background: rgba(0,0,0,0.12); margin: 10px auto; }
   .err { color: var(--red); font-size: 12.5px; margin-top: 6px; display: none; }
+  /* v0.7 输入守卫：非法/越界输入红框 */
+  input.invalid, textarea.invalid { border-color: var(--red) !important; background: #fff5f5 !important; }
+  #saveHint { transition: opacity .5s; opacity: .30; font-size: 11px; color: var(--text3); }
+  #saveHint.on { opacity: .85; color: #34c759; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.6</p>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.7</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -337,7 +341,7 @@
     <div class="metrics">
       <div class="metric"><div class="k">系列项数 n</div><div class="v" id="stN">—</div></div>
       <div class="metric"><div class="k">均值 Q̄</div><div class="v" id="stMean">—</div></div>
-      <div class="metric"><div class="k">均方差 σ</div><div class="v" id="stSigma">—</div></div>
+      <div class="metric"><div class="k">均方差 σ（m³/s）</div><div class="v" id="stSigma">—</div></div>
       <div class="metric"><div class="k">C<sub>v</sub>（矩法）</div><div class="v" id="stCv">—</div></div>
       <div class="metric"><div class="k">C<sub>s</sub>（矩法，仅参考）</div><div class="v" id="stCs">—</div></div>
       <div class="metric"><div class="k">适线误差 SSE</div><div class="v" id="stSse">—</div></div>
@@ -356,7 +360,9 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.6
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.7<br>
+  <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
+  <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
 
 <script src="libs/docx.umd.js"></script>
@@ -803,8 +809,8 @@ $("btnBayes").onclick = runBayesCompare;
 
 // ===== 方法 B：历史洪水位法（与 src/core/methodB.ts 同构） =====
 const HIST_FIELDS = [
-  ["Ac", "河槽面积 A꜀"], ["Bc", "河槽水面宽 B꜀"], ["nc", "河槽糙率 n꜀"],
-  ["At", "河滩面积 Aₜ"], ["Bt", "河滩水面宽 Bₜ"], ["nt", "河滩糙率 nₜ"],
+  ["Ac", "河槽面积 A꜀（m²）"], ["Bc", "河槽水面宽 B꜀（m）"], ["nc", "河槽糙率 n꜀"],
+  ["At", "河滩面积 Aₜ（m²）"], ["Bt", "河滩水面宽 Bₜ（m）"], ["nt", "河滩糙率 nₜ"],
   ["Ipermil", "比降 I（‰）"], ["T", "重现期 T（年）"],
 ];
 (function buildHistRows() {
@@ -881,7 +887,8 @@ function calcMethodC() {
   } catch (e) { $("rcOut").textContent = "—"; }
   try {
     const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
-    if (h - z <= 0) throw new Error("h 须大于 z");
+    $("rdH").classList.remove("invalid"); $("rdZ").classList.remove("invalid");
+    if (h - z <= 0) { $("rdH").classList.add("invalid"); $("rdZ").classList.add("invalid"); throw new Error("h 须大于 z"); }
     $("rdOut").textContent = (phi * Math.pow(h - z, 1.5) * Math.pow(F2, 0.8) * b * g * d).toFixed(2);
   } catch (e) { $("rdOut").textContent = "—"; }
   // 查表辅助：点行填入
@@ -1007,7 +1014,7 @@ function buildReportDocx() {
           new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
           new D.Paragraph({
             border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-            children: [new D.TextRun({ text: "本计算书由桥涵水文软件 v0.3 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+            children: [new D.TextRun({ text: "本计算书由泓算 v0.7 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
           }),
         ],
       }],
@@ -1024,8 +1031,92 @@ function buildReportDocx() {
 }
 $("btnReport").onclick = buildReportDocx;
 
-// 初始渲染（算例 T1）
-calcFromSeries();
+// ===== 参数持久化 + 输入守卫 + 重置默认（v0.7） =====
+const LS_KEY = "hongsuan_v07";
+const HIST_IDS = ["hf0Ac","hf0Bc","hf0nc","hf0At","hf0Bt","hf0nt","hf0Ipermil","hf0T","hf1Ac","hf1Bc","hf1nc","hf1At","hf1Bt","hf1nt","hf1Ipermil","hf1T","hbCv","hbCs"];
+const NODATA_IDS = ["rcSp","rcN","rcPsi","rcTau","rcF","rdPhi","rdH","rdZ","rdF","rdBeta","rdGamma","rdDelta"];
+function collectInputs() {
+  const pick = ids => { const o = {}; ids.forEach(id => { const el = $(id); if (el) o[id] = el.value; }); return o; };
+  return {
+    mode: state.mode,
+    series: $("series").value, hasExtra: $("hasExtra").checked,
+    inN: $("inN").value, inL: $("inL").value, extraSeries: $("extraSeries").value,
+    inMean: $("inMean").value, inCv: $("inCv").value, inCs: $("inCs").value,
+    freq: state.freq,
+    adopted: { ...state.params },
+    hist: pick(HIST_IDS), nodata: pick(NODATA_IDS),
+  };
+}
+let saveTimer = null;
+function markSaved() {
+  const el = $("saveHint"); if (!el) return;
+  el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 900);
+}
+function saveAll() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(collectInputs())); markSaved(); } catch (e) { /* 隐私模式等场景静默 */ }
+}
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveAll, 400); }
+// 事件委托：任何输入控件变化都触发记忆（滑块/键入/查表填入/模式页签全覆盖）
+document.addEventListener("input", e => { if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave(); });
+document.addEventListener("change", e => { if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave(); });
+// 输入守卫：空值/非数值/越界 min~max → 红框提示（不阻断计算，由计算函数给出语义错误）
+function checkNum(el) {
+  const raw = el.value.trim();
+  let bad = raw === "";
+  if (!bad) {
+    const v = parseFloat(raw);
+    bad = !Number.isFinite(v);
+    if (!bad && el.min !== "" && v < +el.min) bad = true;
+    if (!bad && el.max !== "" && v > +el.max) bad = true;
+  }
+  el.classList.toggle("invalid", bad);
+  return !bad;
+}
+document.querySelectorAll("input[type=number]").forEach(el => {
+  el.addEventListener("input", () => checkNum(el));
+  el.addEventListener("blur", () => { if (el.value.trim() === "") { el.classList.add("invalid"); } });
+});
+function restoreAll() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch (e) { d = null; }
+  if (!d || typeof d !== "object") return null;
+  if (typeof d.series === "string") $("series").value = d.series;
+  if (d.hasExtra) { $("hasExtra").checked = true; $("extraBox").style.display = ""; }
+  if (d.inN != null) $("inN").value = d.inN;
+  if (d.inL != null) $("inL").value = d.inL;
+  if (typeof d.extraSeries === "string") $("extraSeries").value = d.extraSeries;
+  if (d.inMean != null) $("inMean").value = d.inMean;
+  if (d.inCv != null) $("inCv").value = d.inCv;
+  if (d.inCs != null) $("inCs").value = d.inCs;
+  if (d.freq != null && Number.isFinite(+d.freq)) { state.freq = +d.freq; $("freqSel").value = String(d.freq); }
+  if (d.adopted && Number.isFinite(d.adopted.mean) && d.adopted.mean > 0 && Number.isFinite(d.adopted.cv) && d.adopted.cv > 0 && Number.isFinite(d.adopted.cs)) {
+    state.adoptedOverride = { mean: d.adopted.mean, cv: d.adopted.cv, cs: d.adopted.cs };
+  }
+  if (d.hist) for (const k in d.hist) { const el = $(k); if (el && d.hist[k] != null) el.value = d.hist[k]; }
+  if (d.nodata) for (const k in d.nodata) { const el = $(k); if (el && d.nodata[k] != null) el.value = d.nodata[k]; }
+  console.log("RESTORE_MODE", d.mode || "series", "ADOPTED", state.adoptedOverride ? "yes" : "no", "FREQ", state.freq);
+  return d.mode || null;
+}
+$("btnReset").onclick = () => {
+  if (confirm("确定清除本机记忆的全部参数并恢复默认示例？")) { localStorage.removeItem(LS_KEY); location.reload(); }
+};
+
+// 初始渲染：恢复上次状态（模式 + 全部输入 + 适线采用参数）
+const urlQ = new URLSearchParams(location.search);
+const restoredMode = restoreAll();
+const urlMethod = urlQ.get("method");
+const startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : (restoredMode || "series");
+if (startMode === "params") { $("mParams").click(); }
+else if (startMode === "histB") { $("mHist").click(); }
+else if (startMode === "noData") { $("mNoData").click(); }
+else { $("mSeries").click(); calcFromSeries(); }
+if (state.adoptedOverride) {
+  state.params = { ...state.adoptedOverride };
+  delete state.adoptedOverride;
+  $("cvSlider").value = Math.min(Math.max(state.params.cv, 0.05), 1.2);
+  $("ratioSlider").value = Math.min(Math.max(state.params.cs / state.params.cv, 1), 8);
+  syncParamInputs(); render();
+}
 if (new URLSearchParams(location.search).get("bayes") === "1") {
   runBayesCompare();
 }
@@ -1033,9 +1124,10 @@ if (new URLSearchParams(location.search).get("report") === "1") {
   // 无头验证模式：跳过下载点击，只生成并报字节数
   buildReportDocx();
 }
-const mParam = new URLSearchParams(location.search).get("method");
-if (mParam === "hist") $("mHist").click();
-else if (mParam === "nodata") $("mNoData").click();
+if (new URLSearchParams(location.search).get("autosave") === "1") {
+  // 无头验证钩子：立即写一次持久化，供二次访问验证恢复
+  saveAll();
+}
 </script>
 </body>
 </html>
