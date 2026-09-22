@@ -519,7 +519,8 @@
     state.series = xs;
     const sorted = [...xs].sort((a, b) => b - a);
     const n = sorted.length;
-    let st, pts;
+    let st;
+    let pts;
     if ($("hasExtra").checked) {
       try {
         const N = Math.round(+$("inN").value);
@@ -536,7 +537,7 @@
         $("stN").textContent = `n=${n}\uFF0Ca=${a}\uFF0Cl=${l}\uFF0CN=${N}`;
       } catch (e) {
         errBox.style.display = "block";
-        errBox.textContent = "\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u6709\u8BEF\uFF1A" + e.message;
+        errBox.textContent = "\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
         return;
       }
     } else {
@@ -553,7 +554,7 @@
     $("stMean").textContent = fmt(st.mean, 1);
     $("stSigma").textContent = fmt(st.sigma, 1);
     $("stCv").textContent = st.cv.toFixed(3);
-    $("stCs").textContent = (st.csMoment ?? st.cs).toFixed(2);
+    $("stCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
     render();
   }
   function syncParamInputs() {
@@ -777,8 +778,9 @@
         <div class="metric hl"><div class="k">\u8BBE\u8BA1\u6D41\u91CF Q<sub>p</sub>\uFF08m\xB3/s\uFF09</div><div class="v">${res.q.toFixed(1)}</div></div>
       </div>`;
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       $("histResult").style.display = "";
-      $("histResult").innerHTML = `<div class="err" style="display:block">${e.message}</div>`;
+      $("histResult").innerHTML = `<div class="err" style="display:block">${msg}</div>`;
     }
   }
   $("btnHist").onclick = calcMethodB;
@@ -841,6 +843,11 @@
           c.width = 940 * 2;
           c.height = 520 * 2;
           const ctx = c.getContext("2d");
+          if (!ctx) {
+            URL.revokeObjectURL(url);
+            reject(new Error("\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301 Canvas 2D \u4E0A\u4E0B\u6587\uFF0C\u65E0\u6CD5\u5BFC\u51FA\u9002\u7EBF\u56FE"));
+            return;
+          }
           ctx.fillStyle = "#fff";
           ctx.fillRect(0, 0, c.width, c.height);
           ctx.drawImage(img, 0, 0, c.width, c.height);
@@ -881,7 +888,12 @@
     }
     const p = state.params, freq = state.freq;
     const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
-    const st = state.stats || { n: state.series.length };
+    const st = state.stats ? {
+      n: state.stats.n,
+      mean: state.stats.mean,
+      cv: state.stats.cv,
+      cs: "cs" in state.stats ? state.stats.cs : state.stats.csMoment
+    } : { n: state.series.length };
     const freqLabel = { "0.0033": "1/300\uFF08\u7279\u5927\u6865\uFF09", "0.01": "1/100\uFF08\u5927\u3001\u4E2D\u6865\uFF09", "0.02": "1/50", "0.04": "1/25" }[String(freq)] || (freq * 100).toFixed(2) + "%";
     const now = /* @__PURE__ */ new Date();
     const H1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: t, bold: true, size: 30 })] });
@@ -936,7 +948,7 @@
             new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.8.0 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.8.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -954,7 +966,7 @@
       });
     }).catch((e) => {
       console.error("DOCX_FAIL", e);
-      alert("\u8BA1\u4E66\u751F\u6210\u5931\u8D25\uFF1A" + e.message);
+      alert("\u8BA1\u4E66\u751F\u6210\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
     });
   }
   $("btnReport").onclick = buildReportDocx;
@@ -1002,7 +1014,7 @@
     }
   }
   function scheduleSave() {
-    clearTimeout(saveTimer);
+    if (saveTimer !== null) clearTimeout(saveTimer);
     saveTimer = setTimeout(saveAll, 400);
   }
   document.addEventListener("input", (e) => {
