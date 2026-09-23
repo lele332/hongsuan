@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { verifyAppPage } from "./verify-app-page.mjs";
 
-const root = path.resolve(process.cwd(), "..", "dist", "泓算离线版-v0.10.0", "泓算-v0.10.0-离线版.html");
+const root = path.resolve(process.cwd(), "..", "dist", "泓算离线版-v0.10.1", "泓算-v0.10.1-离线版.html");
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
 const page = await context.newPage();

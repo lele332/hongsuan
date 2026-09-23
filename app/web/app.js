@@ -651,6 +651,62 @@
     return JSON.stringify(file, null, 2);
   }
 
+  // src/core/hydrograph.ts
+  function parseHydrograph(text) {
+    if (typeof text !== "string") throw new Error("\u8FC7\u7A0B\u7EBF\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u884C\u6570\u636E\uFF08\u6BCF\u884C\uFF1A\u65F6\u95F4h, \u6D41\u91CF\uFF09");
+    const out = [];
+    lines.forEach((line, i) => {
+      const parts = line.split(/[\s,，;；]+/).filter(Boolean);
+      if (parts.length !== 2) throw new Error(`\u7B2C ${i + 1} \u884C\u5E94\u6709 2 \u4E2A\u6570\u503C\uFF08\u65F6\u95F4, \u6D41\u91CF\uFF09\uFF0C\u6536\u5230 ${parts.length} \u4E2A\uFF1A${line}`);
+      const t = Number(parts[0]), q = Number(parts[1]);
+      if (!Number.isFinite(t)) throw new Error(`\u7B2C ${i + 1} \u884C\u65F6\u95F4\u4E0D\u662F\u6709\u6548\u6570\u503C\uFF1A${parts[0]}`);
+      if (!Number.isFinite(q) || q < 0) throw new Error(`\u7B2C ${i + 1} \u884C\u6D41\u91CF\u5FC5\u987B\u4E3A\u975E\u8D1F\u6570\u503C\uFF1A${parts[1]}`);
+      out.push({ t, q });
+    });
+    return out;
+  }
+  function scaleHydrograph(typical, designPeak) {
+    if (!Array.isArray(typical) || typical.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u4E2A\u70B9");
+    if (!typical.every((p) => Number.isFinite(p.t) && Number.isFinite(p.q) && p.q >= 0)) {
+      throw new Error("\u8FC7\u7A0B\u7EBF\u5404\u70B9\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u4E14\u6D41\u91CF\u975E\u8D1F");
+    }
+    if (!(designPeak > 0)) throw new Error("\u8BBE\u8BA1\u6D2A\u5CF0 Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    const typicalPeak = Math.max(...typical.map((p) => p.q));
+    if (!(typicalPeak > 0)) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u5CF0\u503C\u4E3A 0\uFF0C\u65E0\u6CD5\u653E\u5927");
+    const kg = designPeak / typicalPeak;
+    const points = typical.map((p) => ({
+      t: p.t,
+      q: Math.round(p.q * kg * 100) / 100
+    }));
+    return { kg, typicalPeak, designPeak, points };
+  }
+
+  // src/core/areaConvert.ts
+  function suggestExponent(fRef, fSite) {
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    if (diffPct <= 3) return 1;
+    const fMin = Math.min(fRef, fSite);
+    if (fMin < 100) return 0.75;
+    return 0.6;
+  }
+  function areaConvert(input) {
+    const { qRef, fRef, fSite } = input;
+    if (![qRef, fRef, fSite].every(Number.isFinite)) throw new Error("\u9762\u79EF\u6BD4\u62DF\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (!(qRef > 0)) throw new Error("\u53C2\u8BC1\u6210\u679C\u5FC5\u987B\u4E3A\u6B63");
+    if (!(fRef > 0) || !(fSite > 0)) throw new Error("\u6C47\u6C34\u9762\u79EF\u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const n = input.n ?? suggestExponent(fRef, fSite);
+    if (!Number.isFinite(n) || n <= 0) throw new Error("\u9762\u79EF\u4FEE\u6B63\u6307\u6570 n \u5FC5\u987B\u4E3A\u6B63");
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    const warnings = [];
+    const preconditionOk = diffPct < 20 && Math.max(fRef, fSite) <= 1e3;
+    if (diffPct >= 20) warnings.push(`\u9762\u79EF\u5DEE ${diffPct.toFixed(1)}% \u2265 20%\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003`);
+    if (Math.max(fRef, fSite) > 1e3) warnings.push("\u6C47\u6C34\u9762\u79EF >1000 km\xB2\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003");
+    const qSite = qRef * Math.pow(fSite / fRef, n);
+    return { qSite, n, diffPct, preconditionOk, warnings };
+  }
+
   // src/core/methodB.ts
   function manningQ(s) {
     const { Ac, Bc, nc, At, Bt, nt, I } = s;
@@ -882,7 +938,7 @@
   function calcFromSeries() {
     const errBox = $("parseErr");
     const series = parseSeries($("series").value);
-    const xs = series.values;
+    let xs = series.values;
     const notices = [];
     if (series.ignored.length) {
       const shown = series.ignored.slice(0, 5).join("\u3001");
@@ -892,6 +948,21 @@
       errBox.style.display = "block";
       errBox.textContent = "\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6709\u6548\u6D41\u91CF\u503C\uFF08\u5F53\u524D " + xs.length + " \u4E2A\uFF09\u3002\u89C4\u8303\u5EFA\u8BAE\u5B9E\u6D4B\u7CFB\u5217\u4E0D\u5B9C\u5C11\u4E8E 30 \u5E74\u3002";
       return;
+    }
+    if ($("convEnable").checked) {
+      try {
+        const fRef = +$("convFRef").value, fSite = +$("convFSite").value;
+        const nRaw = $("convN").value.trim();
+        const conv = areaConvert({ qRef: 1, fRef, fSite, n: nRaw ? +nRaw : void 0 });
+        notices.push(...conv.warnings);
+        notices.push(`\u5DF2\u6309\u9762\u79EF\u6BD4\u62DF\u8F6C\u6362\u5230\u6865\u4F4D\u65AD\u9762\uFF08\xD7${conv.qSite.toFixed(4)}\uFF0Cn=${conv.n}\uFF09`);
+        xs = xs.map((v) => v * conv.qSite);
+      } catch (e) {
+        errBox.style.display = "block";
+        delete errBox.dataset.kind;
+        errBox.textContent = "\u9762\u79EF\u8F6C\u6362\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
+        return;
+      }
     }
     state.series = xs;
     let st;
@@ -1009,10 +1080,12 @@
     $("mParams").classList.remove("on");
     $("mHist").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(true);
   };
   $("mParams").onclick = () => {
@@ -1021,10 +1094,12 @@
     $("mSeries").classList.remove("on");
     $("mHist").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     syncParamInputs();
     setFitCardsVisible(true);
     render();
@@ -1035,10 +1110,12 @@
     $("mSeries").classList.remove("on");
     $("mParams").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(false);
   };
   $("mNoData").onclick = () => {
@@ -1047,12 +1124,28 @@
     $("mSeries").classList.remove("on");
     $("mParams").classList.remove("on");
     $("mHist").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(false);
     calcMethodC();
+  };
+  $("mHydro").onclick = () => {
+    state.mode = "hydro";
+    $("mHydro").classList.add("on");
+    $("mSeries").classList.remove("on");
+    $("mParams").classList.remove("on");
+    $("mHist").classList.remove("on");
+    $("mNoData").classList.remove("on");
+    $("seriesBox").style.display = "none";
+    $("paramsBox").style.display = "none";
+    $("histBox").style.display = "none";
+    $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "";
+    setFitCardsVisible(false);
   };
   function setFitCardsVisible(v) {
     for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
@@ -1284,6 +1377,33 @@
   ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach((id) => {
     $(id).oninput = calcMethodC;
   });
+  $("btnHydroSample").onclick = () => {
+    $("hydroTypical").value = "0 0\n2 267\n4 533\n6 800\n8 533\n10 267\n12 0";
+    scheduleSave();
+  };
+  $("btnHydroUseQp").onclick = () => {
+    const q = state.params.mean * (1 + phiPIII(state.freq, state.params.cs) * state.params.cv);
+    $("hydroQp").value = q.toFixed(0);
+    scheduleSave();
+  };
+  $("btnHydroScale").onclick = () => {
+    const errEl = $("hydroErr");
+    try {
+      const typical = parseHydrograph($("hydroTypical").value);
+      const r = scaleHydrograph(typical, +$("hydroQp").value);
+      errEl.style.display = "none";
+      $("hydroKg").textContent = r.kg.toFixed(4);
+      $("hydroOut").style.display = "";
+      $("hydroTable").innerHTML = r.points.map((p) => `<tr><td>${p.t}</td><td class="v">${fmt(p.q, 1)}</td></tr>`).join("");
+      state.hydro = r;
+    } catch (e) {
+      errEl.style.display = "block";
+      errEl.textContent = e instanceof Error ? e.message : String(e);
+      $("hydroKg").textContent = "\u2014";
+      $("hydroOut").style.display = "none";
+      state.hydro = null;
+    }
+  };
   $("lkGo").onclick = () => {
     try {
       const zone = Math.round(+$("lkZone").value);
@@ -1423,9 +1543,14 @@
             H1("\u516D\u3001\u9002\u7EBF\u56FE"),
             new D.Paragraph({ children: [new D.ImageRun({ type: "png", data: dataUrl.split(",")[1], transformation: { width: 600, height: 332 } })], spacing: { before: 120, after: 120 } }),
             new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...state.hydro ? [
+              H1("\u4E03\u3001\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF"),
+              P(`\u6309\u89C4\u8303 6.6 \u540C\u500D\u6BD4\u653E\u5927\u6CD5\uFF1Akg = Qp / Q\u5178\u5CF0 = ${state.hydro.designPeak.toFixed(0)} / ${state.hydro.typicalPeak.toFixed(0)} = ${state.hydro.kg.toFixed(4)}\u3002`),
+              mkTable(["\u65F6\u95F4 t\uFF08h\uFF09", "\u8BBE\u8BA1\u6D41\u91CF Q\uFF08m\xB3/s\uFF09"], state.hydro.points.map((p2) => [p2.t, p2.q.toFixed(1)]))
+            ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.10.0 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.10.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -1482,7 +1607,14 @@
       adopted: { ...state.params },
       hist: pick(HIST_IDS),
       nodata: pick(NODATA_IDS),
-      project: currentProject()
+      project: currentProject(),
+      conv: {
+        enable: $("convEnable").checked,
+        fRef: $("convFRef").value,
+        fSite: $("convFSite").value,
+        n: $("convN").value
+      },
+      hydro: { typical: $("hydroTypical").value, qp: $("hydroQp").value }
     };
   }
   function currentProject() {
@@ -1588,6 +1720,16 @@
       const el = $(k);
       if (el && d.nodata[k] != null) el.value = d.nodata[k];
     }
+    if (d.conv) {
+      $("convEnable").checked = Boolean(d.conv.enable);
+      if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
+      if (d.conv.fSite != null) $("convFSite").value = d.conv.fSite;
+      if (d.conv.n != null) $("convN").value = d.conv.n;
+    }
+    if (d.hydro) {
+      if (typeof d.hydro.typical === "string") $("hydroTypical").value = d.hydro.typical;
+      if (d.hydro.qp != null) $("hydroQp").value = d.hydro.qp;
+    }
     if (d.project) {
       $("pjName").value = d.project.name ?? "";
       $("pjSite").value = d.project.bridgeSite ?? "";
@@ -1640,13 +1782,15 @@
   var urlQ = new URLSearchParams(location.search);
   var restoredMode = restoreAll();
   var urlMethod = urlQ.get("method");
-  var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : restoredMode || "series";
+  var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : restoredMode || "series";
   if (startMode === "params") {
     $("mParams").click();
   } else if (startMode === "histB") {
     $("mHist").click();
   } else if (startMode === "noData") {
     $("mNoData").click();
+  } else if (startMode === "hydro") {
+    $("mHydro").click();
   } else {
     $("mSeries").click();
     calcFromSeries();

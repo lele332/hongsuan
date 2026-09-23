@@ -6,6 +6,8 @@ import { RUNOFF_TABLE_SEED, lookupRunoffH } from "../core/runoffTable.ts";
 import { threePointFromSeries } from "../core/threePoint.ts";
 import { autoFit } from "../core/autoFit.ts";
 import { buildProjectFile, parseProjectFile, serializeProject, type ProjectInfo } from "../core/projectFile.ts";
+import { parseHydrograph, scaleHydrograph, type ScaleResult } from "../core/hydrograph.ts";
+import { areaConvert } from "../core/areaConvert.ts";
 import { compareLineages } from "../core/bayes.ts";
 import { manningQ, designFromHistory } from "../core/methodB.ts";
 import { rationalFormula, runoffDepthFormula } from "../core/methodC.ts";
@@ -20,6 +22,7 @@ interface AppState {
   freq: number;
   pts: EmpPoint[];
   adoptedOverride?: FitParams;
+  hydro?: ScaleResult | null;
 }
 
 // 多方法成果对比（规范 6.1.3）：各模式计算后写入，UI 汇总呈现
@@ -214,7 +217,7 @@ function bindChartHover() {
 function calcFromSeries() {
   const errBox = $("parseErr");
   const series = parseSeries($("series").value);
-  const xs = series.values;
+  let xs = series.values;
   const notices: string[] = [];
   if (series.ignored.length) {
     // 评估报告坑1修复：静默过滤 → 明示忽略项（截断显示，防超长粘贴刷屏）
@@ -225,6 +228,22 @@ function calcFromSeries() {
     errBox.style.display = "block";
     errBox.textContent = "至少需要 3 个有效流量值（当前 " + xs.length + " 个）。规范建议实测系列不宜少于 30 年。";
     return;
+  }
+  // 系列面积转换（规范 6.2.2）：参证站系列 → 桥位断面
+  if (($("convEnable") as HTMLInputElement).checked) {
+    try {
+      const fRef = +$("convFRef").value, fSite = +$("convFSite").value;
+      const nRaw = ($("convN") as HTMLInputElement).value.trim();
+      const conv = areaConvert({ qRef: 1, fRef, fSite, n: nRaw ? +nRaw : undefined });
+      notices.push(...conv.warnings);
+      notices.push(`已按面积比拟转换到桥位断面（×${conv.qSite.toFixed(4)}，n=${conv.n}）`);
+      xs = xs.map(v => v * conv.qSite);
+    } catch (e) {
+      errBox.style.display = "block";
+      delete errBox.dataset.kind;
+      errBox.textContent = "面积转换有误：" + (e instanceof Error ? e.message : String(e));
+      return;
+    }
   }
   state.series = xs;
   let st: SeriesStats | DiscontinuousStats;
@@ -338,24 +357,29 @@ $("freqSel").onchange = (e: any) => { state.freq = +e.target.value; render(); };
   };
 });
 $("mSeries").onclick = () => {
-  state.mode = "series"; $("mSeries").classList.add("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on");
-  $("seriesBox").style.display = ""; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "none";
+  state.mode = "series"; $("mSeries").classList.add("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on"); $("mHydro").classList.remove("on");
+  $("seriesBox").style.display = ""; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "none"; $("hydroBox").style.display = "none";
   setFitCardsVisible(true);
 };
 $("mParams").onclick = () => {
-  state.mode = "params"; $("mParams").classList.add("on"); $("mSeries").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on");
-  $("seriesBox").style.display = "none"; $("paramsBox").style.display = ""; $("histBox").style.display = "none"; $("noDataBox").style.display = "none";
+  state.mode = "params"; $("mParams").classList.add("on"); $("mSeries").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on"); $("mHydro").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = ""; $("histBox").style.display = "none"; $("noDataBox").style.display = "none"; $("hydroBox").style.display = "none";
   syncParamInputs(); setFitCardsVisible(true); render();
 };
 $("mHist").onclick = () => {
-  state.mode = "histB"; $("mHist").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mNoData").classList.remove("on");
-  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = ""; $("noDataBox").style.display = "none";
+  state.mode = "histB"; $("mHist").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mNoData").classList.remove("on"); $("mHydro").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = ""; $("noDataBox").style.display = "none"; $("hydroBox").style.display = "none";
   setFitCardsVisible(false);
 };
 $("mNoData").onclick = () => {
-  state.mode = "noData"; $("mNoData").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on");
-  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "";
+  state.mode = "noData"; $("mNoData").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on"); $("mHydro").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = ""; $("hydroBox").style.display = "none";
   setFitCardsVisible(false); calcMethodC();
+};
+$("mHydro").onclick = () => {
+  state.mode = "hydro"; $("mHydro").classList.add("on"); $("mSeries").classList.remove("on"); $("mParams").classList.remove("on"); $("mHist").classList.remove("on"); $("mNoData").classList.remove("on");
+  $("seriesBox").style.display = "none"; $("paramsBox").style.display = "none"; $("histBox").style.display = "none"; $("noDataBox").style.display = "none"; $("hydroBox").style.display = "";
+  setFitCardsVisible(false);
 };
 
 function setFitCardsVisible(v: boolean) {
@@ -572,6 +596,36 @@ function calcMethodC() {
   $(id).oninput = calcMethodC;
 });
 
+// ===== 设计洪水过程线（规范 6.6 同倍比放大，内核 hydrograph.ts） =====
+$("btnHydroSample").onclick = () => {
+  $("hydroTypical").value = "0 0\n2 267\n4 533\n6 800\n8 533\n10 267\n12 0";
+  scheduleSave();
+};
+$("btnHydroUseQp").onclick = () => {
+  const q = state.params.mean * (1 + phiPIII(state.freq, state.params.cs) * state.params.cv);
+  $("hydroQp").value = q.toFixed(0);
+  scheduleSave();
+};
+$("btnHydroScale").onclick = () => {
+  const errEl = $("hydroErr");
+  try {
+    const typical = parseHydrograph(($("hydroTypical") as HTMLTextAreaElement).value);
+    const r = scaleHydrograph(typical, +$("hydroQp").value);
+    errEl.style.display = "none";
+    $("hydroKg").textContent = r.kg.toFixed(4);
+    $("hydroOut").style.display = "";
+    $("hydroTable").innerHTML = r.points
+      .map(p => `<tr><td>${p.t}</td><td class="v">${fmt(p.q, 1)}</td></tr>`).join("");
+    state.hydro = r;
+  } catch (e) {
+    errEl.style.display = "block";
+    errEl.textContent = e instanceof Error ? e.message : String(e);
+    $("hydroKg").textContent = "—";
+    $("hydroOut").style.display = "none";
+    state.hydro = null;
+  }
+};
+
 // 查 h 工具：内置种子数据 + 双线性插值（内核 runoffTable.ts）
 $("lkGo").onclick = () => {
   try {
@@ -712,9 +766,14 @@ function buildReportDocx() {
           H1("六、适线图"),
           new D.Paragraph({ children: [new D.ImageRun({ type: "png", data: dataUrl.split(",")[1], transformation: { width: 600, height: 332 } })], spacing: { before: 120, after: 120 } }),
           new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
+          ...(state.hydro ? [
+            H1("七、设计洪水过程线"),
+            P(`按规范 6.6 同倍比放大法：kg = Qp / Q典峰 = ${state.hydro.designPeak.toFixed(0)} / ${state.hydro.typicalPeak.toFixed(0)} = ${state.hydro.kg.toFixed(4)}。`),
+            mkTable(["时间 t（h）", "设计流量 Q（m³/s）"], state.hydro.points.map(p => [p.t, p.q.toFixed(1)])),
+          ] : []),
           new D.Paragraph({
             border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-            children: [new D.TextRun({ text: "本计算书由泓算 v0.10.0 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+            children: [new D.TextRun({ text: "本计算书由泓算 v0.10.1 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
           }),
         ],
       }],
@@ -756,6 +815,11 @@ function collectInputs() {
     adopted: { ...state.params },
     hist: pick(HIST_IDS), nodata: pick(NODATA_IDS),
     project: currentProject(),
+    conv: {
+      enable: ($("convEnable") as HTMLInputElement).checked,
+      fRef: $("convFRef").value, fSite: $("convFSite").value, n: $("convN").value,
+    },
+    hydro: { typical: ($("hydroTypical") as HTMLTextAreaElement).value, qp: $("hydroQp").value },
   };
 }
 function currentProject(): ProjectInfo {
@@ -834,6 +898,16 @@ function applySaved(d: any): string | null {
   }
   if (d.hist) for (const k in d.hist) { const el = $(k); if (el && d.hist[k] != null) el.value = d.hist[k]; }
   if (d.nodata) for (const k in d.nodata) { const el = $(k); if (el && d.nodata[k] != null) el.value = d.nodata[k]; }
+  if (d.conv) {
+    ($("convEnable") as HTMLInputElement).checked = Boolean(d.conv.enable);
+    if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
+    if (d.conv.fSite != null) $("convFSite").value = d.conv.fSite;
+    if (d.conv.n != null) $("convN").value = d.conv.n;
+  }
+  if (d.hydro) {
+    if (typeof d.hydro.typical === "string") ($("hydroTypical") as HTMLTextAreaElement).value = d.hydro.typical;
+    if (d.hydro.qp != null) $("hydroQp").value = d.hydro.qp;
+  }
   if (d.project) {
     ($("pjName") as HTMLInputElement).value = d.project.name ?? "";
     ($("pjSite") as HTMLInputElement).value = d.project.bridgeSite ?? "";
@@ -888,10 +962,11 @@ $("btnReset").onclick = () => {
 const urlQ = new URLSearchParams(location.search);
 const restoredMode = restoreAll();
 const urlMethod = urlQ.get("method");
-const startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : (restoredMode || "series");
+const startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : (restoredMode || "series");
 if (startMode === "params") { $("mParams").click(); }
 else if (startMode === "histB") { $("mHist").click(); }
 else if (startMode === "noData") { $("mNoData").click(); }
+else if (startMode === "hydro") { $("mHydro").click(); }
 else { $("mSeries").click(); calcFromSeries(); }
 if (state.adoptedOverride) {
   state.params = { ...state.adoptedOverride };

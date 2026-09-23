@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.10.0</title>
+<title>泓算 · 桥涵设计流量推求 v0.10.1</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -113,7 +113,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.8.1</p>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.10.1</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -121,6 +121,7 @@
   <button id="mParams">直接参数模式</button>
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">无资料地区</button>
+  <button id="mHydro">设计洪水过程线</button>
 </div></div>
 
 <div class="card" id="inputCard">
@@ -136,6 +137,18 @@
 1000
 1400
 650</textarea>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-size:12.5px;color:var(--blue)">系列面积转换（规范 6.2.2：面积差 &lt;20% 且 ≤1000 km²）</summary>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
+        <input type="checkbox" id="convEnable" style="width:auto">
+        启用：系列来自参证站，按面积比拟转换到桥位断面（Q 同乘 (F设/F参)ⁿ）
+      </label>
+      <div class="row">
+        <div><label>参证面积 F<sub>参</sub>（km²）</label><input type="number" id="convFRef" value="100" min="0.01" step="any"></div>
+        <div><label>桥位面积 F<sub>设</sub>（km²）</label><input type="number" id="convFSite" value="110" min="0.01" step="any"></div>
+        <div><label>指数 n（留空自动建议）</label><input type="number" id="convN" step="any" placeholder="自动"></div>
+      </div>
+    </details>
     <div class="err" id="parseErr"></div>
     <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。示例为算例 T1（n=10）。</div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
@@ -273,6 +286,31 @@
   </div>
 </div>
 
+<div id="hydroBox" style="display:none">
+  <h2>设计洪水过程线 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.6 同倍比放大法，k<sub>g</sub> = Q<sub>p</sub> / Q<sub>典峰</sub></span></h2>
+  <div class="row">
+    <div style="flex:1.4">
+      <label>典型洪水过程线（每行：时间h,流量，支持空格/逗号分隔）</label>
+      <textarea id="hydroTypical" style="height:110px" placeholder="0 0&#10;2 267&#10;4 533&#10;6 800&#10;8 533&#10;10 267&#10;12 0"></textarea>
+      <button class="btn ghost" id="btnHydroSample" style="margin-top:6px;padding:4px 12px;font-size:12.5px">载入三角形示例</button>
+    </div>
+    <div>
+      <label>设计洪峰 Q<sub>p</sub>（m³/s）</label>
+      <input type="number" id="hydroQp" value="2000" min="0.01" step="any">
+      <button class="btn ghost" id="btnHydroUseQp" style="margin-top:6px;padding:4px 12px;font-size:12.5px">取当前设计流量</button>
+      <button class="btn" id="btnHydroScale" style="margin-top:8px">同倍比放大</button>
+      <div class="metric hl" style="margin-top:8px"><div class="k">放大系数 k<sub>g</sub></div><div class="v" id="hydroKg">—</div></div>
+      <div class="err" id="hydroErr"></div>
+    </div>
+  </div>
+  <div id="hydroOut" style="display:none;margin-top:10px">
+    <table class="ltab">
+      <tr><th>时间 t（h）</th><th class="v">设计流量 Q（m³/s）</th></tr>
+      <tbody id="hydroTable"></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="card" id="chartCard">
   <h2>海森机率格纸 · 适线</h2>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
@@ -407,7 +445,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.10.0<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.10.1<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>

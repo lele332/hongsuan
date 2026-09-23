@@ -55,7 +55,7 @@ export async function verifyAppPage(page, options) {
   await page.waitForSelector("#outQ", { state: "visible" });
 
   const title = await page.title();
-  check(results, "页面标题版本", title.includes("v0.10.0"), title);
+  check(results, "页面标题版本", title.includes("v0.10.1"), title);
 
   if (mode === "web" || mode === "electron") {
     check(results, "单一内核产物已加载", await page.evaluate(() =>
@@ -79,6 +79,24 @@ export async function verifyAppPage(page, options) {
   const cleanNotice = await page.textContent("#parseErr");
   const cleanHidden = !(await page.isVisible("#parseErr"));
   check(results, "干净输入无提示", cleanHidden || !/已忽略/.test(cleanNotice ?? ""), cleanNotice ?? "");
+
+  // 面积转换（规范 6.2.2）：启用后 Q1% 按 (F设/F参)^n 缩放并明示
+  await page.click("#seriesBox details summary");
+  await page.waitForTimeout(150);
+  const qBase = Number((await page.textContent("#outQ")).replace(/[^0-9.]/g, ""));
+  await page.check("#convEnable");
+  await page.fill("#convFRef", "100");
+  await page.fill("#convFSite", "110");
+  await page.fill("#convN", "");
+  await page.click("#btnCalc");
+  await page.waitForTimeout(200);
+  const convNotice = await page.textContent("#parseErr");
+  const qConv = Number((await page.textContent("#outQ")).replace(/[^0-9.]/g, ""));
+  check(results, "面积转换明示", /面积比拟转换/.test(convNotice ?? ""), convNotice ?? "");
+  check(results, "面积转换缩放", Math.abs(qConv - qBase * Math.pow(1.1, 0.75)) < qBase * 0.02, `Q=${qConv} vs base=${qBase}`);
+  await page.uncheck("#convEnable");
+  await page.click("#btnCalc");
+  await page.waitForTimeout(200);
 
   await page.click("#btnCalc");
   await page.waitForTimeout(200);
@@ -206,6 +224,26 @@ export async function verifyAppPage(page, options) {
   check(results, "DOCX 正文含计算书标题", xml.includes("桥涵设计流量计算书"));
   check(results, "DOCX 正文含规范引用", xml.includes("JTG C30-2015"));
   check(results, "DOCX 正文含频率成果表", xml.includes("频率曲线成果表"));
+
+  // 设计洪水过程线：同倍比放大
+  await page.click("#mHydro");
+  await page.click("#btnHydroSample");
+  await page.click("#btnHydroUseQp");
+  await page.click("#btnHydroScale");
+  await page.waitForTimeout(200);
+  const kg = await page.textContent("#hydroKg");
+  const hydroRows = await page.locator("#hydroTable tr").count();
+  const hydroVisible = await page.isVisible("#hydroOut");
+  check(results, "过程线放大执行", /^\d/.test(kg ?? "") && hydroVisible && hydroRows >= 7, `kg=${kg}, rows=${hydroRows}`);
+  // 过程线错误路径：坏数据 → 可见 err 块
+  await page.fill("#hydroTypical", "0 0\nabc 5");
+  await page.click("#btnHydroScale");
+  await page.waitForTimeout(100);
+  const hydroErr = await page.textContent("#hydroErr");
+  check(results, "过程线错误提示", await page.isVisible("#hydroErr") && /第 2 行/.test(hydroErr ?? ""), hydroErr ?? "");
+  // 回到系列模式，保证后续计算书流程在默认态
+  await page.click("#mSeries");
+  await page.waitForTimeout(150);
 
   // 工程文件导出：捕获 JSON Blob 并校验 schema
   if (mode !== "offline") {
