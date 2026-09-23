@@ -314,7 +314,7 @@ if (new URLSearchParams(location.search).get("extra") === "1") {
 
 // ===== 线型比选（贝叶斯 / BIC 后验）——与 src/core/bayes.ts 同构 =====
 const BAYES_CSS = `
-  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 10px; align-items: center; margin: 8px 0; font-size: 13px; }
+  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 8px; align-items: center; margin: 4px 0; font-size: 12.5px; }
   .bbar-outer { height: 10px; background: rgba(120,120,128,0.12); border-radius: 5px; overflow: hidden; }
   .bbar-inner { height: 100%; background: var(--blue); border-radius: 5px; transition: width .5s ease; }
   .bw { font-variant-numeric: tabular-nums; font-weight: 500; text-align: right; }
@@ -365,7 +365,7 @@ const HIST_FIELDS: Array<[HistFieldKey, string]> = [
     { Ac: 400, Bc: 95, nc: 0.03, At: 150, Bt: 180, nt: 0.05, Ipermil: 0.5, T: 50 },
   ];
   $("histRows").innerHTML = [0, 1].map(i => `
-    <div style="margin:12px 0;padding:12px 14px;background:var(--bg);border-radius:10px">
+    <div style="margin:8px 0;padding:8px 10px;background:var(--bg);border-radius:10px">
       <div style="font-size:13px;font-weight:500;margin-bottom:6px">第 ${i + 1} 次历史洪水</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         ${HIST_FIELDS.map(([k, label]) => `<div><label style="margin-top:0">${label}</label><input type="number" step="any" id="hf${i}${k}" value="${defaults[i][k]}"></div>`).join("")}
