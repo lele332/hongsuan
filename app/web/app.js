@@ -185,6 +185,175 @@
     return { a, n, l, N, mean, sigma, cv, cs };
   }
 
+  // src/core/empirical.ts
+  function empiricalContinuous(n) {
+    const out = [];
+    for (let m = 1; m <= n; m++) out.push(100 * m / (n + 1));
+    return out;
+  }
+
+  // src/core/points.ts
+  function continuousPoints(series) {
+    const sorted = [...series].sort((a, b) => b - a);
+    const ps = empiricalContinuous(sorted.length);
+    return sorted.map((q, i) => ({ p: ps[i] / 100, q, kind: "meas" }));
+  }
+  function discontinuousPoints(input) {
+    const sorted = [...input.measuredDesc].sort((a2, b) => b - a2);
+    const stats = discontinuousStats({
+      historicalExtra: input.historicalExtra,
+      measuredDesc: sorted,
+      l: input.l,
+      N: input.N
+    });
+    const { n, l, N, a } = stats;
+    const all = [...input.historicalExtra, ...sorted.slice(0, l)].sort((x, y) => y - x);
+    const points = all.map((q, i) => ({
+      p: (i + 1) / (N + 1),
+      q,
+      kind: "hist"
+    }));
+    const pA = a / (N + 1);
+    for (let m = l + 1; m <= n; m++) {
+      points.push({
+        p: pA + (1 - pA) * (m - l) / (n - l + 1),
+        q: sorted[m - 1],
+        kind: "meas"
+      });
+    }
+    return { stats, points };
+  }
+  function sseOfPoints(points, params, phiFn) {
+    let sse = 0;
+    for (const pt of points) {
+      const qTheory = params.mean * (1 + phiFn(pt.p, params.cs) * params.cv);
+      sse += (pt.q - qTheory) ** 2;
+    }
+    return sse;
+  }
+
+  // src/core/parse.ts
+  function parseSeries(text) {
+    if (typeof text !== "string") throw new Error("\u7CFB\u5217\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const tokens = text.split(/[\s,，;；]+/).filter(Boolean);
+    const values = [];
+    const ignored = [];
+    for (const tok of tokens) {
+      const v = Number(tok);
+      if (Number.isFinite(v) && v > 0) values.push(v);
+      else ignored.push(tok);
+    }
+    return { values, ignored };
+  }
+
+  // src/core/runoffTable.ts
+  var RUNOFF_TABLE_SCHEMA = "hongrunoff-h-table@1";
+  var FREQ_KEYS = ["p1", "p2", "p3_33", "p5", "p10"];
+  var FREQ_PCTS = {
+    p1: 1,
+    p2: 2,
+    p3_33: 3.33,
+    p5: 5,
+    p10: 10
+  };
+  function loadRunoffTable(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const t = json;
+    if (t.schema !== RUNOFF_TABLE_SCHEMA) {
+      throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${RUNOFF_TABLE_SCHEMA}\uFF0C\u6536\u5230 ${String(t.schema)}`);
+    }
+    if (typeof t.source !== "string" || !t.source) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 source \u51FA\u5904\u6807\u6CE8");
+    if (typeof t.zones !== "object" || t.zones === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 zones");
+    for (const [zone, soils] of Object.entries(t.zones)) {
+      const zn = Number(zone);
+      if (!Number.isInteger(zn) || zn < 1 || zn > 18) throw new Error(`\u66B4\u96E8\u5206\u533A\u53F7\u5FC5\u987B\u662F 1..18 \u7684\u6574\u6570\uFF0C\u6536\u5230 ${zone}`);
+      for (const [soil, rows] of Object.entries(soils)) {
+        if (!/^soil[I-V]{1,3}$/.test(soil)) throw new Error(`\u571F\u58E4\u7C7B\u522B\u952E\u5FC5\u987B\u662F soilI..soilVI \u5F62\u5F0F\uFF0C\u6536\u5230 ${soil}`);
+        if (!Array.isArray(rows) || rows.length < 2) {
+          throw new Error(`\u5206\u533A ${zone} ${soil} \u81F3\u5C11\u9700\u8981 2 \u884C\uFF08\u03C4 \u6863\uFF09\u624D\u80FD\u63D2\u503C`);
+        }
+        for (const r of rows) {
+          if (!Number.isFinite(r.tau) || r.tau <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\u6570\uFF08min\uFF09");
+          for (const k of FREQ_KEYS) {
+            if (!Number.isFinite(r.h?.[k]) || r.h[k] <= 0) {
+              throw new Error(`\u5206\u533A ${zone} ${soil} \u03C4=${r.tau} \u7684 ${k} \u5F84\u6D41\u539A\u5EA6\u5FC5\u987B\u4E3A\u6B63\u6570`);
+            }
+          }
+        }
+        const taus = rows.map((r) => r.tau);
+        if (new Set(taus).size !== taus.length) throw new Error(`\u5206\u533A ${zone} ${soil} \u5B58\u5728\u91CD\u590D \u03C4 \u6863`);
+      }
+    }
+    return t;
+  }
+  function lerp(a, b, w) {
+    return a + (b - a) * w;
+  }
+  function hAtFreq(row, pct) {
+    const pcts = FREQ_KEYS.map((k) => FREQ_PCTS[k]);
+    for (let i = 0; i < pcts.length; i++) {
+      if (Math.abs(pct - pcts[i]) < 1e-9) return row[FREQ_KEYS[i]];
+    }
+    let iLo = 0, iHi = 1;
+    if (pct >= pcts[pcts.length - 1]) {
+      iLo = pcts.length - 2;
+      iHi = pcts.length - 1;
+    } else {
+      for (let i = 0; i < pcts.length - 1; i++) {
+        if (pct > pcts[i] && pct < pcts[i + 1]) {
+          iLo = i;
+          iHi = i + 1;
+          break;
+        }
+      }
+    }
+    const w = Math.log(pct / pcts[iLo]) / Math.log(pcts[iHi] / pcts[iLo]);
+    return lerp(row[FREQ_KEYS[iLo]], row[FREQ_KEYS[iHi]], w);
+  }
+  function lookupRunoffH(table, zone, soil, freqPct, tauMin) {
+    const soilKey = "soil" + soil.toUpperCase().replace(/[^IV]/g, "");
+    const rows = table.zones[String(zone)]?.[soilKey];
+    if (!rows) throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868\u4E2D\u6CA1\u6709\u5206\u533A ${zone} / \u571F\u58E4 ${soil} \u7684\u6570\u636E`);
+    if (!Number.isFinite(tauMin) || tauMin <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4\u5FC5\u987B\u4E3A\u6B63\uFF08min\uFF09");
+    const sorted = [...rows].sort((a, b) => a.tau - b.tau);
+    if (tauMin < sorted[0].tau || tauMin > sorted[sorted.length - 1].tau) {
+      throw new Error(
+        `\u6C47\u6D41\u65F6\u95F4 ${tauMin} min \u8D85\u51FA\u8868\u8303\u56F4\uFF08${sorted[0].tau}~${sorted[sorted.length - 1].tau} min\uFF09\uFF0C\u8BF7\u76F4\u63A5\u67E5\u8868`
+      );
+    }
+    const exact = sorted.find((r) => Math.abs(r.tau - tauMin) < 1e-9);
+    if (exact) {
+      const h0 = hAtFreq(exact.h, freqPct);
+      const onFreqNode = FREQ_KEYS.some((k) => Math.abs(FREQ_PCTS[k] - freqPct) < 1e-9);
+      return { h: Math.round(h0 * 100) / 100, interpolated: !onFreqNode };
+    }
+    let rLo = sorted[0], rHi = sorted[sorted.length - 1];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (tauMin >= sorted[i].tau && tauMin <= sorted[i + 1].tau) {
+        rLo = sorted[i];
+        rHi = sorted[i + 1];
+        break;
+      }
+    }
+    const wTau = (tauMin - rLo.tau) / (rHi.tau - rLo.tau);
+    const h = lerp(hAtFreq(rLo.h, freqPct), hAtFreq(rHi.h, freqPct), wTau);
+    return { h: Math.round(h * 100) / 100, interpolated: true };
+  }
+  var RUNOFF_TABLE_SEED = loadRunoffTable({
+    schema: RUNOFF_TABLE_SCHEMA,
+    source: "\u516C\u5F00\u7B97\u4F8B\u951A\u70B9\uFF08k3+685 \u6DB5\u6D1E / \u8D35\u5DDE\u5927\u6865\uFF09\uFF0C\u5B8C\u6574\u8868\u5F85 JTG/T D65-04-2007 \u7EB8\u8D28\u7248\u5F55\u5165",
+    zones: {
+      "5": {
+        soilIV: [
+          { tau: 30, h: { p1: 52, p2: 46, p3_33: 42, p5: 38, p10: 33 } },
+          { tau: 45, h: { p1: 55, p2: 48, p3_33: 44, p5: 40, p10: 35 } },
+          { tau: 60, h: { p1: 57, p2: 50, p3_33: 45, p5: 41, p10: 36 } },
+          { tau: 80, h: { p1: 58, p2: 51, p3_33: 46, p5: 42, p10: 37 } }
+        ]
+      }
+    }
+  });
+
   // src/core/bayes.ts
   function nelderMead(f, x0, opts = {}) {
     const n = x0.length;
@@ -450,9 +619,7 @@
     $("outKp").textContent = kp.toFixed(3);
     const pts = state.pts;
     if (pts.length) {
-      let sse = 0;
-      for (const pt of pts) sse += Math.pow(pt.q - params.mean * (1 + phiPIII(pt.p, params.cs) * params.cv), 2);
-      $("stSse").textContent = fmt(sse, 0);
+      $("stSse").textContent = fmt(sseOfPoints(pts, params, phiPIII), 0);
     } else {
       $("stSse").textContent = "\u2014";
     }
@@ -507,34 +674,39 @@
     $("chart").innerHTML = s;
   }
   function calcFromSeries() {
-    const raw = $("series").value.split(/[\s,，;；]+/).filter(Boolean);
-    const xs = raw.map(Number).filter((v) => Number.isFinite(v) && v > 0);
     const errBox = $("parseErr");
+    const series = parseSeries($("series").value);
+    const xs = series.values;
+    const notices = [];
+    if (series.ignored.length) {
+      const shown = series.ignored.slice(0, 5).join("\u3001");
+      notices.push(`\u5DF2\u5FFD\u7565 ${series.ignored.length} \u4E2A\u65E0\u6548\u503C\uFF08${shown}${series.ignored.length > 5 ? " \u7B49" : ""}\uFF09`);
+    }
     if (xs.length < 3) {
       errBox.style.display = "block";
       errBox.textContent = "\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6709\u6548\u6D41\u91CF\u503C\uFF08\u5F53\u524D " + xs.length + " \u4E2A\uFF09\u3002\u89C4\u8303\u5EFA\u8BAE\u5B9E\u6D4B\u7CFB\u5217\u4E0D\u5B9C\u5C11\u4E8E 30 \u5E74\u3002";
       return;
     }
-    errBox.style.display = "none";
     state.series = xs;
-    const sorted = [...xs].sort((a, b) => b - a);
-    const n = sorted.length;
     let st;
     let pts;
     if ($("hasExtra").checked) {
       try {
         const N = Math.round(+$("inN").value);
         const l = Math.round(+$("inL").value);
-        const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter((v) => Number.isFinite(v) && v > 0);
-        st = discontinuousStats({ historicalExtra: extra, measuredDesc: sorted, l, N });
-        const a = st.a;
-        const all = [...extra, ...sorted.slice(0, l)].sort((x, y) => y - x);
-        pts = all.map((q, i) => ({ p: (i + 1) / (N + 1), q, kind: "hist" }));
-        const pA = a / (N + 1);
-        for (let m = l + 1; m <= n; m++) {
-          pts.push({ p: pA + (1 - pA) * (m - l) / (n - l + 1), q: sorted[m - 1], kind: "meas" });
+        const extraParsed = parseSeries($("extraSeries").value);
+        if (extraParsed.ignored.length) {
+          notices.push(`\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u5DF2\u5FFD\u7565 ${extraParsed.ignored.length} \u4E2A\u65E0\u6548\u503C`);
         }
-        $("stN").textContent = `n=${n}\uFF0Ca=${a}\uFF0Cl=${l}\uFF0CN=${N}`;
+        const r = discontinuousPoints({
+          historicalExtra: extraParsed.values,
+          measuredDesc: xs,
+          l,
+          N
+        });
+        st = r.stats;
+        pts = r.points;
+        $("stN").textContent = `n=${st.n}\uFF0Ca=${st.a}\uFF0Cl=${l}\uFF0CN=${N}`;
       } catch (e) {
         errBox.style.display = "block";
         errBox.textContent = "\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
@@ -542,8 +714,16 @@
       }
     } else {
       st = seriesStats(xs);
-      pts = sorted.map((q, i) => ({ p: (i + 1) / (n + 1), q, kind: "meas" }));
+      pts = continuousPoints(xs);
       $("stN").textContent = st.n;
+    }
+    if (notices.length) {
+      errBox.style.display = "block";
+      errBox.dataset.kind = "notice";
+      errBox.textContent = notices.join("\uFF1B");
+    } else {
+      errBox.style.display = "none";
+      delete errBox.dataset.kind;
     }
     state.stats = st;
     state.pts = pts;
@@ -790,27 +970,35 @@
       $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n;
     };
   });
+  function showMethodCError(which, msg) {
+    const out = $(which === "rc" ? "rcOut" : "rdOut");
+    const err = $(which === "rc" ? "rcErr" : "rdErr");
+    if (msg === null) {
+      err.style.display = "none";
+      err.textContent = "";
+    } else {
+      err.style.display = "block";
+      err.textContent = msg;
+    }
+    return out;
+  }
   function calcMethodC() {
     const v = (id) => +$(id).value;
     try {
       const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
       const q = rationalFormula({ Sp, n, psi, tau, F });
-      $("rcOut").textContent = q.toFixed(2);
-      $("rcOut").removeAttribute("title");
+      showMethodCError("rc", null).textContent = q.toFixed(2);
     } catch (e) {
-      $("rcOut").textContent = "\u2014";
-      $("rcOut").title = e instanceof Error ? e.message : String(e);
+      showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
     try {
       const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
       $("rdH").classList.remove("invalid");
       $("rdZ").classList.remove("invalid");
       const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
-      $("rdOut").textContent = q.toFixed(2);
-      $("rdOut").removeAttribute("title");
+      showMethodCError("rd", null).textContent = q.toFixed(2);
     } catch (e) {
-      $("rdOut").textContent = "\u2014";
-      $("rdOut").title = e instanceof Error ? e.message : String(e);
+      showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
     document.querySelectorAll("#rdTables .fillBtn").forEach((item) => {
       const btn = item;
@@ -831,6 +1019,22 @@
   ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach((id) => {
     $(id).oninput = calcMethodC;
   });
+  $("lkGo").onclick = () => {
+    try {
+      const zone = Math.round(+$("lkZone").value);
+      const soil = $("lkSoil").value;
+      const freq = +$("lkFreq").value;
+      const tau = +$("lkTau").value;
+      const r = lookupRunoffH(RUNOFF_TABLE_SEED, zone, soil, freq, tau);
+      $("rdH").value = String(r.h);
+      $("lkOut").textContent = `h=${r.h} mm${r.interpolated ? "\uFF08\u63D2\u503C\uFF09" : ""}`;
+      $("lkOut").style.color = "var(--text2)";
+      calcMethodC();
+    } catch (e) {
+      $("lkOut").textContent = e instanceof Error ? e.message : String(e);
+      $("lkOut").style.color = "var(--red)";
+    }
+  };
   function svgToPngDataUrl() {
     return new Promise((resolve, reject) => {
       try {
@@ -948,7 +1152,7 @@
             new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.8.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.9.0 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -970,10 +1174,17 @@
     });
   }
   $("btnReport").onclick = buildReportDocx;
-  var LS_KEY = "hongsuan_v08";
-  var LEGACY_LS_KEY = "hongsuan_v07";
+  var LS_KEY = "hongsuan_v09";
+  var LEGACY_KEYS = ["hongsuan_v08", "hongsuan_v07"];
   var HIST_IDS = ["hf0Ac", "hf0Bc", "hf0nc", "hf0At", "hf0Bt", "hf0nt", "hf0Ipermil", "hf0T", "hf1Ac", "hf1Bc", "hf1nc", "hf1At", "hf1Bt", "hf1nt", "hf1Ipermil", "hf1T", "hbCv", "hbCs"];
   var NODATA_IDS = ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"];
+  function migrateState(parsed) {
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.schemaVersion === 9) return parsed;
+    if (parsed.schemaVersion == null) return { ...parsed, schemaVersion: 9 };
+    console.warn("\u672A\u77E5\u6301\u4E45\u5316\u7248\u672C\uFF0C\u6309\u5F53\u524D\u7248\u672C\u5C3D\u529B\u8BFB\u53D6", parsed.schemaVersion);
+    return { ...parsed, schemaVersion: 9 };
+  }
   function collectInputs() {
     const pick = (ids) => {
       const o = {};
@@ -984,6 +1195,7 @@
       return o;
     };
     return {
+      schemaVersion: 9,
       mode: state.mode,
       series: $("series").value,
       hasExtra: $("hasExtra").checked,
@@ -1047,7 +1259,19 @@
   function restoreAll() {
     let d = null;
     try {
-      d = JSON.parse(localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY) || "null");
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        d = migrateState(parsed);
+      } else {
+        for (const k of LEGACY_KEYS) {
+          const legacy = localStorage.getItem(k);
+          if (legacy) {
+            d = migrateState(JSON.parse(legacy));
+            break;
+          }
+        }
+      }
     } catch (e) {
       d = null;
     }
@@ -1084,6 +1308,7 @@
   $("btnReset").onclick = () => {
     if (confirm("\u786E\u5B9A\u6E05\u9664\u672C\u673A\u8BB0\u5FC6\u7684\u5168\u90E8\u53C2\u6570\u5E76\u6062\u590D\u9ED8\u8BA4\u793A\u4F8B\uFF1F")) {
       localStorage.removeItem(LS_KEY);
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
       location.reload();
     }
   };

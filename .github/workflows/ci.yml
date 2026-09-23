@@ -1,0 +1,25 @@
+# CI：每次推送/PR 自动跑 typecheck + 64 项单元测试 + esbuild 内核构建
+# 发布前仍需本机跑 verify:ui / verify:release（Playwright 与 Electron 体积不适合 CI 首版）
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Install
+        working-directory: app
+        run: npm ci
+      - name: Typecheck + Unit tests + Build
+        working-directory: app
+        run: npm run verify

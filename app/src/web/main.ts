@@ -1,12 +1,14 @@
 import { gammaincLower, norminv, phiPIII } from "../core/phi.ts";
-import { seriesStats, discontinuousStats, type SeriesStats, type DiscontinuousStats } from "../core/stats.ts";
+import { seriesStats, type SeriesStats, type DiscontinuousStats } from "../core/stats.ts";
+import { continuousPoints, discontinuousPoints, sseOfPoints, type EmpPoint } from "../core/points.ts";
+import { parseSeries } from "../core/parse.ts";
+import { RUNOFF_TABLE_SEED, lookupRunoffH } from "../core/runoffTable.ts";
 import { compareLineages } from "../core/bayes.ts";
 import { manningQ, designFromHistory } from "../core/methodB.ts";
 import { rationalFormula, runoffDepthFormula } from "../core/methodC.ts";
 
 // ============ 应用状态与渲染 ============
 type FitParams = { mean: number; cv: number; cs: number };
-type EmpPoint = { p: number; q: number; kind: "hist" | "meas" };
 interface AppState {
   mode: string;
   series: number[];
@@ -73,9 +75,7 @@ function render() {
   // 经验点（calcFromSeries 预存，含特大洪水标记）
   const pts = state.pts;
   if (pts.length) {
-    let sse = 0;
-    for (const pt of pts) sse += Math.pow(pt.q - params.mean * (1 + phiPIII(pt.p, params.cs) * params.cv), 2);
-    $("stSse").textContent = fmt(sse, 0);
+    $("stSse").textContent = fmt(sseOfPoints(pts, params, phiPIII), 0);
   } else { $("stSse").textContent = "—"; }
 
   // ---- 绘图 ----
@@ -144,35 +144,40 @@ function render() {
 }
 
 function calcFromSeries() {
-  const raw = $("series").value.split(/[\s,，;；]+/).filter(Boolean);
-  const xs = raw.map(Number).filter((v: number) => Number.isFinite(v) && v > 0);
   const errBox = $("parseErr");
+  const series = parseSeries($("series").value);
+  const xs = series.values;
+  const notices: string[] = [];
+  if (series.ignored.length) {
+    // 评估报告坑1修复：静默过滤 → 明示忽略项（截断显示，防超长粘贴刷屏）
+    const shown = series.ignored.slice(0, 5).join("、");
+    notices.push(`已忽略 ${series.ignored.length} 个无效值（${shown}${series.ignored.length > 5 ? " 等" : ""}）`);
+  }
   if (xs.length < 3) {
     errBox.style.display = "block";
     errBox.textContent = "至少需要 3 个有效流量值（当前 " + xs.length + " 个）。规范建议实测系列不宜少于 30 年。";
     return;
   }
-  errBox.style.display = "none";
   state.series = xs;
-  const sorted = [...xs].sort((a, b) => b - a);
-  const n = sorted.length;
   let st: SeriesStats | DiscontinuousStats;
   let pts: EmpPoint[];
   if ($("hasExtra").checked) {
     try {
       const N = Math.round(+$("inN").value);
       const l = Math.round(+$("inL").value);
-      const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter((v: number) => Number.isFinite(v) && v > 0);
-      st = discontinuousStats({ historicalExtra: extra, measuredDesc: sorted, l, N });
-      const a = st.a;
-      // 统一样法经验频率：特大按流量排序 M=1..a → M/(N+1)；实测一般项 m=l+1..n
-      const all = [...extra, ...sorted.slice(0, l)].sort((x, y) => y - x);
-      pts = all.map((q, i) => ({ p: (i + 1) / (N + 1), q, kind: "hist" }));
-      const pA = a / (N + 1);
-      for (let m = l + 1; m <= n; m++) {
-        pts.push({ p: pA + (1 - pA) * (m - l) / (n - l + 1), q: sorted[m - 1], kind: "meas" });
+      const extraParsed = parseSeries($("extraSeries").value);
+      if (extraParsed.ignored.length) {
+        notices.push(`特大洪水输入已忽略 ${extraParsed.ignored.length} 个无效值`);
       }
-      $("stN").textContent = `n=${n}，a=${a}，l=${l}，N=${N}`;
+      // 统计参数 + 统一样法经验频率点据：均由内核 points.ts 组装
+      const r = discontinuousPoints({
+        historicalExtra: extraParsed.values,
+        measuredDesc: xs,
+        l, N,
+      });
+      st = r.stats;
+      pts = r.points;
+      $("stN").textContent = `n=${st.n}，a=${st.a}，l=${l}，N=${N}`;
     } catch (e) {
       errBox.style.display = "block";
       errBox.textContent = "特大洪水输入有误：" + (e instanceof Error ? e.message : String(e));
@@ -180,8 +185,16 @@ function calcFromSeries() {
     }
   } else {
     st = seriesStats(xs);
-    pts = sorted.map((q, i) => ({ p: (i + 1) / (n + 1), q, kind: "meas" }));
+    pts = continuousPoints(xs);
     $("stN").textContent = st.n;
+  }
+  if (notices.length) {
+    errBox.style.display = "block";
+    errBox.dataset.kind = "notice";
+    errBox.textContent = notices.join("；");
+  } else {
+    errBox.style.display = "none";
+    delete errBox.dataset.kind;
   }
   state.stats = st;
   state.pts = pts;
@@ -392,22 +405,36 @@ document.querySelectorAll("#nTable .fillBtn").forEach(item => {
   btn.onclick = () => { $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n; };
 });
 
-// ===== 方法 C：无资料地区（与 src/core/methodC.ts 同构） =====
+// ===== 方法 C：无资料地区（公式计算全部 import 自 core，UI 只负责取数与呈现） =====
+function showMethodCError(which: "rc" | "rd", msg: string | null) {
+  const out = $(which === "rc" ? "rcOut" : "rdOut");
+  const err = $(which === "rc" ? "rcErr" : "rdErr");
+  if (msg === null) {
+    err.style.display = "none";
+    err.textContent = "";
+  } else {
+    err.style.display = "block";
+    err.textContent = msg; // 可见错误块，不再依赖 title 悬浮（评估报告 4.4）
+  }
+  return out;
+}
 function calcMethodC() {
   const v = (id: string) => +$(id).value;
   try {
     const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
     const q = rationalFormula({ Sp, n, psi, tau, F });
-    $("rcOut").textContent = q.toFixed(2);
-    $("rcOut").removeAttribute("title");
-  } catch (e) { $("rcOut").textContent = "—"; $("rcOut").title = e instanceof Error ? e.message : String(e); }
+    showMethodCError("rc", null).textContent = q.toFixed(2);
+  } catch (e) {
+    showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "—";
+  }
   try {
     const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
     $("rdH").classList.remove("invalid"); $("rdZ").classList.remove("invalid");
     const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
-    $("rdOut").textContent = q.toFixed(2);
-    $("rdOut").removeAttribute("title");
-  } catch (e) { $("rdOut").textContent = "—"; $("rdOut").title = e instanceof Error ? e.message : String(e); }
+    showMethodCError("rd", null).textContent = q.toFixed(2);
+  } catch (e) {
+    showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "—";
+  }
   // 查表辅助：点行填入
   document.querySelectorAll("#rdTables .fillBtn").forEach(item => {
     const btn = item as HTMLButtonElement;
@@ -428,6 +455,24 @@ function calcMethodC() {
 ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach(id => {
   $(id).oninput = calcMethodC;
 });
+
+// 查 h 工具：内置种子数据 + 双线性插值（内核 runoffTable.ts）
+$("lkGo").onclick = () => {
+  try {
+    const zone = Math.round(+$("lkZone").value);
+    const soil = ($("lkSoil") as HTMLSelectElement).value;
+    const freq = +$("lkFreq").value;
+    const tau = +$("lkTau").value;
+    const r = lookupRunoffH(RUNOFF_TABLE_SEED, zone, soil, freq, tau);
+    $("rdH").value = String(r.h);
+    $("lkOut").textContent = `h=${r.h} mm${r.interpolated ? "（插值）" : ""}`;
+    $("lkOut").style.color = "var(--text2)";
+    calcMethodC();
+  } catch (e) {
+    $("lkOut").textContent = e instanceof Error ? e.message : String(e);
+    $("lkOut").style.color = "var(--red)";
+  }
+};
 
 // ===== Word 计算书导出（docx.js 9.5.1，本地 libs/docx.umd.js） =====
 function svgToPngDataUrl(): Promise<string> {
@@ -545,7 +590,7 @@ function buildReportDocx() {
           new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
           new D.Paragraph({
             border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-            children: [new D.TextRun({ text: "本计算书由泓算 v0.8.1 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+            children: [new D.TextRun({ text: "本计算书由泓算 v0.9.0 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
           }),
         ],
       }],
@@ -563,13 +608,22 @@ function buildReportDocx() {
 $("btnReport").onclick = buildReportDocx;
 
 // ===== 参数持久化 + 输入守卫 + 重置默认（v0.8） =====
-const LS_KEY = "hongsuan_v08";
-const LEGACY_LS_KEY = "hongsuan_v07";
+const LS_KEY = "hongsuan_v09";
+const LEGACY_KEYS = ["hongsuan_v08", "hongsuan_v07"]; // 旧键：读取迁移后不再写回
 const HIST_IDS = ["hf0Ac","hf0Bc","hf0nc","hf0At","hf0Bt","hf0nt","hf0Ipermil","hf0T","hf1Ac","hf1Bc","hf1nc","hf1At","hf1Bt","hf1nt","hf1Ipermil","hf1T","hbCv","hbCs"];
 const NODATA_IDS = ["rcSp","rcN","rcPsi","rcTau","rcF","rdPhi","rdH","rdZ","rdF","rdBeta","rdGamma","rdDelta"];
+// 持久化迁移链：v9 = {schemaVersion:9, ...}；v8/v7 = 无版本号的扁平对象（字段兼容，直接透传）
+function migrateState(parsed: any): any {
+  if (!parsed || typeof parsed !== "object") return null;
+  if (parsed.schemaVersion === 9) return parsed;
+  if (parsed.schemaVersion == null) return { ...parsed, schemaVersion: 9 }; // v7/v8 扁平格式
+  console.warn("未知持久化版本，按当前版本尽力读取", parsed.schemaVersion);
+  return { ...parsed, schemaVersion: 9 };
+}
 function collectInputs() {
   const pick = (ids: string[]): Record<string, string> => { const o: Record<string, string> = {}; ids.forEach(id => { const el = $(id); if (el) o[id] = el.value; }); return o; };
   return {
+    schemaVersion: 9,
     mode: state.mode,
     series: $("series").value, hasExtra: $("hasExtra").checked,
     inN: $("inN").value, inL: $("inL").value, extraSeries: $("extraSeries").value,
@@ -613,8 +667,20 @@ document.querySelectorAll("input[type=number]").forEach(item => {
   el.addEventListener("blur", () => { if (el.value.trim() === "") { el.classList.add("invalid"); } });
 });
 function restoreAll() {
+  // v0.9 起带 schemaVersion 与迁移链；旧版扁平数据经迁移函数读入
   let d: any = null;
-  try { d = JSON.parse(localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY) || "null"); } catch (e) { d = null; }
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      d = migrateState(parsed);
+    } else {
+      for (const k of LEGACY_KEYS) {
+        const legacy = localStorage.getItem(k);
+        if (legacy) { d = migrateState(JSON.parse(legacy)); break; }
+      }
+    }
+  } catch (e) { d = null; }
   if (!d || typeof d !== "object") return null;
   if (typeof d.series === "string") $("series").value = d.series;
   if (d.hasExtra) { $("hasExtra").checked = true; $("extraBox").style.display = ""; }
@@ -634,7 +700,11 @@ function restoreAll() {
   return d.mode || null;
 }
 $("btnReset").onclick = () => {
-  if (confirm("确定清除本机记忆的全部参数并恢复默认示例？")) { localStorage.removeItem(LS_KEY); location.reload(); }
+  if (confirm("确定清除本机记忆的全部参数并恢复默认示例？")) {
+    localStorage.removeItem(LS_KEY);
+    for (const k of LEGACY_KEYS) localStorage.removeItem(k);
+    location.reload();
+  }
 };
 
 // 初始渲染：恢复上次状态（模式 + 全部输入 + 适线采用参数）
