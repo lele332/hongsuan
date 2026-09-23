@@ -354,6 +354,72 @@
     }
   });
 
+  // src/core/threePoint.ts
+  function threePointFit(pts) {
+    if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
+    const [p1, p2, p3] = pts.map((t) => t.p);
+    const [x1, x2, x3] = pts.map((t) => t.x);
+    for (const p of [p1, p2, p3]) {
+      if (!(p > 0 && p < 1)) throw new Error(`\u9891\u7387\u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    }
+    if (!(p1 < p2 && p2 < p3)) throw new Error("\u4E09\u70B9\u9891\u7387\u5FC5\u987B\u9012\u589E\uFF08\u5982 5%\u300150%\u300195% \u8D85\u8FC7\u6982\u7387\u5199\u6CD5\u5373 0.05/0.5/0.95\uFF09");
+    if (!(Number.isFinite(x1) && Number.isFinite(x2) && Number.isFinite(x3))) {
+      throw new Error("\u4E09\u70B9\u6D41\u91CF\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
+    if (x1 <= x3) throw new Error("\u8981\u6C42 x1 > x3\uFF08\u9891\u7387\u8D8A\u5C0F\u6D41\u91CF\u8D8A\u5927\uFF09\uFF0C\u7CFB\u5217\u53EF\u80FD\u6052\u5B9A\u6216\u987A\u5E8F\u9519\u8BEF");
+    const sOf = (cs2) => {
+      const f12 = phiPIII(p1, cs2), f22 = phiPIII(p2, cs2), f32 = phiPIII(p3, cs2);
+      return (f12 + f32 - 2 * f22) / (f12 - f32);
+    };
+    const S = (x1 + x3 - 2 * x2) / (x1 - x3);
+    let cs;
+    if (S <= 0) {
+      cs = 0;
+    } else {
+      let lo = 0, hi = 1;
+      let guard = 0;
+      while (sOf(hi) < S && guard++ < 100) {
+        lo = hi;
+        hi *= 2;
+      }
+      if (guard >= 100) throw new Error("\u4E09\u70B9\u6CD5\u6C42 Cs \u4E0A\u754C\u6269\u5F20\u8D85\u9650\uFF0C\u6570\u636E\u53EF\u80FD\u4E0D\u9002\u7528");
+      for (let i = 0; i < 100; i++) {
+        const mid = (lo + hi) / 2;
+        if (sOf(mid) < S) lo = mid;
+        else hi = mid;
+        if (hi - lo < 1e-10) break;
+      }
+      cs = (lo + hi) / 2;
+    }
+    const f1 = phiPIII(p1, cs), f2 = phiPIII(p2, cs), f3 = phiPIII(p3, cs);
+    const sigma = (x1 - x3) / (f1 - f3);
+    if (!(sigma > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA \u03C3 \u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    const mean = x2 - sigma * f2;
+    if (!(mean > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA\u5747\u503C\u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    return { mean, cv: sigma / mean, cs, S, sigma, freqs: [p1, p2, p3] };
+  }
+  function empiricalQuantiles(series, freqs) {
+    if (series.length < 3) throw new Error("\u4E09\u70B9\u6CD5\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6570\u636E");
+    const sorted = [...series].sort((a, b) => b - a);
+    const n = sorted.length;
+    return freqs.map((p) => {
+      const rank = p * (n + 1);
+      if (rank < 1) return sorted[0];
+      if (rank >= n) return sorted[n - 1];
+      const mLo = Math.floor(rank);
+      const w = rank - mLo;
+      return sorted[mLo - 1] + w * (sorted[mLo] - sorted[mLo - 1]);
+    });
+  }
+  function threePointFromSeries(series, freqs = [0.05, 0.5, 0.95]) {
+    const xs = empiricalQuantiles(series, freqs);
+    return threePointFit([
+      { p: freqs[0], x: xs[0] },
+      { p: freqs[1], x: xs[1] },
+      { p: freqs[2], x: xs[2] }
+    ]);
+  }
+
   // src/core/bayes.ts
   function nelderMead(f, x0, opts = {}) {
     const n = x0.length;
@@ -513,6 +579,78 @@
     return { fits, weights, best, q1p };
   }
 
+  // src/core/autoFit.ts
+  function autoFit(points, initial, phiFn = phiPIII) {
+    if (points.length < 3) throw new Error("\u4F18\u5316\u9002\u7EBF\u81F3\u5C11\u9700\u8981 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E");
+    const { mean } = initial;
+    if (!(mean > 0)) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF08\u4F18\u5316\u9002\u7EBF\u56FA\u5B9A\u77E9\u6CD5\u5747\u503C\uFF09");
+    const sseInitial = sseOfPoints(points, initial, phiFn);
+    const objective = (theta) => {
+      const cv2 = theta[0], cs2 = theta[1];
+      let penalty = 0;
+      if (cv2 <= 0.01) penalty += (0.01 - cv2) ** 2 * 1e12;
+      if (cs2 < 0) penalty += cs2 * cs2 * 1e12;
+      if (penalty > 0) return penalty + sseInitial;
+      return sseOfPoints(points, { mean, cv: cv2, cs: cs2 }, phiFn);
+    };
+    const starts = [
+      [initial.cv, initial.cs],
+      [Math.max(initial.cv * 0.8, 0.05), Math.max(initial.cs * 1.5, 0.1)],
+      [Math.min(initial.cv * 1.2, 1.5), Math.max(initial.cs * 0.5, 0.05)]
+    ];
+    let best = null;
+    for (const st of starts) {
+      const r = nelderMead(objective, st, { maxIter: 800, tol: 1e-10 });
+      if (!best || r.fx < best.fx) best = r;
+    }
+    const cv = best.x[0], cs = best.x[1];
+    const sse = sseOfPoints(points, { mean, cv, cs }, phiFn);
+    return {
+      mean,
+      cv,
+      cs,
+      sse,
+      sseInitial,
+      improved: sse <= sseInitial + 1e-9,
+      iterations: best.iterations
+    };
+  }
+
+  // src/core/projectFile.ts
+  var PROJECT_SCHEMA = "hongsuan-project@1";
+  function emptyProject() {
+    return { name: "", bridgeSite: "", engineer: "", reviewer: "", note: "" };
+  }
+  function buildProjectFile(project, state2, appVersion) {
+    const p = { ...emptyProject(), ...project };
+    for (const k of Object.keys(p)) {
+      if (typeof p[k] !== "string") throw new Error(`\u9879\u76EE\u4FE1\u606F\u5B57\u6BB5 ${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    return {
+      schema: PROJECT_SCHEMA,
+      savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      appVersion,
+      project: p,
+      state: state2
+    };
+  }
+  function parseProjectFile(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const f = json;
+    if (f.schema !== PROJECT_SCHEMA) throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${PROJECT_SCHEMA}\uFF0C\u6536\u5230 ${String(f.schema)}`);
+    if (typeof f.savedAt !== "string" || !f.savedAt) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 savedAt");
+    if (typeof f.appVersion !== "string" || !f.appVersion) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 appVersion");
+    if (typeof f.project !== "object" || f.project === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 project \u4FE1\u606F");
+    for (const k of ["name", "bridgeSite", "engineer", "reviewer", "note"]) {
+      if (typeof f.project[k] !== "string") throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 project.${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    if (typeof f.state !== "object" || f.state === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 state");
+    return f;
+  }
+  function serializeProject(file) {
+    return JSON.stringify(file, null, 2);
+  }
+
   // src/core/methodB.ts
   function manningQ(s) {
     const { Ac, Bc, nc, At, Bt, nt, I } = s;
@@ -577,6 +715,16 @@
   }
 
   // src/web/main.ts
+  var stateCompare = {};
+  function freqLabelOf(p) {
+    const m = { "0.0033": "1/300", "0.01": "1/100", "0.02": "1/50", "0.04": "1/25" };
+    return m[String(p)] || (p * 100).toFixed(2) + "%";
+  }
+  function renderCompare() {
+    const el = $("compareTable");
+    const rows = Object.values(stateCompare);
+    el.innerHTML = rows.length ? rows.map((r) => `<tr><td style="padding:4px 6px">${r.label}</td><td class="v">${fmt(r.q, 1)}</td><td>${r.freqLabel}</td><td style="color:var(--text3)">${r.note}</td></tr>`).join("") : `<tr><td colspan="4" style="color:var(--text3)">\u5728\u5404\u6A21\u5F0F\u8BA1\u7B97\u540E\u81EA\u52A8\u6C47\u603B\u5230\u6B64\u8868</td></tr>`;
+  }
   var state = {
     mode: "series",
     series: [],
@@ -617,6 +765,13 @@
     $("outQ").textContent = fmt(q, 0);
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
+    stateCompare.A = {
+      label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
+      q,
+      freqLabel: freqLabelOf(freq),
+      note: `Q\u0304=${fmt(params.mean, 1)}, Cv=${params.cv.toFixed(3)}, Cs=${params.cs.toFixed(2)}`
+    };
+    renderCompare();
     const pts = state.pts;
     if (pts.length) {
       $("stSse").textContent = fmt(sseOfPoints(pts, params, phiPIII), 0);
@@ -665,13 +820,64 @@
     s += `<circle cx="${fx}" cy="${sy2(q)}" r="6" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>`;
     s += `<text x="${Math.min(fx + 10, PR - 120)}" y="${sy2(q) - 10}" font-size="12" fill="#007AFF" font-weight="600">Q${(freq * 100).toFixed(2).replace(/\.?0+$/, "")}% = ${fmt(q, 0)}</text>`;
     for (const pt of pts) {
+      const px = pToX(pt.p), py = sy2(pt.q);
       if (pt.kind === "hist") {
-        s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="5.5" fill="#ff3b30"/>`;
+        s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
       } else {
-        s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="4" fill="#1d1d1f"/>`;
+        s += `<circle cx="${px}" cy="${py}" r="4" fill="#1d1d1f"/>`;
       }
     }
+    s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
+    s += `<line id="chy" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
     $("chart").innerHTML = s;
+    chartQLo = qLo;
+    chartQHi = qHi;
+    bindChartHover();
+  }
+  var chartQLo = 0;
+  var chartQHi = 1;
+  var chartHoverBound = false;
+  function bindChartHover() {
+    if (chartHoverBound) return;
+    chartHoverBound = true;
+    const svg = $("chart");
+    const normCdfT = (t) => {
+      const P = gammaincLower(0.5, t * t / 2);
+      return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+    };
+    const hide = () => {
+      for (const id of ["chx", "chy"]) {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("opacity", "0");
+      }
+    };
+    svg.addEventListener("mousemove", (ev) => {
+      const rect = svg.getBoundingClientRect();
+      const mx = (ev.clientX - rect.left) / rect.width * 940;
+      const my = (ev.clientY - rect.top) / rect.height * 520;
+      if (mx < PL || mx > PR || my < PT || my > PB) {
+        hide();
+        return;
+      }
+      const t = XMAX - (mx - PL) / (PR - PL) * (XMAX - XMIN);
+      const p = 1 - normCdfT(t);
+      const q = chartQLo + (PB - my) / (PB - PT) * (chartQHi - chartQLo);
+      const chx = document.getElementById("chx"), chy = document.getElementById("chy");
+      if (chx && chy) {
+        chx.setAttribute("x1", String(mx));
+        chx.setAttribute("x2", String(mx));
+        chx.setAttribute("y1", String(PT));
+        chx.setAttribute("y2", String(PB));
+        chy.setAttribute("y1", String(my));
+        chy.setAttribute("y2", String(my));
+        chy.setAttribute("x1", String(PL));
+        chy.setAttribute("x2", String(PR));
+        chx.setAttribute("opacity", "0.4");
+        chy.setAttribute("opacity", "0.4");
+      }
+      $("chartReadout").textContent = `P = ${(p * 100).toFixed(2)}% \uFF5C Q = ${fmt(q, 0)} m\xB3/s`;
+    });
+    svg.addEventListener("mouseleave", hide);
   }
   function calcFromSeries() {
     const errBox = $("parseErr");
@@ -854,6 +1060,44 @@
       if (el) el.style.display = v ? "" : "none";
     }
   }
+  $("btnThreePoint").onclick = () => {
+    try {
+      if (!state.series.length) {
+        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        return;
+      }
+      const r = threePointFromSeries(state.series);
+      state.params = {
+        mean: r.mean,
+        cv: Math.min(1.2, Math.max(0.05, r.cv)),
+        cs: Math.max(0, r.cs)
+      };
+      syncParamInputs();
+      render();
+      $("fitMsg").textContent = `\u4E09\u70B9\u6CD5\u521D\u4F30\uFF085%/50%/95% \u97E6\u4F2F\u6392\u4F4D\uFF09\uFF1AQ\u0304=${fmt(r.mean, 1)}\uFF0CCv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}`;
+    } catch (e) {
+      alert("\u4E09\u70B9\u6CD5\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnAutoFit").onclick = () => {
+    try {
+      if (state.pts.length < 3) {
+        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        return;
+      }
+      const r = autoFit(state.pts, state.params);
+      state.params = {
+        mean: r.mean,
+        cv: Math.min(1.2, Math.max(0.05, r.cv)),
+        cs: Math.max(0, r.cs)
+      };
+      syncParamInputs();
+      render();
+      $("fitMsg").textContent = `\u4F18\u5316\u9002\u7EBF\uFF08\u5747\u503C\u56FA\u5B9A\uFF09\uFF1ACv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}\uFF0CSSE ${fmt(r.sseInitial, 0)} \u2192 ${fmt(r.sse, 0)}`;
+    } catch (e) {
+      alert("\u4F18\u5316\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
   $("btnT3").onclick = () => {
     $("mParams").click();
     $("inMean").value = "5173.6";
@@ -944,6 +1188,13 @@
     const cv = +$("hbCv").value, cs = +$("hbCs").value;
     try {
       const res = designFromHistory(floods, { cv, cs }, state.freq, phiPIII);
+      stateCompare.B = {
+        label: "\u65B9\u6CD5B \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5",
+        q: res.q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `${floods.length} \u6B21\u5386\u53F2\u6D2A\u6C34\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09`
+      };
+      renderCompare();
       $("histResult").style.display = "";
       $("histResult").innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -987,6 +1238,13 @@
     try {
       const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
       const q = rationalFormula({ Sp, n, psi, tau, F });
+      stateCompare.C1 = {
+        label: "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F} km\xB2, \u03C4=${tau} h`
+      };
+      renderCompare();
       showMethodCError("rc", null).textContent = q.toFixed(2);
     } catch (e) {
       showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
@@ -996,6 +1254,13 @@
       $("rdH").classList.remove("invalid");
       $("rdZ").classList.remove("invalid");
       const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
+      stateCompare.C2 = {
+        label: "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F2} km\xB2, h=${h} mm`
+      };
+      renderCompare();
       showMethodCError("rd", null).textContent = q.toFixed(2);
     } catch (e) {
       showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
@@ -1091,6 +1356,8 @@
       return;
     }
     const p = state.params, freq = state.freq;
+    const pj = currentProject();
+    const pjAny = pj.name || pj.bridgeSite || pj.engineer || pj.reviewer;
     const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
     const st = state.stats ? {
       n: state.stats.n,
@@ -1124,6 +1391,12 @@
           children: [
             new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\u6CD3\u7B97 \xB7 \u6865\u6DB5\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u4E66", bold: true, size: 40 })] }),
             new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\uFF08P-\u2162 \u578B\u9891\u7387\u66F2\u7EBF\u9002\u7EBF\u6CD5\uFF09", size: 24, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...pjAny ? [
+              H1("\u3007\u3001\u5DE5\u7A0B\u4FE1\u606F"),
+              PB2("\u9879\u76EE\u540D", pj.name || "\u2014"),
+              PB2("\u6865\u4F4D / \u65AD\u9762", pj.bridgeSite || "\u2014"),
+              PB2("\u8BA1\u7B97\u4EBA / \u590D\u6838\u4EBA", `${pj.engineer || "\u2014"} / ${pj.reviewer || "\u2014"}`)
+            ] : [],
             H1("\u4E00\u3001\u8BA1\u7B97\u4F9D\u636E"),
             P("1.\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300BJTG C30-2015\uFF1A\u7B2C 6.2 \u8282\uFF08\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF\uFF09\uFF0C\u5F0F 6.2.6\uFF1AQp = Q\u0304(1 + \u03A6p\xB7Cv)\uFF1B\u8868 1.0.8\uFF08\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387\uFF09\u3002"),
             P("2. \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u91C7\u7528\u76AE\u5C14\u900A\u2162\u578B\uFF08\u89C4\u8303\u7B2C 6.2.4 \u6761\uFF09\uFF1B\u03A6p \u7531 P-\u2162 \u5206\u5E03\u6570\u503C\u8BA1\u7B97\uFF08\u4E0D\u5B8C\u5168 \u0393 \u51FD\u6570\u5206\u4F4D\u6570\uFF09\uFF0C\u7ECF scipy \u72EC\u7ACB\u4EA4\u53C9\u9A8C\u8BC1\u3002"),
@@ -1152,7 +1425,7 @@
             new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.9.0 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.10.0 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -1208,7 +1481,17 @@
       freq: state.freq,
       adopted: { ...state.params },
       hist: pick(HIST_IDS),
-      nodata: pick(NODATA_IDS)
+      nodata: pick(NODATA_IDS),
+      project: currentProject()
+    };
+  }
+  function currentProject() {
+    return {
+      name: $("pjName").value,
+      bridgeSite: $("pjSite").value,
+      engineer: $("pjEng").value,
+      reviewer: $("pjRev").value,
+      note: ""
     };
   }
   var saveTimer = null;
@@ -1276,6 +1559,9 @@
       d = null;
     }
     if (!d || typeof d !== "object") return null;
+    return applySaved(d);
+  }
+  function applySaved(d) {
     if (typeof d.series === "string") $("series").value = d.series;
     if (d.hasExtra) {
       $("hasExtra").checked = true;
@@ -1302,9 +1588,48 @@
       const el = $(k);
       if (el && d.nodata[k] != null) el.value = d.nodata[k];
     }
+    if (d.project) {
+      $("pjName").value = d.project.name ?? "";
+      $("pjSite").value = d.project.bridgeSite ?? "";
+      $("pjEng").value = d.project.engineer ?? "";
+      $("pjRev").value = d.project.reviewer ?? "";
+    }
     console.log("RESTORE_MODE", d.mode || "series", "ADOPTED", state.adoptedOverride ? "yes" : "no", "FREQ", state.freq);
     return d.mode || null;
   }
+  $("btnExportProject").onclick = () => {
+    try {
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.10.0");
+      const blob = new Blob([serializeProject(file)], { type: "application/json" });
+      downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
+      $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
+    } catch (e) {
+      alert("\u5BFC\u51FA\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnImportProject").onclick = () => {
+    $("pjFile").click();
+  };
+  $("pjFile").onchange = () => {
+    const inp = $("pjFile");
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseProjectFile(JSON.parse(String(reader.result)));
+        applySaved({ ...parsed.state, project: parsed.project });
+        saveAll();
+        const dt = parsed.savedAt.slice(0, 10);
+        $("pjMsg").textContent = `\u5DF2\u5BFC\u5165\uFF1A${parsed.project.name || "\u672A\u547D\u540D"}\uFF08${dt}\uFF0C\u6CD3\u7B97 v${parsed.appVersion}\uFF09`;
+        location.reload();
+      } catch (e) {
+        alert("\u5BFC\u5165\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+      }
+    };
+    reader.readAsText(f);
+    inp.value = "";
+  };
   $("btnReset").onclick = () => {
     if (confirm("\u786E\u5B9A\u6E05\u9664\u672C\u673A\u8BB0\u5FC6\u7684\u5168\u90E8\u53C2\u6570\u5E76\u6062\u590D\u9ED8\u8BA4\u793A\u4F8B\uFF1F")) {
       localStorage.removeItem(LS_KEY);

@@ -55,7 +55,7 @@ export async function verifyAppPage(page, options) {
   await page.waitForSelector("#outQ", { state: "visible" });
 
   const title = await page.title();
-  check(results, "页面标题版本", title.includes("v0.9.0"), title);
+  check(results, "页面标题版本", title.includes("v0.10.0"), title);
 
   if (mode === "web" || mode === "electron") {
     check(results, "单一内核产物已加载", await page.evaluate(() =>
@@ -85,6 +85,38 @@ export async function verifyAppPage(page, options) {
   const q1 = Number((await page.textContent("#outQ")).replace(/[^0-9.]/g, ""));
   check(results, "频率适线设计流量", Number.isFinite(q1) && q1 > 0, `Q1%=${q1}`);
 
+  // 图例菱形（色盲形状区分 R6）
+  check(results, "图例含特大洪水菱形标记", await page.evaluate(() =>
+    Boolean(document.querySelector(".legend .dia"))));
+
+  // 悬停读数：十字线 + P/Q 读数条
+  const box = await (await page.$("#chart")).boundingBox();
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await page.waitForTimeout(150);
+  const readout = await page.textContent("#chartReadout");
+  check(results, "图表悬停读数", /P = [\d.]+% .*Q = [\d.,]+/.test(readout ?? ""), readout ?? "");
+  await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await page.waitForTimeout(100);
+
+  // 对比表已自动记录方法A
+  const cmpA = await page.textContent("#compareTable");
+  check(results, "对比表记录方法A", /P-Ⅲ 频率适线/.test(cmpA ?? ""), cmpA ?? "");
+
+  // 三点法初估
+  await page.click("#btnThreePoint");
+  await page.waitForTimeout(200);
+  const tpMsg = await page.textContent("#fitMsg");
+  check(results, "三点法初估", /三点法初估/.test(tpMsg ?? ""), tpMsg ?? "");
+
+  // 优化适线：SSE 不劣化
+  const sseBefore = Number((await page.textContent("#stSse")).replace(/[^0-9.]/g, ""));
+  await page.click("#btnAutoFit");
+  await page.waitForTimeout(600);
+  const afMsg = await page.textContent("#fitMsg");
+  const sseAfter = Number((await page.textContent("#stSse")).replace(/[^0-9.]/g, ""));
+  check(results, "优化适线执行", /优化适线/.test(afMsg ?? ""), afMsg ?? "");
+  check(results, "优化适线 SSE 不劣化", Number.isFinite(sseAfter) && sseAfter <= sseBefore * 1.001 + 1, `${sseBefore} -> ${sseAfter}`);
+
   await page.click("#btnBayes");
   await page.waitForSelector("#bayesResult", { state: "visible" });
   await page.waitForTimeout(500);
@@ -96,6 +128,8 @@ export async function verifyAppPage(page, options) {
   await page.waitForSelector("#histResult", { state: "visible" });
   const histText = await page.textContent("#histResult");
   check(results, "历史洪水位法", /设计流量/.test(histText) && /Q/.test(histText));
+  const cmpB = await page.textContent("#compareTable");
+  check(results, "对比表记录方法B", /历史洪水位法/.test(cmpB ?? ""), "");
 
   await page.click("#mNoData");
   await page.waitForTimeout(200);
@@ -103,6 +137,8 @@ export async function verifyAppPage(page, options) {
   const rdOut = await page.textContent("#rdOut");
   check(results, "推理公式输出", /^\d+(\.\d+)?$/.test(rcOut), rcOut);
   check(results, "径流厚度法输出", /^\d+(\.\d+)?$/.test(rdOut), rdOut);
+  const cmpC = await page.textContent("#compareTable");
+  check(results, "对比表记录方法C", /推理公式/.test(cmpC ?? "") && /径流厚度法/.test(cmpC ?? ""), "");
 
   await page.fill("#rcF", "150");
   await page.dispatchEvent("#rcF", "input");
@@ -170,6 +206,30 @@ export async function verifyAppPage(page, options) {
   check(results, "DOCX 正文含计算书标题", xml.includes("桥涵设计流量计算书"));
   check(results, "DOCX 正文含规范引用", xml.includes("JTG C30-2015"));
   check(results, "DOCX 正文含频率成果表", xml.includes("频率曲线成果表"));
+
+  // 工程文件导出：捕获 JSON Blob 并校验 schema
+  if (mode !== "offline") {
+    await page.evaluate(() => {
+      window.__projBlob = null;
+      const orig = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = (b) => { if (b.type === "application/json") window.__projBlob = b; return orig(b); };
+    });
+    await page.click("#projectCard summary");
+    await page.waitForTimeout(150);
+    await page.fill("#pjName", "E2E 测试项目");
+    await page.click("#btnExportProject");
+    await page.waitForTimeout(300);
+    const projJson = await page.evaluate(async () => window.__projBlob ? await window.__projBlob.text() : null);
+    let projOk = false, projName = "";
+    try {
+      const parsed = JSON.parse(projJson);
+      projOk = parsed.schema === "hongsuan-project@1" && parsed.project && parsed.state;
+      projName = parsed.project?.name ?? "";
+    } catch { /* leave false */ }
+    check(results, "工程文件导出", projOk && projName === "E2E 测试项目", projName);
+    const pjMsg = await page.textContent("#pjMsg");
+    check(results, "工程导出反馈", /已导出/.test(pjMsg ?? ""), pjMsg ?? "");
+  }
 
   if (mode === "offline") {
     const externalRequests = requests.filter(protocol => !["file:", "blob:", "data:"].includes(protocol));

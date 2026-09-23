@@ -1,11 +1,11 @@
 {
   "name": "hydro-design-flood",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "泓算 · 桥涵设计流量推求（JTG C30-2015 设计流量模块）",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-strip-types --test src/tests/phi.test.ts src/tests/cases.test.ts src/tests/discontinuous.test.ts src/tests/bayes.test.ts src/tests/methodB.test.ts src/tests/methodC.test.ts src/tests/guards.test.ts src/tests/points.test.ts src/tests/parse.test.ts src/tests/runoffTable.test.ts",
+    "test": "node --experimental-strip-types --test src/tests/phi.test.ts src/tests/cases.test.ts src/tests/discontinuous.test.ts src/tests/bayes.test.ts src/tests/methodB.test.ts src/tests/methodC.test.ts src/tests/guards.test.ts src/tests/points.test.ts src/tests/parse.test.ts src/tests/runoffTable.test.ts src/tests/threePoint.test.ts src/tests/areaConvert.test.ts src/tests/autoFit.test.ts src/tests/projectFile.test.ts",
     "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.web.json",
     "build": "esbuild src/web/main.ts --bundle --format=iife --outfile=web/app.js --target=es2020",
     "verify": "npm run typecheck && npm test && npm run build",

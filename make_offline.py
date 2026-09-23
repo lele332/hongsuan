@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""生成泓算 v0.9.0 单文件离线版：内联 docx 与 app.js，断网双击即用。"""
+"""生成泓算 v0.10.0 单文件离线版：内联 docx 与 app.js，断网双击即用。"""
 from __future__ import annotations
 
 import re
@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "app" / "web" / "index.html"
 LIB = ROOT / "app" / "web" / "libs" / "docx.umd.js"
 APP_JS = ROOT / "app" / "web" / "app.js"
-OUT_DIR = ROOT / "dist" / "泓算离线版-v0.9.0"
-OUT = OUT_DIR / "泓算-v0.9.0-离线版.html"
-VERSION = "0.9.0"
+OUT_DIR = ROOT / "dist" / "泓算离线版-v0.10.0"
+OUT = OUT_DIR / "泓算-v0.10.0-离线版.html"
+VERSION = "0.10.0"
 
 
 def inline_script(tag: str, code: str, comment: str, html: str) -> str:

@@ -1,4 +1,4 @@
-"""组装泓算 v0.9.0 桌面版（Electron + 单一计算内核构建产物）。"""
+"""组装泓算 v0.10.0 桌面版（Electron + 单一计算内核构建产物）。"""
 from __future__ import annotations
 
 import argparse
@@ -15,7 +15,7 @@ DIST = ROOT / "electron_dist"
 ZIP = DIST / "electron.zip"
 OUT = DIST / "unpacked"
 RELEASE_ROOT = ROOT / "dist"
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 TARGET_NAME = f"泓算桌面版-v{VERSION}"
 TARGET = RELEASE_ROOT / TARGET_NAME
 

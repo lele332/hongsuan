@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.9.0</title>
+<title>泓算 · 桥涵设计流量推求 v0.10.0</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -92,6 +92,7 @@
   svg text { font-family: -apple-system, "PingFang SC", sans-serif; }
   .legend { display: flex; gap: 18px; font-size: 12px; color: var(--text2); margin-top: 8px; }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--blue); vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+  .legend .dia { display:inline-block; width:8px; height:8px; background:#ff3b30; transform:rotate(45deg); margin-right:5px; vertical-align:middle; }
   .legend .dot { display:inline-block; width:8px; height:8px; background:#1d1d1f; border-radius:50%; margin-right:5px; vertical-align: middle; }
   .legend .ring { display:inline-block; width:9px; height:9px; border:2px solid var(--blue); border-radius:50%; margin-right:5px; vertical-align: middle; background:transparent; }
   footer {
@@ -275,10 +276,11 @@
 <div class="card" id="chartCard">
   <h2>海森机率格纸 · 适线</h2>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
+  <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums">悬停图表可读取任意位置频率与流量</div>
   <div class="legend">
     <span><i></i>理论频率曲线（P-Ⅲ）</span>
     <span><span class="dot"></span>经验点据 P<sub>m</sub>=m/(n+1)</span>
-    <span><span class="dot" style="background:#ff3b30"></span>特大洪水 M/(N+1)</span>
+    <span><span class="dia"></span>特大洪水 M/(N+1)</span>
     <span><span class="ring"></span>设计频率点</span>
   </div>
 </div>
@@ -305,6 +307,13 @@
     <div>
       <label>适线均值 Q̄（m³/s，默认矩法初估，可键入微调）</label>
       <input type="number" id="meanIn" value="1065.0" step="any" style="width:100%">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;justify-content:flex-end">
+      <div>
+        <button class="btn" id="btnThreePoint" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="规范 6.2.5 参数初估方法二：5%/50%/95% 三点解 Q̄、Cv、Cs">三点法初估</button>
+        <button class="btn ghost" id="btnAutoFit" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="以当前参数为初值，对经验点据最小化离差平方和（均值固定）">优化适线</button>
+      </div>
+      <div id="fitMsg" style="font-size:11.5px;color:var(--text3)"></div>
     </div>
     <div style="display:flex;align-items:center;color:var(--text3);font-size:12px">
       系列重新计算时恢复矩法初估值；三参数（Q̄、C<sub>v</sub>、C<sub>s</sub>）均可按规范 6.2.5 目估适线调整。
@@ -349,6 +358,14 @@
   </div>
 </div>
 
+<div class="card" id="compareCard">
+  <h2>多方法成果对比 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.1.3 多方法经分析论证后选用</span></h2>
+  <table class="ltab">
+    <tr><th>方法</th><th class="v">设计流量 Q<sub>p</sub>（m³/s）</th><th>频率</th><th>备注</th></tr>
+    <tbody id="compareTable"><tr><td colspan="4" style="color:var(--text3)">在各模式计算后自动汇总到此表</td></tr></tbody>
+  </table>
+</div>
+
 <div class="grid2" id="statsGrid">
   <div class="card">
     <h2>系列统计（矩法初估）</h2>
@@ -370,11 +387,27 @@
   </div>
 </div>
 
+<details class="card" id="projectCard" style="padding:12px 16px">
+  <summary style="cursor:pointer;font-size:13.5px;font-weight:600">工程信息与项目文件（计算书抬头 / JSON 导入导出）</summary>
+  <div class="row" style="margin-top:10px">
+    <div><label>项目名</label><input type="text" id="pjName" placeholder="如：G320 某段改建工程"></div>
+    <div><label>桥位 / 断面</label><input type="text" id="pjSite" placeholder="如：K3+685 涵洞"></div>
+    <div><label>计算人</label><input type="text" id="pjEng" placeholder=""></div>
+    <div><label>复核人</label><input type="text" id="pjRev" placeholder=""></div>
+  </div>
+  <div style="margin-top:10px">
+    <button class="btn" id="btnExportProject" style="margin-top:0;padding:5px 14px;font-size:12.5px">导出工程 (.json)</button>
+    <button class="btn ghost" id="btnImportProject" style="margin-top:0;padding:4px 12px;font-size:12.5px">导入工程</button>
+    <input type="file" id="pjFile" accept=".json,application/json" style="display:none">
+    <span id="pjMsg" style="font-size:11.5px;color:var(--text3);margin-left:8px"></span>
+  </div>
+</details>
+
 <footer>
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.9.0<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.10.0<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>

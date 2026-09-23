@@ -3,6 +3,9 @@ import { seriesStats, type SeriesStats, type DiscontinuousStats } from "../core/
 import { continuousPoints, discontinuousPoints, sseOfPoints, type EmpPoint } from "../core/points.ts";
 import { parseSeries } from "../core/parse.ts";
 import { RUNOFF_TABLE_SEED, lookupRunoffH } from "../core/runoffTable.ts";
+import { threePointFromSeries } from "../core/threePoint.ts";
+import { autoFit } from "../core/autoFit.ts";
+import { buildProjectFile, parseProjectFile, serializeProject, type ProjectInfo } from "../core/projectFile.ts";
 import { compareLineages } from "../core/bayes.ts";
 import { manningQ, designFromHistory } from "../core/methodB.ts";
 import { rationalFormula, runoffDepthFormula } from "../core/methodC.ts";
@@ -17,6 +20,21 @@ interface AppState {
   freq: number;
   pts: EmpPoint[];
   adoptedOverride?: FitParams;
+}
+
+// 多方法成果对比（规范 6.1.3）：各模式计算后写入，UI 汇总呈现
+interface CompareRow { label: string; q: number; freqLabel: string; note: string; }
+const stateCompare: Record<string, CompareRow> = {};
+function freqLabelOf(p: number): string {
+  const m: Record<string, string> = { "0.0033": "1/300", "0.01": "1/100", "0.02": "1/50", "0.04": "1/25" };
+  return m[String(p)] || (p * 100).toFixed(2) + "%";
+}
+function renderCompare() {
+  const el = $("compareTable");
+  const rows = Object.values(stateCompare);
+  el.innerHTML = rows.length
+    ? rows.map(r => `<tr><td style="padding:4px 6px">${r.label}</td><td class="v">${fmt(r.q, 1)}</td><td>${r.freqLabel}</td><td style="color:var(--text3)">${r.note}</td></tr>`).join("")
+    : `<tr><td colspan="4" style="color:var(--text3)">在各模式计算后自动汇总到此表</td></tr>`;
 }
 
 const state: AppState = {
@@ -71,6 +89,12 @@ function render() {
   $("outQ").textContent = fmt(q, 0);
   $("outPhi").textContent = phi.toFixed(3);
   $("outKp").textContent = kp.toFixed(3);
+  stateCompare.A = {
+    label: "方法A · P-Ⅲ 频率适线",
+    q, freqLabel: freqLabelOf(freq),
+    note: `Q̄=${fmt(params.mean, 1)}, Cv=${params.cv.toFixed(3)}, Cs=${params.cs.toFixed(2)}`,
+  };
+  renderCompare();
 
   // 经验点（calcFromSeries 预存，含特大洪水标记）
   const pts = state.pts;
@@ -132,15 +156,59 @@ function render() {
   s += `<circle cx="${fx}" cy="${sy2(q)}" r="6" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>`;
   s += `<text x="${Math.min(fx + 10, PR - 120)}" y="${sy2(q) - 10}" font-size="12" fill="#007AFF" font-weight="600">Q${(freq * 100).toFixed(2).replace(/\.?0+$/, "")}% = ${fmt(q, 0)}</text>`;
 
-  // 经验点（特大红色大圆 / 实测黑点）
+  // 经验点（特大洪水红色菱形 / 实测黑色圆点——形状区分照顾色盲，R6）
   for (const pt of pts) {
+    const px = pToX(pt.p), py = sy2(pt.q);
     if (pt.kind === "hist") {
-      s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="5.5" fill="#ff3b30"/>`;
+      s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
     } else {
-      s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="4" fill="#1d1d1f"/>`;
+      s += `<circle cx="${px}" cy="${py}" r="4" fill="#1d1d1f"/>`;
     }
   }
+  // 悬停十字线（坐标由 mousemove 处理器写入）
+  s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
+  s += `<line id="chy" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
   $("chart").innerHTML = s;
+  chartQLo = qLo; chartQHi = qHi;
+  bindChartHover();
+}
+
+// 悬停读数：任意位置 → 频率 P 与流量 Q（R6 图表交互）
+let chartQLo = 0, chartQHi = 1;
+let chartHoverBound = false;
+function bindChartHover() {
+  if (chartHoverBound) return;
+  chartHoverBound = true;
+  const svg = $("chart") as unknown as SVGSVGElement;
+  const normCdfT = (t: number) => {
+    const P = gammaincLower(0.5, t * t / 2);
+    return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+  };
+  const hide = () => {
+    for (const id of ["chx", "chy"]) {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("opacity", "0");
+    }
+  };
+  svg.addEventListener("mousemove", (ev) => {
+    const rect = svg.getBoundingClientRect();
+    const mx = ((ev.clientX - rect.left) / rect.width) * 940;
+    const my = ((ev.clientY - rect.top) / rect.height) * 520;
+    if (mx < PL || mx > PR || my < PT || my > PB) { hide(); return; }
+    const t = XMAX - ((mx - PL) / (PR - PL)) * (XMAX - XMIN);
+    const p = 1 - normCdfT(t);
+    const q = chartQLo + ((PB - my) / (PB - PT)) * (chartQHi - chartQLo);
+    const chx = document.getElementById("chx"), chy = document.getElementById("chy");
+    if (chx && chy) {
+      chx.setAttribute("x1", String(mx)); chx.setAttribute("x2", String(mx));
+      chx.setAttribute("y1", String(PT)); chx.setAttribute("y2", String(PB));
+      chy.setAttribute("y1", String(my)); chy.setAttribute("y2", String(my));
+      chy.setAttribute("x1", String(PL)); chy.setAttribute("x2", String(PR));
+      chx.setAttribute("opacity", "0.4"); chy.setAttribute("opacity", "0.4");
+    }
+    $("chartReadout").textContent = `P = ${(p * 100).toFixed(2)}% ｜ Q = ${fmt(q, 0)} m³/s`;
+  });
+  svg.addEventListener("mouseleave", hide);
 }
 
 function calcFromSeries() {
@@ -297,6 +365,36 @@ function setFitCardsVisible(v: boolean) {
     if (el) el.style.display = v ? "" : "none";
   }
 }
+$("btnThreePoint").onclick = () => {
+  try {
+    if (!state.series.length) { alert("请先计算系列（流量系列模式）。"); return; }
+    const r = threePointFromSeries(state.series);
+    state.params = {
+      mean: r.mean,
+      cv: Math.min(1.2, Math.max(0.05, r.cv)),
+      cs: Math.max(0, r.cs),
+    };
+    syncParamInputs(); render();
+    $("fitMsg").textContent = `三点法初估（5%/50%/95% 韦伯排位）：Q̄=${fmt(r.mean, 1)}，Cv=${r.cv.toFixed(3)}，Cs=${r.cs.toFixed(2)}`;
+  } catch (e) {
+    alert("三点法失败：" + (e instanceof Error ? e.message : String(e)));
+  }
+};
+$("btnAutoFit").onclick = () => {
+  try {
+    if (state.pts.length < 3) { alert("请先计算系列（流量系列模式）。"); return; }
+    const r = autoFit(state.pts, state.params);
+    state.params = {
+      mean: r.mean,
+      cv: Math.min(1.2, Math.max(0.05, r.cv)),
+      cs: Math.max(0, r.cs),
+    };
+    syncParamInputs(); render();
+    $("fitMsg").textContent = `优化适线（均值固定）：Cv=${r.cv.toFixed(3)}，Cs=${r.cs.toFixed(2)}，SSE ${fmt(r.sseInitial, 0)} → ${fmt(r.sse, 0)}`;
+  } catch (e) {
+    alert("优化适线失败：" + (e instanceof Error ? e.message : String(e)));
+  }
+};
 $("btnT3").onclick = () => {
   $("mParams").click();
   $("inMean").value = "5173.6"; $("inCv").value = "0.331"; $("inCs").value = "1.99";
@@ -383,6 +481,12 @@ function calcMethodB() {
   const cv = +$("hbCv").value, cs = +$("hbCs").value;
   try {
     const res = designFromHistory(floods, { cv, cs }, state.freq, phiPIII);
+    stateCompare.B = {
+      label: "方法B · 历史洪水位法",
+      q: res.q, freqLabel: freqLabelOf(state.freq),
+      note: `${floods.length} 次历史洪水（曼宁公式）`,
+    };
+    renderCompare();
     $("histResult").style.display = "";
     $("histResult").innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -423,6 +527,12 @@ function calcMethodC() {
   try {
     const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
     const q = rationalFormula({ Sp, n, psi, tau, F });
+    stateCompare.C1 = {
+      label: "方法C · 推理公式",
+      q, freqLabel: freqLabelOf(state.freq),
+      note: `F=${F} km², τ=${tau} h`,
+    };
+    renderCompare();
     showMethodCError("rc", null).textContent = q.toFixed(2);
   } catch (e) {
     showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "—";
@@ -431,6 +541,12 @@ function calcMethodC() {
     const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
     $("rdH").classList.remove("invalid"); $("rdZ").classList.remove("invalid");
     const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
+    stateCompare.C2 = {
+      label: "方法C · 径流厚度法",
+      q, freqLabel: freqLabelOf(state.freq),
+      note: `F=${F2} km², h=${h} mm`,
+    };
+    renderCompare();
     showMethodCError("rd", null).textContent = q.toFixed(2);
   } catch (e) {
     showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "—";
@@ -524,6 +640,8 @@ function buildReportDocx() {
   const D = window.docx;
   if (!D) { alert("docx 库未加载（web/libs/docx.umd.js）"); return; }
   const p = state.params, freq = state.freq;
+  const pj = currentProject();
+  const pjAny = pj.name || pj.bridgeSite || pj.engineer || pj.reviewer;
   const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
   const st: { n: number; mean?: number; cv?: number; cs?: number } = state.stats
     ? {
@@ -562,6 +680,12 @@ function buildReportDocx() {
         children: [
           new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "泓算 · 桥涵设计流量计算书", bold: true, size: 40 })] }),
           new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "（P-Ⅲ 型频率曲线适线法）", size: 24, color: "6e6e73" })], spacing: { after: 240 } }),
+          ...(pjAny ? [
+            H1("〇、工程信息"),
+            PB("项目名", pj.name || "—"),
+            PB("桥位 / 断面", pj.bridgeSite || "—"),
+            PB("计算人 / 复核人", `${pj.engineer || "—"} / ${pj.reviewer || "—"}`),
+          ] : []),
           H1("一、计算依据"),
           P("1.《公路工程水文勘测设计规范》JTG C30-2015：第 6.2 节（利用实测流量系列推算设计流量），式 6.2.6：Qp = Q̄(1 + Φp·Cv)；表 1.0.8（设计洪水频率）。"),
           P("2. 理论频率曲线采用皮尔逊Ⅲ型（规范第 6.2.4 条）；Φp 由 P-Ⅲ 分布数值计算（不完全 Γ 函数分位数），经 scipy 独立交叉验证。"),
@@ -590,7 +714,7 @@ function buildReportDocx() {
           new D.Paragraph({ children: [new D.TextRun({ text: "图：海森机率格纸上的经验点据与 P-Ⅲ 理论频率曲线（横轴频率、纵轴流量 m³/s）", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
           new D.Paragraph({
             border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-            children: [new D.TextRun({ text: "本计算书由泓算 v0.9.0 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
+            children: [new D.TextRun({ text: "本计算书由泓算 v0.10.0 生成，Φ 值算法经多源交叉验证（scipy 独立实现一致到 1e-6）。计算结果供学习与课程设计参考，工程应用须经注册工程师复核。生成时间：" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })],
           }),
         ],
       }],
@@ -631,6 +755,16 @@ function collectInputs() {
     freq: state.freq,
     adopted: { ...state.params },
     hist: pick(HIST_IDS), nodata: pick(NODATA_IDS),
+    project: currentProject(),
+  };
+}
+function currentProject(): ProjectInfo {
+  return {
+    name: ($("pjName") as HTMLInputElement).value,
+    bridgeSite: ($("pjSite") as HTMLInputElement).value,
+    engineer: ($("pjEng") as HTMLInputElement).value,
+    reviewer: ($("pjRev") as HTMLInputElement).value,
+    note: "",
   };
 }
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -682,6 +816,10 @@ function restoreAll() {
     }
   } catch (e) { d = null; }
   if (!d || typeof d !== "object") return null;
+  return applySaved(d);
+}
+
+function applySaved(d: any): string | null {
   if (typeof d.series === "string") $("series").value = d.series;
   if (d.hasExtra) { $("hasExtra").checked = true; $("extraBox").style.display = ""; }
   if (d.inN != null) $("inN").value = d.inN;
@@ -696,9 +834,48 @@ function restoreAll() {
   }
   if (d.hist) for (const k in d.hist) { const el = $(k); if (el && d.hist[k] != null) el.value = d.hist[k]; }
   if (d.nodata) for (const k in d.nodata) { const el = $(k); if (el && d.nodata[k] != null) el.value = d.nodata[k]; }
+  if (d.project) {
+    ($("pjName") as HTMLInputElement).value = d.project.name ?? "";
+    ($("pjSite") as HTMLInputElement).value = d.project.bridgeSite ?? "";
+    ($("pjEng") as HTMLInputElement).value = d.project.engineer ?? "";
+    ($("pjRev") as HTMLInputElement).value = d.project.reviewer ?? "";
+  }
   console.log("RESTORE_MODE", d.mode || "series", "ADOPTED", state.adoptedOverride ? "yes" : "no", "FREQ", state.freq);
   return d.mode || null;
 }
+$("btnExportProject").onclick = () => {
+  try {
+    const file = buildProjectFile(currentProject(), collectInputs(), "0.10.0");
+    const blob = new Blob([serializeProject(file)], { type: "application/json" });
+    downloadBlob(blob, `泓算工程-${file.project.name || "未命名"}.json`);
+    $("pjMsg").textContent = "已导出工程文件";
+  } catch (e) {
+    alert("导出失败：" + (e instanceof Error ? e.message : String(e)));
+  }
+};
+$("btnImportProject").onclick = () => {
+  ($("pjFile") as HTMLInputElement).click();
+};
+$("pjFile").onchange = () => {
+  const inp = $("pjFile") as HTMLInputElement;
+  const f = inp.files && inp.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = parseProjectFile(JSON.parse(String(reader.result)));
+      applySaved({ ...(parsed.state as Record<string, unknown>), project: parsed.project });
+      saveAll();
+      const dt = parsed.savedAt.slice(0, 10);
+      $("pjMsg").textContent = `已导入：${parsed.project.name || "未命名"}（${dt}，泓算 v${parsed.appVersion}）`;
+      location.reload();
+    } catch (e) {
+      alert("导入失败：" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  reader.readAsText(f);
+  inp.value = "";
+};
 $("btnReset").onclick = () => {
   if (confirm("确定清除本机记忆的全部参数并恢复默认示例？")) {
     localStorage.removeItem(LS_KEY);
