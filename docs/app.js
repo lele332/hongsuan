@@ -696,6 +696,77 @@
     }
   };
 
+  // src/core/plans.ts
+  var MULTI_SCHEMA = "hongsuan-multiproject@1";
+  function set(obj, path, value) {
+    const keys = path.split(".");
+    let cur = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (typeof cur[k] !== "object" || cur[k] === null) cur[k] = {};
+      cur = cur[k];
+    }
+    cur[keys[keys.length - 1]] = value;
+  }
+  function flatten(obj, prefix = "", out = {}) {
+    if (obj === null || obj === void 0) {
+      out[prefix] = obj;
+      return out;
+    }
+    if (Array.isArray(obj)) {
+      obj.forEach((v, i) => flatten(v, `${prefix}[${i}]`, out));
+      return out;
+    }
+    if (typeof obj === "object") {
+      for (const [k, v] of Object.entries(obj)) {
+        flatten(v, prefix ? `${prefix}.${k}` : k, out);
+      }
+      return out;
+    }
+    out[prefix] = obj;
+    return out;
+  }
+  function createPlan(name, base, current, note) {
+    if (!name.trim()) throw new Error("\u65B9\u6848\u540D\u4E0D\u80FD\u4E3A\u7A7A");
+    const fb = flatten(base), fc = flatten(current);
+    const deltas = {};
+    for (const [k, v] of Object.entries(fc)) {
+      if (fb[k] !== v) deltas[k] = v;
+    }
+    return {
+      id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: name.trim(),
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      note,
+      deltas
+    };
+  }
+  function applyPlan(base, plan) {
+    const out = JSON.parse(JSON.stringify(base));
+    for (const [path, v] of Object.entries(plan.deltas)) set(out, path, v);
+    return out;
+  }
+  function diffPlans(base, a, b) {
+    const sa = flatten(applyPlan(base, a));
+    const sb = flatten(applyPlan(base, b));
+    const keys = /* @__PURE__ */ new Set([...Object.keys(sa), ...Object.keys(sb)]);
+    const rows = [];
+    for (const k of [...keys].sort()) {
+      if (sa[k] !== sb[k]) rows.push({ path: k, a: sa[k], b: sb[k] });
+    }
+    return rows;
+  }
+  function parseMultiProject(raw) {
+    if (typeof raw !== "object" || raw === null) throw new Error("\u591A\u65B9\u6848\u5DE5\u7A0B\u6587\u4EF6\u5185\u5BB9\u975E\u6CD5");
+    const o = raw;
+    if (o.schema !== MULTI_SCHEMA) {
+      throw new Error(`\u4E0D\u652F\u6301\u7684\u5DE5\u7A0B\u683C\u5F0F\uFF1A${String(o.schema)}\uFF08\u5E94\u4E3A ${MULTI_SCHEMA}\uFF09`);
+    }
+    if (typeof o.data !== "object" || o.data === null) throw new Error("\u7F3A\u5C11\u5171\u4EAB\u6570\u636E data");
+    if (!Array.isArray(o.plans)) throw new Error("plans \u5FC5\u987B\u4E3A\u6570\u7EC4");
+    return o;
+  }
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -926,20 +997,20 @@
   ];
 
   // src/core/projectDiff.ts
-  function flatten(obj, prefix = "", out = {}, maxArray = 40) {
+  function flatten2(obj, prefix = "", out = {}, maxArray = 40) {
     if (obj === null || obj === void 0) {
       out[prefix] = String(obj);
       return out;
     }
     if (Array.isArray(obj)) {
       const n = Math.min(obj.length, maxArray);
-      for (let i = 0; i < n; i++) flatten(obj[i], `${prefix}[${i}]`, out, maxArray);
+      for (let i = 0; i < n; i++) flatten2(obj[i], `${prefix}[${i}]`, out, maxArray);
       if (obj.length > maxArray) out[`${prefix}.length`] = String(obj.length);
       return out;
     }
     if (typeof obj === "object") {
       for (const [k, v] of Object.entries(obj)) {
-        flatten(v, prefix ? `${prefix}.${k}` : k, out, maxArray);
+        flatten2(v, prefix ? `${prefix}.${k}` : k, out, maxArray);
       }
       return out;
     }
@@ -948,8 +1019,8 @@
   }
   var IGNORE = [/^savedAt$/, /^schema$/, /^appVersion$/];
   function diffProjectFiles(a, b) {
-    const fa = flatten(a);
-    const fb = flatten(b);
+    const fa = flatten2(a);
+    const fb = flatten2(b);
     const keys = /* @__PURE__ */ new Set([...Object.keys(fa), ...Object.keys(fb)]);
     const rows = [];
     const added = [];
@@ -976,7 +1047,7 @@
       });
     }
     const label = (o) => {
-      const r = flatten(o);
+      const r = flatten2(o);
       const name = r["project.name"] ?? "";
       const t = o?.savedAt;
       return `${name}${t ? `\uFF08${String(t).slice(0, 10)}\uFF09` : ""}`;
@@ -3439,6 +3510,318 @@
     }
     box.textContent = e instanceof Error ? e.message : String(e);
   }
+  function buildCommands() {
+    const go = (m) => () => switchMode(m);
+    const click = (id) => () => $(id).click();
+    return [
+      { title: "\u5207\u5230 \xB7 \u6709\u8D44\u6599\u7CFB\u5217\uFF08\u9002\u7EBF\uFF09", hint: "\u6A21\u5F0F", run: go("series") },
+      { title: "\u5207\u5230 \xB7 \u76F4\u63A5\u53C2\u6570\u6A21\u5F0F", hint: "\u6A21\u5F0F", run: go("params") },
+      { title: "\u5207\u5230 \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5", hint: "\u6A21\u5F0F", run: go("hist") },
+      { title: "\u5207\u5230 \xB7 \u65E0\u8D44\u6599\u5730\u533A", hint: "\u6A21\u5F0F", run: go("noData") },
+      { title: "\u5207\u5230 \xB7 \u5730\u56FE\u91CF\u7B97", hint: "\u6A21\u5F0F", run: go("map") },
+      { title: "\u5207\u5230 \xB7 \u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", hint: "\u6A21\u5F0F", run: go("hydro") },
+      { title: "\u5207\u5230 \xB7 \u5E2E\u52A9\u4E0E\u77E5\u8BC6\u5E93", hint: "\u6A21\u5F0F", run: go("help") },
+      { title: "\u8BA1\u7B97\u5E76\u9002\u7EBF\uFF08\u65B9\u6CD5 A\uFF09", hint: "\u8BA1\u7B97", run: click("btnCalc") },
+      { title: "\u4E09\u70B9\u6CD5\u521D\u4F30\u53C2\u6570", hint: "\u8BA1\u7B97", run: click("btnThreePoint") },
+      { title: "\u81EA\u52A8\u4F18\u5316\u9002\u7EBF", hint: "\u8BA1\u7B97", run: click("btnAutoFit") },
+      { title: "\u7EBF\u578B\u6BD4\u9009\uFF08\u8D1D\u53F6\u65AF\uFF09", hint: "\u8BA1\u7B97", run: click("btnBayes") },
+      { title: "\u8BA1\u7B97\u5386\u53F2\u6D2A\u6C34\u6CD5\u8BBE\u8BA1\u6D41\u91CF", hint: "\u8BA1\u7B97", run: click("btnHist") },
+      { title: "\u63A8\u7B97\u6C34\u9762\u7EBF", hint: "\u8BA1\u7B97", run: click("btnWsProfile") },
+      { title: "\u4E24\u6D2A\u75D5\u53CD\u89E3 Q", hint: "\u8BA1\u7B97", run: click("btnWsSolve") },
+      { title: "\u8BA1\u7B97\u6865\u5B54\u6700\u5C0F\u51C0\u957F\u5EA6", hint: "\u8BA1\u7B97", run: click("opGo") },
+      { title: "\u8BA1\u7B97\u4E00\u822C\u51B2\u5237\uFF0864-1\uFF09", hint: "\u8BA1\u7B97", run: click("scGo") },
+      { title: "\u8BA1\u7B97\u5C40\u90E8\u51B2\u5237\uFF0865-2\uFF09", hint: "\u8BA1\u7B97", run: click("lsGo") },
+      { title: "\u6C47\u603B\u603B\u51B2\u5237\u6DF1\u5EA6", hint: "\u8BA1\u7B97", run: click("tsGo") },
+      { title: "\u5730\u56FE\uFF1A\u8BA1\u7B97\u6C47\u6C34\u533A F / L / I", hint: "\u8BA1\u7B97", run: click("mapGo") },
+      { title: "\u5730\u56FE\uFF1A\u628A F \u586B\u5165\u65B9\u6CD5 C", hint: "\u8BA1\u7B97", run: click("mapFill") },
+      { title: "\u67E5\u5F84\u6D41\u539A\u5EA6 h \u5E76\u586B\u5165", hint: "\u67E5\u8868", run: click("lkGo") },
+      { title: "\u67E5 \u03C8 / \u03C4 / z / \u03B2 / \u03B3 / \u03B4", hint: "\u67E5\u8868", run: click("cbPsi") },
+      { title: "\u5BFC\u51FA Word \u8BA1\u7B97\u4E66", hint: "\u5BFC\u51FA", run: click("btnReport") },
+      { title: "\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6\uFF08JSON\uFF09", hint: "\u5BFC\u51FA", run: click("btnExportProject") },
+      { title: "\u5BFC\u51FA\u8BA1\u7B97\u65E5\u5FD7 Markdown", hint: "\u5BFC\u51FA", run: click("logExportMd") },
+      { title: "\u5BFC\u51FA\u8BA1\u7B97\u65E5\u5FD7 JSON", hint: "\u5BFC\u51FA", run: click("logExportJson") },
+      { title: "\u5BFC\u51FA\u9891\u7387\u66F2\u7EBF SVG / PNG", hint: "\u5BFC\u51FA", run: click("exSvg") },
+      { title: "\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown", hint: "\u5BFC\u51FA", run: click("sysKb") },
+      { title: "\u5DE5\u7A0B\u6587\u4EF6\u7248\u672C\u5BF9\u6BD4", hint: "\u5DE5\u7A0B", run: () => {
+        const d = $("projDiffCard");
+        if (d) {
+          d.open = true;
+          d.scrollIntoView({ block: "center" });
+        }
+      } },
+      { title: "\u6E05\u7A7A\u8BA1\u7B97\u65E5\u5FD7", hint: "\u7BA1\u7406", run: click("logClear") },
+      { title: "\u67E5\u770B\u672C\u673A\u6570\u636E\u5360\u7528", hint: "\u7BA1\u7406", run: click("sysUsage") },
+      { title: "\u6E05\u7A7A\u672C\u673A\u8BB0\u5FC6\uFF0C\u6062\u590D\u9ED8\u8BA4", hint: "\u7BA1\u7406", run: click("btnReset") }
+    ];
+  }
+  var CMDS = buildCommands();
+  var cmdIndex = 0;
+  var cmdHits = [];
+  function renderCmd(q) {
+    const kw = q.trim();
+    cmdHits = kw ? CMDS.filter((c) => `${c.title} ${c.hint}`.includes(kw)) : CMDS.slice(0, 12);
+    if (cmdIndex >= cmdHits.length) cmdIndex = 0;
+    const list = $("cmdList");
+    list.innerHTML = "";
+    if (cmdHits.length === 0) {
+      const d = document.createElement("div");
+      d.style.cssText = "padding:14px;font-size:13px;color:var(--text3)";
+      d.textContent = "\u6CA1\u6709\u5339\u914D\u7684\u547D\u4EE4";
+      list.appendChild(d);
+    }
+    cmdHits.forEach((c, i) => {
+      const row = document.createElement("div");
+      row.style.cssText = `padding:9px 15px;cursor:pointer;font-size:13px;display:flex;gap:10px;align-items:center;${i === cmdIndex ? "background:#eef4ff" : ""}`;
+      const ttl = document.createElement("span");
+      ttl.textContent = c.title;
+      ttl.style.flex = "1";
+      const tag = document.createElement("span");
+      tag.textContent = c.hint;
+      tag.style.cssText = "font-size:11px;color:var(--text3);flex:none";
+      row.append(ttl, tag);
+      row.onmouseenter = () => {
+        cmdIndex = i;
+        renderCmd($("cmdInput").value);
+      };
+      row.onclick = () => {
+        execCmd(i);
+      };
+      list.appendChild(row);
+    });
+    $("cmdCount").textContent = `${cmdHits.length} \u4E2A\u547D\u4EE4`;
+  }
+  function execCmd(i) {
+    const c = cmdHits[i];
+    closeCmd();
+    if (c) {
+      try {
+        c.run();
+      } catch (e) {
+        console.warn("\u547D\u4EE4\u6267\u884C\u5931\u8D25", c.title, e);
+      }
+    }
+  }
+  function openCmd() {
+    $("cmdPanel").style.display = "flex";
+    $("cmdInput").value = "";
+    cmdIndex = 0;
+    renderCmd("");
+    $("cmdInput").focus();
+  }
+  function closeCmd() {
+    $("cmdPanel").style.display = "none";
+  }
+  if ($("cmdPanel")) {
+    $("cmdInput").oninput = (e) => {
+      cmdIndex = 0;
+      renderCmd(e.target.value);
+    };
+    $("cmdInput").onkeydown = (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        cmdIndex = (cmdIndex + 1) % Math.max(1, cmdHits.length);
+        renderCmd($("cmdInput").value);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        cmdIndex = (cmdIndex - 1 + cmdHits.length) % Math.max(1, cmdHits.length);
+        renderCmd($("cmdInput").value);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        execCmd(cmdIndex);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeCmd();
+      }
+    };
+    $("cmdPanel").onclick = (e) => {
+      if (e.target === $("cmdPanel")) closeCmd();
+    };
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if ($("cmdPanel").style.display === "flex") closeCmd();
+        else openCmd();
+      }
+      if (e.key === "Escape" && $("cmdPanel").style.display === "flex") closeCmd();
+    });
+  }
+  var multi = { data: null, plans: [], pick: null };
+  function planMsg(text, isErr = false) {
+    const el = $("planMsg");
+    el.textContent = text;
+    el.style.display = text ? "block" : "none";
+    el.style.color = isErr ? "var(--red)" : "";
+  }
+  function renderPlans() {
+    const box = $("planList");
+    box.innerHTML = "";
+    if (multi.plans.length === 0) {
+      const d = document.createElement("div");
+      d.style.cssText = "font-size:12px;color:var(--text3)";
+      d.textContent = "\u8FD8\u6CA1\u6709\u65B9\u6848\u3002\u8C03\u597D\u4E00\u7EC4\u53C2\u6570\u540E\u70B9\u300C\u4FDD\u5B58\u5F53\u524D\u4E3A\u65B0\u65B9\u6848\u300D\uFF0C\u4E4B\u540E\u6BCF\u6B21\u6539\u52A8\u518D\u5B58\u4E00\u4E2A\uFF0C\u5C31\u80FD\u76F4\u63A5\u5BF9\u6BD4\u5DEE\u5F02\u3002";
+      box.appendChild(d);
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const x of ["\u65B9\u6848", "\u5DEE\u5F02\u9879", "\u4FDD\u5B58\u65F6\u95F4", "\u64CD\u4F5C"]) {
+      const th = document.createElement("th");
+      th.textContent = x;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    multi.plans.forEach((pl, i) => {
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td");
+      td1.innerHTML = `<b>${pl.name}</b>${pl.note ? `<br><span style="color:var(--text3)">${pl.note}</span>` : ""}`;
+      const td2 = document.createElement("td");
+      td2.textContent = String(Object.keys(pl.deltas).length);
+      const td3 = document.createElement("td");
+      td3.style.whiteSpace = "nowrap";
+      td3.textContent = new Date(pl.createdAt).toLocaleString("zh-CN", { hour12: false }).slice(5);
+      const td4 = document.createElement("td");
+      td4.style.whiteSpace = "nowrap";
+      for (const [label, fn] of [
+        ["\u5207\u6362", () => {
+          if (!multi.data) return;
+          applySaved(applyPlan(multi.data, pl));
+          planMsg(`\u5DF2\u5207\u6362\u5230\u65B9\u6848\u300C${pl.name}\u300D`);
+        }],
+        [multi.pick && multi.pick.includes(i) ? "\u53D6\u6D88\u5BF9\u6BD4" : "\u5BF9\u6BD4", () => {
+          if (!multi.pick) {
+            multi.pick = [i, -1];
+          } else if (multi.pick[1] === -1 && multi.pick[0] !== i) {
+            multi.pick[1] = i;
+          } else if (multi.pick[0] === i || multi.pick[1] === i) {
+            multi.pick = null;
+          } else {
+            multi.pick = [i, -1];
+          }
+          renderPlans();
+          renderPlanDiff();
+        }],
+        ["\u5220\u9664", () => {
+          multi.plans.splice(i, 1);
+          multi.pick = null;
+          renderPlans();
+          renderPlanDiff();
+        }]
+      ]) {
+        const b = document.createElement("button");
+        b.className = "btn ghost";
+        b.style.cssText = "padding:2px 8px;font-size:11.5px;margin-right:4px";
+        b.textContent = label;
+        b.onclick = fn;
+        td4.appendChild(b);
+      }
+      tr.append(td1, td2, td3, td4);
+      table.appendChild(tr);
+    });
+    box.appendChild(table);
+  }
+  function renderPlanDiff() {
+    const box = $("planDiff");
+    box.innerHTML = "";
+    if (!multi.data || !multi.pick || multi.pick[1] < 0) return;
+    const [i, j] = multi.pick;
+    const a = multi.plans[i], b = multi.plans[j];
+    if (!a || !b) return;
+    const rows = diffPlans(multi.data, a, b);
+    const head = document.createElement("div");
+    head.style.cssText = "font-size:12px;margin-bottom:4px";
+    head.innerHTML = `\u300C<b>${a.name}</b>\u300D\u4E0E\u300C<b>${b.name}</b>\u300D\u5171 <b>${rows.length}</b> \u5904\u4E0D\u540C`;
+    box.appendChild(head);
+    if (rows.length === 0) return;
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const x of ["\u5B57\u6BB5", a.name, b.name]) {
+      const th = document.createElement("th");
+      th.textContent = x;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    for (const r of rows) {
+      const tr = document.createElement("tr");
+      for (const v of [r.path, String(r.a ?? "\u2014"), String(r.b ?? "\u2014")]) {
+        const td = document.createElement("td");
+        td.textContent = v;
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    box.appendChild(table);
+  }
+  if ($("planCard")) {
+    renderPlans();
+    $("planAdd").onclick = () => {
+      try {
+        const name = $("planName").value.trim();
+        if (!name) throw new Error("\u8BF7\u5148\u586B\u5199\u65B9\u6848\u540D");
+        const cur = collectInputs();
+        if (!multi.data) {
+          multi.data = cur;
+          multi.plans.push(createPlan(name, cur, cur, "\u57FA\u51C6\u65B9\u6848\uFF08\u5171\u4EAB\u6570\u636E\uFF09"));
+          planMsg(`\u5DF2\u5EFA\u7ACB\u57FA\u51C6\u6570\u636E\uFF0C\u5E76\u4FDD\u5B58\u65B9\u6848\u300C${name}\u300D`);
+        } else {
+          multi.plans.push(createPlan(name, multi.data, cur));
+          planMsg(`\u5DF2\u4FDD\u5B58\u65B9\u6848\u300C${name}\u300D\uFF08\u4EC5\u5B58\u5DEE\u5F02\uFF09`);
+        }
+        $("planName").value = "";
+        renderPlans();
+      } catch (e) {
+        planMsg(e instanceof Error ? e.message : String(e), true);
+      }
+    };
+    $("planClear").onclick = () => {
+      multi.data = null;
+      multi.plans = [];
+      multi.pick = null;
+      renderPlans();
+      renderPlanDiff();
+      planMsg("\u5DF2\u6E05\u7A7A\u5168\u90E8\u65B9\u6848");
+    };
+    $("planExport").onclick = () => {
+      if (multi.plans.length === 0) {
+        planMsg("\u8FD8\u6CA1\u6709\u65B9\u6848\u53EF\u5BFC\u51FA", true);
+        return;
+      }
+      const payload = {
+        schema: "hongsuan-multiproject@1",
+        appVersion: "0.11.1",
+        data: multi.data,
+        plans: multi.plans
+      };
+      downloadText(JSON.stringify(payload, null, 2), "\u6CD3\u7B97\u591A\u65B9\u6848\u5DE5\u7A0B.json", "application/json;charset=utf-8");
+      planMsg("\u5DF2\u5BFC\u51FA\u591A\u65B9\u6848\u5DE5\u7A0B\uFF08\u542B\u5171\u4EAB\u6570\u636E + \u5404\u65B9\u6848\u5DEE\u5F02\uFF09");
+    };
+    $("planImport").onclick = () => {
+      $("planFile").click();
+    };
+    $("planFile").onchange = () => {
+      const inp = $("planFile");
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const mp = parseMultiProject(JSON.parse(String(r.result)));
+          multi.data = mp.data;
+          multi.plans = mp.plans;
+          multi.pick = null;
+          renderPlans();
+          renderPlanDiff();
+          planMsg(`\u5DF2\u5BFC\u5165 ${mp.plans.length} \u4E2A\u65B9\u6848`);
+        } catch (e) {
+          planMsg(e instanceof Error ? e.message : String(e), true);
+        }
+      };
+      r.readAsText(f, "utf-8");
+    };
+  }
   function logCalc(module, inputs, results, basis, params) {
     try {
       calcLog.add({ module, inputs, results, basis, params });
@@ -3836,21 +4219,21 @@
     };
   }
   function fillProjectForm(p) {
-    const set = (id, val) => {
+    const set2 = (id, val) => {
       $(id).value = val ?? "";
     };
-    set("pjName", p.name ?? "");
-    set("pjSite", p.bridgeSite ?? "");
-    set("pjEng", p.engineer ?? "");
-    set("pjRev", p.reviewer ?? "");
-    set("pjRiver", p.river ?? "");
-    set("pjReach", p.reach ?? "");
-    set("pjStation", p.station ?? "");
-    set("pjStationArea", p.stationArea ?? "");
-    set("pjSiteArea", p.siteArea ?? "");
-    set("pjDesignFreq", p.designFreq ?? "");
-    set("pjSpec", p.spec ?? "JTG C30\u20142015");
-    set("pjZone", p.zone ?? "");
+    set2("pjName", p.name ?? "");
+    set2("pjSite", p.bridgeSite ?? "");
+    set2("pjEng", p.engineer ?? "");
+    set2("pjRev", p.reviewer ?? "");
+    set2("pjRiver", p.river ?? "");
+    set2("pjReach", p.reach ?? "");
+    set2("pjStation", p.station ?? "");
+    set2("pjStationArea", p.stationArea ?? "");
+    set2("pjSiteArea", p.siteArea ?? "");
+    set2("pjDesignFreq", p.designFreq ?? "");
+    set2("pjSpec", p.spec ?? "JTG C30\u20142015");
+    set2("pjZone", p.zone ?? "");
   }
   var saveTimer = null;
   function markSaved() {
