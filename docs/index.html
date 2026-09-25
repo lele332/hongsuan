@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.8.1</title>
+<title>泓算 · 桥涵设计流量推求 v0.10.2</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -22,67 +22,67 @@
   body {
     font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
     background: var(--bg); color: var(--text);
-    max-width: 1020px; margin: 0 auto; padding: 28px 20px 60px;
-    font-size: 14px; line-height: 1.6;
+    max-width: 1160px; margin: 0 auto; padding: 14px 16px 36px;
+    font-size: 13.5px; line-height: 1.5;
   }
-  header { text-align: center; margin-bottom: 22px; }
-  header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  header { text-align: center; margin-bottom: 10px; }
+  header h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.5px; }
   header p { color: var(--text2); font-size: 12.5px; margin-top: 4px; }
   .seg {
     display: inline-flex; background: rgba(120,120,128,0.12); border-radius: 10px;
-    padding: 2px; margin: 0 auto 18px; width: fit-content; display: flex;
+    padding: 2px; margin: 0 auto 10px; width: fit-content; display: flex;
   }
   .seg button {
-    border: 0; background: transparent; padding: 6px 22px; font-size: 13.5px;
+    border: 0; background: transparent; padding: 4px 16px; font-size: 13px;
     border-radius: 8px; color: var(--text); cursor: pointer; transition: all .18s;
   }
   .seg button.on { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.12); font-weight: 500; }
   .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 20px 22px; margin-bottom: 16px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 10px;
     transition: border-color .25s ease;
   }
   .card:hover { border-color: rgba(0,122,255,0.28); }
-  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
   textarea {
-    width: 100%; height: 96px; border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 12px; font: 13px/1.7 ui-monospace, Consolas, monospace;
+    width: 100%; height: 72px; border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; font: 12.5px/1.6 ui-monospace, Consolas, monospace;
     resize: vertical; outline: none; background: #fafafa;
   }
   textarea:focus { border-color: var(--blue); background: #fff; }
-  label { font-size: 12.5px; color: var(--text2); display: block; margin: 10px 0 4px; }
+  label { font-size: 12px; color: var(--text2); display: block; margin: 6px 0 3px; }
   input[type=number], select {
     width: 100%; border: 1px solid var(--border); border-radius: 8px;
-    padding: 7px 10px; font-size: 13.5px; outline: none; background: #fff; color: var(--text);
+    padding: 5px 8px; font-size: 13px; outline: none; background: #fff; color: var(--text);
   }
   input[type=number]:focus, select:focus { border-color: var(--blue); }
   .row { display: flex; gap: 12px; }
   .row > div { flex: 1; }
   .btn {
     display: inline-block; background: var(--blue); color: #fff; border: 0;
-    border-radius: 980px; padding: 8px 24px; font-size: 14px; font-weight: 500;
-    cursor: pointer; margin-top: 12px; transition: transform .18s ease, opacity .15s;
+    border-radius: 980px; padding: 6px 18px; font-size: 13px; font-weight: 500;
+    cursor: pointer; margin-top: 8px; transition: transform .18s ease, opacity .15s;
   }
   .btn:hover { opacity: .88; }
   .btn:active { transform: scale(.96); }
   .btn.ghost {
     background: transparent; color: var(--blue); border: 1.5px solid var(--blue);
-    margin-left: 8px; padding: 6.5px 18px;
+    margin-left: 6px; padding: 5px 14px;
   }
   .btn.ghost:active { transform: scale(.96); }
-  input[type=range] { width: 100%; accent-color: var(--blue); margin: 6px 0 2px; }
+  input[type=range] { width: 100%; accent-color: var(--blue); margin: 4px 0 1px; }
   .val { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text); }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
   .metric {
-    background: var(--bg); border-radius: 10px; padding: 10px 14px;
+    background: var(--bg); border-radius: 10px; padding: 7px 10px;
   }
-  .metric .k { font-size: 11.5px; color: var(--text2); }
-  .metric .v { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .metric .k { font-size: 11px; color: var(--text2); }
+  .metric .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 1px; }
   .metric.hl .v { color: var(--blue); }
   .metric .u { font-size: 11px; color: var(--text3); font-weight: 400; }
-  .hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  .hint { font-size: 12px; color: var(--text3); margin-top: 5px; }
   .ltab { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px }
   .ltab th { text-align:left; color:var(--text2); font-weight:500; padding:4px 6px; border-bottom:1px solid var(--line) }
   .ltab td { padding:4px 6px; border-bottom:1px solid var(--line); color:var(--text2) }
@@ -92,6 +92,7 @@
   svg text { font-family: -apple-system, "PingFang SC", sans-serif; }
   .legend { display: flex; gap: 18px; font-size: 12px; color: var(--text2); margin-top: 8px; }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--blue); vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+  .legend .dia { display:inline-block; width:8px; height:8px; background:#ff3b30; transform:rotate(45deg); margin-right:5px; vertical-align:middle; }
   .legend .dot { display:inline-block; width:8px; height:8px; background:#1d1d1f; border-radius:50%; margin-right:5px; vertical-align: middle; }
   .legend .ring { display:inline-block; width:9px; height:9px; border:2px solid var(--blue); border-radius:50%; margin-right:5px; vertical-align: middle; background:transparent; }
   footer {
@@ -101,6 +102,7 @@
   footer .brand { font-size: 13px; color: var(--text2); font-weight: 500; letter-spacing: 2px; }
   footer .sep { width: 36px; height: 1px; background: rgba(0,0,0,0.12); margin: 10px auto; }
   .err { color: var(--red); font-size: 12.5px; margin-top: 6px; display: none; }
+  .err[data-kind=notice] { color: #b25000; background: rgba(255,159,10,0.10); border-radius: 8px; padding: 8px 12px; }
   /* v0.7 输入守卫：非法/越界输入红框 */
   input.invalid, textarea.invalid { border-color: var(--red) !important; background: #fff5f5 !important; }
   #saveHint { transition: opacity .5s; opacity: .30; font-size: 11px; color: var(--text3); }
@@ -111,7 +113,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.8.1</p>
+  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.10.2</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -119,6 +121,7 @@
   <button id="mParams">直接参数模式</button>
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">无资料地区</button>
+  <button id="mHydro">设计洪水过程线</button>
 </div></div>
 
 <div class="card" id="inputCard">
@@ -134,6 +137,18 @@
 1000
 1400
 650</textarea>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-size:12.5px;color:var(--blue)">系列面积转换（规范 6.2.2：面积差 &lt;20% 且 ≤1000 km²）</summary>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
+        <input type="checkbox" id="convEnable" style="width:auto">
+        启用：系列来自参证站，按面积比拟转换到桥位断面（Q 同乘 (F设/F参)ⁿ）
+      </label>
+      <div class="row">
+        <div><label>参证面积 F<sub>参</sub>（km²）</label><input type="number" id="convFRef" value="100" min="0.01" step="any"></div>
+        <div><label>桥位面积 F<sub>设</sub>（km²）</label><input type="number" id="convFSite" value="110" min="0.01" step="any"></div>
+        <div><label>指数 n（留空自动建议）</label><input type="number" id="convN" step="any" placeholder="自动"></div>
+      </div>
+    </details>
     <div class="err" id="parseErr"></div>
     <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。示例为算例 T1（n=10）。</div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
@@ -207,6 +222,26 @@
       </table>
     </details>
     <div id="histResult" style="display:none;margin-top:14px"></div>
+    <h3 style="margin-top:22px;font-size:15px">非均匀流水面线推算（规范 6.3.1-4 · 试算法）</h3>
+    <div class="hint" style="margin-top:0">由控制断面水深用直接步进法推 M2/M1 等渐变流水面线：Δx = ΔE/(S0−Sf̄)，Sf = n²v²/R<sup>4/3</sup>。试算法：假定 Q 由下游洪痕向上游推算，与上游洪痕对照调整。<b>棱柱体等断面简化</b>（梯形断面），教学与初步估算用。</div>
+    <div class="row">
+      <div><label>底宽 b（m）</label><input type="number" id="wsB" value="8" step="0.1" min="0.01"></div>
+      <div><label>边坡 m（横:竖）</label><input type="number" id="wsM" value="1" step="0.1" min="0"></div>
+      <div><label>糙率 n</label><input type="number" id="wsN" value="0.03" step="0.005" min="0.005"></div>
+      <div><label>比降 S0（‰）</label><input type="number" id="wsS0" value="0.8" step="0.05" min="0.01"></div>
+    </div>
+    <div class="row">
+      <div><label>推算河长 L（m）</label><input type="number" id="wsL" value="4000" step="100" min="10"></div>
+      <div><label>下游洪痕水深 y<sub>下</sub>（m）</label><input type="number" id="wsYc" value="3.3" step="0.05" min="0.01"></div>
+      <div><label>假定流量 Q（m³/s）</label><input type="number" id="wsQ" value="80" step="1" min="0.1"></div>
+      <div><label>上游洪痕水深 y<sub>上</sub>（m，反解用）</label><input type="number" id="wsYup" value="3.9" step="0.05" min="0.01"></div>
+    </div>
+    <div class="row" style="margin-top:2px">
+      <button class="btn" id="btnWsProfile">推算水面线</button>
+      <button class="btn" id="btnWsSolve">两洪痕反解 Q</button>
+    </div>
+    <div class="err" id="wsErr" style="margin-top:8px"></div>
+    <div id="wsResult" style="display:none;margin-top:12px"></div>
   </div>
 
   <div id="noDataBox" style="display:none">
@@ -221,6 +256,7 @@
         <div><label>汇流时间 τ（h）</label><input type="number" id="rcTau" value="0.55" step="0.01" min="0.01"></div>
         <div><label>汇水面积 F（km²）</label><input type="number" id="rcF" value="3.94" step="0.01" min="0.01"></div></div>
         <div class="metric hl" style="margin-top:10px"><div class="k">推理公式 Q<sub>p</sub>（m³/s）</div><div class="v" id="rcOut">—</div></div>
+        <div class="err" id="rcErr"></div>
       </div>
       <div>
         <label style="font-weight:500;color:var(--text)">径流厚度法 Q = ψ·(h−z)<sup>1.5</sup>·F<sup>0.8</sup>·βγδ <span style="color:#34c759;font-size:11px">✓ JTG/T D65-04-2007 形式，三公开算例锚定</span></label>
@@ -232,6 +268,18 @@
         <div><label>折减 γ</label><input type="number" id="rdGamma" value="1" step="0.05"></div>
         <div><label>折减 δ</label><input type="number" id="rdDelta" value="1" step="0.05"></div></div>
         <div class="metric" style="margin-top:10px"><div class="k">径流厚度法 Q<sub>p</sub>（m³/s）</div><div class="v" id="rdOut">—</div></div>
+        <div class="err" id="rdErr"></div>
+        <table class="ltab"><tr><th colspan="3">h 径流厚度查表（内置锚点数据 + 插值，完整 18 分区表待录入）</th></tr>
+          <tr><td colspan="3" style="padding:6px 4px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px">
+              <span>暴雨分区</span><input type="number" id="lkZone" value="5" min="1" max="18" step="1" style="width:56px">
+              <span>土类</span><select id="lkSoil" style="width:64px"><option>IV</option><option>I</option><option>II</option><option>III</option><option>V</option><option>VI</option></select>
+              <span>频率%</span><input type="number" id="lkFreq" value="2" min="0.5" max="10" step="any" style="width:60px">
+              <span>汇流时间 min</span><input type="number" id="lkTau" value="60" min="1" step="any" style="width:60px">
+              <button class="fillBtn" id="lkGo">查 h 并填入</button>
+              <span id="lkOut" style="color:var(--text2)"></span>
+            </div>
+          </td></tr>
         <details id="rdTables" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13px;color:var(--blue)">查表辅助：ψ / h / z / β / γ / δ 取值（点行自动填入）</summary>
           <div class="hint" style="margin-top:10px">出处：《公路涵洞设计细则》JTG/T D65-04-2007（现 JTG/T 3365-02-2020《公路涵洞设计规范》）附录 B。径流厚度 h 需查<b>暴雨分区（全国 1~18 区）× 土壤类别（Ⅰ~Ⅵ 类）× 洪水频率 × 汇流时间</b>成套表，请查纸质规范/地区水文手册（电子完整表涉版权未内置）；下列锚点值取自公开算例，点行可一键填入。</div>
@@ -249,22 +297,47 @@
           <tr><td>δ：湖泊率 2%</td><td>0.99</td><td>湖南算例</td><td><button data-delta="0.99" class="fillBtn">填入</button></td></tr>
           <tr><td>δ：水库面积占比 30%</td><td>0.91</td><td>k3+685 算例</td><td><button data-delta="0.91" class="fillBtn">填入</button></td></tr>
           <tr><td>γ：汇流时间短、面积小（&lt;1 km²）</td><td>1</td><td>绥建算例</td><td><button data-gamma="1" class="fillBtn">填入</button></td></tr></table>
-          <table class="ltab"><tr><th colspan="3">h 径流厚度锚点（查表路径示例）</th></tr>
+          <tr><th colspan="3">h 径流厚度锚点（查表路径示例）</th></tr>
           <tr><td>第 5 暴雨区 · Ⅳ 类土 · P=2% · 80min</td><td>47 mm</td><td><button data-h="47" class="fillBtn">填入</button></td></tr>
           <tr><td>第 15 暴雨区 · Ⅲ 类土 · 1/25 · 30min</td><td>23 mm</td><td><button data-h="23" class="fillBtn">填入</button></td></tr></table>
         </details>
       </div>
     </div>
   </div>
+
+<div id="hydroBox" style="display:none">
+  <h2>设计洪水过程线 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.6 同倍比放大法，k<sub>g</sub> = Q<sub>p</sub> / Q<sub>典峰</sub></span></h2>
+  <div class="row">
+    <div style="flex:1.4">
+      <label>典型洪水过程线（每行：时间h,流量，支持空格/逗号分隔）</label>
+      <textarea id="hydroTypical" style="height:110px" placeholder="0 0&#10;2 267&#10;4 533&#10;6 800&#10;8 533&#10;10 267&#10;12 0"></textarea>
+      <button class="btn ghost" id="btnHydroSample" style="margin-top:6px;padding:4px 12px;font-size:12.5px">载入三角形示例</button>
+    </div>
+    <div>
+      <label>设计洪峰 Q<sub>p</sub>（m³/s）</label>
+      <input type="number" id="hydroQp" value="2000" min="0.01" step="any">
+      <button class="btn ghost" id="btnHydroUseQp" style="margin-top:6px;padding:4px 12px;font-size:12.5px">取当前设计流量</button>
+      <button class="btn" id="btnHydroScale" style="margin-top:8px">同倍比放大</button>
+      <div class="metric hl" style="margin-top:8px"><div class="k">放大系数 k<sub>g</sub></div><div class="v" id="hydroKg">—</div></div>
+      <div class="err" id="hydroErr"></div>
+    </div>
+  </div>
+  <div id="hydroOut" style="display:none;margin-top:10px">
+    <table class="ltab">
+      <tr><th>时间 t（h）</th><th class="v">设计流量 Q（m³/s）</th></tr>
+      <tbody id="hydroTable"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="card" id="chartCard">
   <h2>海森机率格纸 · 适线</h2>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
+  <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums">悬停图表可读取任意位置频率与流量</div>
   <div class="legend">
     <span><i></i>理论频率曲线（P-Ⅲ）</span>
     <span><span class="dot"></span>经验点据 P<sub>m</sub>=m/(n+1)</span>
-    <span><span class="dot" style="background:#ff3b30"></span>特大洪水 M/(N+1)</span>
+    <span><span class="dia"></span>特大洪水 M/(N+1)</span>
     <span><span class="ring"></span>设计频率点</span>
   </div>
 </div>
@@ -291,6 +364,13 @@
     <div>
       <label>适线均值 Q̄（m³/s，默认矩法初估，可键入微调）</label>
       <input type="number" id="meanIn" value="1065.0" step="any" style="width:100%">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;justify-content:flex-end">
+      <div>
+        <button class="btn" id="btnThreePoint" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="规范 6.2.5 参数初估方法二：5%/50%/95% 三点解 Q̄、Cv、Cs">三点法初估</button>
+        <button class="btn ghost" id="btnAutoFit" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="以当前参数为初值，对经验点据最小化离差平方和（均值固定）">优化适线</button>
+      </div>
+      <div id="fitMsg" style="font-size:11.5px;color:var(--text3)"></div>
     </div>
     <div style="display:flex;align-items:center;color:var(--text3);font-size:12px">
       系列重新计算时恢复矩法初估值；三参数（Q̄、C<sub>v</sub>、C<sub>s</sub>）均可按规范 6.2.5 目估适线调整。
@@ -335,6 +415,14 @@
   </div>
 </div>
 
+<div class="card" id="compareCard">
+  <h2>多方法成果对比 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.1.3 多方法经分析论证后选用</span></h2>
+  <table class="ltab">
+    <tr><th>方法</th><th class="v">设计流量 Q<sub>p</sub>（m³/s）</th><th>频率</th><th>备注</th></tr>
+    <tbody id="compareTable"><tr><td colspan="4" style="color:var(--text3)">在各模式计算后自动汇总到此表</td></tr></tbody>
+  </table>
+</div>
+
 <div class="grid2" id="statsGrid">
   <div class="card">
     <h2>系列统计（矩法初估）</h2>
@@ -356,11 +444,27 @@
   </div>
 </div>
 
+<details class="card" id="projectCard" style="padding:12px 16px">
+  <summary style="cursor:pointer;font-size:13.5px;font-weight:600">工程信息与项目文件（计算书抬头 / JSON 导入导出）</summary>
+  <div class="row" style="margin-top:10px">
+    <div><label>项目名</label><input type="text" id="pjName" placeholder="如：G320 某段改建工程"></div>
+    <div><label>桥位 / 断面</label><input type="text" id="pjSite" placeholder="如：K3+685 涵洞"></div>
+    <div><label>计算人</label><input type="text" id="pjEng" placeholder=""></div>
+    <div><label>复核人</label><input type="text" id="pjRev" placeholder=""></div>
+  </div>
+  <div style="margin-top:10px">
+    <button class="btn" id="btnExportProject" style="margin-top:0;padding:5px 14px;font-size:12.5px">导出工程 (.json)</button>
+    <button class="btn ghost" id="btnImportProject" style="margin-top:0;padding:4px 12px;font-size:12.5px">导入工程</button>
+    <input type="file" id="pjFile" accept=".json,application/json" style="display:none">
+    <span id="pjMsg" style="font-size:11.5px;color:var(--text3);margin-left:8px"></span>
+  </div>
+</details>
+
 <footer>
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.8.1<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.10.2<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>

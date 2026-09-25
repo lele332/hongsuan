@@ -185,6 +185,241 @@
     return { a, n, l, N, mean, sigma, cv, cs };
   }
 
+  // src/core/empirical.ts
+  function empiricalContinuous(n) {
+    const out = [];
+    for (let m = 1; m <= n; m++) out.push(100 * m / (n + 1));
+    return out;
+  }
+
+  // src/core/points.ts
+  function continuousPoints(series) {
+    const sorted = [...series].sort((a, b) => b - a);
+    const ps = empiricalContinuous(sorted.length);
+    return sorted.map((q, i) => ({ p: ps[i] / 100, q, kind: "meas" }));
+  }
+  function discontinuousPoints(input) {
+    const sorted = [...input.measuredDesc].sort((a2, b) => b - a2);
+    const stats = discontinuousStats({
+      historicalExtra: input.historicalExtra,
+      measuredDesc: sorted,
+      l: input.l,
+      N: input.N
+    });
+    const { n, l, N, a } = stats;
+    const all = [...input.historicalExtra, ...sorted.slice(0, l)].sort((x, y) => y - x);
+    const points = all.map((q, i) => ({
+      p: (i + 1) / (N + 1),
+      q,
+      kind: "hist"
+    }));
+    const pA = a / (N + 1);
+    for (let m = l + 1; m <= n; m++) {
+      points.push({
+        p: pA + (1 - pA) * (m - l) / (n - l + 1),
+        q: sorted[m - 1],
+        kind: "meas"
+      });
+    }
+    return { stats, points };
+  }
+  function sseOfPoints(points, params, phiFn) {
+    let sse = 0;
+    for (const pt of points) {
+      const qTheory = params.mean * (1 + phiFn(pt.p, params.cs) * params.cv);
+      sse += (pt.q - qTheory) ** 2;
+    }
+    return sse;
+  }
+
+  // src/core/parse.ts
+  function parseSeries(text) {
+    if (typeof text !== "string") throw new Error("\u7CFB\u5217\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const tokens = text.split(/[\s,，;；]+/).filter(Boolean);
+    const values = [];
+    const ignored = [];
+    for (const tok of tokens) {
+      const v = Number(tok);
+      if (Number.isFinite(v) && v > 0) values.push(v);
+      else ignored.push(tok);
+    }
+    return { values, ignored };
+  }
+
+  // src/core/runoffTable.ts
+  var RUNOFF_TABLE_SCHEMA = "hongrunoff-h-table@1";
+  var FREQ_KEYS = ["p1", "p2", "p3_33", "p5", "p10"];
+  var FREQ_PCTS = {
+    p1: 1,
+    p2: 2,
+    p3_33: 3.33,
+    p5: 5,
+    p10: 10
+  };
+  function loadRunoffTable(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const t = json;
+    if (t.schema !== RUNOFF_TABLE_SCHEMA) {
+      throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${RUNOFF_TABLE_SCHEMA}\uFF0C\u6536\u5230 ${String(t.schema)}`);
+    }
+    if (typeof t.source !== "string" || !t.source) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 source \u51FA\u5904\u6807\u6CE8");
+    if (typeof t.zones !== "object" || t.zones === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 zones");
+    for (const [zone, soils] of Object.entries(t.zones)) {
+      const zn = Number(zone);
+      if (!Number.isInteger(zn) || zn < 1 || zn > 18) throw new Error(`\u66B4\u96E8\u5206\u533A\u53F7\u5FC5\u987B\u662F 1..18 \u7684\u6574\u6570\uFF0C\u6536\u5230 ${zone}`);
+      for (const [soil, rows] of Object.entries(soils)) {
+        if (!/^soil[I-V]{1,3}$/.test(soil)) throw new Error(`\u571F\u58E4\u7C7B\u522B\u952E\u5FC5\u987B\u662F soilI..soilVI \u5F62\u5F0F\uFF0C\u6536\u5230 ${soil}`);
+        if (!Array.isArray(rows) || rows.length < 2) {
+          throw new Error(`\u5206\u533A ${zone} ${soil} \u81F3\u5C11\u9700\u8981 2 \u884C\uFF08\u03C4 \u6863\uFF09\u624D\u80FD\u63D2\u503C`);
+        }
+        for (const r of rows) {
+          if (!Number.isFinite(r.tau) || r.tau <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\u6570\uFF08min\uFF09");
+          for (const k of FREQ_KEYS) {
+            if (!Number.isFinite(r.h?.[k]) || r.h[k] <= 0) {
+              throw new Error(`\u5206\u533A ${zone} ${soil} \u03C4=${r.tau} \u7684 ${k} \u5F84\u6D41\u539A\u5EA6\u5FC5\u987B\u4E3A\u6B63\u6570`);
+            }
+          }
+        }
+        const taus = rows.map((r) => r.tau);
+        if (new Set(taus).size !== taus.length) throw new Error(`\u5206\u533A ${zone} ${soil} \u5B58\u5728\u91CD\u590D \u03C4 \u6863`);
+      }
+    }
+    return t;
+  }
+  function lerp(a, b, w) {
+    return a + (b - a) * w;
+  }
+  function hAtFreq(row, pct) {
+    const pcts = FREQ_KEYS.map((k) => FREQ_PCTS[k]);
+    for (let i = 0; i < pcts.length; i++) {
+      if (Math.abs(pct - pcts[i]) < 1e-9) return row[FREQ_KEYS[i]];
+    }
+    let iLo = 0, iHi = 1;
+    if (pct >= pcts[pcts.length - 1]) {
+      iLo = pcts.length - 2;
+      iHi = pcts.length - 1;
+    } else {
+      for (let i = 0; i < pcts.length - 1; i++) {
+        if (pct > pcts[i] && pct < pcts[i + 1]) {
+          iLo = i;
+          iHi = i + 1;
+          break;
+        }
+      }
+    }
+    const w = Math.log(pct / pcts[iLo]) / Math.log(pcts[iHi] / pcts[iLo]);
+    return lerp(row[FREQ_KEYS[iLo]], row[FREQ_KEYS[iHi]], w);
+  }
+  function lookupRunoffH(table, zone, soil, freqPct, tauMin) {
+    const soilKey = "soil" + soil.toUpperCase().replace(/[^IV]/g, "");
+    const rows = table.zones[String(zone)]?.[soilKey];
+    if (!rows) throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868\u4E2D\u6CA1\u6709\u5206\u533A ${zone} / \u571F\u58E4 ${soil} \u7684\u6570\u636E`);
+    if (!Number.isFinite(tauMin) || tauMin <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4\u5FC5\u987B\u4E3A\u6B63\uFF08min\uFF09");
+    const sorted = [...rows].sort((a, b) => a.tau - b.tau);
+    if (tauMin < sorted[0].tau || tauMin > sorted[sorted.length - 1].tau) {
+      throw new Error(
+        `\u6C47\u6D41\u65F6\u95F4 ${tauMin} min \u8D85\u51FA\u8868\u8303\u56F4\uFF08${sorted[0].tau}~${sorted[sorted.length - 1].tau} min\uFF09\uFF0C\u8BF7\u76F4\u63A5\u67E5\u8868`
+      );
+    }
+    const exact = sorted.find((r) => Math.abs(r.tau - tauMin) < 1e-9);
+    if (exact) {
+      const h0 = hAtFreq(exact.h, freqPct);
+      const onFreqNode = FREQ_KEYS.some((k) => Math.abs(FREQ_PCTS[k] - freqPct) < 1e-9);
+      return { h: Math.round(h0 * 100) / 100, interpolated: !onFreqNode };
+    }
+    let rLo = sorted[0], rHi = sorted[sorted.length - 1];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (tauMin >= sorted[i].tau && tauMin <= sorted[i + 1].tau) {
+        rLo = sorted[i];
+        rHi = sorted[i + 1];
+        break;
+      }
+    }
+    const wTau = (tauMin - rLo.tau) / (rHi.tau - rLo.tau);
+    const h = lerp(hAtFreq(rLo.h, freqPct), hAtFreq(rHi.h, freqPct), wTau);
+    return { h: Math.round(h * 100) / 100, interpolated: true };
+  }
+  var RUNOFF_TABLE_SEED = loadRunoffTable({
+    schema: RUNOFF_TABLE_SCHEMA,
+    source: "\u516C\u5F00\u7B97\u4F8B\u951A\u70B9\uFF08k3+685 \u6DB5\u6D1E / \u8D35\u5DDE\u5927\u6865\uFF09\uFF0C\u5B8C\u6574\u8868\u5F85 JTG/T D65-04-2007 \u7EB8\u8D28\u7248\u5F55\u5165",
+    zones: {
+      "5": {
+        soilIV: [
+          { tau: 30, h: { p1: 52, p2: 46, p3_33: 42, p5: 38, p10: 33 } },
+          { tau: 45, h: { p1: 55, p2: 48, p3_33: 44, p5: 40, p10: 35 } },
+          { tau: 60, h: { p1: 57, p2: 50, p3_33: 45, p5: 41, p10: 36 } },
+          { tau: 80, h: { p1: 58, p2: 51, p3_33: 46, p5: 42, p10: 37 } }
+        ]
+      }
+    }
+  });
+
+  // src/core/threePoint.ts
+  function threePointFit(pts) {
+    if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
+    const [p1, p2, p3] = pts.map((t) => t.p);
+    const [x1, x2, x3] = pts.map((t) => t.x);
+    for (const p of [p1, p2, p3]) {
+      if (!(p > 0 && p < 1)) throw new Error(`\u9891\u7387\u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    }
+    if (!(p1 < p2 && p2 < p3)) throw new Error("\u4E09\u70B9\u9891\u7387\u5FC5\u987B\u9012\u589E\uFF08\u5982 5%\u300150%\u300195% \u8D85\u8FC7\u6982\u7387\u5199\u6CD5\u5373 0.05/0.5/0.95\uFF09");
+    if (!(Number.isFinite(x1) && Number.isFinite(x2) && Number.isFinite(x3))) {
+      throw new Error("\u4E09\u70B9\u6D41\u91CF\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
+    if (x1 <= x3) throw new Error("\u8981\u6C42 x1 > x3\uFF08\u9891\u7387\u8D8A\u5C0F\u6D41\u91CF\u8D8A\u5927\uFF09\uFF0C\u7CFB\u5217\u53EF\u80FD\u6052\u5B9A\u6216\u987A\u5E8F\u9519\u8BEF");
+    const sOf = (cs2) => {
+      const f12 = phiPIII(p1, cs2), f22 = phiPIII(p2, cs2), f32 = phiPIII(p3, cs2);
+      return (f12 + f32 - 2 * f22) / (f12 - f32);
+    };
+    const S = (x1 + x3 - 2 * x2) / (x1 - x3);
+    let cs;
+    if (S <= 0) {
+      cs = 0;
+    } else {
+      let lo = 0, hi = 1;
+      let guard = 0;
+      while (sOf(hi) < S && guard++ < 100) {
+        lo = hi;
+        hi *= 2;
+      }
+      if (guard >= 100) throw new Error("\u4E09\u70B9\u6CD5\u6C42 Cs \u4E0A\u754C\u6269\u5F20\u8D85\u9650\uFF0C\u6570\u636E\u53EF\u80FD\u4E0D\u9002\u7528");
+      for (let i = 0; i < 100; i++) {
+        const mid = (lo + hi) / 2;
+        if (sOf(mid) < S) lo = mid;
+        else hi = mid;
+        if (hi - lo < 1e-10) break;
+      }
+      cs = (lo + hi) / 2;
+    }
+    const f1 = phiPIII(p1, cs), f2 = phiPIII(p2, cs), f3 = phiPIII(p3, cs);
+    const sigma = (x1 - x3) / (f1 - f3);
+    if (!(sigma > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA \u03C3 \u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    const mean = x2 - sigma * f2;
+    if (!(mean > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA\u5747\u503C\u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    return { mean, cv: sigma / mean, cs, S, sigma, freqs: [p1, p2, p3] };
+  }
+  function empiricalQuantiles(series, freqs) {
+    if (series.length < 3) throw new Error("\u4E09\u70B9\u6CD5\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6570\u636E");
+    const sorted = [...series].sort((a, b) => b - a);
+    const n = sorted.length;
+    return freqs.map((p) => {
+      const rank = p * (n + 1);
+      if (rank < 1) return sorted[0];
+      if (rank >= n) return sorted[n - 1];
+      const mLo = Math.floor(rank);
+      const w = rank - mLo;
+      return sorted[mLo - 1] + w * (sorted[mLo] - sorted[mLo - 1]);
+    });
+  }
+  function threePointFromSeries(series, freqs = [0.05, 0.5, 0.95]) {
+    const xs = empiricalQuantiles(series, freqs);
+    return threePointFit([
+      { p: freqs[0], x: xs[0] },
+      { p: freqs[1], x: xs[1] },
+      { p: freqs[2], x: xs[2] }
+    ]);
+  }
+
   // src/core/bayes.ts
   function nelderMead(f, x0, opts = {}) {
     const n = x0.length;
@@ -344,6 +579,134 @@
     return { fits, weights, best, q1p };
   }
 
+  // src/core/autoFit.ts
+  function autoFit(points, initial, phiFn = phiPIII) {
+    if (points.length < 3) throw new Error("\u4F18\u5316\u9002\u7EBF\u81F3\u5C11\u9700\u8981 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E");
+    const { mean } = initial;
+    if (!(mean > 0)) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF08\u4F18\u5316\u9002\u7EBF\u56FA\u5B9A\u77E9\u6CD5\u5747\u503C\uFF09");
+    const sseInitial = sseOfPoints(points, initial, phiFn);
+    const objective = (theta) => {
+      const cv2 = theta[0], cs2 = theta[1];
+      let penalty = 0;
+      if (cv2 <= 0.01) penalty += (0.01 - cv2) ** 2 * 1e12;
+      if (cs2 < 0) penalty += cs2 * cs2 * 1e12;
+      if (penalty > 0) return penalty + sseInitial;
+      return sseOfPoints(points, { mean, cv: cv2, cs: cs2 }, phiFn);
+    };
+    const starts = [
+      [initial.cv, initial.cs],
+      [Math.max(initial.cv * 0.8, 0.05), Math.max(initial.cs * 1.5, 0.1)],
+      [Math.min(initial.cv * 1.2, 1.5), Math.max(initial.cs * 0.5, 0.05)]
+    ];
+    let best = null;
+    for (const st of starts) {
+      const r = nelderMead(objective, st, { maxIter: 800, tol: 1e-10 });
+      if (!best || r.fx < best.fx) best = r;
+    }
+    const cv = best.x[0], cs = best.x[1];
+    const sse = sseOfPoints(points, { mean, cv, cs }, phiFn);
+    return {
+      mean,
+      cv,
+      cs,
+      sse,
+      sseInitial,
+      improved: sse <= sseInitial + 1e-9,
+      iterations: best.iterations
+    };
+  }
+
+  // src/core/projectFile.ts
+  var PROJECT_SCHEMA = "hongsuan-project@1";
+  function emptyProject() {
+    return { name: "", bridgeSite: "", engineer: "", reviewer: "", note: "" };
+  }
+  function buildProjectFile(project, state2, appVersion) {
+    const p = { ...emptyProject(), ...project };
+    for (const k of Object.keys(p)) {
+      if (typeof p[k] !== "string") throw new Error(`\u9879\u76EE\u4FE1\u606F\u5B57\u6BB5 ${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    return {
+      schema: PROJECT_SCHEMA,
+      savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      appVersion,
+      project: p,
+      state: state2
+    };
+  }
+  function parseProjectFile(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const f = json;
+    if (f.schema !== PROJECT_SCHEMA) throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${PROJECT_SCHEMA}\uFF0C\u6536\u5230 ${String(f.schema)}`);
+    if (typeof f.savedAt !== "string" || !f.savedAt) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 savedAt");
+    if (typeof f.appVersion !== "string" || !f.appVersion) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 appVersion");
+    if (typeof f.project !== "object" || f.project === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 project \u4FE1\u606F");
+    for (const k of ["name", "bridgeSite", "engineer", "reviewer", "note"]) {
+      if (typeof f.project[k] !== "string") throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 project.${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    if (typeof f.state !== "object" || f.state === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 state");
+    return f;
+  }
+  function serializeProject(file) {
+    return JSON.stringify(file, null, 2);
+  }
+
+  // src/core/hydrograph.ts
+  function parseHydrograph(text) {
+    if (typeof text !== "string") throw new Error("\u8FC7\u7A0B\u7EBF\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u884C\u6570\u636E\uFF08\u6BCF\u884C\uFF1A\u65F6\u95F4h, \u6D41\u91CF\uFF09");
+    const out = [];
+    lines.forEach((line, i) => {
+      const parts = line.split(/[\s,，;；]+/).filter(Boolean);
+      if (parts.length !== 2) throw new Error(`\u7B2C ${i + 1} \u884C\u5E94\u6709 2 \u4E2A\u6570\u503C\uFF08\u65F6\u95F4, \u6D41\u91CF\uFF09\uFF0C\u6536\u5230 ${parts.length} \u4E2A\uFF1A${line}`);
+      const t = Number(parts[0]), q = Number(parts[1]);
+      if (!Number.isFinite(t)) throw new Error(`\u7B2C ${i + 1} \u884C\u65F6\u95F4\u4E0D\u662F\u6709\u6548\u6570\u503C\uFF1A${parts[0]}`);
+      if (!Number.isFinite(q) || q < 0) throw new Error(`\u7B2C ${i + 1} \u884C\u6D41\u91CF\u5FC5\u987B\u4E3A\u975E\u8D1F\u6570\u503C\uFF1A${parts[1]}`);
+      out.push({ t, q });
+    });
+    return out;
+  }
+  function scaleHydrograph(typical, designPeak) {
+    if (!Array.isArray(typical) || typical.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u4E2A\u70B9");
+    if (!typical.every((p) => Number.isFinite(p.t) && Number.isFinite(p.q) && p.q >= 0)) {
+      throw new Error("\u8FC7\u7A0B\u7EBF\u5404\u70B9\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u4E14\u6D41\u91CF\u975E\u8D1F");
+    }
+    if (!(designPeak > 0)) throw new Error("\u8BBE\u8BA1\u6D2A\u5CF0 Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    const typicalPeak = Math.max(...typical.map((p) => p.q));
+    if (!(typicalPeak > 0)) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u5CF0\u503C\u4E3A 0\uFF0C\u65E0\u6CD5\u653E\u5927");
+    const kg = designPeak / typicalPeak;
+    const points = typical.map((p) => ({
+      t: p.t,
+      q: Math.round(p.q * kg * 100) / 100
+    }));
+    return { kg, typicalPeak, designPeak, points };
+  }
+
+  // src/core/areaConvert.ts
+  function suggestExponent(fRef, fSite) {
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    if (diffPct <= 3) return 1;
+    const fMin = Math.min(fRef, fSite);
+    if (fMin < 100) return 0.75;
+    return 0.6;
+  }
+  function areaConvert(input) {
+    const { qRef, fRef, fSite } = input;
+    if (![qRef, fRef, fSite].every(Number.isFinite)) throw new Error("\u9762\u79EF\u6BD4\u62DF\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (!(qRef > 0)) throw new Error("\u53C2\u8BC1\u6210\u679C\u5FC5\u987B\u4E3A\u6B63");
+    if (!(fRef > 0) || !(fSite > 0)) throw new Error("\u6C47\u6C34\u9762\u79EF\u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const n = input.n ?? suggestExponent(fRef, fSite);
+    if (!Number.isFinite(n) || n <= 0) throw new Error("\u9762\u79EF\u4FEE\u6B63\u6307\u6570 n \u5FC5\u987B\u4E3A\u6B63");
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    const warnings = [];
+    const preconditionOk = diffPct < 20 && Math.max(fRef, fSite) <= 1e3;
+    if (diffPct >= 20) warnings.push(`\u9762\u79EF\u5DEE ${diffPct.toFixed(1)}% \u2265 20%\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003`);
+    if (Math.max(fRef, fSite) > 1e3) warnings.push("\u6C47\u6C34\u9762\u79EF >1000 km\xB2\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003");
+    const qSite = qRef * Math.pow(fSite / fRef, n);
+    return { qSite, n, diffPct, preconditionOk, warnings };
+  }
+
   // src/core/methodB.ts
   function manningQ(s) {
     const { Ac, Bc, nc, At, Bt, nt, I } = s;
@@ -407,7 +770,174 @@
     return p.psi * Math.pow(p.h - p.z, 3 / 2) * Math.pow(p.F, 4 / 5) * p.beta * p.gamma * p.delta;
   }
 
+  // src/core/waterSurface.ts
+  var G = 9.8;
+  function trapA(g, y) {
+    return (g.b + g.m * y) * y;
+  }
+  function trapBs(g, y) {
+    return g.b + 2 * g.m * y;
+  }
+  function trapP(g, y) {
+    return g.b + 2 * y * Math.sqrt(1 + g.m * g.m);
+  }
+  function trapR(g, y) {
+    return trapA(g, y) / trapP(g, y);
+  }
+  function flowState(g, Q, y) {
+    const A = trapA(g, y), R = trapR(g, y);
+    const v = Q / A;
+    const fr = Math.sqrt(Q * Q * trapBs(g, y) / (G * A * A * A));
+    const sf = g.n * g.n * v * v / Math.pow(R, 4 / 3);
+    const E = y + v * v / (2 * G);
+    return { v, fr, sf, E };
+  }
+  function normalDepth(g, S0, Q) {
+    if (!(S0 > 0) || !(Q > 0)) throw new Error("\u6BD4\u964D\u4E0E\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    const f = (y) => trapA(g, y) * Math.pow(trapR(g, y), 2 / 3) * Math.sqrt(S0) / g.n - Q;
+    let lo = 1e-5, hi = 1;
+    let guard = 0;
+    while (f(hi) < 0 && guard++ < 200) {
+      lo = hi;
+      hi *= 2;
+      if (hi > 1e5) throw new Error("\u6B63\u5E38\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650");
+    }
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) < 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function criticalDepth(g, Q) {
+    if (!(Q > 0)) throw new Error("\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    const f = (y) => Q * Q * trapBs(g, y) / (G * Math.pow(trapA(g, y), 3)) - 1;
+    let lo = 1e-5, hi = 1;
+    let guard = 0;
+    while (f(hi) > 0 && guard++ < 200) {
+      lo = hi;
+      hi *= 2;
+      if (hi > 1e5) throw new Error("\u4E34\u754C\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650");
+    }
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) > 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function waterSurfaceProfile(opts) {
+    const { geom, S0, Q, yControl, length } = opts;
+    const N = opts.steps ?? 40;
+    if (![geom.b, geom.m, geom.n, S0, Q, yControl, length].every(Number.isFinite)) throw new Error("\u6C34\u9762\u7EBF\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (!(geom.b > 0) || !(geom.n > 0)) throw new Error("\u5E95\u5BBD\u4E0E\u7CD9\u7387\u5FC5\u987B\u4E3A\u6B63");
+    if (geom.m < 0) throw new Error("\u8FB9\u5761\u7CFB\u6570\u4E0D\u80FD\u4E3A\u8D1F");
+    if (!(S0 > 0)) throw new Error("\u6BD4\u964D\u5FC5\u987B\u4E3A\u6B63");
+    if (!(Q > 0)) throw new Error("\u5047\u5B9A\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    if (!(yControl > 0)) throw new Error("\u63A7\u5236\u65AD\u9762\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63");
+    if (!(length > 0)) throw new Error("\u63A8\u7B97\u6CB3\u957F\u5FC5\u987B\u4E3A\u6B63");
+    const yn = normalDepth(geom, S0, Q);
+    const yc = criticalDepth(geom, Q);
+    const stCtrl = flowState(geom, Q, yControl);
+    const regime = stCtrl.fr < 1 ? "subcritical" : "supercritical";
+    const points = [{ x: 0, y: yControl, v: stCtrl.v, E: stCtrl.E, sf: stCtrl.sf }];
+    let reached = 0;
+    if (Math.abs(yControl - yn) / yn < 1e-4) {
+      const st = flowState(geom, Q, yn);
+      return { points: [{ x: -length, y: yn, v: st.v, E: st.E, sf: st.sf }, points[0]], yn, yc, regime, reachedLength: length };
+    }
+    if (yControl < yc * 1.0001) throw new Error("\u63A7\u5236\u65AD\u9762\u6C34\u6DF1\u63A5\u8FD1/\u4F4E\u4E8E\u4E34\u754C\u6C34\u6DF1\uFF0C\u6C34\u9762\u7EBF\u63A8\u7B97\u4E0D\u7A33\u5B9A\uFF08\u6025\u6D41\u63A7\u5236\u4F4D\u7F6E\u9700\u5728\u4E0A\u6E38\uFF09");
+    const yEnd = yn;
+    const dy = (yEnd - yControl) / N;
+    let x = 0;
+    for (let i = 0; i < N; i++) {
+      const y1 = yControl + dy * i;
+      const y2 = yControl + dy * (i + 1);
+      const s1 = flowState(geom, Q, y1);
+      const s2 = flowState(geom, Q, y2);
+      const sfBar = (s1.sf + s2.sf) / 2;
+      const denom = S0 - sfBar;
+      if (Math.abs(denom) < 1e-8) break;
+      const dx = (s2.E - s1.E) / denom;
+      const stepLen = Math.abs(dx);
+      if (reached + stepLen >= length) {
+        const frac = (length - reached) / stepLen;
+        const yL = y1 + (y2 - y1) * frac;
+        const stL = flowState(geom, Q, yL);
+        x = (regime === "subcritical" ? -1 : 1) * length;
+        points.push({ x, y: yL, v: stL.v, E: stL.E, sf: stL.sf });
+        reached = length;
+        break;
+      }
+      x += dx;
+      reached += stepLen;
+      points.push({ x, y: y2, v: s2.v, E: s2.E, sf: s2.sf });
+    }
+    return { points, yn, yc, regime, reachedLength: reached };
+  }
+  function depthAt(result, dist) {
+    const pts = result.points;
+    const d = Math.abs(dist);
+    if (d <= 0) return pts[0].y;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d1 = Math.abs(pts[i].x), d2 = Math.abs(pts[i + 1].x);
+      if (d >= d1 && d <= d2) {
+        const w = d2 === d1 ? 0 : (d - d1) / (d2 - d1);
+        return pts[i].y + w * (pts[i + 1].y - pts[i].y);
+      }
+    }
+    return pts[pts.length - 1].y;
+  }
+  function solveDischargeFromMarks(geom, S0, yDown, yUp, length) {
+    if (!(yUp > yDown)) throw new Error("\u672C\u7B97\u6CD5\u8981\u6C42\u4E0A\u6E38\u6D2A\u75D5\u6C34\u6DF1\u5927\u4E8E\u4E0B\u6E38\uFF08\u7F13\u6D41 M2 \u578B\uFF1B\u5176\u4ED6\u5F62\u6001\u8BF7\u4EBA\u5DE5\u8BD5\u7B97\uFF09");
+    const A = trapA(geom, yDown), R = trapR(geom, yDown);
+    const q0 = A * Math.pow(R, 2 / 3) * Math.sqrt(S0) / geom.n;
+    const residualOf = (Q) => {
+      const prof2 = waterSurfaceProfile({ geom, S0, Q, yControl: yDown, length });
+      return { r: depthAt(prof2, length) - yUp, prof: prof2 };
+    };
+    let lo = q0 * 0.3, hi = q0 * 3;
+    let rLo = residualOf(lo).r, rHi = residualOf(hi).r;
+    let guard = 0;
+    while (rLo * rHi > 0 && guard++ < 24) {
+      lo *= 0.5;
+      hi *= 2;
+      rLo = residualOf(lo).r;
+      rHi = residualOf(hi).r;
+      if (lo < q0 * 2e-3 || hi > q0 * 500) {
+        throw new Error("\u81EA\u52A8\u8BD5\u7B97\u672A\u627E\u5230\u6709\u6548\u6D41\u91CF\u533A\u95F4\uFF0C\u8BF7\u4EBA\u5DE5\u8C03\u6574\u65AD\u9762\u53C2\u6570\u6216\u6539\u7528\u5747\u5300\u6D41\u516C\u5F0F");
+      }
+    }
+    let mid = q0, rMid = residualOf(mid).r;
+    for (let i = 0; i < 60; i++) {
+      mid = (lo + hi) / 2;
+      rMid = residualOf(mid).r;
+      if (rLo * rMid <= 0) {
+        hi = mid;
+        rHi = rMid;
+      } else {
+        lo = mid;
+        rLo = rMid;
+      }
+      if (hi - lo < q0 * 1e-4) break;
+    }
+    const prof = residualOf(mid).prof;
+    return { Q: mid, residual: rMid, iterations: guard, profile: prof };
+  }
+
   // src/web/main.ts
+  var stateCompare = {};
+  function freqLabelOf(p) {
+    const m = { "0.0033": "1/300", "0.01": "1/100", "0.02": "1/50", "0.04": "1/25" };
+    return m[String(p)] || (p * 100).toFixed(2) + "%";
+  }
+  function renderCompare() {
+    const el = $("compareTable");
+    const rows = Object.values(stateCompare);
+    el.innerHTML = rows.length ? rows.map((r) => `<tr><td style="padding:4px 6px">${r.label}</td><td class="v">${fmt(r.q, 1)}</td><td>${r.freqLabel}</td><td style="color:var(--text3)">${r.note}</td></tr>`).join("") : `<tr><td colspan="4" style="color:var(--text3)">\u5728\u5404\u6A21\u5F0F\u8BA1\u7B97\u540E\u81EA\u52A8\u6C47\u603B\u5230\u6B64\u8868</td></tr>`;
+  }
   var state = {
     mode: "series",
     series: [],
@@ -448,11 +978,16 @@
     $("outQ").textContent = fmt(q, 0);
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
+    stateCompare.A = {
+      label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
+      q,
+      freqLabel: freqLabelOf(freq),
+      note: `Q\u0304=${fmt(params.mean, 1)}, Cv=${params.cv.toFixed(3)}, Cs=${params.cs.toFixed(2)}`
+    };
+    renderCompare();
     const pts = state.pts;
     if (pts.length) {
-      let sse = 0;
-      for (const pt of pts) sse += Math.pow(pt.q - params.mean * (1 + phiPIII(pt.p, params.cs) * params.cv), 2);
-      $("stSse").textContent = fmt(sse, 0);
+      $("stSse").textContent = fmt(sseOfPoints(pts, params, phiPIII), 0);
     } else {
       $("stSse").textContent = "\u2014";
     }
@@ -498,43 +1033,114 @@
     s += `<circle cx="${fx}" cy="${sy2(q)}" r="6" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>`;
     s += `<text x="${Math.min(fx + 10, PR - 120)}" y="${sy2(q) - 10}" font-size="12" fill="#007AFF" font-weight="600">Q${(freq * 100).toFixed(2).replace(/\.?0+$/, "")}% = ${fmt(q, 0)}</text>`;
     for (const pt of pts) {
+      const px = pToX(pt.p), py = sy2(pt.q);
       if (pt.kind === "hist") {
-        s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="5.5" fill="#ff3b30"/>`;
+        s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
       } else {
-        s += `<circle cx="${pToX(pt.p)}" cy="${sy2(pt.q)}" r="4" fill="#1d1d1f"/>`;
+        s += `<circle cx="${px}" cy="${py}" r="4" fill="#1d1d1f"/>`;
       }
     }
+    s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
+    s += `<line id="chy" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
     $("chart").innerHTML = s;
+    chartQLo = qLo;
+    chartQHi = qHi;
+    bindChartHover();
+  }
+  var chartQLo = 0;
+  var chartQHi = 1;
+  var chartHoverBound = false;
+  function bindChartHover() {
+    if (chartHoverBound) return;
+    chartHoverBound = true;
+    const svg = $("chart");
+    const normCdfT = (t) => {
+      const P = gammaincLower(0.5, t * t / 2);
+      return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+    };
+    const hide = () => {
+      for (const id of ["chx", "chy"]) {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("opacity", "0");
+      }
+    };
+    svg.addEventListener("mousemove", (ev) => {
+      const rect = svg.getBoundingClientRect();
+      const mx = (ev.clientX - rect.left) / rect.width * 940;
+      const my = (ev.clientY - rect.top) / rect.height * 520;
+      if (mx < PL || mx > PR || my < PT || my > PB) {
+        hide();
+        return;
+      }
+      const t = XMAX - (mx - PL) / (PR - PL) * (XMAX - XMIN);
+      const p = 1 - normCdfT(t);
+      const q = chartQLo + (PB - my) / (PB - PT) * (chartQHi - chartQLo);
+      const chx = document.getElementById("chx"), chy = document.getElementById("chy");
+      if (chx && chy) {
+        chx.setAttribute("x1", String(mx));
+        chx.setAttribute("x2", String(mx));
+        chx.setAttribute("y1", String(PT));
+        chx.setAttribute("y2", String(PB));
+        chy.setAttribute("y1", String(my));
+        chy.setAttribute("y2", String(my));
+        chy.setAttribute("x1", String(PL));
+        chy.setAttribute("x2", String(PR));
+        chx.setAttribute("opacity", "0.4");
+        chy.setAttribute("opacity", "0.4");
+      }
+      $("chartReadout").textContent = `P = ${(p * 100).toFixed(2)}% \uFF5C Q = ${fmt(q, 0)} m\xB3/s`;
+    });
+    svg.addEventListener("mouseleave", hide);
   }
   function calcFromSeries() {
-    const raw = $("series").value.split(/[\s,，;；]+/).filter(Boolean);
-    const xs = raw.map(Number).filter((v) => Number.isFinite(v) && v > 0);
     const errBox = $("parseErr");
+    const series = parseSeries($("series").value);
+    let xs = series.values;
+    const notices = [];
+    if (series.ignored.length) {
+      const shown = series.ignored.slice(0, 5).join("\u3001");
+      notices.push(`\u5DF2\u5FFD\u7565 ${series.ignored.length} \u4E2A\u65E0\u6548\u503C\uFF08${shown}${series.ignored.length > 5 ? " \u7B49" : ""}\uFF09`);
+    }
     if (xs.length < 3) {
       errBox.style.display = "block";
       errBox.textContent = "\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6709\u6548\u6D41\u91CF\u503C\uFF08\u5F53\u524D " + xs.length + " \u4E2A\uFF09\u3002\u89C4\u8303\u5EFA\u8BAE\u5B9E\u6D4B\u7CFB\u5217\u4E0D\u5B9C\u5C11\u4E8E 30 \u5E74\u3002";
       return;
     }
-    errBox.style.display = "none";
+    if ($("convEnable").checked) {
+      try {
+        const fRef = +$("convFRef").value, fSite = +$("convFSite").value;
+        const nRaw = $("convN").value.trim();
+        const conv = areaConvert({ qRef: 1, fRef, fSite, n: nRaw ? +nRaw : void 0 });
+        notices.push(...conv.warnings);
+        notices.push(`\u5DF2\u6309\u9762\u79EF\u6BD4\u62DF\u8F6C\u6362\u5230\u6865\u4F4D\u65AD\u9762\uFF08\xD7${conv.qSite.toFixed(4)}\uFF0Cn=${conv.n}\uFF09`);
+        xs = xs.map((v) => v * conv.qSite);
+      } catch (e) {
+        errBox.style.display = "block";
+        delete errBox.dataset.kind;
+        errBox.textContent = "\u9762\u79EF\u8F6C\u6362\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
+        return;
+      }
+    }
     state.series = xs;
-    const sorted = [...xs].sort((a, b) => b - a);
-    const n = sorted.length;
     let st;
     let pts;
     if ($("hasExtra").checked) {
       try {
         const N = Math.round(+$("inN").value);
         const l = Math.round(+$("inL").value);
-        const extra = $("extraSeries").value.split(/[\s,，;；]+/).filter(Boolean).map(Number).filter((v) => Number.isFinite(v) && v > 0);
-        st = discontinuousStats({ historicalExtra: extra, measuredDesc: sorted, l, N });
-        const a = st.a;
-        const all = [...extra, ...sorted.slice(0, l)].sort((x, y) => y - x);
-        pts = all.map((q, i) => ({ p: (i + 1) / (N + 1), q, kind: "hist" }));
-        const pA = a / (N + 1);
-        for (let m = l + 1; m <= n; m++) {
-          pts.push({ p: pA + (1 - pA) * (m - l) / (n - l + 1), q: sorted[m - 1], kind: "meas" });
+        const extraParsed = parseSeries($("extraSeries").value);
+        if (extraParsed.ignored.length) {
+          notices.push(`\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u5DF2\u5FFD\u7565 ${extraParsed.ignored.length} \u4E2A\u65E0\u6548\u503C`);
         }
-        $("stN").textContent = `n=${n}\uFF0Ca=${a}\uFF0Cl=${l}\uFF0CN=${N}`;
+        const r = discontinuousPoints({
+          historicalExtra: extraParsed.values,
+          measuredDesc: xs,
+          l,
+          N
+        });
+        st = r.stats;
+        pts = r.points;
+        $("stN").textContent = `n=${st.n}\uFF0Ca=${st.a}\uFF0Cl=${l}\uFF0CN=${N}`;
       } catch (e) {
         errBox.style.display = "block";
         errBox.textContent = "\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
@@ -542,8 +1148,16 @@
       }
     } else {
       st = seriesStats(xs);
-      pts = sorted.map((q, i) => ({ p: (i + 1) / (n + 1), q, kind: "meas" }));
+      pts = continuousPoints(xs);
       $("stN").textContent = st.n;
+    }
+    if (notices.length) {
+      errBox.style.display = "block";
+      errBox.dataset.kind = "notice";
+      errBox.textContent = notices.join("\uFF1B");
+    } else {
+      errBox.style.display = "none";
+      delete errBox.dataset.kind;
     }
     state.stats = st;
     state.pts = pts;
@@ -623,10 +1237,12 @@
     $("mParams").classList.remove("on");
     $("mHist").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(true);
   };
   $("mParams").onclick = () => {
@@ -635,10 +1251,12 @@
     $("mSeries").classList.remove("on");
     $("mHist").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     syncParamInputs();
     setFitCardsVisible(true);
     render();
@@ -649,10 +1267,12 @@
     $("mSeries").classList.remove("on");
     $("mParams").classList.remove("on");
     $("mNoData").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "";
     $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(false);
   };
   $("mNoData").onclick = () => {
@@ -661,12 +1281,28 @@
     $("mSeries").classList.remove("on");
     $("mParams").classList.remove("on");
     $("mHist").classList.remove("on");
+    $("mHydro").classList.remove("on");
     $("seriesBox").style.display = "none";
     $("paramsBox").style.display = "none";
     $("histBox").style.display = "none";
     $("noDataBox").style.display = "";
+    $("hydroBox").style.display = "none";
     setFitCardsVisible(false);
     calcMethodC();
+  };
+  $("mHydro").onclick = () => {
+    state.mode = "hydro";
+    $("mHydro").classList.add("on");
+    $("mSeries").classList.remove("on");
+    $("mParams").classList.remove("on");
+    $("mHist").classList.remove("on");
+    $("mNoData").classList.remove("on");
+    $("seriesBox").style.display = "none";
+    $("paramsBox").style.display = "none";
+    $("histBox").style.display = "none";
+    $("noDataBox").style.display = "none";
+    $("hydroBox").style.display = "";
+    setFitCardsVisible(false);
   };
   function setFitCardsVisible(v) {
     for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
@@ -674,6 +1310,44 @@
       if (el) el.style.display = v ? "" : "none";
     }
   }
+  $("btnThreePoint").onclick = () => {
+    try {
+      if (!state.series.length) {
+        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        return;
+      }
+      const r = threePointFromSeries(state.series);
+      state.params = {
+        mean: r.mean,
+        cv: Math.min(1.2, Math.max(0.05, r.cv)),
+        cs: Math.max(0, r.cs)
+      };
+      syncParamInputs();
+      render();
+      $("fitMsg").textContent = `\u4E09\u70B9\u6CD5\u521D\u4F30\uFF085%/50%/95% \u97E6\u4F2F\u6392\u4F4D\uFF09\uFF1AQ\u0304=${fmt(r.mean, 1)}\uFF0CCv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}`;
+    } catch (e) {
+      alert("\u4E09\u70B9\u6CD5\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnAutoFit").onclick = () => {
+    try {
+      if (state.pts.length < 3) {
+        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        return;
+      }
+      const r = autoFit(state.pts, state.params);
+      state.params = {
+        mean: r.mean,
+        cv: Math.min(1.2, Math.max(0.05, r.cv)),
+        cs: Math.max(0, r.cs)
+      };
+      syncParamInputs();
+      render();
+      $("fitMsg").textContent = `\u4F18\u5316\u9002\u7EBF\uFF08\u5747\u503C\u56FA\u5B9A\uFF09\uFF1ACv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}\uFF0CSSE ${fmt(r.sseInitial, 0)} \u2192 ${fmt(r.sse, 0)}`;
+    } catch (e) {
+      alert("\u4F18\u5316\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
   $("btnT3").onclick = () => {
     $("mParams").click();
     $("inMean").value = "5173.6";
@@ -691,7 +1365,7 @@
     $("extraBox").style.display = "";
   }
   var BAYES_CSS = `
-  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 10px; align-items: center; margin: 8px 0; font-size: 13px; }
+  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 8px; align-items: center; margin: 4px 0; font-size: 12.5px; }
   .bbar-outer { height: 10px; background: rgba(120,120,128,0.12); border-radius: 5px; overflow: hidden; }
   .bbar-inner { height: 100%; background: var(--blue); border-radius: 5px; transition: width .5s ease; }
   .bw { font-variant-numeric: tabular-nums; font-weight: 500; text-align: right; }
@@ -747,7 +1421,7 @@
       { Ac: 400, Bc: 95, nc: 0.03, At: 150, Bt: 180, nt: 0.05, Ipermil: 0.5, T: 50 }
     ];
     $("histRows").innerHTML = [0, 1].map((i) => `
-    <div style="margin:12px 0;padding:12px 14px;background:var(--bg);border-radius:10px">
+    <div style="margin:8px 0;padding:8px 10px;background:var(--bg);border-radius:10px">
       <div style="font-size:13px;font-weight:500;margin-bottom:6px">\u7B2C ${i + 1} \u6B21\u5386\u53F2\u6D2A\u6C34</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         ${HIST_FIELDS.map(([k, label]) => `<div><label style="margin-top:0">${label}</label><input type="number" step="any" id="hf${i}${k}" value="${defaults[i][k]}"></div>`).join("")}
@@ -764,6 +1438,13 @@
     const cv = +$("hbCv").value, cs = +$("hbCs").value;
     try {
       const res = designFromHistory(floods, { cv, cs }, state.freq, phiPIII);
+      stateCompare.B = {
+        label: "\u65B9\u6CD5B \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5",
+        q: res.q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `${floods.length} \u6B21\u5386\u53F2\u6D2A\u6C34\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09`
+      };
+      renderCompare();
       $("histResult").style.display = "";
       $("histResult").innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -784,33 +1465,120 @@
     }
   }
   $("btnHist").onclick = calcMethodB;
+  function wsGeom() {
+    return { b: +$("wsB").value, m: +$("wsM").value, n: +$("wsN").value };
+  }
+  function wsShow(html) {
+    $("wsErr").textContent = "";
+    $("wsResult").style.display = "";
+    $("wsResult").innerHTML = html;
+  }
+  function wsFail(e) {
+    $("wsResult").style.display = "none";
+    const msg = e instanceof Error ? e.message : String(e);
+    $("wsErr").textContent = msg;
+    $("wsErr").style.display = "block";
+  }
+  function calcWsProfile() {
+    try {
+      const geom = wsGeom();
+      const S0 = +$("wsS0").value / 1e3, L = +$("wsL").value, yDown = +$("wsYc").value, Q = +$("wsQ").value;
+      const r = waterSurfaceProfile({ geom, S0, Q, yControl: yDown, length: L });
+      const yEnd = depthAt(r, L);
+      const upText = r.regime === "subcritical" ? "\u4E0A\u6E38\u7AEF" : "\u4E0B\u6E38\u7AEF";
+      const rows = r.points.filter((_, i) => i % Math.ceil(r.points.length / 12) === 0 || i === r.points.length - 1);
+      wsShow(`
+      <div class="metrics">
+        <div class="metric"><div class="k">\u6B63\u5E38\u6C34\u6DF1 y<sub>n</sub>\uFF08m\uFF09</div><div class="v">${r.yn.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u4E34\u754C\u6C34\u6DF1 y<sub>c</sub>\uFF08m\uFF09</div><div class="v">${r.yc.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6D41\u6001</div><div class="v">${r.regime === "subcritical" ? "\u7F13\u6D41" : "\u6025\u6D41"}</div></div>
+        <div class="metric hl"><div class="k">${upText}\u6C34\u6DF1\uFF08m\uFF09</div><div class="v">${yEnd.toFixed(3)}</div></div>
+      </div>
+      <table class="ltab" style="margin-top:10px">
+        <tr><th>\u8DDD\u63A7\u5236\u65AD\u9762\uFF08m\uFF09</th><th class="v">\u6C34\u6DF1 y\uFF08m\uFF09</th><th class="v">\u6D41\u901F v\uFF08m/s\uFF09</th><th class="v">\u6BD4\u80FD E\uFF08m\uFF09</th><th class="v">Sf</th></tr>
+        ${rows.map((p) => `<tr><td>${p.x.toFixed(0)}</td><td class="v">${p.y.toFixed(3)}</td><td class="v">${p.v.toFixed(3)}</td><td class="v">${p.E.toFixed(3)}</td><td class="v">${p.sf.toExponential(3)}</td></tr>`).join("")}
+      </table>
+      <div class="hint" style="margin-top:8px">\u5171 ${r.points.length} \u4E2A\u8BA1\u7B97\u70B9\uFF08\u9694\u884C\u663E\u793A\uFF09\uFF1Bx \u4E3A\u8D1F\u8868\u793A\u5728\u63A7\u5236\u65AD\u9762${r.regime === "subcritical" ? "\u4E0A\u6E38" : "\u4E0B\u6E38"}\u3002\u4E0E ${upText.replace("\u7AEF", "")}\u6D2A\u75D5\u5BF9\u7167\u8C03\u6574\u5047\u5B9A Q \u5373\u53EF\u8BD5\u7B97\u3002</div>`);
+    } catch (e) {
+      wsFail(e);
+    }
+  }
+  function calcWsSolve() {
+    try {
+      const geom = wsGeom();
+      const S0 = +$("wsS0").value / 1e3, L = +$("wsL").value, yDown = +$("wsYc").value, yUp = +$("wsYup").value;
+      const s = solveDischargeFromMarks(geom, S0, yDown, yUp, L);
+      stateCompare.B2 = {
+        label: "\u65B9\u6CD5B \xB7 \u4E24\u6D2A\u75D5\u53CD\u89E3 Q",
+        q: s.Q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `y\u4E0B=${yDown}m \u2192 y\u4E0A=${yUp}m\uFF0CL=${L}m`
+      };
+      renderCompare();
+      const yn = normalDepth(geom, S0, s.Q), yc = criticalDepth(geom, s.Q);
+      wsShow(`
+      <div class="metrics">
+        <div class="metric hl"><div class="k">\u53CD\u89E3\u6D41\u91CF Q\uFF08m\xB3/s\uFF09</div><div class="v">${s.Q.toFixed(1)}</div></div>
+        <div class="metric"><div class="k">\u5BF9\u5E94 y<sub>n</sub>\uFF08m\uFF09</div><div class="v">${yn.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u5BF9\u5E94 y<sub>c</sub>\uFF08m\uFF09</div><div class="v">${yc.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6B8B\u5DEE\uFF08m\uFF09</div><div class="v">${s.residual.toExponential(2)}</div></div>
+      </div>
+      <div class="hint" style="margin-top:8px">\u7531\u4E0B\u6E38\u6D2A\u75D5 ${yDown}m \u6309\u5047\u5B9A Q \u5411\u4E0A\u6E38\u63A8\u7B97\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5 ${yUp}m \u5BF9\u7167\u8FED\u4EE3\uFF1B\u6210\u679C\u5DF2\u5199\u5165\u591A\u65B9\u6CD5\u5BF9\u6BD4\u8868\u3002</div>`);
+    } catch (e) {
+      wsFail(e);
+    }
+  }
+  $("btnWsProfile").onclick = calcWsProfile;
+  $("btnWsSolve").onclick = calcWsSolve;
   document.querySelectorAll("#nTable .fillBtn").forEach((item) => {
     const btn = item;
     btn.onclick = () => {
       $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n;
     };
   });
+  function showMethodCError(which, msg) {
+    const out = $(which === "rc" ? "rcOut" : "rdOut");
+    const err = $(which === "rc" ? "rcErr" : "rdErr");
+    if (msg === null) {
+      err.style.display = "none";
+      err.textContent = "";
+    } else {
+      err.style.display = "block";
+      err.textContent = msg;
+    }
+    return out;
+  }
   function calcMethodC() {
     const v = (id) => +$(id).value;
     try {
       const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
       const q = rationalFormula({ Sp, n, psi, tau, F });
-      $("rcOut").textContent = q.toFixed(2);
-      $("rcOut").removeAttribute("title");
+      stateCompare.C1 = {
+        label: "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F} km\xB2, \u03C4=${tau} h`
+      };
+      renderCompare();
+      showMethodCError("rc", null).textContent = q.toFixed(2);
     } catch (e) {
-      $("rcOut").textContent = "\u2014";
-      $("rcOut").title = e instanceof Error ? e.message : String(e);
+      showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
     try {
       const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
       $("rdH").classList.remove("invalid");
       $("rdZ").classList.remove("invalid");
       const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
-      $("rdOut").textContent = q.toFixed(2);
-      $("rdOut").removeAttribute("title");
+      stateCompare.C2 = {
+        label: "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F2} km\xB2, h=${h} mm`
+      };
+      renderCompare();
+      showMethodCError("rd", null).textContent = q.toFixed(2);
     } catch (e) {
-      $("rdOut").textContent = "\u2014";
-      $("rdOut").title = e instanceof Error ? e.message : String(e);
+      showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
     document.querySelectorAll("#rdTables .fillBtn").forEach((item) => {
       const btn = item;
@@ -831,6 +1599,49 @@
   ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach((id) => {
     $(id).oninput = calcMethodC;
   });
+  $("btnHydroSample").onclick = () => {
+    $("hydroTypical").value = "0 0\n2 267\n4 533\n6 800\n8 533\n10 267\n12 0";
+    scheduleSave();
+  };
+  $("btnHydroUseQp").onclick = () => {
+    const q = state.params.mean * (1 + phiPIII(state.freq, state.params.cs) * state.params.cv);
+    $("hydroQp").value = q.toFixed(0);
+    scheduleSave();
+  };
+  $("btnHydroScale").onclick = () => {
+    const errEl = $("hydroErr");
+    try {
+      const typical = parseHydrograph($("hydroTypical").value);
+      const r = scaleHydrograph(typical, +$("hydroQp").value);
+      errEl.style.display = "none";
+      $("hydroKg").textContent = r.kg.toFixed(4);
+      $("hydroOut").style.display = "";
+      $("hydroTable").innerHTML = r.points.map((p) => `<tr><td>${p.t}</td><td class="v">${fmt(p.q, 1)}</td></tr>`).join("");
+      state.hydro = r;
+    } catch (e) {
+      errEl.style.display = "block";
+      errEl.textContent = e instanceof Error ? e.message : String(e);
+      $("hydroKg").textContent = "\u2014";
+      $("hydroOut").style.display = "none";
+      state.hydro = null;
+    }
+  };
+  $("lkGo").onclick = () => {
+    try {
+      const zone = Math.round(+$("lkZone").value);
+      const soil = $("lkSoil").value;
+      const freq = +$("lkFreq").value;
+      const tau = +$("lkTau").value;
+      const r = lookupRunoffH(RUNOFF_TABLE_SEED, zone, soil, freq, tau);
+      $("rdH").value = String(r.h);
+      $("lkOut").textContent = `h=${r.h} mm${r.interpolated ? "\uFF08\u63D2\u503C\uFF09" : ""}`;
+      $("lkOut").style.color = "var(--text2)";
+      calcMethodC();
+    } catch (e) {
+      $("lkOut").textContent = e instanceof Error ? e.message : String(e);
+      $("lkOut").style.color = "var(--red)";
+    }
+  };
   function svgToPngDataUrl() {
     return new Promise((resolve, reject) => {
       try {
@@ -887,6 +1698,8 @@
       return;
     }
     const p = state.params, freq = state.freq;
+    const pj = currentProject();
+    const pjAny = pj.name || pj.bridgeSite || pj.engineer || pj.reviewer;
     const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
     const st = state.stats ? {
       n: state.stats.n,
@@ -920,6 +1733,12 @@
           children: [
             new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\u6CD3\u7B97 \xB7 \u6865\u6DB5\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u4E66", bold: true, size: 40 })] }),
             new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\uFF08P-\u2162 \u578B\u9891\u7387\u66F2\u7EBF\u9002\u7EBF\u6CD5\uFF09", size: 24, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...pjAny ? [
+              H1("\u3007\u3001\u5DE5\u7A0B\u4FE1\u606F"),
+              PB2("\u9879\u76EE\u540D", pj.name || "\u2014"),
+              PB2("\u6865\u4F4D / \u65AD\u9762", pj.bridgeSite || "\u2014"),
+              PB2("\u8BA1\u7B97\u4EBA / \u590D\u6838\u4EBA", `${pj.engineer || "\u2014"} / ${pj.reviewer || "\u2014"}`)
+            ] : [],
             H1("\u4E00\u3001\u8BA1\u7B97\u4F9D\u636E"),
             P("1.\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300BJTG C30-2015\uFF1A\u7B2C 6.2 \u8282\uFF08\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF\uFF09\uFF0C\u5F0F 6.2.6\uFF1AQp = Q\u0304(1 + \u03A6p\xB7Cv)\uFF1B\u8868 1.0.8\uFF08\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387\uFF09\u3002"),
             P("2. \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u91C7\u7528\u76AE\u5C14\u900A\u2162\u578B\uFF08\u89C4\u8303\u7B2C 6.2.4 \u6761\uFF09\uFF1B\u03A6p \u7531 P-\u2162 \u5206\u5E03\u6570\u503C\u8BA1\u7B97\uFF08\u4E0D\u5B8C\u5168 \u0393 \u51FD\u6570\u5206\u4F4D\u6570\uFF09\uFF0C\u7ECF scipy \u72EC\u7ACB\u4EA4\u53C9\u9A8C\u8BC1\u3002"),
@@ -946,9 +1765,14 @@
             H1("\u516D\u3001\u9002\u7EBF\u56FE"),
             new D.Paragraph({ children: [new D.ImageRun({ type: "png", data: dataUrl.split(",")[1], transformation: { width: 600, height: 332 } })], spacing: { before: 120, after: 120 } }),
             new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...state.hydro ? [
+              H1("\u4E03\u3001\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF"),
+              P(`\u6309\u89C4\u8303 6.6 \u540C\u500D\u6BD4\u653E\u5927\u6CD5\uFF1Akg = Qp / Q\u5178\u5CF0 = ${state.hydro.designPeak.toFixed(0)} / ${state.hydro.typicalPeak.toFixed(0)} = ${state.hydro.kg.toFixed(4)}\u3002`),
+              mkTable(["\u65F6\u95F4 t\uFF08h\uFF09", "\u8BBE\u8BA1\u6D41\u91CF Q\uFF08m\xB3/s\uFF09"], state.hydro.points.map((p2) => [p2.t, p2.q.toFixed(1)]))
+            ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.8.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.10.2 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -970,10 +1794,18 @@
     });
   }
   $("btnReport").onclick = buildReportDocx;
-  var LS_KEY = "hongsuan_v08";
-  var LEGACY_LS_KEY = "hongsuan_v07";
+  var LS_KEY = "hongsuan_v09";
+  var LEGACY_KEYS = ["hongsuan_v08", "hongsuan_v07"];
   var HIST_IDS = ["hf0Ac", "hf0Bc", "hf0nc", "hf0At", "hf0Bt", "hf0nt", "hf0Ipermil", "hf0T", "hf1Ac", "hf1Bc", "hf1nc", "hf1At", "hf1Bt", "hf1nt", "hf1Ipermil", "hf1T", "hbCv", "hbCs"];
   var NODATA_IDS = ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"];
+  var WS_IDS = ["wsB", "wsM", "wsN", "wsS0", "wsL", "wsYc", "wsQ", "wsYup"];
+  function migrateState(parsed) {
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.schemaVersion === 9) return parsed;
+    if (parsed.schemaVersion == null) return { ...parsed, schemaVersion: 9 };
+    console.warn("\u672A\u77E5\u6301\u4E45\u5316\u7248\u672C\uFF0C\u6309\u5F53\u524D\u7248\u672C\u5C3D\u529B\u8BFB\u53D6", parsed.schemaVersion);
+    return { ...parsed, schemaVersion: 9 };
+  }
   function collectInputs() {
     const pick = (ids) => {
       const o = {};
@@ -984,6 +1816,7 @@
       return o;
     };
     return {
+      schemaVersion: 9,
       mode: state.mode,
       series: $("series").value,
       hasExtra: $("hasExtra").checked,
@@ -996,7 +1829,25 @@
       freq: state.freq,
       adopted: { ...state.params },
       hist: pick(HIST_IDS),
-      nodata: pick(NODATA_IDS)
+      nodata: pick(NODATA_IDS),
+      wsurf: pick(WS_IDS),
+      project: currentProject(),
+      conv: {
+        enable: $("convEnable").checked,
+        fRef: $("convFRef").value,
+        fSite: $("convFSite").value,
+        n: $("convN").value
+      },
+      hydro: { typical: $("hydroTypical").value, qp: $("hydroQp").value }
+    };
+  }
+  function currentProject() {
+    return {
+      name: $("pjName").value,
+      bridgeSite: $("pjSite").value,
+      engineer: $("pjEng").value,
+      reviewer: $("pjRev").value,
+      note: ""
     };
   }
   var saveTimer = null;
@@ -1047,11 +1898,26 @@
   function restoreAll() {
     let d = null;
     try {
-      d = JSON.parse(localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY) || "null");
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        d = migrateState(parsed);
+      } else {
+        for (const k of LEGACY_KEYS) {
+          const legacy = localStorage.getItem(k);
+          if (legacy) {
+            d = migrateState(JSON.parse(legacy));
+            break;
+          }
+        }
+      }
     } catch (e) {
       d = null;
     }
     if (!d || typeof d !== "object") return null;
+    return applySaved(d);
+  }
+  function applySaved(d) {
     if (typeof d.series === "string") $("series").value = d.series;
     if (d.hasExtra) {
       $("hasExtra").checked = true;
@@ -1078,25 +1944,81 @@
       const el = $(k);
       if (el && d.nodata[k] != null) el.value = d.nodata[k];
     }
+    if (d.wsurf) for (const k in d.wsurf) {
+      const el = $(k);
+      if (el && d.wsurf[k] != null) el.value = d.wsurf[k];
+    }
+    if (d.conv) {
+      $("convEnable").checked = Boolean(d.conv.enable);
+      if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
+      if (d.conv.fSite != null) $("convFSite").value = d.conv.fSite;
+      if (d.conv.n != null) $("convN").value = d.conv.n;
+    }
+    if (d.hydro) {
+      if (typeof d.hydro.typical === "string") $("hydroTypical").value = d.hydro.typical;
+      if (d.hydro.qp != null) $("hydroQp").value = d.hydro.qp;
+    }
+    if (d.project) {
+      $("pjName").value = d.project.name ?? "";
+      $("pjSite").value = d.project.bridgeSite ?? "";
+      $("pjEng").value = d.project.engineer ?? "";
+      $("pjRev").value = d.project.reviewer ?? "";
+    }
     console.log("RESTORE_MODE", d.mode || "series", "ADOPTED", state.adoptedOverride ? "yes" : "no", "FREQ", state.freq);
     return d.mode || null;
   }
+  $("btnExportProject").onclick = () => {
+    try {
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.10.0");
+      const blob = new Blob([serializeProject(file)], { type: "application/json" });
+      downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
+      $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
+    } catch (e) {
+      alert("\u5BFC\u51FA\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnImportProject").onclick = () => {
+    $("pjFile").click();
+  };
+  $("pjFile").onchange = () => {
+    const inp = $("pjFile");
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseProjectFile(JSON.parse(String(reader.result)));
+        applySaved({ ...parsed.state, project: parsed.project });
+        saveAll();
+        const dt = parsed.savedAt.slice(0, 10);
+        $("pjMsg").textContent = `\u5DF2\u5BFC\u5165\uFF1A${parsed.project.name || "\u672A\u547D\u540D"}\uFF08${dt}\uFF0C\u6CD3\u7B97 v${parsed.appVersion}\uFF09`;
+        location.reload();
+      } catch (e) {
+        alert("\u5BFC\u5165\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+      }
+    };
+    reader.readAsText(f);
+    inp.value = "";
+  };
   $("btnReset").onclick = () => {
     if (confirm("\u786E\u5B9A\u6E05\u9664\u672C\u673A\u8BB0\u5FC6\u7684\u5168\u90E8\u53C2\u6570\u5E76\u6062\u590D\u9ED8\u8BA4\u793A\u4F8B\uFF1F")) {
       localStorage.removeItem(LS_KEY);
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
       location.reload();
     }
   };
   var urlQ = new URLSearchParams(location.search);
   var restoredMode = restoreAll();
   var urlMethod = urlQ.get("method");
-  var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : restoredMode || "series";
+  var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : restoredMode || "series";
   if (startMode === "params") {
     $("mParams").click();
   } else if (startMode === "histB") {
     $("mHist").click();
   } else if (startMode === "noData") {
     $("mNoData").click();
+  } else if (startMode === "hydro") {
+    $("mHydro").click();
   } else {
     $("mSeries").click();
     calcFromSeries();
