@@ -122,6 +122,7 @@
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">无资料地区</button>
 <button id="mHelp">帮助</button>
+<button id="mMap">地图量算</button>
   <button id="mHydro">设计洪水过程线</button>
 </div></div>
 
@@ -435,6 +436,34 @@
       </div>
     </div>
   </div>
+
+<div id="mapBox" style="display:none">
+  <h2>汇水区勾绘与量算 <span style="font-weight:400;font-size:13px;color:var(--text2)">底图本地导入 · 离线可用 · 结果直连方法 C</span></h2>
+  <div class="hint" style="margin-top:0">
+    <b>为什么不接在线地图：</b>在线底图涉及审图号与边界合规，且离线单文件版断网不可用。这里改为<b>你自己导入地形图/影像截图</b>做底图，比例尺由你在图上标定，全程离线、数据来源你自持。
+    <br><b>用法：</b>① 导入底图 → ② 选「标定比例尺」，在图上点两点（一段你已知实际距离的线段，如道路、等高线间距）并填实际距离 → ③ 选「勾汇水区」，沿分水岭点一圈 → ④ 可选「勾主河沟」并填上下游高程 → ⑤ 点计算，F / L / I 自动算出，可一键填入方法 C。
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px">
+    <input type="file" id="mapImg" accept="image/*" style="font-size:12px">
+    <select id="mapMode" style="width:130px">
+      <option value="calib">① 标定比例尺</option>
+      <option value="poly">② 勾汇水区</option>
+      <option value="river">③ 勾主河沟</option>
+    </select>
+    <span>已知实际距离（m）</span><input type="number" id="mapRealD" value="1000" step="any" min="0.001" style="width:90px">
+    <button class="btn" id="mapGo">计算</button>
+    <button class="btn ghost" id="mapClear">清除</button>
+    <button class="btn" id="mapFill">把 F 填入方法 C</button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:12px">
+    <span>上游高程（m）</span><input type="number" id="mapH1" step="any" style="width:80px">
+    <span>出口/桥位高程（m）</span><input type="number" id="mapH2" step="any" style="width:80px">
+    <span id="mapScaleTip" style="color:var(--text2)"></span>
+  </div>
+  <svg id="mapCanvas" viewBox="0 0 900 560" style="width:100%;height:auto;border:1px solid var(--border);background:#fff;margin-top:8px"></svg>
+  <div id="mapOut" style="font-size:12.5px;margin-top:8px"></div>
+  <div class="err" id="mapErr"></div>
+</div>
 
 <div id="helpBox" style="display:none">
   <h2>帮助中心 <span style="font-weight:400;font-size:13px;color:var(--text2)">规范条文速查 · 数据来源 · 常见问题</span></h2>

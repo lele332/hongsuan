@@ -670,6 +670,75 @@
   };
   var calcLog = new CalcLog();
 
+  // src/core/catchment.ts
+  function polygonAreaPx(pts) {
+    if (!Array.isArray(pts) || pts.length < 3) return 0;
+    let s = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) {
+        throw new Error("\u5750\u6807\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+      }
+      s += a.x * b.y - b.x * a.y;
+    }
+    return Math.abs(s) / 2;
+  }
+  function polylineLengthPx(pts) {
+    if (!Array.isArray(pts) || pts.length < 2) return 0;
+    let d = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const dx = pts[i + 1].x - pts[i].x, dy = pts[i + 1].y - pts[i].y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw new Error("\u5750\u6807\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+      d += Math.hypot(dx, dy);
+    }
+    return d;
+  }
+  function measureCatchment(input) {
+    const { poly, river, scale, hTop, hBottom } = input;
+    const warnings = [];
+    if (!scale || !Number.isFinite(scale.pixelDistance) || scale.pixelDistance <= 0) {
+      throw new Error("\u6BD4\u4F8B\u5C3A\u6807\u5B9A\u65E0\u6548\uFF1A\u56FE\u4E0A\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08\u50CF\u7D20\uFF09");
+    }
+    if (!Number.isFinite(scale.realDistanceM) || scale.realDistanceM <= 0) {
+      throw new Error("\u6BD4\u4F8B\u5C3A\u6807\u5B9A\u65E0\u6548\uFF1A\u5BF9\u5E94\u7684\u5B9E\u9645\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    }
+    if (!Array.isArray(poly) || poly.length < 3) {
+      throw new Error("\u6C47\u6C34\u533A\u81F3\u5C11\u9700\u8981 3 \u4E2A\u9876\u70B9\u624D\u80FD\u6784\u6210\u591A\u8FB9\u5F62");
+    }
+    const mpp = scale.realDistanceM / scale.pixelDistance;
+    const areaPx = polygonAreaPx(poly);
+    const areaM2 = areaPx * mpp * mpp;
+    const F = areaM2 / 1e6;
+    let L = null;
+    if (river && river.length >= 2) {
+      L = polylineLengthPx(river) * mpp / 1e3;
+      if (!(L > 0)) {
+        L = null;
+        warnings.push("\u4E3B\u6CB3\u6C9F\u957F\u5EA6\u91CF\u7B97\u4E3A 0\uFF0C\u8BF7\u68C0\u67E5\u662F\u5426\u91CD\u590D\u70B9\u6216\u70B9\u8DDD\u8FC7\u5C0F");
+      }
+    }
+    let I = null, Ipermille = null;
+    if (L !== null && Number.isFinite(hTop) && Number.isFinite(hBottom)) {
+      const dh = hTop - hBottom;
+      if (dh < 0) warnings.push("\u4E0A\u6E38\u9AD8\u7A0B\u4F4E\u4E8E\u51FA\u53E3\u9AD8\u7A0B\uFF0C\u6BD4\u964D\u4E3A\u8D1F\uFF0C\u8BF7\u6838\u5BF9\u9AD8\u7A0B\u70B9\u6B21\u5E8F");
+      I = dh / (L * 1e3);
+      Ipermille = I * 1e3;
+    }
+    if (F > 30) {
+      warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519\uFF0C\u8BF7\u6539\u7528\u5176\u4ED6\u65B9\u6CD5");
+    }
+    if (F <= 0) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u662F\u5426\u95ED\u5408\u3001\u6BD4\u4F8B\u5C3A\u662F\u5426\u6B63\u786E");
+    return {
+      F: Math.round(F * 1e4) / 1e4,
+      L: L === null ? null : Math.round(L * 1e4) / 1e4,
+      I: I === null ? null : Math.round(I * 1e8) / 1e8,
+      Ipermille: Ipermille === null ? null : Math.round(Ipermille * 1e4) / 1e4,
+      metersPerPixel: Math.round(mpp * 1e6) / 1e6,
+      areaPx: Math.round(areaPx * 100) / 100,
+      warnings
+    };
+  }
+
   // src/core/helpContent.ts
   var HELP_SECTIONS = [
     {
@@ -1889,7 +1958,8 @@
     hist: "mHist",
     noData: "mNoData",
     hydro: "mHydro",
-    help: "mHelp"
+    help: "mHelp",
+    map: "mMap"
   };
   var MODE_BOX = {
     series: "seriesBox",
@@ -1897,7 +1967,8 @@
     hist: "histBox",
     noData: "noDataBox",
     hydro: "hydroBox",
-    help: "helpBox"
+    help: "helpBox",
+    map: "mapBox"
   };
   function switchMode(mode) {
     state.mode = mode === "hist" ? "histB" : mode;
@@ -1912,6 +1983,7 @@
     }
     if (mode === "noData") calcMethodC();
     if (mode === "help") renderHelp();
+    if (mode === "map") renderMap();
   }
   for (const key of Object.keys(MODE_BTN)) {
     $(MODE_BTN[key]).onclick = () => switchMode(key);
@@ -2768,6 +2840,141 @@
       } catch (e) {
         msg.textContent = e instanceof Error ? e.message : String(e);
       }
+    };
+  }
+  var mapState = { bg: null, calib: [], poly: [], river: [], scale: null, last: null };
+  function mapPtsOfCurrentMode() {
+    const mode = $("mapMode").value;
+    if (mode === "calib") return mapState.calib;
+    if (mode === "poly") return mapState.poly;
+    return mapState.river;
+  }
+  function toSvgPoint(evt) {
+    const svg = $("mapCanvas");
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    const m = svg.getScreenCTM();
+    if (!m) return { x: 0, y: 0 };
+    const p = pt.matrixTransform(m.inverse());
+    return { x: p.x, y: p.y };
+  }
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function renderMap() {
+    const pts = mapPtsOfCurrentMode();
+    const parts = [];
+    if (mapState.bg) {
+      parts.push(`<image href="${mapState.bg}" x="0" y="0" width="900" height="560" preserveAspectRatio="xMidYMid meet" opacity="0.9"/>`);
+    }
+    if (mapState.calib.length >= 2) {
+      const [a, b] = mapState.calib;
+      parts.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#d85a30" stroke-width="2"/>`);
+    }
+    if (mapState.poly.length >= 2) {
+      const d = mapState.poly.map((p) => `${p.x},${p.y}`).join(" ");
+      parts.push(`<polygon points="${d}" fill="#378add" fill-opacity="0.15" stroke="#185fa5" stroke-width="2"/>`);
+    }
+    if (mapState.river.length >= 2) {
+      const d = mapState.river.map((p) => `${p.x},${p.y}`).join(" ");
+      parts.push(`<polyline points="${d}" fill="none" stroke="#1d9e75" stroke-width="2.5"/>`);
+    }
+    for (const arr of [mapState.calib, mapState.poly, mapState.river]) {
+      for (const p of arr) {
+        parts.push(`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#fff" stroke="#333" stroke-width="1.2"/>`);
+      }
+    }
+    const mode = $("mapMode").value;
+    const tip = mode === "calib" ? "\u5728\u56FE\u4E0A\u70B9\u4E24\u70B9\uFF0C\u6807\u51FA\u4E00\u6BB5\u5DF2\u77E5\u5B9E\u9645\u8DDD\u79BB" : mode === "poly" ? "\u6CBF\u5206\u6C34\u5CAD\u4F9D\u6B21\u70B9\u51FB\uFF0C\u56F4\u51FA\u6C47\u6C34\u533A" : "\u4ECE\u4E0A\u6E38\u5230\u51FA\u53E3\u4F9D\u6B21\u70B9\u51FB\u4E3B\u6CB3\u6C9F\u4E2D\u5FC3\u7EBF";
+    parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${esc(tip)}</text>`);
+    $("mapCanvas").innerHTML = parts.join("");
+  }
+  if ($("mapCanvas")) {
+    $("mapCanvas").addEventListener("click", (e) => {
+      const p = toSvgPoint(e);
+      const arr = mapPtsOfCurrentMode();
+      arr.push(p);
+      if ($("mapMode").value === "calib" && arr.length > 2) arr.splice(0, arr.length - 2);
+      renderMap();
+    });
+    $("mapImg").onchange = () => {
+      const el = $("mapImg");
+      const f = el.files && el.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        mapState.bg = String(r.result);
+        renderMap();
+      };
+      r.readAsDataURL(f);
+    };
+    $("mapMode").onchange = renderMap;
+    $("mapClear").onclick = () => {
+      mapState.calib = [];
+      mapState.poly = [];
+      mapState.river = [];
+      mapState.scale = null;
+      mapState.last = null;
+      $("mapOut").innerHTML = "";
+      $("mapErr").textContent = "";
+      $("mapScaleTip").textContent = "";
+      renderMap();
+    };
+    $("mapGo").onclick = () => {
+      const out = $("mapOut"), err = $("mapErr");
+      try {
+        if (mapState.calib.length < 2) throw new Error("\u8BF7\u5148\u5728\u56FE\u4E0A\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF08\u70B9\u4E24\u70B9 + \u586B\u5B9E\u9645\u8DDD\u79BB\uFF09");
+        const a = mapState.calib[0], b = mapState.calib[1];
+        const pixelDistance = Math.hypot(b.x - a.x, b.y - a.y);
+        if (!(pixelDistance > 0)) throw new Error("\u6807\u5B9A\u70B9\u91CD\u5408\uFF0C\u8BF7\u91CD\u65B0\u70B9\u4E24\u70B9");
+        const realDistanceM = +$("mapRealD").value;
+        mapState.scale = { pixelDistance, realDistanceM };
+        const h1 = +$("mapH1").value, h2 = +$("mapH2").value;
+        const r = measureCatchment({
+          poly: mapState.poly,
+          river: mapState.river.length >= 2 ? mapState.river : void 0,
+          scale: mapState.scale,
+          hTop: Number.isFinite(h1) ? h1 : void 0,
+          hBottom: Number.isFinite(h2) ? h2 : void 0
+        });
+        mapState.last = { F: r.F, L: r.L, I: r.I };
+        const lines = [
+          `\u6BD4\u4F8B\u5C3A\uFF1A${pixelDistance.toFixed(1)} \u50CF\u7D20 = ${realDistanceM} m\uFF081 \u50CF\u7D20 = ${r.metersPerPixel} m\uFF09`,
+          `\u6C47\u6C34\u9762\u79EF <b>F = ${r.F} km\xB2</b>\uFF08\u56FE\u4E0A ${r.areaPx} \u50CF\u7D20\xB2\uFF09`,
+          r.L === null ? "\u4E3B\u6CB3\u6C9F\u957F\u5EA6 L\uFF1A\u672A\u52FE\uFF08\u53EF\u9009\uFF09" : `\u4E3B\u6CB3\u6C9F\u957F\u5EA6 <b>L = ${r.L} km</b>`,
+          r.I === null ? "\u5E73\u5747\u6BD4\u964D I\uFF1A\u9700\u540C\u65F6\u7ED9\u51FA\u4E0A\u4E0B\u6E38\u9AD8\u7A0B" : `\u5E73\u5747\u6BD4\u964D <b>I = ${r.I}</b>\uFF08${r.Ipermille}\u2030\uFF09`
+        ];
+        out.innerHTML = lines.map((l) => `<div>${l}</div>`).join("") + r.warnings.map((w) => `<div style="color:var(--amber)">\u63D0\u793A\uFF1A${esc(w)}</div>`).join("");
+        $("mapScaleTip").textContent = `\u5DF2\u6807\u5B9A\uFF1A1 \u50CF\u7D20 = ${r.metersPerPixel} m`;
+        err.style.display = "none";
+        logCalc(
+          "\u5730\u56FE\u91CF\u7B97 \xB7 \u6C47\u6C34\u533A",
+          {
+            \u6807\u5B9A\u70B9: `${pixelDistance.toFixed(1)} \u50CF\u7D20 = ${realDistanceM} m`,
+            \u6C47\u6C34\u533A\u9876\u70B9: mapState.poly.length,
+            \u4E3B\u6CB3\u6C9F\u70B9: mapState.river.length
+          },
+          { F: r.F + " km\xB2", L: r.L === null ? "\u672A\u52FE" : r.L + " km", I: r.I === null ? "\u7F3A\u9AD8\u7A0B" : String(r.I) },
+          "\u56FE\u5F62\u91CF\u7B97\uFF08\u978B\u5E26\u516C\u5F0F \xD7 \u7528\u6237\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF09"
+        );
+      } catch (e) {
+        out.innerHTML = "";
+        err.style.display = "block";
+        err.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
+    $("mapFill").onclick = () => {
+      const err = $("mapErr");
+      if (!mapState.last) {
+        err.style.display = "block";
+        err.textContent = "\u8BF7\u5148\u5B8C\u6210\u91CF\u7B97\uFF0C\u518D\u628A F \u586B\u5165\u65B9\u6CD5 C";
+        return;
+      }
+      $("rdF").value = String(mapState.last.F);
+      calcMethodC();
+      err.style.display = "none";
+      $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u65B9\u6CD5 C\uFF08\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF09\u5E76\u91CD\u7B97</div>`;
     };
   }
   function logCalc(module, inputs, results, basis, params) {
