@@ -494,6 +494,12 @@
     下面每一条都注明规范条号与页码，只摘要点、不复制原文，方便你对照纸质规范核对。
     内置数据的来源全部列出，可自行下载原始文件验证。
   </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+    <input type="text" id="kbSearch" placeholder="知识库检索：输入关键词，如 冲刷 / 桥孔 / ψ / B-9" style="min-width:280px;flex:1">
+    <button class="btn" id="kbSearchGo">检索</button>
+    <button class="btn ghost" id="kbSearchClear">清除</button>
+  </div>
+  <div id="kbResult" style="font-size:12.5px;margin-top:8px"></div>
   <div id="helpSections"></div>
   <details style="margin-top:12px">
     <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">数据来源与出处</summary>
@@ -659,6 +665,21 @@
     <div><label>项目名</label><input type="text" id="pjName" placeholder="如：G320 某段改建工程"></div>
     <div><label>桥位 / 断面</label><input type="text" id="pjSite" placeholder="如：K3+685 涵洞"></div>
     <div><label>计算人</label><input type="text" id="pjEng" placeholder=""></div>
+    <div><label>河流 / 沟名</label><input type="text" id="pjRiver" placeholder="如：沙河"></div>
+    <div><label>河段类型</label><select id="pjReach">
+      <option value="">（未填）</option>
+      <option value="稳定">稳定</option>
+      <option value="次稳定">次稳定</option>
+      <option value="不稳定">不稳定</option>
+      <option value="峡谷">峡谷</option>
+      <option value="宽滩">宽滩</option>
+    </select></div>
+    <div><label>参证水文站</label><input type="text" id="pjStation" placeholder="如：XX 水文站"></div>
+    <div><label>参证站汇水面积（km²）</label><input type="number" id="pjStationArea" step="any" min="0"></div>
+    <div><label>桥位汇水面积（km²）</label><input type="number" id="pjSiteArea" step="any" min="0"></div>
+    <div><label>设计洪水频率</label><input type="text" id="pjDesignFreq" placeholder="如：1%"></div>
+    <div><label>采用规范</label><input type="text" id="pjSpec" value="JTG C30—2015"></div>
+    <div><label>暴雨分区</label><input type="text" id="pjZone" placeholder="如：第 5 区"></div>
     <div><label>复核人</label><input type="text" id="pjRev" placeholder=""></div>
   </div>
   <div style="margin-top:10px">
@@ -666,6 +687,38 @@
     <button class="btn ghost" id="btnImportProject" style="margin-top:0;padding:4px 12px;font-size:12.5px">导入工程</button>
     <input type="file" id="pjFile" accept=".json,application/json" style="display:none">
     <span id="pjMsg" style="font-size:11.5px;color:var(--text3);margin-left:8px"></span>
+  </div>
+</details>
+
+<details class="card" id="sysCard" style="padding:12px 16px;margin-top:10px">
+  <summary style="cursor:pointer;font-size:13.5px;font-weight:600">系统管理（默认设置 · 本机数据 · 知识库）</summary>
+  <div style="margin-top:10px">
+    <div class="hint" style="margin-top:0">
+      所有数据都保存在<b>你自己的电脑</b>里（浏览器 localStorage），不上传任何服务器。下面可以改默认设置、查看占用、导出或清空本机数据。
+    </div>
+    <div class="row">
+      <div><label>默认设计频率</label><select id="sysFreq">
+        <option value="0.01">1%（1/100）</option>
+        <option value="0.02">2%（1/50）</option>
+        <option value="0.0333">3.33%（1/30）</option>
+        <option value="0.05">5%（1/20）</option>
+        <option value="0.1">10%（1/10）</option>
+      </select></div>
+      <div><label>默认河段类型</label><select id="sysReach">
+        <option value="stable">稳定（开阔、顺直微弯）</option>
+        <option value="substable">次稳定（分汊、弯曲）</option>
+        <option value="unstable">不稳定（滩、槽可分）</option>
+      </select></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn" id="sysSave">保存默认设置</button></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn" id="sysUsage">查看本机数据占用</button>
+      <button class="btn" id="sysExport">导出本机全部数据</button>
+      <button class="btn" id="sysKb">导出知识库（Markdown）</button>
+      <button class="btn ghost" id="sysReset">清空本机数据</button>
+    </div>
+    <div id="sysOut" style="font-size:12px;margin-top:8px"></div>
+    <div class="err" id="sysMsg"></div>
   </div>
 </details>
 

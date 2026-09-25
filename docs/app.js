@@ -1417,7 +1417,9 @@
   function buildProjectFile(project, state2, appVersion) {
     const p = { ...emptyProject(), ...project };
     for (const k of Object.keys(p)) {
-      if (typeof p[k] !== "string") throw new Error(`\u9879\u76EE\u4FE1\u606F\u5B57\u6BB5 ${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+      const v = p[k];
+      if (v === void 0) continue;
+      if (typeof v !== "string") throw new Error(`\u9879\u76EE\u4FE1\u606F\u5B57\u6BB5 ${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
     }
     return {
       schema: PROJECT_SCHEMA,
@@ -3196,6 +3198,134 @@
       $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u65B9\u6CD5 C\uFF08\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF09\u5E76\u91CD\u7B97</div>`;
     };
   }
+  var SYS_KEY = "hongsuan_sys_settings";
+  function applySysDefaults() {
+    try {
+      const raw = localStorage.getItem(SYS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.freq) {
+        state.freq = s.freq;
+        $("freqSel").value = String(s.freq);
+      }
+      if (s.reach) $("opReach").value = s.reach;
+    } catch {
+    }
+  }
+  if ($("sysCard")) {
+    applySysDefaults();
+    $("sysSave").onclick = () => {
+      const s = {
+        freq: Number($("sysFreq").value),
+        reach: $("sysReach").value
+      };
+      localStorage.setItem(SYS_KEY, JSON.stringify(s));
+      state.freq = s.freq;
+      $("opReach").value = s.reach;
+      $("sysOut").textContent = `\u5DF2\u4FDD\u5B58\uFF1A\u9ED8\u8BA4\u9891\u7387 ${(s.freq * 100).toFixed(2)}%\uFF0C\u9ED8\u8BA4\u6CB3\u6BB5 ${s.reach}`;
+      render();
+    };
+    $("sysUsage").onclick = () => {
+      let bytes = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        bytes += (localStorage.getItem(k) ?? "").length + k.length;
+      }
+      $("sysOut").textContent = `\u672C\u673A\u6570\u636E\u7EA6 ${(bytes / 1024).toFixed(1)} KB\uFF08\u542B\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u3001\u9ED8\u8BA4\u8BBE\u7F6E\u3001\u5929\u5730\u56FE tk\uFF09\uFF1B\u8BA1\u7B97\u65E5\u5FD7 ${calcLog.size()} \u6761`;
+    };
+    $("sysExport").onclick = () => {
+      const dump = { schema: "hongsuan-local-dump@1", savedAt: (/* @__PURE__ */ new Date()).toISOString() };
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        const raw = localStorage.getItem(k) ?? "";
+        try {
+          dump[k] = JSON.parse(raw);
+        } catch {
+          dump[k] = raw;
+        }
+      }
+      downloadText(JSON.stringify(dump, null, 2), "\u6CD3\u7B97\u672C\u673A\u6570\u636E.json", "application/json;charset=utf-8");
+      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u672C\u673A\u5168\u90E8\u6570\u636E\uFF08JSON\uFF09";
+    };
+    $("sysReset").onclick = () => {
+      if (!confirm("\u5C06\u6E05\u7A7A\u672C\u673A\u4FDD\u5B58\u7684\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u4E0E\u9ED8\u8BA4\u8BBE\u7F6E\uFF08\u4E0D\u5F71\u54CD\u5DF2\u5BFC\u51FA\u7684\u6587\u4EF6\uFF09\uFF0C\u786E\u5B9A\uFF1F")) return;
+      localStorage.clear();
+      $("sysOut").textContent = "\u5DF2\u6E05\u7A7A\u672C\u673A\u6570\u636E\uFF0C\u5237\u65B0\u9875\u9762\u540E\u56DE\u5230\u9ED8\u8BA4\u72B6\u6001";
+    };
+    $("sysKb").onclick = () => {
+      downloadText(helpToMarkdown(), "\u6CD3\u7B97\u77E5\u8BC6\u5E93.md", "text/markdown;charset=utf-8");
+      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown";
+    };
+  }
+  function helpToMarkdown() {
+    const lines = ["# \u6CD3\u7B97\u77E5\u8BC6\u5E93", "", `> \u5BFC\u51FA\u65F6\u95F4\uFF1A${(/* @__PURE__ */ new Date()).toLocaleString("zh-CN")}`, ""];
+    for (const sec of HELP_SECTIONS) {
+      lines.push(`## ${sec.title}\uFF08${sec.spec}\uFF09`, "");
+      for (const it of sec.items) {
+        lines.push(`- **${it.no}** ${it.title}${it.page ? `\uFF08${it.page}\uFF09` : ""}`, `  ${it.summary}`);
+      }
+      lines.push("");
+    }
+    lines.push("## \u6570\u636E\u6765\u6E90\u4E0E\u51FA\u5904", "");
+    for (const s of HELP_SOURCES) lines.push(`- **${s.name}**\uFF1A${s.detail}${s.url ? ` \u2014 ${s.url}` : ""}`);
+    lines.push("", "## \u5E38\u89C1\u95EE\u9898", "");
+    for (const f of HELP_FAQ) lines.push(`- **\u95EE**\uFF1A${f.q}`, `  **\u7B54**\uFF1A${f.a}`);
+    lines.push("", "## \u8BA1\u7B97\u6B63\u786E\u6027\u9A8C\u8BC1", "");
+    for (const v of HELP_VALIDATION) lines.push(`- ${v}`);
+    return lines.join("\n");
+  }
+  function kbSearch(q) {
+    const kw = q.trim();
+    if (!kw) return [];
+    const hits = [];
+    for (const sec of HELP_SECTIONS) {
+      for (const it of sec.items) {
+        const hay = `${it.no} ${it.title} ${it.summary} ${sec.title} ${sec.spec}`;
+        if (hay.includes(kw)) hits.push(`[${it.no}] ${it.title} \u2014 ${it.summary}`);
+      }
+    }
+    for (const f of HELP_FAQ) {
+      if (`${f.q} ${f.a}`.includes(kw)) hits.push(`[FAQ] ${f.q} \u2014 ${f.a}`);
+    }
+    for (const s of HELP_SOURCES) {
+      if (`${s.name} ${s.detail}`.includes(kw)) hits.push(`[\u6765\u6E90] ${s.name} \u2014 ${s.detail}`);
+    }
+    for (const v of HELP_VALIDATION) {
+      if (v.includes(kw)) hits.push(`[\u9A8C\u8BC1] ${v}`);
+    }
+    return hits;
+  }
+  if ($("kbSearchGo")) {
+    $("kbSearchGo").onclick = () => {
+      const q = $("kbSearch").value;
+      const hits = kbSearch(q);
+      const box = $("kbResult");
+      box.innerHTML = "";
+      if (!q.trim()) {
+        box.textContent = "\u8BF7\u8F93\u5165\u5173\u952E\u8BCD";
+        return;
+      }
+      if (hits.length === 0) {
+        box.textContent = `\u672A\u547D\u4E2D\u300C${q}\u300D\uFF1A\u53EF\u6362\u4E2A\u8BF4\u6CD5\uFF08\u5982\u300C\u51B2\u5237\u300D\u300C\u6865\u5B54\u300D\u300CB-9\u300D\u300C\u03C8\u300D\uFF09`;
+        return;
+      }
+      const head = document.createElement("div");
+      head.innerHTML = `\u547D\u4E2D <b>${hits.length}</b> \u6761\uFF1A`;
+      box.appendChild(head);
+      for (const h of hits) {
+        const d = document.createElement("div");
+        d.style.marginTop = "4px";
+        d.textContent = "\xB7 " + h;
+        box.appendChild(d);
+      }
+    };
+    $("kbSearchClear").onclick = () => {
+      $("kbSearch").value = "";
+      $("kbResult").innerHTML = "";
+    };
+  }
   function logCalc(module, inputs, results, basis, params) {
     try {
       calcLog.add({ module, inputs, results, basis, params });
@@ -3470,13 +3600,39 @@
     };
   }
   function currentProject() {
+    const v = (id) => $(id).value;
     return {
-      name: $("pjName").value,
-      bridgeSite: $("pjSite").value,
-      engineer: $("pjEng").value,
-      reviewer: $("pjRev").value,
-      note: ""
+      name: v("pjName"),
+      bridgeSite: v("pjSite"),
+      engineer: v("pjEng"),
+      reviewer: v("pjRev"),
+      note: "",
+      river: v("pjRiver"),
+      reach: v("pjReach"),
+      station: v("pjStation"),
+      stationArea: v("pjStationArea"),
+      siteArea: v("pjSiteArea"),
+      designFreq: v("pjDesignFreq"),
+      spec: v("pjSpec"),
+      zone: v("pjZone")
     };
+  }
+  function fillProjectForm(p) {
+    const set = (id, val) => {
+      $(id).value = val ?? "";
+    };
+    set("pjName", p.name ?? "");
+    set("pjSite", p.bridgeSite ?? "");
+    set("pjEng", p.engineer ?? "");
+    set("pjRev", p.reviewer ?? "");
+    set("pjRiver", p.river ?? "");
+    set("pjReach", p.reach ?? "");
+    set("pjStation", p.station ?? "");
+    set("pjStationArea", p.stationArea ?? "");
+    set("pjSiteArea", p.siteArea ?? "");
+    set("pjDesignFreq", p.designFreq ?? "");
+    set("pjSpec", p.spec ?? "JTG C30\u20142015");
+    set("pjZone", p.zone ?? "");
   }
   var saveTimer = null;
   function markSaved() {
@@ -3616,6 +3772,7 @@
     reader.onload = () => {
       try {
         const parsed = parseProjectFile(JSON.parse(String(reader.result)));
+        fillProjectForm(parsed.project);
         applySaved({ ...parsed.state, project: parsed.project });
         saveAll();
         const dt = parsed.savedAt.slice(0, 10);
