@@ -235,6 +235,33 @@
         <div class="metric hl" style="margin-top:10px"><div class="k">冲刷后最大水深 h<sub>p</sub>（m）</div><div class="v" id="scOut">—</div></div>
         <div id="scDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
         <div class="err" id="scErr"></div>
+
+        <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
+          <div class="hint" style="margin-top:0">
+            <b>墩台局部冲刷（8.4.1，65-2 式）</b>：
+            h<sub>b</sub> = K<sub>ξ</sub>·K<sub>η2</sub>·B<sub>1</sub><sup>0.6</sup>·h<sub>p</sub><sup>0.15</sup>·[(v−v<sub>0</sub>′)/v<sub>0</sub>]<sup>n₂</sup>；
+            K<sub>η2</sub>=0.0023d̄<sup>2.2</sup>+0.375d̄<sup>0.24</sup>，v<sub>0</sub>=0.28(d̄+0.7)<sup>0.5</sup>，v<sub>0</sub>′=0.12(d̄+0.5)<sup>0.55</sup>，n<sub>2</sub>=(v<sub>0</sub>/v)<sup>0.23+0.19lg d̄</sup>
+          </div>
+          <div class="row">
+            <div><label>行近流速 v（m/s）</label><input type="number" id="lsV" value="3.14" step="any" min="0.01"></div>
+            <div><label>桥墩计算宽度 B<sub>1</sub>（m）</label><input type="number" id="lsB1" value="1.5" step="any" min="0.01"></div>
+            <div><label>墩形系数 K<sub>ξ</sub>（附录C）</label><input type="number" id="lsKxi" value="1" step="0.01" min="0.01"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn" id="lsUseV">用一般冲刷结果推算 v</button>
+            <button class="btn" id="lsGo">计算局部冲刷</button>
+          </div>
+          <div class="metric hl" style="margin-top:10px"><div class="k">局部冲刷深度 h<sub>b</sub>（m）</div><div class="v" id="lsOut">—</div></div>
+          <div id="lsDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+          <div class="err" id="lsErr"></div>
+
+          <div class="row" style="margin-top:10px">
+            <div><label>自然演变冲刷（m，无资料填 0）</label><input type="number" id="tsNat" value="0" step="any" min="0"></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn" id="tsGo">汇总总冲刷深度</button></div>
+          </div>
+          <div class="metric" style="margin-top:8px"><div class="k">总冲刷深度（m）</div><div class="v" id="tsOut">—</div></div>
+          <div id="tsNote" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        </div>
       </div>
     </details>
   </div>

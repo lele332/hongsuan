@@ -767,6 +767,80 @@
     };
   }
 
+  // src/core/localScour.ts
+  function incipientVelocity(d50) {
+    return 0.28 * Math.pow(d50 + 0.7, 0.5);
+  }
+  function startScourVelocity(d50) {
+    return 0.12 * Math.pow(d50 + 0.5, 0.55);
+  }
+  function grainFactor(d50) {
+    return 23e-4 * Math.pow(d50, 2.2) + 0.375 * Math.pow(d50, 0.24);
+  }
+  function scourExponent(v, v0, d50) {
+    return Math.pow(v0 / v, 0.23 + 0.19 * Math.log10(d50));
+  }
+  function approachVelocity641(E, d50, hp) {
+    if (!Number.isFinite(E) || E <= 0) throw new Error("\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63");
+    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    return E * Math.pow(d50, 1 / 6) * Math.pow(hp, 2 / 3);
+  }
+  function localScour652(input) {
+    const { v, d50, B1, hp, Kxi } = input;
+    const warnings = [];
+    if (!Number.isFinite(v) || v <= 0) throw new Error("\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09");
+    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(B1) || B1 <= 0) throw new Error("\u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6 B1 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new Error("\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63\uFF08\u6309\u9644\u5F55C\u9009\u7528\uFF09");
+    const v0 = incipientVelocity(d50);
+    const v0p = startScourVelocity(d50);
+    const Keta2 = grainFactor(d50);
+    const n2 = scourExponent(v, v0, d50);
+    const base = Kxi * Keta2 * Math.pow(B1, 0.6) * Math.pow(hp, 0.15);
+    let hb;
+    let branch;
+    if (v <= v0p) {
+      hb = 0;
+      branch = "no-scour";
+      warnings.push("\u884C\u8FD1\u6D41\u901F\u5C0F\u4E8E\u59CB\u51B2\u6D41\u901F v0\u2032\uFF0C\u6865\u58A9\u5C40\u90E8\u51B2\u5237\u53D6 0");
+    } else if (v <= v0) {
+      hb = base * ((v - v0p) / v0);
+      branch = "v<=v0";
+    } else {
+      hb = base * Math.pow((v - v0p) / v0, n2);
+      branch = "v>v0";
+    }
+    if (Kxi === 1) {
+      warnings.push("K\u03BE \u53D6\u7528 1.0\uFF1A\u8BF7\u6309\u9644\u5F55C\u6309\u58A9\u5F62\u590D\u6838\uFF08\u5706\u7AEF\u5F62/\u5C16\u7AEF\u5F62/\u77E9\u5F62\u7B49\u53D6\u503C\u4E0D\u540C\uFF09");
+    }
+    if (d50 > 200) {
+      warnings.push("d\u0304>200 mm\uFF08\u5375\u77F3/\u6F02\u77F3\uFF09\u65F6 65-2 \u5F0F\u9002\u7528\u6027\u9700\u590D\u6838");
+    }
+    return {
+      hb: Math.round(hb * 1e3) / 1e3,
+      v0: Math.round(v0 * 1e3) / 1e3,
+      v0p: Math.round(v0p * 1e3) / 1e3,
+      n2: Math.round(n2 * 1e3) / 1e3,
+      Keta2: Math.round(Keta2 * 1e4) / 1e4,
+      branch,
+      warnings
+    };
+  }
+  function totalScour(input) {
+    const { natural, general, local } = input;
+    for (const [k, v] of Object.entries({ natural, general, local })) {
+      if (!Number.isFinite(v) || v < 0) throw new Error(`${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6570\uFF08m\uFF09`);
+    }
+    const notes = [
+      "\u89C4\u8303 8.6.1\uFF1A\u57FA\u5E95\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u3001\u4E00\u822C\u51B2\u5237\u548C\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF0C\u5E76\u7B26\u5408 JTG D63",
+      "\u89C4\u8303 8.6.2\uFF1A\u975E\u5CA9\u77F3\u6CB3\u5E8A\u58A9\u53F0\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF0C\u5B89\u5168\u503C\u6309\u8868 8.6.2 \u53D6\uFF08\u672C\u7248\u672A\u5185\u7F6E\u8BE5\u8868\uFF0C\u9700\u67E5\u89C4\u8303\u539F\u8868\uFF09"
+    ];
+    if (natural === 0) notes.push("\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u6309 0 \u8BA1\u5165\uFF1A\u82E5\u6709\u6CB3\u9053\u6F14\u53D8\u8D44\u6599\u5E94\u8865\u5145");
+    return { total: Math.round((natural + general + local) * 1e3) / 1e3, notes };
+  }
+
   // src/core/threePoint.ts
   function threePointFit(pts) {
     if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
@@ -2261,6 +2335,10 @@
       const { E, band } = sandCoefE(rho);
       const A = +$("scA").value;
       const r = generalScour641({ Q2, mu, Bcj, hmc, hcq, E, d50, A });
+      lastGeneralHp = r.hp;
+      lastGeneralHy = r.hy;
+      lastScourE = E;
+      lastD50 = d50;
       out.textContent = r.hp.toFixed(2);
       detail.innerHTML = "";
       const lines = [
@@ -2330,6 +2408,89 @@
         const err = $("scErr");
         err.style.display = "block";
         err.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
+  }
+  var lastGeneralHp = 0;
+  var lastGeneralHy = 0;
+  var lastScourE = 0.66;
+  var lastD50 = 0.14;
+  function calcLocalScour() {
+    const err = $("lsErr"), out = $("lsOut"), detail = $("lsDetail");
+    try {
+      const v = +$("lsV").value, B1 = +$("lsB1").value, Kxi = +$("lsKxi").value;
+      const d50 = lastD50;
+      const hp = lastGeneralHp > 0 ? lastGeneralHp : +$("scHmc").value;
+      const r = localScour652({ v, d50, B1, hp, Kxi });
+      out.textContent = r.hb.toFixed(2);
+      detail.innerHTML = "";
+      const lines = [
+        `v\u2080 = 0.28\xB7(${d50}+0.7)^0.5 = ${r.v0} m/s\uFF1Bv\u2080\u2032 = 0.12\xB7(${d50}+0.5)^0.55 = ${r.v0p} m/s`,
+        `K<sub>\u03B72</sub> = ${r.Keta2}\uFF1Bn\u2082 = ${r.n2}\uFF1B\u91C7\u7528\u5206\u652F\uFF1A${r.branch === "no-scour" ? "\u4E0D\u51B2\u5237" : r.branch === "v<=v0" ? "v\u2264v\u2080\uFF08\u4E00\u5F0F\uFF09" : "v>v\u2080\uFF08\u4E8C\u5F0F\uFF09"}`,
+        `h<sub>p</sub> = ${hp.toFixed(2)} m\uFF08\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1\uFF09`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      for (const w of r.warnings) {
+        const d = document.createElement("div");
+        d.textContent = "\u63D0\u793A\uFF1A" + w;
+        d.style.color = "var(--amber)";
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u51B2\u5237 \xB7 \u5C40\u90E8\u51B2\u523765-2",
+        { \u884C\u8FD1\u6D41\u901Fv: v + " m/s", \u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6B1: B1 + " m", \u58A9\u5F62\u7CFB\u6570K\u03BE: Kxi, \u5E73\u5747\u7C92\u5F84: d50 + " mm", \u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1hp: hp.toFixed(2) + " m" },
+        { hb: r.hb.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C8.4.1\u6761\uFF0865-2\u5F0F\uFF09",
+        { v0: r.v0, "v0\u2032": r.v0p, Keta2: r.Keta2, n2: r.n2, \u5206\u652F: r.branch }
+      );
+      return r.hb;
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      err.textContent = e instanceof Error ? e.message : String(e);
+      return 0;
+    }
+  }
+  if ($("lsGo")) {
+    $("lsGo").onclick = () => {
+      calcLocalScour();
+    };
+    $("lsUseV").onclick = () => {
+      try {
+        if (lastGeneralHp <= 0) throw new Error("\u8BF7\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97");
+        const v = approachVelocity641(lastScourE, lastD50, lastGeneralHp);
+        $("lsV").value = v.toFixed(3);
+        const err = $("lsErr");
+        err.style.display = "none";
+        calcLocalScour();
+      } catch (e) {
+        const err = $("lsErr");
+        err.style.display = "block";
+        err.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
+    $("tsGo").onclick = () => {
+      const hbRaw = ($("lsOut").textContent ?? "").replace(/[^0-9.]/g, "");
+      const hb = Number(hbRaw);
+      const r = totalScour({
+        natural: +$("tsNat").value,
+        general: lastGeneralHy,
+        local: Number.isFinite(hb) ? hb : 0
+      });
+      $("tsOut").textContent = r.total.toFixed(2);
+      const note = $("tsNote");
+      note.innerHTML = "";
+      for (const n of r.notes) {
+        const d = document.createElement("div");
+        d.textContent = "\xB7 " + n;
+        note.appendChild(d);
       }
     };
   }
