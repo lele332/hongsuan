@@ -1,4 +1,8 @@
 (() => {
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
   // src/core/phi.ts
   function gammaln(x) {
     const g = 7;
@@ -608,6 +612,63 @@
       note: `\u6E56\u6CCA\u7387 ${lakeRatePct}% \u2192 \u53D6 ${fs[idx]}% \u6863 \u03B4=${v}` + (exact ? "" : "\uFF08\u5411\u504F\u5B89\u5168\u65B9\u5411\u53D6\u6863\uFF09")
     };
   }
+
+  // src/core/calcLog.ts
+  var LOG_MAX = 200;
+  var CalcLog = class {
+    constructor() {
+      __publicField(this, "entries", []);
+    }
+    add(e) {
+      if (!e.module || !e.module.trim()) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u6A21\u5757\u540D");
+      if (!e.results || Object.keys(e.results).length === 0) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u7ED3\u679C");
+      if (!e.basis || !e.basis.trim()) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u89C4\u8303\u4F9D\u636E");
+      const entry = {
+        t: e.t ?? (/* @__PURE__ */ new Date()).toISOString(),
+        module: e.module,
+        inputs: e.inputs ?? {},
+        params: e.params,
+        results: e.results,
+        basis: e.basis
+      };
+      this.entries.push(entry);
+      if (this.entries.length > LOG_MAX) this.entries.splice(0, this.entries.length - LOG_MAX);
+      return entry;
+    }
+    list() {
+      return this.entries;
+    }
+    size() {
+      return this.entries.length;
+    }
+    clear() {
+      this.entries = [];
+    }
+    // 最近 n 条（倒序：新的在前）
+    recent(n) {
+      return this.entries.slice(-n).reverse();
+    }
+    toJSON(indent = 2) {
+      return JSON.stringify({ schema: "hongsuan-calc-log@1", entries: this.entries }, null, indent);
+    }
+    toMarkdown(title = "\u8BA1\u7B97\u65E5\u5FD7") {
+      const lines = [
+        `# ${title}`,
+        "",
+        `> \u751F\u6210\u65F6\u95F4\uFF1A${(/* @__PURE__ */ new Date()).toLocaleString("zh-CN")} \uFF5C \u5171 ${this.entries.length} \u6761`,
+        "",
+        "| \u65F6\u95F4 | \u6A21\u5757 | \u4E3B\u8981\u8F93\u5165 | \u91C7\u7528/\u4E2D\u95F4\u503C | \u7ED3\u679C | \u89C4\u8303\u4F9D\u636E |",
+        "| --- | --- | --- | --- | --- | --- |"
+      ];
+      const fmt2 = (o) => !o ? "\u2014" : Object.entries(o).map(([k, v]) => `${k}=${v}`).join("\uFF1B");
+      for (const e of this.entries) {
+        const time = new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false });
+        lines.push(`| ${time} | ${e.module} | ${fmt2(e.inputs)} | ${fmt2(e.params)} | ${fmt2(e.results)} | ${e.basis} |`);
+      }
+      return lines.join("\n");
+    }
+  };
+  var calcLog = new CalcLog();
 
   // src/core/threePoint.ts
   function threePointFit(pts) {
@@ -1233,6 +1294,7 @@
     $("outQ").textContent = fmt(q, 0);
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
+    logRenderOnce();
     stateCompare.A = {
       label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
       q,
@@ -1816,6 +1878,12 @@
       };
       renderCompare();
       showMethodCError("rc", null).textContent = q.toFixed(2);
+      logCalc(
+        "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        { \u96E8\u529BSp: Sp + " mm/h", \u8870\u51CF\u6307\u6570n: n, \u5F84\u6D41\u7CFB\u6570\u03C8: psi, \u6C47\u6D41\u65F6\u95F4\u03C4: tau + " h", \u6C47\u6C34\u9762\u79EFF: F + " km\xB2" },
+        { Qp: q.toFixed(2) + " m\xB3/s" },
+        "JTG/T 3365-02-2020 \u7B2C6.2\u6761\uFF08\u66B4\u96E8\u63A8\u7406\u6CD5\uFF09"
+      );
     } catch (e) {
       showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
@@ -1832,6 +1900,20 @@
       };
       renderCompare();
       showMethodCError("rd", null).textContent = q.toFixed(2);
+      logCalc(
+        "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        {
+          \u5730\u8C8C\u7CFB\u6570\u03C8: phi,
+          \u5F84\u6D41\u539A\u5EA6h: h + " mm",
+          \u6EDE\u7559\u539A\u5EA6z: z + " mm",
+          \u6C47\u6C34\u9762\u79EFF: F2 + " km\xB2",
+          \u6298\u51CF\u03B2: b,
+          \u6298\u51CF\u03B3: g,
+          \u6298\u51CF\u03B4: d
+        },
+        { Qp: q.toFixed(2) + " m\xB3/s" },
+        "JTG/T 3365-02-2020 \u7B2C6.3\u6761\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\uFF0C\u9644\u5F55B \u8868B-9/B-5/B-10~13\uFF09"
+      );
     } catch (e) {
       showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
     }
@@ -1897,6 +1979,12 @@
       $("rdH").value = String(r.h);
       $("lkOut").textContent = `h=${r.h} mm${note}`;
       $("lkOut").style.color = "var(--text2)";
+      logCalc(
+        "\u67E5\u8868 \xB7 \u5F84\u6D41\u539A\u5EA6h",
+        { \u66B4\u96E8\u5206\u533A: zone, \u571F\u58E4\u7C7B\u5C5E: soil, \u9891\u7387: freq + "%", \u6C47\u6D41\u65F6\u95F4: tau + " min" },
+        { h: r.h + " mm" + (r.interpolated ? "\uFF08\u63D2\u503C/\u5916\u63A8\uFF09" : "\uFF08\u8868\u503C\uFF09") },
+        "\u9644\u5F55B \u8868B-9"
+      );
       calcMethodC();
     } catch (e) {
       $("lkOut").textContent = e instanceof Error ? e.message : String(e);
@@ -1911,9 +1999,10 @@
   function cbErr(e) {
     cbMsg(e instanceof Error ? e.message : String(e), true);
   }
-  function cbFill(id, value, note) {
+  function cbFill(id, value, note, meta) {
     $(id).value = String(value);
     cbMsg(note);
+    if (meta) logCalc(meta.module, meta.inputs, { [meta.key]: value }, meta.basis);
     calcMethodC();
   }
   for (const item of listZ()) {
@@ -1927,7 +2016,7 @@
       const terrain = $("cbPsiTerrain").value;
       const f = +$("rdF").value;
       const r = lookupPsi(terrain, f);
-      cbFill("rdPhi", r.value, r.note);
+      cbFill("rdPhi", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u5730\u8C8C\u7CFB\u6570\u03C8", basis: "\u9644\u5F55B \u8868B-5", inputs: { \u5730\u5F62: terrain, \u6C47\u6C34\u9762\u79EFF: f + " km\xB2" }, key: "\u03C8" });
     } catch (e) {
       cbErr(e);
     }
@@ -1935,7 +2024,7 @@
   $("cbTau").onclick = () => {
     try {
       const r = lookupTau(+$("cbTauF").value);
-      cbFill("rcTau", r.value, r.note);
+      cbFill("rcTau", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6C47\u6D41\u65F6\u95F4\u03C4", basis: "\u9644\u5F55B \u8868B-8", inputs: { \u6C47\u6C34\u9762\u79EFF: $("cbTauF").value + " km\xB2" }, key: "\u03C4(min)" });
     } catch (e) {
       cbErr(e);
     }
@@ -1944,7 +2033,12 @@
     try {
       const sel = $("cbZFeature");
       const opt = sel.options[sel.selectedIndex];
-      cbFill("rdZ", sel.value, `\u5730\u9762\u7279\u5F81\uFF1A${opt.textContent ?? ""} \u2192 z=${sel.value} mm\uFF08\u8868B-10\uFF09`);
+      cbFill(
+        "rdZ",
+        sel.value,
+        `\u5730\u9762\u7279\u5F81\uFF1A${opt.textContent ?? ""} \u2192 z=${sel.value} mm\uFF08\u8868B-10\uFF09`,
+        { module: "\u67E5\u8868 \xB7 \u6EDE\u7559\u539A\u5EA6z", basis: "\u9644\u5F55B \u8868B-10", inputs: { \u5730\u9762\u7279\u5F81: opt.textContent ?? "" }, key: "z(mm)" }
+      );
     } catch (e) {
       cbErr(e);
     }
@@ -1954,7 +2048,7 @@
       const d = +$("cbBetaD").value;
       const mtn = $("cbBetaMtn").value === "1";
       const r = lookupBeta(d, mtn);
-      cbFill("rdBeta", r.value, r.note);
+      cbFill("rdBeta", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6D2A\u5CF0\u4F20\u64AD\u6298\u51CF\u03B2", basis: "\u9644\u5F55B \u8868B-11", inputs: { \u91CD\u5FC3\u8DDD\u6DB5\u4F4D: d + " km", \u5730\u5F62: mtn ? "\u5C71\u5730\u53CA\u5C71\u5CAD" : "\u5E73\u539F\u53CA\u4E18\u9675" }, key: "\u03B2" });
     } catch (e) {
       cbErr(e);
     }
@@ -1965,7 +2059,7 @@
       const nw = $("cbGammaNw").value === "1";
       const tau = +$("rcTau").value;
       const r = lookupGamma(tau, w, nw);
-      cbFill("rdGamma", r.value, r.note);
+      cbFill("rdGamma", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u964D\u96E8\u4E0D\u5747\u5300\u6298\u51CF\u03B3", basis: "\u9644\u5F55B \u8868B-12", inputs: { \u6C47\u6C34\u533A\u5C3A\u5BF8: w + " km", \u6C47\u6D41\u65F6\u95F4: tau + " min", \u6C14\u5019\u533A: nw ? "\u897F\u5317\u548C\u5185\u8499" : "\u5B63\u5019\u98CE\u5730\u533A" }, key: "\u03B3" });
     } catch (e) {
       cbErr(e);
     }
@@ -1973,7 +2067,7 @@
   $("cbDelta").onclick = () => {
     try {
       const r = lookupDelta(+$("cbDeltaF").value);
-      cbFill("rdDelta", r.value, r.note);
+      cbFill("rdDelta", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6E56\u5E93\u8C03\u8282\u6298\u51CF\u03B4", basis: "\u9644\u5F55B \u8868B-13", inputs: { \u6E56\u6CCA\u7387: $("cbDeltaF").value + "%" }, key: "\u03B4" });
     } catch (e) {
       cbErr(e);
     }
@@ -2002,6 +2096,80 @@
     out.textContent = `\u547D\u4E2D\u7B2C ${hits.join("\u3001")} \u533A \u2192 \u5DF2\u586B\u5165 ${hits[0]} \u533A\uFF1B${z.range}`;
     out.style.color = "var(--text2)";
   };
+  function logCalc(module, inputs, results, basis, params) {
+    try {
+      calcLog.add({ module, inputs, results, basis, params });
+      renderCalcLog();
+    } catch {
+    }
+  }
+  function kvText(o) {
+    return !o ? "\u2014" : Object.entries(o).map(([k, v]) => `${k}=${v}`).join("\uFF1B");
+  }
+  function renderCalcLog() {
+    const body = $("logBody");
+    if (!body) return;
+    const rows = calcLog.recent(30);
+    body.innerHTML = "";
+    for (const e of rows) {
+      const tr = document.createElement("tr");
+      for (const text of [
+        new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false }),
+        e.module,
+        kvText(e.inputs),
+        kvText(e.params),
+        kvText(e.results),
+        e.basis
+      ]) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+    const cnt = $("logCount");
+    if (cnt) cnt.textContent = `\u5171 ${calcLog.size()} \u6761\uFF08\u663E\u793A\u6700\u8FD1 ${rows.length} \u6761\uFF09`;
+  }
+  var logTimer;
+  var lastSig = "";
+  function logRenderOnce() {
+    const sig = `${state.params.mean}|${state.params.cv}|${state.params.cs}|${state.freq}|${state.series.length}`;
+    if (logTimer) clearTimeout(logTimer);
+    logTimer = setTimeout(() => {
+      if (sig === lastSig) return;
+      lastSig = sig;
+      const phi = phiPIII(state.freq, state.params.cs);
+      const kp = 1 + phi * state.params.cv;
+      const q = state.params.mean * kp;
+      logCalc(
+        "\u65B9\u6CD5A \xB7 P-\u2162\u9002\u7EBF",
+        { \u7CFB\u5217\u957F\u5EA6: state.series.length, \u8BBE\u8BA1\u9891\u7387: (state.freq * 100).toFixed(2) + "%", \u4E0D\u8FDE\u5E8F: $("hasExtra").checked ? "\u662F" : "\u5426" },
+        { \u03A6: phi.toFixed(3), Kp: kp.toFixed(3), Qp: fmt(q, 0) + " m\xB3/s" },
+        "JTG C30-2015 \u7B2C6.2\u6761\uFF08\u76AE\u5C14\u900A\u2162\u578B\uFF09",
+        {
+          Q\u0304: fmt(state.params.mean, 1),
+          Cv: state.params.cv.toFixed(3),
+          Cs: state.params.cs.toFixed(3),
+          CsCv: (state.params.cs / state.params.cv).toFixed(2)
+        }
+      );
+    }, 800);
+  }
+  function downloadText(text, fileName, mime) {
+    downloadBlob(new Blob([text], { type: mime }), fileName);
+  }
+  if ($("logExportMd")) {
+    $("logExportMd").onclick = () => {
+      downloadText(calcLog.toMarkdown("\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7"), "\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7.md", "text/markdown;charset=utf-8");
+    };
+    $("logExportJson").onclick = () => {
+      downloadText(calcLog.toJSON(), "\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7.json", "application/json;charset=utf-8");
+    };
+    $("logClear").onclick = () => {
+      calcLog.clear();
+      renderCalcLog();
+    };
+  }
   function svgToPngDataUrl() {
     return new Promise((resolve, reject) => {
       try {
