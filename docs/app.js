@@ -841,6 +841,44 @@
     return { Lj, B0, Cp };
   }
 
+  // src/core/clayScour.ts
+  function clayGeneralScour(p) {
+    const { A, Q, mu, B, hmax, havg, IL, part } = p;
+    if (!(A >= 1 && A <= 1.2)) {
+      throw new HsError({
+        code: "E_INPUT_RANGE",
+        field: "state.cscour.cA",
+        value: A,
+        message: `\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A=${A} \u5E94\u5728 1.0~1.2`,
+        suggestion: "\u4E00\u822C\u53D6 1.0~1.2\uFF0C\u53D8\u8FC1\u3001\u6E38\u8361\u3001\u5BBD\u6D45\u6CB3\u6BB5\u4E0D\u8D85\u8FC7 1.8\uFF08\u6309\u89C4\u8303 8.3.1\uFF09",
+        normRef: "JTG C30\u20142015 8.3.2"
+      });
+    }
+    if (!(IL >= 0.16 && IL <= 1.19)) {
+      throw new HsError({
+        code: "E_INPUT_RANGE",
+        field: "state.cscour.cIL",
+        value: IL,
+        message: `\u6DB2\u6027\u6307\u6570 I_L=${IL} \u8D85\u51FA\u9002\u7528\u8303\u56F4 0.16~1.19`,
+        suggestion: "\u7531\u51B2\u5237\u5751\u8303\u56F4\u5185\u9ECF\u6027\u571F\u7684\u6DB2\u9650\u3001\u5851\u9650\u4E0E\u5929\u7136\u542B\u6C34\u91CF\u8BA1\u7B97\uFF08I_L = (w\u2212wP)/(wL\u2212wP)\uFF09",
+        normRef: "JTG C30\u20142015 8.3.2"
+      });
+    }
+    if (!Number.isFinite(Q) || Q <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cQ", value: Q, message: "\u901A\u8FC7\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u6CB3\u69FD\u7528 Q\u2082\u3001\u6CB3\u6EE9\u7528 Q\u2081\uFF08\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", suggestion: "\u6309\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84\u67E5\u8868 8.3.1-1", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
+    if (!Number.isFinite(B) || B <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cB", value: B, message: "\u8FC7\u6C34\u51C0\u5BBD\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6CB3\u69FD\u7528 Bcj\u3001\u6CB3\u6EE9\u7528 Btj\uFF08\u6865\u5B54\u8FC7\u6C34\u51C0\u5BBD\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(hmax) || hmax <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cHmax", value: hmax, message: "\u6700\u5927\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(havg) || havg <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cHavg", value: havg, message: "\u5E73\u5747\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    const exp = part === "channel" ? 5 / 8 : 6 / 7;
+    const numerator = A * (Q / (mu * B)) * Math.pow(hmax / havg, 5 / 3) / (0.33 * (1 / IL));
+    const hp = Math.pow(numerator, exp);
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      depth: Math.round((hp - hmax) * 1e3) / 1e3,
+      exponent: part === "channel" ? "5/8\uFF08\u6CB3\u69FD\uFF09" : "6/7\uFF08\u6CB3\u6EE9\uFF09"
+    };
+  }
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -2817,7 +2855,35 @@
   }
   function calcScour() {
     const err = $("scErr"), out = $("scOut"), detail = $("scDetail");
+    const vOf = (id) => +$(id).value;
     try {
+      if ($("scSoil")?.value === "clay") {
+        const part = $("scPart").value;
+        const r2 = clayGeneralScour({
+          A: vOf("scAclay"),
+          Q: vOf("scQ2"),
+          mu: vOf("scMu"),
+          B: vOf("scBcj"),
+          hmax: vOf("scHmc"),
+          havg: vOf("scHcq"),
+          IL: vOf("scIL"),
+          part
+        });
+        lastGeneralHp = r2.hp;
+        lastGeneralHy = r2.depth;
+        lastScourE = NaN;
+        lastD50 = NaN;
+        out.textContent = r2.hp.toFixed(2);
+        detail.innerHTML = `hp = [ A\xB7(Q/(\u03BC\xB7B))\xB7(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> \xF7 (0.33\xB7(1/I<sub>L</sub>)) ]<sup>${r2.exponent}</sup> = <b>${r2.hp.toFixed(2)} m</b><br>\u51B2\u5237\u6DF1\u5EA6 = hp \u2212 h<sub>max</sub> = <b>${r2.depth.toFixed(2)} m</b>\uFF08\u9ECF\u6027\u571F\uFF0C${part === "channel" ? "\u6CB3\u69FD" : "\u6CB3\u6EE9"}\u90E8\u5206\uFF09<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.2\uFF08\u9ECF\u6027\u571F\u6CB3\u5E8A\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u4E00\u822C\u51B2\u5237 \xB7 \u9ECF\u6027\u571F\uFF088.3.2\uFF09",
+          { \u90E8\u4F4D: part === "channel" ? "\u6CB3\u69FD" : "\u6CB3\u6EE9", \u96C6\u4E2D\u7CFB\u6570A: vOf("scA"), \u6DB2\u6027\u6307\u6570IL: vOf("scIL"), \u901A\u8FC7\u6D41\u91CFQ: vOf("scQ2"), \u51C0\u5BBDB: vOf("scBcj"), \u6700\u5927\u6C34\u6DF1: vOf("scHmc"), \u5E73\u5747\u6C34\u6DF1: vOf("scHcq") },
+          { hp: r2.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6: r2.depth.toFixed(2) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F8.3.2\uFF08\u9ECF\u6027\u571F\u6CB3\u5E8A\u4E00\u822C\u51B2\u5237\uFF09"
+        );
+        return;
+      }
       const Q2 = +$("scQ2").value, mu = +$("scMu").value, Bcj = +$("scBcj").value;
       const hmc = +$("scHmc").value, hcq = +$("scHcq").value, d50 = +$("scD50").value;
       const rho = +$("scRho").value;
@@ -2873,7 +2939,16 @@
     }
   }
   if ($("scGo")) {
+    let syncScSoil = function() {
+      const clay = $("scSoil").value === "clay";
+      $("scHintNonclay").style.display = clay ? "none" : "";
+      $("scHintClay").style.display = clay ? "" : "none";
+      $("scPart").style.display = clay ? "" : "none";
+      $("scIL").style.display = clay ? "" : "none";
+    };
     $("scGo").onclick = calcScour;
+    $("scSoil").onchange = syncScSoil;
+    syncScSoil();
     $("scUseQ").onclick = () => {
       const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
       const q = Number(raw);

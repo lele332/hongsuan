@@ -218,12 +218,29 @@
     </details>
 
     <details id="scourBox" style="margin-top:10px">
-      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥下一般冲刷（规范第 8 章 · 64-1 修正式）</summary>
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥下一般冲刷（规范第 8 章）</summary>
       <div style="margin-top:10px">
-        <div class="hint" style="margin-top:0">
+        <div class="row" style="margin-top:0">
+          <div><label>河床类型</label><select id="scSoil" style="width:220px">
+            <option value="nonclay">非黏性土（64-1 修正式 8.3.1-4）</option>
+            <option value="clay">黏性土（8.3.2）</option>
+          </select></div>
+          <div><label>黏性土计算部位</label><select id="scPart" style="width:180px">
+            <option value="channel">河槽部分（指数 5/8）</option>
+            <option value="floodplain">河滩部分（指数 6/7）</option>
+          </select></div>
+          <div><label>单宽流量集中系数 A</label><input type="number" id="scAclay" value="1.1" step="0.01" min="1" max="1.2"></div>
+          <div><label>液性指数 I<sub>L</sub>（0.16~1.19）</label><input type="number" id="scIL" value="0.50" step="0.01" min="0.16" max="1.19"></div>
+        </div>
+        <div class="hint" style="margin-top:6px" id="scHintNonclay">
           公式 8.3.1-4（非黏性土河槽，冲止流速原理）：
           <b>h<sub>p</sub> = [ A·(Q₂/(μ·B<sub>cj</sub>))·(h<sub>mc</sub>/h<sub>cq</sub>)<sup>5/3</sup> ÷ (E·d̄<sup>1/6</sup>) ]<sup>3/5</sup></b>
-          <span style="color:var(--red)">仅非黏性土河槽部分；河滩部分、黏性土、局部冲刷（8.4）与行近流速（8.3.3）本版未实现。</span>
+          <span style="color:var(--red)">非黏性土仅河槽部分；河滩部分（8.3.1-5）未实现。</span>
+        </div>
+        <div class="hint" style="margin-top:6px;display:none" id="scHintClay">
+          公式 8.3.2（黏性土河床，分河槽 / 河滩）：
+          <b>h<sub>p</sub> = [ A·(Q/(μ·B))·(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> ÷ (0.33·(1/I<sub>L</sub>)) ]<sup>5/8 或 6/7</sup></b>
+          <span style="color:var(--text3)">黏性土按液性指数 I<sub>L</sub> 反映抗冲性（软土冲得更深）。A=1.0~1.2，I<sub>L</sub>=0.16~1.19。</span>
         </div>
         <div class="row">
           <div><label>河槽设计流量 Q₂（m³/s）</label><input type="number" id="scQ2" value="4722" step="any" min="0.01"></div>
