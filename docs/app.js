@@ -721,6 +721,52 @@
     };
   }
 
+  // src/core/generalScour.ts
+  function concentrationFactorA(Bd, Hz) {
+    if (!Number.isFinite(Bd) || Bd <= 0) throw new Error("\u9020\u5E8A\u6D41\u91CF\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6 Bd \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(Hz) || Hz <= 0) throw new Error("\u9020\u5E8A\u6D41\u91CF\u4E0B\u7684\u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1 Hz \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    const raw = Math.pow(Math.sqrt(Bd) / Hz, 0.15);
+    const capped = raw > 1.8;
+    return { A: capped ? 1.8 : Math.round(raw * 1e3) / 1e3, capped };
+  }
+  function sandCoefE(rhoKgM3) {
+    if (!Number.isFinite(rhoKgM3) || rhoKgM3 < 0) throw new Error("\u542B\u6C99\u91CF\u5FC5\u987B\u4E3A\u975E\u8D1F\uFF08kg/m\xB3\uFF09");
+    if (rhoKgM3 < 1) return { E: 0.46, band: "\u03C1<1.0" };
+    if (rhoKgM3 <= 10) return { E: 0.66, band: "1\u2264\u03C1\u226410" };
+    return { E: 0.86, band: "\u03C1>10" };
+  }
+  function generalScour641(input) {
+    const { Q2, mu, Bcj, hmc, hcq, E, d50, A } = input;
+    const warnings = [];
+    if (!Number.isFinite(Q2) || Q2 <= 0) throw new Error("\u8BBE\u8BA1\u6D41\u91CF Q2 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new Error("\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]\uFF08\u88688.3.1-1\uFF09");
+    if (!Number.isFinite(Bcj) || Bcj <= 0) throw new Error("\u6865\u5B54\u8FC7\u6C34\u51C0\u5BBD Bcj \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(hmc) || hmc <= 0) throw new Error("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1 hmc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(hcq) || hcq <= 0) throw new Error("\u6865\u4E0B\u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1 hcq \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(E) || E <= 0) throw new Error("\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63\uFF08\u88688.3.1-2\uFF1A0.46/0.66/0.86\uFF09");
+    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u69FD\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(A) || A <= 0) throw new Error("\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A \u5FC5\u987B\u4E3A\u6B63");
+    if (hmc < hcq) warnings.push("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1\u5C0F\u4E8E\u5E73\u5747\u6C34\u6DF1\uFF0C\u8BF7\u6838\u5BF9\u65AD\u9762\u6570\u636E\uFF08\u901A\u5E38 hmc \u2265 hcq\uFF09");
+    if (A > 1.8) warnings.push("A>1.8 \u65F6\u89C4\u8303\u5141\u8BB8\u91C7\u7528 1.8\uFF08\u5C71\u524D\u53D8\u8FC1\u3001\u6E38\u8361\u3001\u5BBD\u6EE9\u6CB3\u6BB5\uFF09");
+    if (mu < 0.85) warnings.push("\u03BC<0.85 \u5DF2\u4F4E\u4E8E\u88688.3.1-1 \u5E38\u89C1\u8303\u56F4\uFF0C\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84");
+    const q = Q2 / (mu * Bcj);
+    const ratio = hmc / hcq;
+    const inner = A * q * Math.pow(ratio, 5 / 3) / (E * Math.pow(d50, 1 / 6));
+    const hp = Math.pow(inner, 3 / 5);
+    const hy = hp - hmc;
+    const vz = A * q * Math.pow(ratio, 5 / 3) / Math.pow(hp, 5 / 3);
+    const vzTheory = E * Math.pow(d50, 1 / 6);
+    if (hy < 0) warnings.push("\u8BA1\u7B97\u51B2\u5237\u6DF1\u5EA6\u4E3A\u8D1F\uFF1Ahp \u5C0F\u4E8E\u51B2\u5237\u524D\u6C34\u6DF1\uFF0C\u8BF7\u6838\u5BF9\u65AD\u9762\u4E0E\u6D41\u91CF\u6570\u636E");
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      hy: Math.round(hy * 1e3) / 1e3,
+      q: Math.round(q * 1e3) / 1e3,
+      vz: Math.round(vz * 1e3) / 1e3,
+      vzTheory: Math.round(vzTheory * 1e3) / 1e3,
+      warnings
+    };
+  }
+
   // src/core/threePoint.ts
   function threePointFit(pts) {
     if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
@@ -2205,6 +2251,87 @@
         calcBridgeOpening();
       };
     }
+  }
+  function calcScour() {
+    const err = $("scErr"), out = $("scOut"), detail = $("scDetail");
+    try {
+      const Q2 = +$("scQ2").value, mu = +$("scMu").value, Bcj = +$("scBcj").value;
+      const hmc = +$("scHmc").value, hcq = +$("scHcq").value, d50 = +$("scD50").value;
+      const rho = +$("scRho").value;
+      const { E, band } = sandCoefE(rho);
+      const A = +$("scA").value;
+      const r = generalScour641({ Q2, mu, Bcj, hmc, hcq, E, d50, A });
+      out.textContent = r.hp.toFixed(2);
+      detail.innerHTML = "";
+      const lines = [
+        `hp = [ ${A} \xD7 (${Q2}/(${mu}\xD7${Bcj})) \xD7 (${hmc}/${hcq})<sup>5/3</sup> \xF7 (${E}\xD7${d50}<sup>1/6</sup>) ]<sup>3/5</sup> = <b>${r.hp.toFixed(2)} m</b>`,
+        `\u5355\u5BBD\u6D41\u91CF q = ${r.q} m\xB3/(s\xB7m)\uFF1B\u51B2\u5237\u6DF1\u5EA6 hy = hp \u2212 hmc = <b>${r.hy.toFixed(2)} m</b>`,
+        `\u51B2\u6B62\u6D41\u901F\u6821\u6838 vz = ${r.vz} m/s\uFF08\u7406\u8BBA E\xB7d\u0304<sup>1/6</sup> = ${r.vzTheory} m/s\uFF0C\u4E00\u81F4\u5373\u516C\u5F0F\u95ED\u5408\uFF09`,
+        `\u542B\u6C99\u91CF\u7CFB\u6570 E = ${E}\uFF08${band} kg/m\xB3\uFF0C\u88688.3.1-2\uFF09`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      for (const w of r.warnings) {
+        const d = document.createElement("div");
+        d.textContent = "\u63D0\u793A\uFF1A" + w;
+        d.style.color = "var(--amber)";
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u51B2\u5237 \xB7 \u4E00\u822C\u51B2\u523764-1",
+        {
+          \u8BBE\u8BA1\u6D41\u91CFQ2: Q2 + " m\xB3/s",
+          \u538B\u7F29\u7CFB\u6570\u03BC: mu,
+          \u8FC7\u6C34\u51C0\u5BBDBcj: Bcj + " m",
+          \u6CB3\u69FD\u6700\u5927\u6C34\u6DF1: hmc + " m",
+          \u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1: hcq + " m",
+          \u5E73\u5747\u7C92\u5F84: d50 + " mm",
+          \u542B\u6C99\u91CF: rho + " kg/m\xB3",
+          \u96C6\u4E2D\u7CFB\u6570A: A
+        },
+        { hp: r.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6hy: r.hy.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C8.3.1\u6761\uFF0864-1\u4FEE\u6B63\u5F0F\uFF0C\u88688.3.1-2\uFF09",
+        { E, q: r.q, \u51B2\u6B62\u6D41\u901Fvz: r.vz }
+      );
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      err.textContent = e instanceof Error ? e.message : String(e);
+    }
+  }
+  if ($("scGo")) {
+    $("scGo").onclick = calcScour;
+    $("scUseQ").onclick = () => {
+      const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
+      const q = Number(raw);
+      if (Number.isFinite(q) && q > 0) {
+        $("scQ2").value = String(q);
+        calcScour();
+      } else {
+        const err = $("scErr");
+        err.style.display = "block";
+        err.textContent = "\u5F53\u524D\u8FD8\u6CA1\u6709\u6709\u6548\u7684\u8BBE\u8BA1\u6D41\u91CF\uFF0C\u8BF7\u5148\u8BA1\u7B97\u5E76\u9002\u7EBF";
+      }
+    };
+    $("scCalcA").onclick = () => {
+      try {
+        const r = concentrationFactorA(+$("scBd").value, +$("scHz").value);
+        $("scA").value = String(r.A);
+        const tip = $("scATip");
+        tip.textContent = r.capped ? `A=${r.A}\uFF08\u539F\u59CB\u503C>1.8\uFF0C\u5DF2\u6309\u89C4\u8303\u53D6 1.8\uFF09` : `A = (\u221A${$("scBd").value} / ${$("scHz").value})^0.15 = ${r.A}`;
+        calcScour();
+      } catch (e) {
+        const err = $("scErr");
+        err.style.display = "block";
+        err.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
   }
   function logCalc(module, inputs, results, basis, params) {
     try {
