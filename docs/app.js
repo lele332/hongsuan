@@ -757,6 +757,83 @@
     "\u4E09\u7AEF E2E\uFF1A\u7F51\u9875\u7248\u3001Electron \u684C\u9762\u7248\u3001\u79BB\u7EBF\u5355\u6587\u4EF6\u7248\u5168\u6D41\u7A0B\u9A8C\u8BC1"
   ];
 
+  // src/core/projectDiff.ts
+  function flatten(obj, prefix = "", out = {}, maxArray = 40) {
+    if (obj === null || obj === void 0) {
+      out[prefix] = String(obj);
+      return out;
+    }
+    if (Array.isArray(obj)) {
+      const n = Math.min(obj.length, maxArray);
+      for (let i = 0; i < n; i++) flatten(obj[i], `${prefix}[${i}]`, out, maxArray);
+      if (obj.length > maxArray) out[`${prefix}.length`] = String(obj.length);
+      return out;
+    }
+    if (typeof obj === "object") {
+      for (const [k, v] of Object.entries(obj)) {
+        flatten(v, prefix ? `${prefix}.${k}` : k, out, maxArray);
+      }
+      return out;
+    }
+    out[prefix] = String(obj);
+    return out;
+  }
+  var IGNORE = [/^savedAt$/, /^schema$/, /^appVersion$/];
+  function diffProjectFiles(a, b) {
+    const fa = flatten(a);
+    const fb = flatten(b);
+    const keys = /* @__PURE__ */ new Set([...Object.keys(fa), ...Object.keys(fb)]);
+    const rows = [];
+    const added = [];
+    const removed = [];
+    for (const k of [...keys].sort()) {
+      if (IGNORE.some((re) => re.test(k))) continue;
+      const va = fa[k], vb = fb[k];
+      if (va === void 0) {
+        added.push(k);
+        continue;
+      }
+      if (vb === void 0) {
+        removed.push(k);
+        continue;
+      }
+      if (va === vb) continue;
+      const na = Number(va), nb = Number(vb);
+      const numeric = va.trim() !== "" && vb.trim() !== "" && Number.isFinite(na) && Number.isFinite(nb);
+      rows.push({
+        path: k,
+        a: va,
+        b: vb,
+        delta: numeric ? (nb - na >= 0 ? "+" : "") + String(Math.round((nb - na) * 1e6) / 1e6) : void 0
+      });
+    }
+    const label = (o) => {
+      const r = flatten(o);
+      const name = r["project.name"] ?? "";
+      const t = o?.savedAt;
+      return `${name}${t ? `\uFF08${String(t).slice(0, 10)}\uFF09` : ""}`;
+    };
+    return { rows, added, removed, aLabel: label(a), bLabel: label(b) };
+  }
+  function diffToMarkdown(d) {
+    const lines = [
+      "# \u5DE5\u7A0B\u6587\u4EF6\u7248\u672C\u5BF9\u6BD4",
+      "",
+      `> \u65E7\u7248\uFF1A${d.aLabel || "\u2014"} \uFF5C \u65B0\u7248\uFF1A${d.bLabel || "\u2014"}`,
+      "",
+      `\u53D8\u5316\u9879 ${d.rows.length} \u4E2A\uFF1B\u65B0\u589E\u5B57\u6BB5 ${d.added.length} \u4E2A\uFF1B\u5220\u9664\u5B57\u6BB5 ${d.removed.length} \u4E2A`,
+      "",
+      "| \u5B57\u6BB5 | \u65E7\u503C | \u65B0\u503C | \u53D8\u5316 |",
+      "| --- | --- | --- | --- |"
+    ];
+    for (const r of d.rows) {
+      lines.push(`| ${r.path} | ${r.a} | ${r.b} | ${r.delta ?? "\u2014"} |`);
+    }
+    if (d.added.length) lines.push("", "\u65B0\u589E\uFF1A" + d.added.join("\u3001"));
+    if (d.removed.length) lines.push("\u5220\u9664\uFF1A" + d.removed.join("\u3001"));
+    return lines.join("\n");
+  }
+
   // src/core/bridgeOpening.ts
   var REACH_TABLE = {
     stable: {
@@ -2597,6 +2674,101 @@
       valBox.appendChild(d);
     }
     helpRendered = true;
+  }
+  function svgMarkup() {
+    const svg = $("chart");
+    let s = svg.outerHTML;
+    if (!/xmlns=/.test(s)) s = s.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    return s;
+  }
+  if ($("exSvg")) {
+    $("exSvg").onclick = () => {
+      downloadBlob(new Blob([svgMarkup()], { type: "image/svg+xml;charset=utf-8" }), "\u9891\u7387\u66F2\u7EBF.svg");
+    };
+    $("exPng").onclick = async () => {
+      try {
+        const url = await svgToPngDataUrl();
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "\u9891\u7387\u66F2\u7EBF.png";
+        a.click();
+        $("exMsg").textContent = "\u5DF2\u5BFC\u51FA PNG\uFF082 \u500D\u50CF\u7D20\u5BC6\u5EA6\uFF09";
+      } catch {
+        $("exMsg").textContent = "PNG \u5BFC\u51FA\u5931\u8D25\uFF0C\u8BF7\u6539\u7528 SVG";
+      }
+    };
+  }
+  function readFileText(inputId) {
+    return new Promise((resolve, reject) => {
+      const el = $(inputId);
+      const f = el.files && el.files[0];
+      if (!f) {
+        reject(new Error("\u8BF7\u5148\u9009\u62E9\u6587\u4EF6"));
+        return;
+      }
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error("\u6587\u4EF6\u8BFB\u53D6\u5931\u8D25"));
+      r.readAsText(f, "utf-8");
+    });
+  }
+  if ($("pdGo")) {
+    $("pdGo").onclick = async () => {
+      const box = $("pdOut");
+      const msg = $("pdMsg");
+      try {
+        const [ta, tb] = await Promise.all([readFileText("pdA"), readFileText("pdB")]);
+        const A = parseProjectFile(JSON.parse(ta));
+        const B = parseProjectFile(JSON.parse(tb));
+        const d = diffProjectFiles(A, B);
+        box.innerHTML = "";
+        const head = document.createElement("div");
+        head.style.fontSize = "12px";
+        head.innerHTML = `\u65E7\u7248\uFF1A<b>${d.aLabel || "\u2014"}</b> \uFF5C \u65B0\u7248\uFF1A<b>${d.bLabel || "\u2014"}</b> \uFF5C \u53D8\u5316 <b>${d.rows.length}</b> \u9879`;
+        box.appendChild(head);
+        if (d.rows.length === 0) {
+          const none = document.createElement("div");
+          none.style.fontSize = "12px";
+          none.textContent = "\u4E24\u4EFD\u5DE5\u7A0B\u6587\u4EF6\u5728\u8BBE\u8BA1\u8F93\u5165\u4E0A\u5B8C\u5168\u4E00\u81F4\uFF08\u65F6\u95F4\u6233\u4E0E\u7248\u672C\u53F7\u7684\u5DEE\u5F02\u5DF2\u5FFD\u7565\uFF09";
+          box.appendChild(none);
+          return;
+        }
+        const table = document.createElement("table");
+        table.className = "ltab";
+        table.style.fontSize = "12px";
+        const trh = document.createElement("tr");
+        for (const h of ["\u5B57\u6BB5", "\u65E7\u503C", "\u65B0\u503C", "\u53D8\u5316"]) {
+          const th = document.createElement("th");
+          th.textContent = h;
+          trh.appendChild(th);
+        }
+        table.appendChild(trh);
+        for (const r of d.rows) {
+          const tr = document.createElement("tr");
+          for (const v of [r.path, r.a, r.b, r.delta ?? "\u2014"]) {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+          }
+          table.appendChild(tr);
+        }
+        box.appendChild(table);
+        msg.textContent = "";
+      } catch (e) {
+        msg.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
+    $("pdMd").onclick = async () => {
+      const msg = $("pdMsg");
+      try {
+        const [ta, tb] = await Promise.all([readFileText("pdA"), readFileText("pdB")]);
+        const d = diffProjectFiles(parseProjectFile(JSON.parse(ta)), parseProjectFile(JSON.parse(tb)));
+        downloadText(diffToMarkdown(d), "\u5DE5\u7A0B\u6587\u4EF6\u5BF9\u6BD4.md", "text/markdown;charset=utf-8");
+        msg.textContent = "\u5DF2\u5BFC\u51FA\u5BF9\u6BD4\u6458\u8981";
+      } catch (e) {
+        msg.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
   }
   function logCalc(module, inputs, results, basis, params) {
     try {
