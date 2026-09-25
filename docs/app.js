@@ -767,6 +767,80 @@
     return o;
   }
 
+  // src/core/bridgeOpening.ts
+  var REACH_TABLE = {
+    stable: {
+      label: "\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF09",
+      Kq: 0.84,
+      n3: 0.9,
+      applies: "\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u6CB3\u6BB5"
+    },
+    substable: {
+      label: "\u6B21\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF09",
+      Kq: 0.95,
+      n3: 0.87,
+      applies: "\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5"
+    },
+    unstable: {
+      label: "\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u6EE9\u3001\u69FD\u53EF\u5206\uFF09",
+      Kq: 0.69,
+      n3: 1.59,
+      applies: "\u6EE9\u3001\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5"
+    }
+  };
+  function minBridgeOpening(input) {
+    const { Qp, Qc, Bc, reach } = input;
+    const warnings = [];
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    const coef = REACH_TABLE[reach];
+    if (!coef) throw new Error(`\u6CB3\u6BB5\u7C7B\u578B\u5FC5\u987B\u662F stable / substable / unstable\uFF0C\u6536\u5230 ${String(reach)}`);
+    const ratio = Qp / Qc;
+    const Qt = Qp - Qc;
+    if (Qt < 0) {
+      warnings.push("\u6CB3\u6EE9\u6D41\u91CF Qp\u2212Qc \u4E3A\u8D1F\uFF1A\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u91CF\u4E0E\u6CB3\u69FD\u6D41\u91CF\uFF08\u901A\u5E38 Qp \u5E94\u5927\u4E8E Qc\uFF09");
+    }
+    if (ratio > 3) {
+      warnings.push(`Qp/Qc=${ratio.toFixed(2)} \u504F\u5927\uFF0C\u6865\u5B54\u5C06\u663E\u8457\u538B\u7F29\u6CB3\u6EE9\uFF0C\u5E94\u590D\u6838\u6CB3\u6BB5\u5206\u7C7B\u4E0E\u51B2\u5237\u5F71\u54CD`);
+    }
+    if (reach === "unstable" && ratio > 2) {
+      warnings.push("\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u5BF9\u6D41\u91CF\u6BD4\u654F\u611F\uFF08n3=1.59\uFF09\uFF0C\u5EFA\u8BAE\u7ED3\u5408\u6CB3\u5E8A\u6F14\u53D8\u5206\u6790\u7EFC\u5408\u786E\u5B9A\u6865\u957F");
+    }
+    const Lj = coef.Kq * Math.pow(ratio, coef.n3) * Bc;
+    return {
+      Lj: Math.round(Lj * 100) / 100,
+      Kq: coef.Kq,
+      n3: coef.n3,
+      Qt: Math.round(Qt * 100) / 100,
+      ratio: Math.round(ratio * 1e4) / 1e4,
+      warnings
+    };
+  }
+  function wideOpening(p) {
+    const { Qp, Qc, Bc } = p;
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    const Qt = p.Qt !== void 0 ? p.Qt : Qp - Qc;
+    if (!(Qt > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", message: "\u5BBD\u6EE9\u6CB3\u6BB5\u8981\u6C42\u6CB3\u6EE9\u6D41\u91CF Qt \u4E3A\u6B63\uFF08Qt = Qp \u2212 Qc\uFF09", suggestion: "\u5BBD\u6EE9\u6CB3\u6BB5\u6CB3\u6EE9\u5E94\u901A\u8FC7\u660E\u663E\u6D41\u91CF\uFF0C\u8BF7\u6838\u5BF9 Qp \u4E0E Qc", normRef: "JTG C30\u20142015 7.2.1-3" });
+    const qc = Qc / Bc;
+    const beta = 1.19 * Math.pow(Qc / Qt, 0.1);
+    const Lj = Qp / (beta * qc);
+    return { Lj, beta, qc, Qt };
+  }
+  function indistinguishableOpening(p) {
+    const { Qp, Q2pct, Qmean, d50 } = p;
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u5F15\u7528\u4E0A\u6E38\u6210\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Q2pct) || Q2pct <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indQ2", value: Q2pct, message: "\u9891\u7387 2% \u7684\u6D2A\u6C34\u6D41\u91CF Q2% \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u6309\u9002\u7EBF\u7ED3\u679C\u53D6 P=2% \u7684\u6D41\u91CF\uFF0850 \u5E74\u4E00\u9047\uFF09", normRef: "JTG C30\u20142015 7.2.1-5" });
+    if (!Number.isFinite(Qmean) || Qmean <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indQm", value: Qmean, message: "\u5E74\u6700\u5927\u6D41\u91CF\u5E73\u5747\u503C Q\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u6D41\u91CF\u7CFB\u5217\u77E9\u6CD5\u5747\u503C\u53D6\u5F97\uFF08\u9002\u7EBF\u91C7\u7528\u7684 Q\u0304\uFF09", normRef: "JTG C30\u20142015 7.2.1-6" });
+    if (!Number.isFinite(d50) || d50 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indD50", value: d50, message: "\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6CE8\u610F\u5355\u4F4D\u662F\u7C73\uFF08\u5982 10mm \u5E94\u586B 0.010\uFF09", normRef: "JTG C30\u20142015 7.2.1-6" });
+    const B0 = 16.07 * Math.pow(Qmean, 0.24) / Math.pow(d50, 0.3);
+    const Cp = Math.pow(Qp / Q2pct, 0.33);
+    const Lj = Cp * B0;
+    return { Lj, B0, Cp };
+  }
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -1071,57 +1145,6 @@
     if (d.added.length) lines.push("", "\u65B0\u589E\uFF1A" + d.added.join("\u3001"));
     if (d.removed.length) lines.push("\u5220\u9664\uFF1A" + d.removed.join("\u3001"));
     return lines.join("\n");
-  }
-
-  // src/core/bridgeOpening.ts
-  var REACH_TABLE = {
-    stable: {
-      label: "\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF09",
-      Kq: 0.84,
-      n3: 0.9,
-      applies: "\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u6CB3\u6BB5"
-    },
-    substable: {
-      label: "\u6B21\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF09",
-      Kq: 0.95,
-      n3: 0.87,
-      applies: "\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5"
-    },
-    unstable: {
-      label: "\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u6EE9\u3001\u69FD\u53EF\u5206\uFF09",
-      Kq: 0.69,
-      n3: 1.59,
-      applies: "\u6EE9\u3001\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5"
-    }
-  };
-  function minBridgeOpening(input) {
-    const { Qp, Qc, Bc, reach } = input;
-    const warnings = [];
-    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
-    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
-    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
-    const coef = REACH_TABLE[reach];
-    if (!coef) throw new Error(`\u6CB3\u6BB5\u7C7B\u578B\u5FC5\u987B\u662F stable / substable / unstable\uFF0C\u6536\u5230 ${String(reach)}`);
-    const ratio = Qp / Qc;
-    const Qt = Qp - Qc;
-    if (Qt < 0) {
-      warnings.push("\u6CB3\u6EE9\u6D41\u91CF Qp\u2212Qc \u4E3A\u8D1F\uFF1A\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u91CF\u4E0E\u6CB3\u69FD\u6D41\u91CF\uFF08\u901A\u5E38 Qp \u5E94\u5927\u4E8E Qc\uFF09");
-    }
-    if (ratio > 3) {
-      warnings.push(`Qp/Qc=${ratio.toFixed(2)} \u504F\u5927\uFF0C\u6865\u5B54\u5C06\u663E\u8457\u538B\u7F29\u6CB3\u6EE9\uFF0C\u5E94\u590D\u6838\u6CB3\u6BB5\u5206\u7C7B\u4E0E\u51B2\u5237\u5F71\u54CD`);
-    }
-    if (reach === "unstable" && ratio > 2) {
-      warnings.push("\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u5BF9\u6D41\u91CF\u6BD4\u654F\u611F\uFF08n3=1.59\uFF09\uFF0C\u5EFA\u8BAE\u7ED3\u5408\u6CB3\u5E8A\u6F14\u53D8\u5206\u6790\u7EFC\u5408\u786E\u5B9A\u6865\u957F");
-    }
-    const Lj = coef.Kq * Math.pow(ratio, coef.n3) * Bc;
-    return {
-      Lj: Math.round(Lj * 100) / 100,
-      Kq: coef.Kq,
-      n3: coef.n3,
-      Qt: Math.round(Qt * 100) / 100,
-      ratio: Math.round(ratio * 1e4) / 1e4,
-      warnings
-    };
   }
 
   // src/core/generalScour.ts
@@ -2694,9 +2717,43 @@
     const err = $("opErr");
     const out = $("opOut");
     const detail = $("opDetail");
+    const reachSel = $("opReach").value;
+    const vOf = (id) => +$(id).value;
     try {
+      if (reachSel === "wide") {
+        const qtRaw = $("opQt").value;
+        const r2 = wideOpening({
+          Qp: vOf("opQp"),
+          Qc: vOf("opQc"),
+          Bc: vOf("opBc"),
+          Qt: qtRaw.trim() === "" ? void 0 : Number(qtRaw)
+        });
+        out.textContent = r2.Lj.toFixed(1);
+        detail.innerHTML = `Lj = Qp/(\u03B2\xB7qc) = ${r2.Lj.toFixed(1)} m \uFF5C \u03B2 = 1.19\xB7(Qc/Qt)^0.10 = ${r2.beta.toFixed(3)}\uFF0Cqc = Qc/Bc = ${r2.qc.toFixed(2)} m\xB3/(s\xB7m)<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 7.2.1-3\uFF08\u5BBD\u6EE9\u6CB3\u6BB5\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u5BBD\u6EE9\u6CB3\u6BB5",
+          { \u8BBE\u8BA1\u6D41\u91CFQp: vOf("opQp"), \u6CB3\u69FD\u6D41\u91CFQc: vOf("opQc"), \u6CB3\u69FD\u5BBD\u5EA6Bc: vOf("opBc"), \u6CB3\u6EE9\u6D41\u91CFQt: r2.Qt },
+          { \u03B2: r2.beta.toFixed(3), qc: r2.qc.toFixed(2), Lj: r2.Lj.toFixed(1) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F7.2.1-3\uFF08\u5BBD\u6EE9\u6CB3\u6BB5\u5355\u5BBD\u6D41\u91CF\u516C\u5F0F\uFF09"
+        );
+        return;
+      }
+      if (reachSel === "indist") {
+        const r2 = indistinguishableOpening({ Qp: vOf("opQp"), Q2pct: vOf("opQ2"), Qmean: vOf("opQm"), d50: vOf("opD50") });
+        out.textContent = r2.Lj.toFixed(1);
+        detail.innerHTML = `Lj = Cp\xB7B\u2080 = ${r2.Lj.toFixed(1)} m \uFF5C B\u2080 = 16.07\xB7Q\u0304^0.24/d\u0304^0.30 = ${r2.B0.toFixed(1)} m\uFF0CCp = (Qp/Q\u2082%)^0.33 = ${r2.Cp.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 7.2.1-4~6\uFF08\u6EE9\u3001\u69FD\u96BE\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u6EE9\u69FD\u96BE\u5206\u6CB3\u6BB5",
+          { \u8BBE\u8BA1\u6D41\u91CFQp: vOf("opQp"), Q2\u767E\u5206\u6BD4\u6D41\u91CF: vOf("opQ2"), \u5E74\u6700\u5927\u6D41\u91CF\u5747\u503CQ: vOf("opQm"), \u6CE5\u6C99\u5E73\u5747\u7C92\u5F84d: vOf("opD50") },
+          { B0: r2.B0.toFixed(1) + " m", Cp: r2.Cp.toFixed(3), Lj: r2.Lj.toFixed(1) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F7.2.1-4~6\uFF08\u6EE9\u3001\u69FD\u96BE\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF09"
+        );
+        return;
+      }
       const Qp = +$("opQp").value, Qc = +$("opQc").value, Bc = +$("opBc").value;
-      const reach = $("opReach").value;
+      const reach = reachSel;
       const r = minBridgeOpening({ Qp, Qc, Bc, reach });
       out.textContent = r.Lj.toFixed(2);
       const coef = REACH_TABLE[reach];
@@ -2727,8 +2784,17 @@
       showErr(err, e);
     }
   }
+  function syncOpenRows() {
+    const reach = $("opReach").value;
+    const wide = $("opWideRow");
+    const ind = $("opIndRow");
+    if (wide) wide.style.display = reach === "wide" ? "" : "none";
+    if (ind) ind.style.display = reach === "indist" ? "" : "none";
+  }
   if ($("opGo")) {
     $("opGo").onclick = calcBridgeOpening;
+    $("opReach").onchange = syncOpenRows;
+    syncOpenRows();
     $("opUseQ").onclick = () => {
       const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
       const q = Number(raw);
