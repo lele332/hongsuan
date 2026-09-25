@@ -283,6 +283,36 @@
               <span id="lkOut" style="color:var(--text2)"></span>
             </div>
           </td></tr>
+        <table class="ltab" style="margin-top:8px"><tr><th colspan="4">系数查表 ✅ 已内置规范表 B-5 / B-8 / B-10~B-13，无需人工翻表</th></tr>
+          <tr><td colspan="4" style="padding:6px 4px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px">
+              <span>ψ 地形</span>
+              <select id="cbPsiTerrain" style="width:72px"><option>丘陵</option><option>平地</option><option>平原</option><option>山地</option><option>山岭</option></select>
+              <button class="fillBtn" id="cbPsi">查 ψ 并填入</button>
+              <span style="margin-left:6px">τ 面积 F</span><input type="number" id="cbTauF" value="3.94" min="0.01" step="0.01" style="width:64px">
+              <button class="fillBtn" id="cbTau">查 τ 并填入</button>
+              <span style="margin-left:6px">z 地面特征</span><select id="cbZFeature" style="width:170px"></select>
+              <button class="fillBtn" id="cbZ">查 z 并填入</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;margin-top:6px">
+              <span>β 重心距涵位 km</span><input type="number" id="cbBetaD" value="1" min="0.1" step="0.1" style="width:60px">
+              <select id="cbBetaMtn" style="width:96px"><option value="0">平原及丘陵</option><option value="1">山地及山岭</option></select>
+              <button class="fillBtn" id="cbBeta">查 β 并填入</button>
+              <span style="margin-left:6px">γ 汇水区尺寸 km</span><input type="number" id="cbGammaW" value="5" min="0.1" step="0.1" style="width:60px">
+              <select id="cbGammaNw" style="width:110px"><option value="0">季候风地区</option><option value="1">西北和内蒙</option></select>
+              <button class="fillBtn" id="cbGamma">查 γ 并填入</button>
+              <span style="margin-left:6px">δ 湖泊率 %</span><input type="number" id="cbDeltaF" value="5" min="0" step="1" style="width:56px">
+              <button class="fillBtn" id="cbDelta">查 δ 并填入</button>
+            </div>
+            <div id="cbOut" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+          </td></tr>
+          <tr><td colspan="4" style="padding:6px 4px;font-size:12px">
+            <span>暴雨分区查询（输入省份或山川名，如「湖南」「武夷山」）</span>
+            <input id="cbZoneQ" style="width:120px" placeholder="湖南" value="湖南">
+            <button class="fillBtn" id="cbZoneGo">查分区</button>
+            <span id="cbZoneOut" style="color:var(--text2);margin-left:6px"></span>
+          </td></tr>
+        </table>
         <details id="rdTables" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13px;color:var(--blue)">查表辅助：ψ / h / z / β / γ / δ 取值（点行自动填入）</summary>
           <div class="hint" style="margin-top:10px">出处：《公路涵洞设计规范》JTG/T 3365-02-2020 附录 B（该规范已由交通运输部公告 2020 年第 88 号全文公开，本软件数据取自其官方公开 PDF）。<b>径流厚度 h 的完整表（表 B-9：暴雨分区 1~18 区 × 土壤类属 Ⅰ~Ⅵ 类 × 频率 1/2/4% × 汇流时间 30/45/60/80 min）已内置</b>，用上方查表工具直接取；下列 ψ / z / β / γ / δ 为公开算例锚点值，点行可一键填入。</div>

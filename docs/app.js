@@ -499,6 +499,116 @@
   }
   var RUNOFF_TABLE_FULL = buildFullTable();
 
+  // src/core/auxTables.generated.ts
+  var AUX_PSI_F_BANDS = ["F<10", "10<F<=20", "20<F<=30"];
+  var AUX_PSI_ROWS = [{ "terrain": "\u5E73\u5730", "slope": "1.2", "psi": ["0.05", "0.05", "0.05"] }, { "terrain": "\u5E73\u539F", "slope": "3\uFF0C4\uFF0C6", "psi": ["0.07", "0.06", "0.06"] }, { "terrain": "\u4E18\u9675", "slope": "10\uFF0C14\uFF0C20", "psi": ["0.09", "0.07", "0.06"] }, { "terrain": "\u5C71\u5730", "slope": "27\uFF0C35\uFF0C45", "psi": ["0.10", "0.09", "0.07"] }, { "terrain": "\u5C71\u5CAD", "slope": "60\uFF5E100", "psi": ["0.13", "0.11", "0.08"] }, { "terrain": "", "slope": "100\uFF5E200", "psi": ["0.14", "", ""] }, { "terrain": "", "slope": "200\uFF5E400", "psi": ["0.15", "", ""] }, { "terrain": "", "slope": "400\uFF5E800", "psi": ["0.16", "", ""] }, { "terrain": "", "slope": "800\uFF5E1200", "psi": ["0.17", "", ""] }];
+  var AUX_ZONES = { "1": { "east": "\u7531\u9EC4\u6CB3\u53E3\u8D77 \u81F3\u592A\u884C\u5C71\u4E1C \u9E93", "south": "\u9EC4\u6CB3", "west": "\u4E94\u53F0\u5C71\u3001\u592A\u884C \u5C71", "north": "\u71D5\u5C71\u5C71\u8109", "range": "\u4E3B\u8981\u662F\u592A\u884C\u5C71\u4E1C\u9762\u5C71\u533A\uFF0C \u5305\u62EC\uFF1A\u6CB3\u5317\u897F\u5317\u90E8\uFF0C\u6CB3\u5357 \u897F\u5317\u89D2\uFF0C\u5C71\u897F\u4E1C\u90E8\u4E00\u90E8 \u5206\u3002" }, "2": { "east": "\u9EC4\u6CB3", "south": "\u9EC4\u6CB3", "west": "\u592A\u884C\u5C71\u9E93", "north": "\u6D77\u6CB3", "range": "\u534E\u5317\u5E73\u539F\uFF0C\u5305\u62EC\uFF1A\u6CB3\u5317\u5927 \u90E8\u5206\u3001\u5C71\u4E1C\u9EC4\u6CB3\u4EE5\u5317\u3001\u6CB3 \u5357\u9EC4\u6CB3\u4EE5\u5317\u7684\u5317\u89D2\u4E00\u5C0F \u90E8\u5206\u3002" }, "3": { "east": "\u9EC4\u6D77", "south": "\u6C82\u6CB3", "west": "\u8FD0\u6CB3", "north": "\u9EC4\u6CB3\u3001\u6E24 \u6D77", "range": "\u5C71\u4E1C\u534A\u5C9B\uFF0C\u5305\u62EC\uFF1A\u5C71\u4E1C\u5927 \u90E8\u3001\u6C5F\u82CF\u5317\u90E8\u4E00\u5C0F\u90E8\u5206\uFF0C \u5C71\u4E1C\u897F\u5357\u89D2\u3002" }, "4": { "east": "\u9EC4\u6D77", "south": "\u5929\u76EE\u5C71\u3001 \u9EC4\u5C71\u3001\u5927 \u522B\u5C71\u3001\u5927 \u6D2A\u5C71\u3001\u8346 \u5C71", "west": "\u6B66\u5F53\u5C71\u3001\u5DEB\u5C71", "north": "\u6C82\u6CB3\u3001\u8FD0 \u6CB3\u3001\u9EC4\u6CB3\u3001 \u5D69\u6CB3", "range": "\u6DEE\u6CB3\u6D41\u57DF\u548C\u957F\u6C5F\u4E0B\u6E38\u5E73 \u539F\uFF0C\u5305\u62EC\uFF1A\u6C5F\u82CF\u5168\u90E8\uFF0C\u5B89 \u5FBD\u3001\u6CB3\u5357\u7684\u7EDD\u5927\u90E8\u5206\uFF0C\u6E56 \u5317\u5317\u90E8\u7684\u4E00\u5C0F\u90E8\u5206\u3001\u5C71\u4E1C \u897F\u5357\u89D2\u3002" }, "5": { "east": "\u6B66\u5937\u5C71", "south": "\u5927\u5EBE\u5CAD\u548C \u6CBF\u5E7F\u897F\u5317 \u90E8\u7701\u754C\u5C71 \u8109", "west": "\u6B66\u9675\u5C71\u8109", "north": "\u9EC4\u5C71\u3001\u5927 \u522B\u5C71\u3001\u5927 \u6D2A\u5C71\u3001\u8346 \u5C71", "range": "\u957F\u6C5F\u6D41\u57DF\u4E2D\u6E38\u5E73\u539F\uFF0C\u5305 \u62EC\uFF1A\u6E56\u5357\u5168\u90E8\uFF0C\u6C5F\u897F\u3001\u6E56 \u5317\u4E00\u90E8\u5206\uFF0C\u5B89\u5FBD\u897F\u5357\u89D2\uFF0C \u6D59\u6C5F\u3001\u5E7F\u897F\u4E00\u5C0F\u90E8\u5206\u3002" }, "6": { "east": "\u62EC\u82CD\u5C71\u3001\u6234\u4E91 \u5C71", "south": "\u7F57\u6D6E\u5C71\u3001 \u4E5D\u8FDE\u5C71", "west": "\u6B66\u5937\u5C71\u3001\u5927\u5EBE \u5CAD\u3001\u5317\u6C5F\u897F\u6C5F \u5206\u6C34\u5CAD", "north": "\u5929\u76EE\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u6D59\u6C5F\u3001 \u798F\u5EFA\u3001\u5E7F\u4E1C\u5927\u90E8\u5206\uFF0C\u6C5F\u897F \u4E1C\u5357\u89D2" }, "7": { "east": "\u4E1C\u6D77\u3001\u53F0\u6E7E\u6D77 \u5CE1", "south": "\u97E9\u6C5F\u3001\u4E5D \u9F99\u6C5F\u5206\u6C34 \u5CAD", "west": "\u62EC\u82CD\u5C71\u3001\u6234\u4E91 \u5C71", "north": "\u676D\u5DDE\u6E7E", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u6D59\u6C5F\u3001 \u798F\u5EFA\u4E00\u90E8\u5206" }, "8": { "east": "\u97E9\u6C5F\u3001\u4E5D\u9F99\u6C5F \u5206\u6C34\u5CAD", "south": "\u5357\u6D77", "west": "\u56FD\u754C", "north": "\u7F57\u6D6E\u5C71\u3001 \u4E5D\u8FDE\u5C71\u3001 \u4E91\u5F00\u5C71\u3001 \u5341\u4E07\u5927\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u5E7F\u4E1C \u7701\u5927\u90E8\u5206\uFF0C\u5E7F\u897F\u5357\u90E8\u4E00\u5C0F \u90E8\u5206" }, "9": { "east": "\u5317\u6C5F\u3001\u897F\u6C5F\u5206", "south": "\u4E91 \u5F00 \u5927", "west": "\u6CBF\u7ECF\u5EA6 106", "north": "\u6CBF\u7701\u754C\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u5E7F\u897F" }, "10": { "east": "\u6B66\u9675\u5C71\u8109", "south": "\u82D7\u5CAD\u3001\u56FD \u754C", "west": "\u6CBF\u7ECF\u5EA6 107 \u5C71\u8109\uFF0C\u5927\u5A04 \u5C71\uFF0C\u6CBF\u7ECF\u5EA6\u2218 104 \u5C71\u8109", "north": "\u5927\u5DF4\u5C71", "range": "\u4E91\u8D35\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u8D35\u5DDE \u5168\u90E8\u3001\u9655\u897F\u3001\u6E56\u5317\u3001\u56DB\u5DDD\u3001 \u4E91\u5357\u7684\u4E00\u90E8\u5206\u548C\u5E7F\u897F\u5317 \u89D2" }, "11": { "east": "\u6CBF\u7ECF\u5EA6 104 \u5C71\u8109", "south": "\u56FD\u754C", "west": "\u6A2A\u65AD\u5C71 \u2218", "north": "\u7EAC\u5EA628", "range": "\u4E91\u8D35\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u4E91\u5357 \u5927\u90E8\u5206\uFF0C\u56DB\u5DDD\u4E00\u5C0F\u90E8\u5206" }, "12": { "east": "\u2218 \u6CBF\u7ECF\u5EA6 107 \u5C71\u8109 \u2218", "south": "\u5927\u5A04\u5C71", "west": "\u8336\u576A\u5C71\u3001\u909B\u83B1 \u5C71\u3001\u5939\u91D1\u5C71\u3001 \u5927\u76F8\u5CAD", "north": "\u2218 \u7C73\u4ED3\u5C71\u3001 \u6469\u5929\u5CAD", "range": "\u56DB\u5DDD\u76C6\u5730\u533A\uFF0C\u5305\u62EC\uFF1A\u56DB\u5DDD \u5927\u90E8\u5206" }, "13": { "east": "\u5927\u5174\u5B89\u5CAD\u3001\u592A \u884C\u5C71\u3001\u4E94\u53F0 \u5C71\u3001\u6B66\u5F53\u5C71\u3001 \u5DEB\u5C71", "south": "\u5927\u5DF4\u5C71", "west": "\u6D1B\u6CB3\u3001\u6CFE\u6CB3\u53D1 \u6E90\u5C71\u8109\u5206\u6C34 \u5CAD", "north": "\u957F\u57CE", "range": "\u9EC4\u571F\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u5C71\u897F \u5927\u90E8\u5206\uFF0C\u6CB3\u5317\u3001\u9655\u897F\u3001\u7518 \u8083\u7684\u4E00\u90E8\u5206" }, "14": { "east": "\u5927\u5174\u5B89\u5CAD", "south": "\u592A\u884C\u5C71\u3001 \u4E94\u53F0\u5C71", "west": "\u8D3A\u5170\u5C71\u3001\u516D\u76D8 \u6C34", "north": "\u9634\u5C71\u3001\u9521 \u6797\u6D69\u7279\u3001 \u56FD\u754C", "range": "\u5317\u90E8\u9AD8\u539F\u548C\u9EC4\u6CB3\u5CB8\u9AD8\u539F\uFF0C \u5305\u62EC\uFF1A\u5185\u8499\u53E4\u81EA\u6CBB\u533A\u7684\u5927 \u90E8\u5206\uFF0C\u6CB3\u5317\u3001\u5C71\u897F\u3001\u7518\u8083 \u7684\u4E00\u5C0F\u90E8\u5206" }, "15": { "east": "\u5C0F\u5174\u5B89\u5CAD", "south": "\u5927\u3001\u5C0F\u5174 \u5B89\u5CAD\u5357\u9E93", "west": "\u5927\u5174\u5B89\u5CAD", "north": "\u56FD\u754C", "range": "\u9ED1\u9F99\u6C5F\u548C\u5185\u8499\u7684\u4E00\u90E8\u5206" }, "16": { "east": "\u56FD\u754C", "south": "\u56FD\u754C\u3001\u9F99 \u6C5F\u5C71\u3001\u516C \u4E3B\u5CAD\u3001\u53CC \u5C71\u3001\u71D5\u5C71 \u5C71\u8109", "west": "\u5927\u5174\u5B89\u5CAD", "north": "\u56FD\u754C\u3001\u5C0F \u5174\u5B89\u5CAD\u5357 \u9E93", "range": "\u677E\u82B1\u6C5F\u5E73\u539F\uFF0C\u5305\u62EC\uFF1A\u9ED1\u9F99 \u6C5F\u3001\u5409\u6797\u3001\u8FBD\u5B81\u3001\u5185\u8499\u7684 \u4E00\u90E8\u5206" }, "17": { "east": "\u9F99\u6C5F\u5C71\u3001\u516C\u4E3B \u5CAD", "south": "\u5343\u5C71\u3001\u8FBD \u4E1C\u6E7E", "west": "\u5927\u5174\u5B89\u5CAD\u4E1C \u9E93", "north": "\u53CC\u5C71", "range": "\u8FBD\u6CB3\u5E73\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u8FBD\u5B81 \u7684\u5927\u90E8\u5206\uFF0C\u5409\u6797\u3001\u5185\u8499\u3001 \u6CB3\u5317\u7684\u4E00\u90E8\u5206" }, "18": { "east": "\u9E2D\u7EFF\u6C5F", "south": "\u897F\u671D\u9C9C\u6E7E", "west": "\u65C5\u5927\u3001\u672C\u6EAA\u7684 \u8FDE\u7EBF", "north": "\u9F99\u6C5F\u5C71\u3001 \u5343\u5C71", "range": "\u8FBD\u4E1C\u534A\u5C9B\u533A\uFF0C\u5305\u62EC\uFF1A\u8FBD\u5B81 \u7684\u4E00\u90E8\u5206" } };
+  var AUX_Z = [{ "feature": "\u9AD81m\u4EE5\u4E0B\u5BC6\u8349\uFF0C1.5m\u4EE5\u4E0B\u5E7C\u6797\uFF0C\u7A00\u704C\u6728\u4E1B\uFF0C\u6839\u6D45\u830E\u7EC6\u7684\u65F1\u7530 \u519C\u4F5C\u7269\uFF08\u5982\u9EA6\u7C7B\uFF09", "z": "5" }, { "feature": "\u9AD81m\u4EE5\u4E0A\u5BC6\u8349\uFF0C1.5m\u4EE5\u4E0A\u5E7C\u6797\uFF0C\u704C\u6728\u4E1B\uFF0C\u6839\u6DF1\u830E\u7C97\u7684\u65F1\u7530\u519C \u4F5C\u7269\uFF08\u5982\u9AD8\u7CB1\uFF09\uFF1B\u5C71\u5730\u6C34\u7A3B\u7530\uFF0C\u7ED3\u5408\u6CBB\u7406\uFF0C\u5761\u9762\u5DF2\u521D\u6B65\u63A7\u5236\u8005", "z": "10" }, { "feature": "\u987A\u5761\u5E26\u57C2\u7684\u68AF\u7530\uFF0C \u6BCF\u4E2A0.1\uFF5E0.2m3\uFF0C\uFF1E10\u4E07\u4E2A\uFF0Fkm2\u7684\u9C7C\u9CDE\u5751\uFF0C 0.3m3/m\u5DE6\u53F3\uFF0C\uFF1E5\u4E07\u4E2A\uFF0Fkm2\u7684\u6C34\u5E73\u6C9F \uFF08\u540E\u4E24\u9879\u5728\u9EC4\u571F\u9AD8\u539F\u6C34\u571F\u6D41\u5931\u4E25\u91CD\u5730\u533A\u4E0D\u8003\u8651\uFF09", "z": "10\uFF5E15" }, { "feature": "\u7A00\u6797\uFF0C\u6811\u51A0\u6240\u906E\u76D6\u7684\u9762\u79EF\u5360\u5168\u9762\u79EF\u7684\u767E\u5206\u6BD4\uFF08\u5373\u90C1\u95ED\u5EA6\uFF09\u4E3A40\uFF05 \u4EE5\u4E0B\uFF0C\u7ED3\u5408\u6CBB\u7406\uFF0C\u5761\u9762\u5DF2\u57FA\u672C\u63A7\u5236\u8005", "z": "15" }, { "feature": "\u5E73\u539F\u6C34\u7A3B\u7530", "z": "20" }, { "feature": "\u4E2D\u7B49\u7A20\u5EA6\u6797\uFF08\u90C1\u95ED\u5EA660\uFF05\u5DE6\u53F3\uFF09", "z": "25" }, { "feature": "\u6C34\u5E73\u5E26\u6897\u6216\u5012\u5761\u7684\u68AF\u7530", "z": "20\uFF5E30" }, { "feature": "\u5BC6\u6797\uFF08\u90C1\u95ED\u5EA680\uFF05\u4EE5\u4E0A\uFF09", "z": "35" }, { "feature": "\u963B\u585E\u5730\u3001\u9752\u82D4\u6CE5\u82D4\u5730\u3001\u6D2A\u6C34\u65F6\u671F\u957F\u6709\u519C\u4F5C\u7269\u7684\u8015\u5730", "z": "20\uFF5E40" }];
+  var AUX_BETA = { "distancesKm": ["1", "2", "3", "4", "5", "6", "7", "10"], "plainHilly": ["1", "0.95", "0.90", "0.85", "0.80", "0.75", "0.70", "0.60"], "mountain": ["1", "1", "1", "0.95", "0.90", "0.85", "0.80", "0.70"] };
+  var AUX_GAMMA = { "monsoon": { "25": { "30": "1.0" }, "35": { "30": "0.9", "45": "1.0" }, "50": { "30": "0.8", "45": "0.9", "60": "1.0" }, "100": { "30": "0.8", "45": "0.9", "60": "0.9", "80": "1.0" } }, "northwest": { "5": { "30": "0.9", "45": "1.0" }, "10": { "30": "0.8", "45": "0.9", "60": "0.9", "80": "1.0" }, "20": { "30": "0.7", "45": "0.8", "60": "0.8", "80": "0.9", "100": "0.9", "150": "1.0" }, "35": { "30": "0.6", "45": "0.7", "60": "0.7", "80": "0.8", "100": "0.8", "150": "0.9", "200": "1.0" } } };
+  var AUX_DELTA = { "lakeRatePct": ["5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "60", "70", "80", "90", "100"], "delta": ["0.99", "0.97", "0.96", "0.94", "0.93", "0.91", "0.90", "0.88", "0.87", "0.85", "0.82", "0.79", "0.76", "0.73", "0.70"] };
+
+  // src/core/auxTable.ts
+  function num(s) {
+    if (s == null) return null;
+    const m = /^\d+(?:\.\d+)?$/.exec(s.trim());
+    return m ? Number(s) : null;
+  }
+  function lookupPsi(terrain, fKm2) {
+    if (!Number.isFinite(fKm2) || fKm2 <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const rows = AUX_PSI_ROWS.filter((r) => r.terrain === terrain);
+    if (!rows.length) {
+      throw new Error(`\u5730\u8C8C\u7CFB\u6570\u8868\u4E2D\u6CA1\u6709\u5730\u5F62\u300C${terrain}\u300D\uFF0C\u53EF\u9009\uFF1A${[...new Set(AUX_PSI_ROWS.map((r) => r.terrain))].join("/")}`);
+    }
+    const bandIdx = fKm2 < 10 ? 0 : fKm2 <= 20 ? 1 : fKm2 <= 30 ? 2 : -1;
+    if (bandIdx < 0) throw new Error("\u6C47\u6C34\u9762\u79EF 30 km\xB2 \u4EE5\u4E0A\u4E0D\u9002\u7528\u8868 B-5\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF09");
+    const row = rows[0];
+    const v = num(row.psi[bandIdx]);
+    if (v == null) throw new Error(`\u8BE5\u5730\u5F62\u5728 ${AUX_PSI_F_BANDS[bandIdx]} \u6863\u65E0\u8868\u503C`);
+    return {
+      value: v,
+      exact: true,
+      note: `${terrain}\uFF08\u4E3B\u6CB3\u6C9F\u5761\u5EA6 ${row.slope}\u2030\uFF09\uFF0C${AUX_PSI_F_BANDS[bandIdx]} km\xB2 \u2192 \u03C8=${v}` + (rows.length > 1 ? `\uFF1B\u8BE5\u5730\u5F62\u5171 ${rows.length} \u6863\u5761\u5EA6\u53EF\u9009` : "")
+    };
+  }
+  function lookupTau(fKm2) {
+    if (!Number.isFinite(fKm2) || fKm2 <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const bands = [[10, 30], [20, 45], [30, 80]];
+    for (const [fMax, tau] of bands) {
+      if (fKm2 <= fMax) return { value: tau, exact: true, note: `F=${fKm2} km\xB2 \u2192 \u03C4=${tau} min\uFF08\u8868B-8\uFF09` };
+    }
+    throw new Error("\u6C47\u6C34\u9762\u79EF\u8D85\u8FC7 30 km\xB2\uFF0C\u8868 B-8 \u4E0D\u9002\u7528\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF09");
+  }
+  function lookupZone(zone) {
+    const z = AUX_ZONES[String(zone)];
+    if (!z) throw new Error(`\u66B4\u96E8\u5206\u533A\u8868\u4EC5\u6709 1~18 \u533A\uFF0C\u6536\u5230 ${zone}`);
+    return z;
+  }
+  function allZones() {
+    return AUX_ZONES;
+  }
+  function listZ() {
+    return AUX_Z.map((r) => ({ feature: r.feature, z: r.z }));
+  }
+  function lookupBeta(distanceKm, mountainous) {
+    if (!Number.isFinite(distanceKm) || distanceKm <= 0) throw new Error("\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08km\uFF09");
+    const dists = AUX_BETA.distancesKm.map(Number);
+    const series = mountainous ? AUX_BETA.mountain : AUX_BETA.plainHilly;
+    let idx = 0;
+    for (let i = 0; i < dists.length; i++) if (distanceKm >= dists[i]) idx = i;
+    const v = num(series[idx]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    const exact = Math.abs(distanceKm - dists[idx]) < 1e-9;
+    return {
+      value: v,
+      exact,
+      note: `${mountainous ? "\u5C71\u5730\u53CA\u5C71\u5CAD" : "\u5E73\u539F\u53CA\u4E18\u9675"}\uFF1A\u6C47\u6C34\u9762\u79EF\u91CD\u5FC3\u8DDD\u6DB5\u4F4D ${distanceKm} km \u2192 \u03B2=${v}` + (exact ? "" : `\uFF08\u6309\u4E0D\u5927\u4E8E\u5B9E\u9645\u8DDD\u79BB\u7684 ${dists[idx]} km \u6863\u53D6\u503C\uFF09`)
+    };
+  }
+  function lookupGamma(tauMin, widthKm, northwest) {
+    if (!Number.isFinite(tauMin) || tauMin <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4\u5FC5\u987B\u4E3A\u6B63\uFF08min\uFF09");
+    if (!Number.isFinite(widthKm) || widthKm <= 0) throw new Error("\u6C47\u6C34\u533A\u957F\u5EA6\u6216\u5BBD\u5EA6\u5FC5\u987B\u4E3A\u6B63\uFF08km\uFF09");
+    const group = northwest ? AUX_GAMMA.northwest : AUX_GAMMA.monsoon;
+    const widths = Object.keys(group).map(Number).sort((a, b) => a - b);
+    let wSel = widths[0];
+    for (const w of widths) if (widthKm >= w) wSel = w;
+    const col = group[String(wSel)] ?? {};
+    const taus = Object.keys(col).map(Number).sort((a, b) => a - b);
+    if (!taus.length) throw new Error("\u8BE5\u5BBD\u5EA6\u6863\u65E0\u8868\u503C");
+    let tSel = taus[taus.length - 1];
+    for (const t of taus) if (t >= tauMin) {
+      tSel = t;
+      break;
+    }
+    const v = num(col[String(tSel)]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    return {
+      value: v,
+      exact: Math.abs(tauMin - tSel) < 1e-9 && Math.abs(widthKm - wSel) < 1e-9,
+      note: `${northwest ? "\u897F\u5317\u548C\u5185\u8499" : "\u5B63\u5019\u98CE\u6C14\u5019"}\u5730\u533A\uFF1A\u5BBD\u5EA6 ${widthKm} km\u3001\u03C4=${tauMin} min \u2192 \u53D6 ${wSel} km / ${tSel} min \u6863 \u03B3=${v}`
+    };
+  }
+  function lookupDelta(lakeRatePct) {
+    if (!Number.isFinite(lakeRatePct) || lakeRatePct < 0) throw new Error("\u6E56\u6CCA\u7387 f \u5FC5\u987B\u4E3A\u975E\u8D1F\u767E\u5206\u6570");
+    const fs = AUX_DELTA.lakeRatePct.map(Number);
+    if (lakeRatePct < fs[0]) {
+      return { value: 1, exact: true, note: `\u6E56\u6CCA\u7387 ${lakeRatePct}% < ${fs[0]}%\uFF0C\u89C4\u8303\u672A\u5217\u8868\uFF0C\u6309\u4E0D\u6298\u51CF\u53D6 \u03B4=1` };
+    }
+    let idx = fs.length - 1;
+    for (let i = 0; i < fs.length; i++) if (lakeRatePct <= fs[i]) {
+      idx = i;
+      break;
+    }
+    const v = num(AUX_DELTA.delta[idx]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    const exact = Math.abs(lakeRatePct - fs[idx]) < 1e-9;
+    return {
+      value: v,
+      exact,
+      note: `\u6E56\u6CCA\u7387 ${lakeRatePct}% \u2192 \u53D6 ${fs[idx]}% \u6863 \u03B4=${v}` + (exact ? "" : "\uFF08\u5411\u504F\u5B89\u5168\u65B9\u5411\u53D6\u6863\uFF09")
+    };
+  }
+
   // src/core/threePoint.ts
   function threePointFit(pts) {
     if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
@@ -1792,6 +1902,105 @@
       $("lkOut").textContent = e instanceof Error ? e.message : String(e);
       $("lkOut").style.color = "var(--red)";
     }
+  };
+  function cbMsg(text, isErr = false) {
+    const el = $("cbOut");
+    el.textContent = text;
+    el.style.color = isErr ? "var(--red)" : "var(--text2)";
+  }
+  function cbErr(e) {
+    cbMsg(e instanceof Error ? e.message : String(e), true);
+  }
+  function cbFill(id, value, note) {
+    $(id).value = String(value);
+    cbMsg(note);
+    calcMethodC();
+  }
+  for (const item of listZ()) {
+    const opt = document.createElement("option");
+    opt.value = item.z;
+    opt.textContent = `${item.feature}\uFF08${item.z} mm\uFF09`;
+    $("cbZFeature").appendChild(opt);
+  }
+  $("cbPsi").onclick = () => {
+    try {
+      const terrain = $("cbPsiTerrain").value;
+      const f = +$("rdF").value;
+      const r = lookupPsi(terrain, f);
+      cbFill("rdPhi", r.value, r.note);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbTau").onclick = () => {
+    try {
+      const r = lookupTau(+$("cbTauF").value);
+      cbFill("rcTau", r.value, r.note);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbZ").onclick = () => {
+    try {
+      const sel = $("cbZFeature");
+      const opt = sel.options[sel.selectedIndex];
+      cbFill("rdZ", sel.value, `\u5730\u9762\u7279\u5F81\uFF1A${opt.textContent ?? ""} \u2192 z=${sel.value} mm\uFF08\u8868B-10\uFF09`);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbBeta").onclick = () => {
+    try {
+      const d = +$("cbBetaD").value;
+      const mtn = $("cbBetaMtn").value === "1";
+      const r = lookupBeta(d, mtn);
+      cbFill("rdBeta", r.value, r.note);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbGamma").onclick = () => {
+    try {
+      const w = +$("cbGammaW").value;
+      const nw = $("cbGammaNw").value === "1";
+      const tau = +$("rcTau").value;
+      const r = lookupGamma(tau, w, nw);
+      cbFill("rdGamma", r.value, r.note);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbDelta").onclick = () => {
+    try {
+      const r = lookupDelta(+$("cbDeltaF").value);
+      cbFill("rdDelta", r.value, r.note);
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbZoneGo").onclick = () => {
+    const q = $("cbZoneQ").value.trim();
+    const out = $("cbZoneOut");
+    if (!q) {
+      out.textContent = "\u8BF7\u8F93\u5165\u7701\u4EFD\u6216\u5C71\u5DDD\u540D";
+      out.style.color = "var(--red)";
+      return;
+    }
+    const zones = allZones();
+    const hits = [];
+    for (const [no, z2] of Object.entries(zones)) {
+      const hay = `${z2.range} ${z2.east} ${z2.south} ${z2.west} ${z2.north}`;
+      if (hay.includes(q)) hits.push(no);
+    }
+    if (!hits.length) {
+      out.textContent = `\u672A\u627E\u5230\u5305\u542B\u300C${q}\u300D\u7684\u5206\u533A\uFF0C\u53EF\u6362\u7701\u4EFD\u6216\u5C71\u8109\u540D\u518D\u8BD5`;
+      out.style.color = "var(--red)";
+      return;
+    }
+    $("lkZone").value = hits[0];
+    const z = lookupZone(Number(hits[0]));
+    out.textContent = `\u547D\u4E2D\u7B2C ${hits.join("\u3001")} \u533A \u2192 \u5DF2\u586B\u5165 ${hits[0]} \u533A\uFF1B${z.range}`;
+    out.style.color = "var(--text2)";
   };
   function svgToPngDataUrl() {
     return new Promise((resolve, reject) => {
