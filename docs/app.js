@@ -670,6 +670,32 @@
   };
   var calcLog = new CalcLog();
 
+  // src/core/errors.ts
+  var HsError = class extends Error {
+    constructor(d) {
+      super(d.message);
+      __publicField(this, "code");
+      __publicField(this, "field");
+      __publicField(this, "value");
+      __publicField(this, "suggestion");
+      __publicField(this, "normRef");
+      this.name = "HsError";
+      this.code = d.code;
+      this.field = d.field;
+      this.value = d.value;
+      this.suggestion = d.suggestion;
+      this.normRef = d.normRef;
+    }
+    toJSON() {
+      const d = { code: this.code, message: this.message };
+      if (this.field !== void 0) d.field = this.field;
+      if (this.value !== void 0) d.value = this.value;
+      if (this.suggestion !== void 0) d.suggestion = this.suggestion;
+      if (this.normRef !== void 0) d.normRef = this.normRef;
+      return d;
+    }
+  };
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -1000,9 +1026,9 @@
   function minBridgeOpening(input) {
     const { Qp, Qc, Bc, reach } = input;
     const warnings = [];
-    if (!Number.isFinite(Qp) || Qp <= 0) throw new Error("\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
-    if (!Number.isFinite(Qc) || Qc <= 0) throw new Error("\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
-    if (!Number.isFinite(Bc) || Bc <= 0) throw new Error("\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
     const coef = REACH_TABLE[reach];
     if (!coef) throw new Error(`\u6CB3\u6BB5\u7C7B\u578B\u5FC5\u987B\u662F stable / substable / unstable\uFF0C\u6536\u5230 ${String(reach)}`);
     const ratio = Qp / Qc;
@@ -1044,13 +1070,13 @@
   function generalScour641(input) {
     const { Q2, mu, Bcj, hmc, hcq, E, d50, A } = input;
     const warnings = [];
-    if (!Number.isFinite(Q2) || Q2 <= 0) throw new Error("\u8BBE\u8BA1\u6D41\u91CF Q2 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
-    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new Error("\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]\uFF08\u88688.3.1-1\uFF09");
+    if (!Number.isFinite(Q2) || Q2 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scQ2", value: Q2, message: "\u8BBE\u8BA1\u6D41\u91CF Q2 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u5F15\u7528\u4E0A\u6E38\u6210\u679C", normRef: "JTG C30\u20142015 \u7B2C8.3.1\u6761" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", suggestion: "\u6309\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84\u67E5\u8868 8.3.1-1", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
     if (!Number.isFinite(Bcj) || Bcj <= 0) throw new Error("\u6865\u5B54\u8FC7\u6C34\u51C0\u5BBD Bcj \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
     if (!Number.isFinite(hmc) || hmc <= 0) throw new Error("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1 hmc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
     if (!Number.isFinite(hcq) || hcq <= 0) throw new Error("\u6865\u4E0B\u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1 hcq \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
-    if (!Number.isFinite(E) || E <= 0) throw new Error("\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63\uFF08\u88688.3.1-2\uFF1A0.46/0.66/0.86\uFF09");
-    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u69FD\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(E) || E <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scRho", value: E, message: "\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u6C5B\u671F\u542B\u6C99\u91CF\u53D6 0.46 / 0.66 / 0.86\uFF08\u8868 8.3.1-2\uFF09", normRef: "JTG C30\u20142015 \u88688.3.1-2" });
+    if (!Number.isFinite(d50) || d50 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scD50", value: d50, message: "\u6CB3\u69FD\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", suggestion: "\u7531\u5E8A\u6C99\u9897\u7C92\u5206\u6790\u6C42\u5F97\u5E73\u5747\u7C92\u5F84", normRef: "JTG C30\u20142015 \u7B2C8.3.1\u6761" });
     if (!Number.isFinite(A) || A <= 0) throw new Error("\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A \u5FC5\u987B\u4E3A\u6B63");
     if (hmc < hcq) warnings.push("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1\u5C0F\u4E8E\u5E73\u5747\u6C34\u6DF1\uFF0C\u8BF7\u6838\u5BF9\u65AD\u9762\u6570\u636E\uFF08\u901A\u5E38 hmc \u2265 hcq\uFF09");
     if (A > 1.8) warnings.push("A>1.8 \u65F6\u89C4\u8303\u5141\u8BB8\u91C7\u7528 1.8\uFF08\u5C71\u524D\u53D8\u8FC1\u3001\u6E38\u8361\u3001\u5BBD\u6EE9\u6CB3\u6BB5\uFF09");
@@ -1095,11 +1121,11 @@
   function localScour652(input) {
     const { v, d50, B1, hp, Kxi } = input;
     const warnings = [];
-    if (!Number.isFinite(v) || v <= 0) throw new Error("\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09");
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsV", value: v, message: "\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", suggestion: "\u70B9\u300C\u7528\u4E00\u822C\u51B2\u5237\u7ED3\u679C\u63A8\u7B97 v\u300D\u81EA\u52A8\u7B97\u51FA\uFF088.3.3-2\uFF09", normRef: "JTG C30\u20142015 \u7B2C8.3.3\u6761" });
     if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
-    if (!Number.isFinite(B1) || B1 <= 0) throw new Error("\u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6 B1 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(B1) || B1 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsB1", value: B1, message: "\u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6 B1 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6309\u9644\u5F55 C \u58A9\u5BBD\u8BA1\u7B97\u53D6\u7528", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
     if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
-    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new Error("\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63\uFF08\u6309\u9644\u5F55C\u9009\u7528\uFF09");
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsKxi", value: Kxi, message: "\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u9644\u5F55 C \u4F9D\u58A9\u5F62\u67E5\u8868\u53D6\u7528\uFF08\u672C\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF09", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
     const v0 = incipientVelocity(d50);
     const v0p = startScourVelocity(d50);
     const Keta2 = grainFactor(d50);
@@ -1409,8 +1435,53 @@
     };
   }
 
+  // src/core/migrate.ts
+  var SCHEMA_V1 = "hongsuan-project@1";
+  var SCHEMA_V2 = "hongsuan-project@2";
+  var v1tov2 = {
+    from: SCHEMA_V1,
+    to: SCHEMA_V2,
+    note: "state \u8865\u9F50\u6865\u5B54/\u4E00\u822C\u51B2\u5237/\u5C40\u90E8\u51B2\u5237/\u603B\u51B2\u5237\u56DB\u7EC4\u6301\u4E45\u5316\u5B57\u6BB5\uFF08v0.11.0 \u65B0\u589E\uFF0C\u7F3A\u7701\u7A7A\uFF09",
+    migrate: (f) => ({
+      ...f,
+      schema: SCHEMA_V2,
+      state: {
+        open: {},
+        scour: {},
+        local: {},
+        total: {},
+        ...f.state
+      }
+    })
+  };
+  var MIGRATIONS = [v1tov2];
+  var LATEST_SCHEMA = MIGRATIONS.length ? MIGRATIONS[MIGRATIONS.length - 1].to : SCHEMA_V1;
+  function migrateProjectFile(json) {
+    if (typeof json !== "object" || json === null) {
+      throw new HsError({ code: "E_SCHEMA", message: "\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61" });
+    }
+    let f = json;
+    const migratedFrom = [];
+    for (; ; ) {
+      if (f.schema === LATEST_SCHEMA) return { file: f, migratedFrom };
+      const step = MIGRATIONS.find((m) => m.from === f.schema);
+      if (!step) {
+        const known = [SCHEMA_V1, ...MIGRATIONS.map((m) => m.to)].join(" \u2192 ");
+        throw new HsError({
+          code: "E_SCHEMA",
+          field: "schema",
+          value: f.schema,
+          message: `\u65E0\u6CD5\u8BC6\u522B\u7684\u5DE5\u7A0B\u6587\u4EF6 schema\uFF1A${String(f.schema)}\uFF08\u5DF2\u77E5\u8FC1\u79FB\u94FE\uFF1A${known}\uFF09`,
+          suggestion: "\u8BF7\u786E\u8BA4\u6587\u4EF6\u672A\u88AB\u5176\u4ED6\u8F6F\u4EF6\u7BE1\u6539\uFF1B\u82E5\u6765\u81EA\u66F4\u65E7\u7248\u672C\uFF0C\u8BF7\u5148\u7ECF\u4E2D\u95F4\u7248\u672C\u6253\u5F00\u4E00\u6B21"
+        });
+      }
+      f = step.migrate(f);
+      migratedFrom.push(`${step.from}\u2192${step.to}`);
+    }
+  }
+
   // src/core/projectFile.ts
-  var PROJECT_SCHEMA = "hongsuan-project@1";
+  var PROJECT_SCHEMA = "hongsuan-project@2";
   function emptyProject() {
     return { name: "", bridgeSite: "", engineer: "", reviewer: "", note: "" };
   }
@@ -1431,8 +1502,10 @@
   }
   function parseProjectFile(json) {
     if (typeof json !== "object" || json === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
-    const f = json;
+    const m = migrateProjectFile(json);
+    const f = m.file;
     if (f.schema !== PROJECT_SCHEMA) throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${PROJECT_SCHEMA}\uFF0C\u6536\u5230 ${String(f.schema)}`);
+    if (m.migratedFrom.length) f.migratedFrom = m.migratedFrom;
     if (typeof f.savedAt !== "string" || !f.savedAt) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 savedAt");
     if (typeof f.appVersion !== "string" || !f.appVersion) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 appVersion");
     if (typeof f.project !== "object" || f.project === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 project \u4FE1\u606F");
@@ -1546,19 +1619,19 @@
   // src/core/methodC.ts
   function rationalFormula(p) {
     if (![p.Sp, p.n, p.psi, p.tau, p.F].every(Number.isFinite)) throw new Error("\u63A8\u7406\u516C\u5F0F\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
-    if (p.F <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
-    if (p.tau <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\uFF08h\uFF09");
+    if (p.F <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcF", value: p.F, message: "\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09", suggestion: "\u586B\u5199\u6865\u4F4D\u4EE5\u4E0A\u7684\u6C47\u6C34\u9762\u79EF\uFF0C\u53EF\u7528\u5730\u56FE\u91CF\u7B97\u52FE\u51FA", normRef: "JTG C30\u20142015 \u7B2C6.4\u6761" });
+    if (p.tau <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcTau", value: p.tau, message: "\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\uFF08h\uFF09", suggestion: "\u6309\u89C4\u8303\u8868 B-8 \u4F9D\u6C47\u6C34\u9762\u79EF\u53D6\u503C\uFF08\u4E00\u822C 30~80 min\uFF09", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-8" });
     if (p.Sp <= 0) throw new Error("\u96E8\u529B Sp \u5FC5\u987B\u4E3A\u6B63\uFF08mm/h\uFF09");
     if (p.n < 0) throw new Error("\u66B4\u96E8\u8870\u51CF\u6307\u6570 n \u4E0D\u80FD\u4E3A\u8D1F");
-    if (p.psi <= 0 || p.psi > 1) throw new Error("\u6D2A\u5CF0\u5F84\u6D41\u7CFB\u6570 \u03C8 \u5E94\u5728 (0,1]");
-    if (p.F >= 100) throw new Error("\u63A8\u7406\u516C\u5F0F\u9002\u7528\u4E8E\u6C47\u6C34\u9762\u79EF <100 km\xB2\uFF08\u89C4\u8303 6.4.2\uFF09\uFF0C\u5F53\u524D " + p.F + " km\xB2");
+    if (p.psi <= 0 || p.psi > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcPsi", value: p.psi, message: "\u6D2A\u5CF0\u5F84\u6D41\u7CFB\u6570 \u03C8 \u5E94\u5728 (0,1]", suggestion: "\u6309\u89C4\u8303\u8868 B-5 \u4F9D\u5730\u5F62\u4E0E\u4E3B\u6CB3\u6C9F\u5761\u5EA6\u53D6\u503C", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-5" });
+    if (p.F >= 100) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcF", value: p.F, message: "\u63A8\u7406\u516C\u5F0F\u9002\u7528\u4E8E\u6C47\u6C34\u9762\u79EF <100 km\xB2\uFF08\u89C4\u8303 6.4.2\uFF09\uFF0C\u5F53\u524D " + p.F + " km\xB2", suggestion: "\u6539\u7528\u5730\u533A\u7ECF\u9A8C\u516C\u5F0F\u6216\u7531\u5B9E\u6D4B\u8D44\u6599\u63A8\u6C42", normRef: "JTG C30\u20142015 \u7B2C6.4\u6761" });
     return 0.278 * p.psi * (p.Sp / Math.pow(p.tau, p.n)) * p.F;
   }
   function runoffDepthFormula(p) {
     if (![p.psi, p.h, p.z, p.F, p.beta, p.gamma, p.delta].every(Number.isFinite)) throw new Error("\u5F84\u6D41\u539A\u5EA6\u6CD5\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
     if (p.F <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
-    if (p.h - p.z <= 0) throw new Error("\u5F84\u6D41\u539A\u5EA6 h \u5FC5\u987B\u5927\u4E8E\u6EDE\u7559\u539A\u5EA6 z");
-    if (p.psi <= 0) throw new Error("\u5730\u8C8C\u7CFB\u6570 \u03C8 \u5FC5\u987B\u4E3A\u6B63");
+    if (p.h - p.z <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rdH", value: p.h, message: "\u5F84\u6D41\u539A\u5EA6 h=" + p.h + "mm \u5FC5\u987B\u5927\u4E8E\u6EDE\u7559\u539A\u5EA6 z=" + p.z + "mm\uFF08\u5426\u5219\u4E0D\u4EA7\u751F\u5F84\u6D41\uFF09", suggestion: "\u67E5\u8868 B-9 \u6838\u5BF9\u66B4\u96E8\u5206\u533A\u4E0E\u571F\u7684\u7C7B\u5C5E\uFF1B\u6216\u6309\u8868 B-10 \u6838\u5BF9\u6EDE\u7559\u539A\u5EA6 z", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-9 / \u8868B-10" });
+    if (p.psi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rdPsi", value: p.psi, message: "\u5730\u8C8C\u7CFB\u6570 \u03C8 \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u89C4\u8303\u8868 B-5 \u53D6\u503C", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-5" });
     if (p.beta <= 0 || p.beta > 1 || p.gamma <= 0 || p.gamma > 1 || p.delta <= 0 || p.delta > 1) {
       throw new Error("\u6298\u51CF\u7CFB\u6570 \u03B2\u3001\u03B3\u3001\u03B4 \u5747\u5E94\u5728 (0,1]");
     }
@@ -2295,7 +2368,7 @@
       $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n;
     };
   });
-  function showMethodCError(which, msg) {
+  function showMethodCError(which, msg, e) {
     const out = $(which === "rc" ? "rcOut" : "rdOut");
     const err = $(which === "rc" ? "rcErr" : "rdErr");
     if (msg === null) {
@@ -2303,11 +2376,19 @@
       err.textContent = "";
     } else {
       err.style.display = "block";
-      err.textContent = msg;
+      const lines = [msg];
+      if (e instanceof HsError) {
+        if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+        if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+        const el = elementForField(e.field);
+        if (el) el.classList.add("field-error");
+      }
+      err.textContent = lines.join(" \uFF5C ");
     }
     return out;
   }
   function calcMethodC() {
+    clearFieldErrors();
     const v = (id) => +$(id).value;
     try {
       const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
@@ -2327,7 +2408,7 @@
         "JTG/T 3365-02-2020 \u7B2C6.2\u6761\uFF08\u66B4\u96E8\u63A8\u7406\u6CD5\uFF09"
       );
     } catch (e) {
-      showMethodCError("rc", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
+      showMethodCError("rc", e instanceof Error ? e.message : String(e), e).textContent = "\u2014";
     }
     try {
       const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
@@ -2357,7 +2438,7 @@
         "JTG/T 3365-02-2020 \u7B2C6.3\u6761\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\uFF0C\u9644\u5F55B \u8868B-9/B-5/B-10~13\uFF09"
       );
     } catch (e) {
-      showMethodCError("rd", e instanceof Error ? e.message : String(e)).textContent = "\u2014";
+      showMethodCError("rd", e instanceof Error ? e.message : String(e), e).textContent = "\u2014";
     }
     document.querySelectorAll("#rdTables .fillBtn").forEach((item) => {
       const btn = item;
@@ -2572,7 +2653,7 @@
       out.textContent = "\u2014";
       detail.innerHTML = "";
       err.style.display = "block";
-      err.textContent = e instanceof Error ? e.message : String(e);
+      showErr(err, e);
     }
   }
   if ($("opGo")) {
@@ -2651,7 +2732,7 @@
       out.textContent = "\u2014";
       detail.innerHTML = "";
       err.style.display = "block";
-      err.textContent = e instanceof Error ? e.message : String(e);
+      showErr(err, e);
     }
   }
   if ($("scGo")) {
@@ -2678,7 +2759,7 @@
       } catch (e) {
         const err = $("scErr");
         err.style.display = "block";
-        err.textContent = e instanceof Error ? e.message : String(e);
+        showErr(err, e);
       }
     };
   }
@@ -2725,7 +2806,7 @@
       out.textContent = "\u2014";
       detail.innerHTML = "";
       err.style.display = "block";
-      err.textContent = e instanceof Error ? e.message : String(e);
+      showErr(err, e);
       return 0;
     }
   }
@@ -2744,7 +2825,7 @@
       } catch (e) {
         const err = $("lsErr");
         err.style.display = "block";
-        err.textContent = e instanceof Error ? e.message : String(e);
+        showErr(err, e);
       }
     };
     $("tsGo").onclick = () => {
@@ -2965,7 +3046,7 @@
       }
     } else {
       parts.push(
-        `<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="#f5f5f7"/><text x="20" y="40" font-size="14" fill="#5f5e5a">\u586B\u5165\u5929\u5730\u56FE tk \u5E76\u70B9\u300C\u52A0\u8F7D\u5E95\u56FE\u300D\u540E\u5373\u53EF\u663E\u793A\u5F71\u50CF\uFF08tk \u514D\u8D39\u7533\u8BF7\uFF0C\u4EC5\u672C\u673A\u4FDD\u5B58\uFF09</text>`
+        `<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="#f5f5f7"/><text x="20" y="46" font-size="16" font-weight="600" fill="#2c2c2a">\u8FD9\u91CC\u662F\u5730\u56FE\u91CF\u7B97\u753B\u5E03</text><text x="20" y="78" font-size="14" fill="#5f5e5a">\u65B9\u5F0F\u4E00\uFF1A\u4E0A\u65B9\u586B\u5165\u5929\u5730\u56FE tk\uFF08\u5B98\u7F51\u514D\u8D39\u7533\u8BF7\uFF09\u2192 \u70B9\u300C\u52A0\u8F7D\u5E95\u56FE\u300D\uFF0C\u5373\u53EF\u770B\u5230\u771F\u5B9E\u5F71\u50CF / \u5730\u5F62 / \u77E2\u91CF</text><text x="20" y="104" font-size="14" fill="#5f5e5a">\u65B9\u5F0F\u4E8C\uFF1A\u5E95\u56FE\u65B9\u5F0F\u5207\u5230\u300C\u672C\u5730\u56FE\u7247\u300D\uFF0C\u5BFC\u5165\u4F60\u81EA\u5DF1\u7684\u5730\u5F62\u56FE\u6216\u5F71\u50CF\u622A\u56FE\uFF08\u65AD\u7F51\u4E5F\u80FD\u7528\uFF09</text><text x="20" y="138" font-size="13" fill="#8a8a84">\u65E0\u8BBA\u54EA\u79CD\u65B9\u5F0F\uFF0C\u90FD\u53EF\u4EE5\u76F4\u63A5\u6CBF\u5206\u6C34\u5CAD\u70B9\u51FB\u52FE\u51FA\u6C47\u6C34\u533A\uFF1B\u5728\u7EBF\u6A21\u5F0F\u4E0B F \u7531\u7ECF\u7EAC\u5EA6\u81EA\u52A8\u7B97\u51FA\uFF0C\u4E0D\u7528\u6807\u6BD4\u4F8B\u5C3A</text>`
       );
     }
     if (geo.poly.length >= 2) {
@@ -3149,7 +3230,7 @@
       } catch (e) {
         out.innerHTML = "";
         err.style.display = "block";
-        err.textContent = e instanceof Error ? e.message : String(e);
+        showErr(err, e);
       }
     };
     const syncSrc = () => {
@@ -3325,6 +3406,38 @@
       $("kbSearch").value = "";
       $("kbResult").innerHTML = "";
     };
+  }
+  function clearFieldErrors() {
+    for (const el of document.querySelectorAll(".field-error")) el.classList.remove("field-error");
+  }
+  function elementForField(field) {
+    if (!field) return null;
+    const id = field.split(".").pop() ?? "";
+    const el = document.getElementById(id);
+    return el ? el : null;
+  }
+  function showErr(box, e) {
+    clearFieldErrors();
+    box.style.display = "block";
+    if (e instanceof HsError) {
+      const lines = [e.message];
+      if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+      if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+      box.textContent = lines.join(" \uFF5C ");
+      const el = elementForField(e.field);
+      if (el) {
+        el.classList.add("field-error");
+        const scroller = el.closest("details");
+        if (scroller instanceof HTMLDetailsElement) scroller.open = true;
+        try {
+          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        } catch {
+        }
+        el.focus();
+      }
+      return;
+    }
+    box.textContent = e instanceof Error ? e.message : String(e);
   }
   function logCalc(module, inputs, results, basis, params) {
     try {
@@ -3530,7 +3643,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.10.2 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -3557,6 +3670,10 @@
   var HIST_IDS = ["hf0Ac", "hf0Bc", "hf0nc", "hf0At", "hf0Bt", "hf0nt", "hf0Ipermil", "hf0T", "hf1Ac", "hf1Bc", "hf1nc", "hf1At", "hf1Bt", "hf1nt", "hf1Ipermil", "hf1T", "hbCv", "hbCs"];
   var NODATA_IDS = ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"];
   var WS_IDS = ["wsB", "wsM", "wsN", "wsS0", "wsL", "wsYc", "wsQ", "wsYup"];
+  var OPEN_IDS = ["opQp", "opQc", "opBc", "opReach"];
+  var SCOUR_IDS = ["scQ2", "scMu", "scBcj", "scHmc", "scHcq", "scD50", "scRho", "scA", "scBd", "scHz"];
+  var LOCAL_IDS = ["lsV", "lsB1", "lsKxi"];
+  var TOTAL_IDS = ["tsNat"];
   function migrateState(parsed) {
     if (!parsed || typeof parsed !== "object") return null;
     if (parsed.schemaVersion === 9) return parsed;
@@ -3589,6 +3706,10 @@
       hist: pick(HIST_IDS),
       nodata: pick(NODATA_IDS),
       wsurf: pick(WS_IDS),
+      open: pick(OPEN_IDS),
+      scour: pick(SCOUR_IDS),
+      local: pick(LOCAL_IDS),
+      total: pick(TOTAL_IDS),
       project: currentProject(),
       conv: {
         enable: $("convEnable").checked,
@@ -3732,6 +3853,22 @@
       const el = $(k);
       if (el && d.wsurf[k] != null) el.value = d.wsurf[k];
     }
+    if (d.open) for (const k in d.open) {
+      const el = $(k);
+      if (el && d.open[k] != null) el.value = d.open[k];
+    }
+    if (d.scour) for (const k in d.scour) {
+      const el = $(k);
+      if (el && d.scour[k] != null) el.value = d.scour[k];
+    }
+    if (d.local) for (const k in d.local) {
+      const el = $(k);
+      if (el && d.local[k] != null) el.value = d.local[k];
+    }
+    if (d.total) for (const k in d.total) {
+      const el = $(k);
+      if (el && d.total[k] != null) el.value = d.total[k];
+    }
     if (d.conv) {
       $("convEnable").checked = Boolean(d.conv.enable);
       if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
@@ -3753,7 +3890,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.10.0");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.1");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";

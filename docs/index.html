@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.10.2</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.1</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -105,6 +105,8 @@
   .err[data-kind=notice] { color: #b25000; background: rgba(255,159,10,0.10); border-radius: 8px; padding: 8px 12px; }
   /* v0.7 输入守卫：非法/越界输入红框 */
   input.invalid, textarea.invalid { border-color: var(--red) !important; background: #fff5f5 !important; }
+  /* 结构化错误定位（HsError.field）：与输入守卫的 .invalid 分开，避免互相清除 */
+  .field-error { border-color: var(--red) !important; background: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(255,59,48,.12) !important; }
   #saveHint { transition: opacity .5s; opacity: .30; font-size: 11px; color: var(--text3); }
   #saveHint.on { opacity: .85; color: #34c759; }
 </style>
@@ -113,7 +115,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>面向学生与青年工程师的公路桥涵水文计算工具 ｜ 依据 JTG C30-2015 ｜ v0.10.2</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.1</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -121,9 +123,9 @@
   <button id="mParams">直接参数模式</button>
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">无资料地区</button>
-<button id="mHelp">帮助</button>
-<button id="mMap">地图量算</button>
-  <button id="mHydro">设计洪水过程线</button>
+    <button id="mMap">地图量算</button>
+<button id="mHydro">设计洪水过程线</button>
+    <button id="mHelp">帮助</button>
 </div></div>
 
 <div class="card" id="inputCard">
@@ -745,7 +747,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.10.2<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.1<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
