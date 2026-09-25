@@ -693,6 +693,79 @@
     }
     return d;
   }
+  function lonLatToWorldPx(p, z) {
+    if (!Number.isFinite(p.lon) || !Number.isFinite(p.lat)) throw new Error("\u7ECF\u7EAC\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+    if (!Number.isFinite(z) || z < 1 || z > 18) throw new Error("\u7F29\u653E\u7EA7\u522B z \u5E94\u5728 1~18");
+    const n = Math.pow(2, z) * 256;
+    const lat = Math.max(-85.05112878, Math.min(85.05112878, p.lat));
+    const x = (p.lon + 180) / 360 * n;
+    const s = Math.sin(lat * Math.PI / 180);
+    const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n;
+    return { x, y };
+  }
+  function worldPxToLonLat(x, y, z) {
+    if (![x, y, z].every(Number.isFinite)) throw new Error("\u50CF\u7D20\u5750\u6807\u4E0E\u7F29\u653E\u7EA7\u522B\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+    const n = Math.pow(2, z) * 256;
+    const lon = x / n * 360 - 180;
+    const e = Math.exp((0.5 - y / n) * 4 * Math.PI);
+    const lat = Math.asin((e - 1) / (e + 1)) * 180 / Math.PI;
+    return { lon, lat };
+  }
+  function haversineKm(a, b) {
+    const R = 6371.0088;
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLon = (b.lon - a.lon) * Math.PI / 180;
+    const la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function polylineLengthKm(pts) {
+    if (!Array.isArray(pts) || pts.length < 2) return 0;
+    let d = 0;
+    for (let i = 0; i < pts.length - 1; i++) d += haversineKm(pts[i], pts[i + 1]);
+    return d;
+  }
+  function geoPolygonAreaKm2(pts) {
+    if (!Array.isArray(pts) || pts.length < 3) return 0;
+    const lat0 = pts.reduce((s2, p) => s2 + p.lat, 0) / pts.length;
+    const kx = 111.32 * Math.cos(lat0 * Math.PI / 180);
+    const ky = 110.57;
+    const xy = pts.map((p) => ({ x: p.lon * kx, y: p.lat * ky }));
+    let s = 0;
+    for (let i = 0; i < xy.length; i++) {
+      const a = xy[i], b = xy[(i + 1) % xy.length];
+      s += a.x * b.y - b.x * a.y;
+    }
+    return Math.abs(s) / 2;
+  }
+  function measureFromLonLat(input) {
+    const { poly, river, hTop, hBottom } = input;
+    const warnings = [];
+    if (!Array.isArray(poly) || poly.length < 3) throw new Error("\u6C47\u6C34\u533A\u81F3\u5C11\u9700\u8981 3 \u4E2A\u9876\u70B9\uFF08\u7ECF\u7EAC\u5EA6\uFF09");
+    const F = geoPolygonAreaKm2(poly);
+    let L = null;
+    if (river && river.length >= 2) {
+      const l = polylineLengthKm(river);
+      L = l > 0 ? l : null;
+      if (L === null) warnings.push("\u4E3B\u6CB3\u6C9F\u957F\u5EA6\u91CF\u7B97\u4E3A 0\uFF0C\u8BF7\u68C0\u67E5\u70B9\u4F4D\u662F\u5426\u91CD\u590D");
+    }
+    let I = null, Ipermille = null;
+    if (L !== null && Number.isFinite(hTop) && Number.isFinite(hBottom)) {
+      const dh = hTop - hBottom;
+      if (dh < 0) warnings.push("\u4E0A\u6E38\u9AD8\u7A0B\u4F4E\u4E8E\u51FA\u53E3\u9AD8\u7A0B\uFF0C\u6BD4\u964D\u4E3A\u8D1F\uFF0C\u8BF7\u6838\u5BF9\u9AD8\u7A0B\u70B9\u6B21\u5E8F");
+      I = dh / (L * 1e3);
+      Ipermille = I * 1e3;
+    }
+    if (F > 30) warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519");
+    if (!(F > 0)) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u9876\u70B9\u987A\u5E8F\u4E0E\u662F\u5426\u95ED\u5408");
+    return {
+      F: Math.round(F * 1e4) / 1e4,
+      L: L === null ? null : Math.round(L * 1e4) / 1e4,
+      I: I === null ? null : Math.round(I * 1e8) / 1e8,
+      Ipermille: Ipermille === null ? null : Math.round(Ipermille * 1e4) / 1e4,
+      warnings
+    };
+  }
   function measureCatchment(input) {
     const { poly, river, scale, hTop, hBottom } = input;
     const warnings = [];
@@ -2843,6 +2916,81 @@
     };
   }
   var mapState = { bg: null, calib: [], poly: [], river: [], scale: null, last: null };
+  var geo = {
+    tk: localStorage.getItem("hongsuan_tdt_tk") ?? "",
+    layer: "img_w",
+    lon: 112.9388,
+    lat: 28.2282,
+    z: 12,
+    poly: [],
+    river: [],
+    loaded: false
+  };
+  var CANVAS_W = 900;
+  var CANVAS_H = 560;
+  function isOnline() {
+    return $("mapSrc").value === "online";
+  }
+  function tdtUrl(tx, ty, z) {
+    const s = Math.floor(Math.abs(tx + ty)) % 4;
+    return `https://t${s}.tianditu.gov.cn/DataServer?T=${geo.layer}&x=${tx}&y=${ty}&l=${z}&tk=${encodeURIComponent(geo.tk)}`;
+  }
+  function canvasToLonLat(cx, cy) {
+    const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+    const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+    return worldPxToLonLat(ox + cx, oy + cy, geo.z);
+  }
+  function lonLatToCanvas(p) {
+    const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+    const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+    const w = lonLatToWorldPx(p, geo.z);
+    return { x: w.x - ox, y: w.y - oy };
+  }
+  function renderOnlineMap() {
+    const parts = [];
+    if (geo.loaded && geo.tk) {
+      const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+      const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+      const tx0 = Math.floor(ox / 256), tx1 = Math.floor((ox + CANVAS_W) / 256);
+      const ty0 = Math.floor(oy / 256), ty1 = Math.floor((oy + CANVAS_H) / 256);
+      for (let tx = tx0; tx <= tx1; tx++) {
+        for (let ty = ty0; ty <= ty1; ty++) {
+          const px = tx * 256 - ox, py = ty * 256 - oy;
+          parts.push(
+            `<image href="${tdtUrl(tx, ty, geo.z)}" x="${px}" y="${py}" width="256" height="256"/>`
+          );
+        }
+      }
+    } else {
+      parts.push(
+        `<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="#f5f5f7"/><text x="20" y="40" font-size="14" fill="#5f5e5a">\u586B\u5165\u5929\u5730\u56FE tk \u5E76\u70B9\u300C\u52A0\u8F7D\u5E95\u56FE\u300D\u540E\u5373\u53EF\u663E\u793A\u5F71\u50CF\uFF08tk \u514D\u8D39\u7533\u8BF7\uFF0C\u4EC5\u672C\u673A\u4FDD\u5B58\uFF09</text>`
+      );
+    }
+    if (geo.poly.length >= 2) {
+      const d = geo.poly.map((p) => {
+        const q = lonLatToCanvas(p);
+        return `${q.x},${q.y}`;
+      }).join(" ");
+      parts.push(`<polygon points="${d}" fill="#378add" fill-opacity="0.18" stroke="#185fa5" stroke-width="2"/>`);
+    }
+    if (geo.river.length >= 2) {
+      const d = geo.river.map((p) => {
+        const q = lonLatToCanvas(p);
+        return `${q.x},${q.y}`;
+      }).join(" ");
+      parts.push(`<polyline points="${d}" fill="none" stroke="#1d9e75" stroke-width="2.5"/>`);
+    }
+    for (const arr of [geo.poly, geo.river]) {
+      for (const p of arr) {
+        const q = lonLatToCanvas(p);
+        parts.push(`<circle cx="${q.x}" cy="${q.y}" r="3.5" fill="#fff" stroke="#333" stroke-width="1.2"/>`);
+      }
+    }
+    const mode = $("mapMode").value;
+    const tip = mode === "poly" ? "\u6CBF\u5206\u6C34\u5CAD\u4F9D\u6B21\u70B9\u51FB\uFF08\u6309\u7ECF\u7EAC\u5EA6\u8BB0\u5F55\uFF0C\u65E0\u9700\u6807\u6BD4\u4F8B\u5C3A\uFF09" : mode === "river" ? "\u4ECE\u4E0A\u6E38\u5230\u51FA\u53E3\u4F9D\u6B21\u70B9\u51FB\u4E3B\u6CB3\u6C9F\u4E2D\u5FC3\u7EBF" : "\u5728\u7EBF\u5E95\u56FE\u65E0\u9700\u6807\u5B9A\uFF1B\u5207\u5230\u672C\u5730\u56FE\u7247\u624D\u9700\u8981\u6807\u5B9A\u6BD4\u4F8B\u5C3A";
+    parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${tip}</text>`);
+    $("mapCanvas").innerHTML = parts.join("");
+  }
   function mapPtsOfCurrentMode() {
     const mode = $("mapMode").value;
     if (mode === "calib") return mapState.calib;
@@ -2863,6 +3011,10 @@
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function renderMap() {
+    if (isOnline()) {
+      renderOnlineMap();
+      return;
+    }
     const pts = mapPtsOfCurrentMode();
     const parts = [];
     if (mapState.bg) {
@@ -2893,6 +3045,14 @@
   if ($("mapCanvas")) {
     $("mapCanvas").addEventListener("click", (e) => {
       const p = toSvgPoint(e);
+      if (isOnline()) {
+        const ll = canvasToLonLat(p.x, p.y);
+        const mode = $("mapMode").value;
+        if (mode === "river") geo.river.push(ll);
+        else geo.poly.push(ll);
+        renderMap();
+        return;
+      }
       const arr = mapPtsOfCurrentMode();
       arr.push(p);
       if ($("mapMode").value === "calib" && arr.length > 2) arr.splice(0, arr.length - 2);
@@ -2916,6 +3076,8 @@
       mapState.river = [];
       mapState.scale = null;
       mapState.last = null;
+      geo.poly = [];
+      geo.river = [];
       $("mapOut").innerHTML = "";
       $("mapErr").textContent = "";
       $("mapScaleTip").textContent = "";
@@ -2924,6 +3086,30 @@
     $("mapGo").onclick = () => {
       const out = $("mapOut"), err = $("mapErr");
       try {
+        if (isOnline()) {
+          const h12 = +$("mapH1").value, h22 = +$("mapH2").value;
+          const r2 = measureFromLonLat({
+            poly: geo.poly,
+            river: geo.river.length >= 2 ? geo.river : void 0,
+            hTop: Number.isFinite(h12) ? h12 : void 0,
+            hBottom: Number.isFinite(h22) ? h22 : void 0
+          });
+          mapState.last = { F: r2.F, L: r2.L, I: r2.I };
+          const lines2 = [
+            `\u6C47\u6C34\u9762\u79EF <b>F = ${r2.F} km\xB2</b>\uFF08\u7531 ${geo.poly.length} \u4E2A\u7ECF\u7EAC\u5EA6\u9876\u70B9\u76F4\u63A5\u91CF\u7B97\uFF0C\u65E0\u9700\u6807\u6BD4\u4F8B\u5C3A\uFF09`,
+            r2.L === null ? "\u4E3B\u6CB3\u6C9F\u957F\u5EA6 L\uFF1A\u672A\u52FE\uFF08\u53EF\u9009\uFF09" : `\u4E3B\u6CB3\u6C9F\u957F\u5EA6 <b>L = ${r2.L} km</b>\uFF08Haversine\uFF09`,
+            r2.I === null ? "\u5E73\u5747\u6BD4\u964D I\uFF1A\u9700\u540C\u65F6\u7ED9\u51FA\u4E0A\u4E0B\u6E38\u9AD8\u7A0B" : `\u5E73\u5747\u6BD4\u964D <b>I = ${r2.I}</b>\uFF08${r2.Ipermille}\u2030\uFF09`
+          ];
+          out.innerHTML = lines2.map((l) => `<div>${l}</div>`).join("") + r2.warnings.map((w) => `<div style="color:var(--amber)">\u63D0\u793A\uFF1A${w}</div>`).join("");
+          err.style.display = "none";
+          logCalc(
+            "\u5730\u56FE\u91CF\u7B97 \xB7 \u6C47\u6C34\u533A\uFF08\u5728\u7EBF\u5E95\u56FE\uFF09",
+            { \u5E95\u56FE: "\u5929\u5730\u56FE " + geo.layer, \u7EA7\u522B: geo.z, \u6C47\u6C34\u533A\u9876\u70B9: geo.poly.length, \u4E3B\u6CB3\u6C9F\u70B9: geo.river.length },
+            { F: r2.F + " km\xB2", L: r2.L === null ? "\u672A\u52FE" : r2.L + " km", I: r2.I === null ? "\u7F3A\u9AD8\u7A0B" : String(r2.I) },
+            "\u7ECF\u7EAC\u5EA6\u591A\u8FB9\u5F62\u9762\u79EF\uFF08\u7B49\u8DDD\u5706\u67F1\u6295\u5F71\uFF09+ Haversine \u6CB3\u957F"
+          );
+          return;
+        }
         if (mapState.calib.length < 2) throw new Error("\u8BF7\u5148\u5728\u56FE\u4E0A\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF08\u70B9\u4E24\u70B9 + \u586B\u5B9E\u9645\u8DDD\u79BB\uFF09");
         const a = mapState.calib[0], b = mapState.calib[1];
         const pixelDistance = Math.hypot(b.x - a.x, b.y - a.y);
@@ -2964,6 +3150,39 @@
         err.textContent = e instanceof Error ? e.message : String(e);
       }
     };
+    const syncSrc = () => {
+      const on = isOnline();
+      $("mapOnlineCtl").style.display = on ? "inline-flex" : "none";
+      $("mapLocalCtl").style.display = on ? "none" : "inline";
+      renderMap();
+    };
+    $("mapSrc").onchange = syncSrc;
+    $("mapTk").value = geo.tk;
+    $("mapLoad").onclick = () => {
+      geo.tk = $("mapTk").value.trim();
+      geo.layer = $("mapLayer").value;
+      geo.lon = +$("mapLon").value;
+      geo.lat = +$("mapLat").value;
+      geo.z = Math.round(+$("mapZ").value);
+      if (!geo.tk) {
+        const err = $("mapErr");
+        err.style.display = "block";
+        err.textContent = "\u8BF7\u5148\u586B\u5165\u5929\u5730\u56FE tk\uFF08\u5B98\u7F51\u514D\u8D39\u7533\u8BF7\uFF1B\u4EC5\u4FDD\u5B58\u5728\u672C\u673A localStorage\uFF09";
+        return;
+      }
+      localStorage.setItem("hongsuan_tdt_tk", geo.tk);
+      geo.loaded = true;
+      $("mapErr").style.display = "none";
+      renderMap();
+    };
+    const reZoom = (dz) => {
+      geo.z = Math.max(1, Math.min(18, geo.z + dz));
+      $("mapZ").value = String(geo.z);
+      renderMap();
+    };
+    $("mapZoomIn").onclick = () => reZoom(1);
+    $("mapZoomOut").onclick = () => reZoom(-1);
+    syncSrc();
     $("mapFill").onclick = () => {
       const err = $("mapErr");
       if (!mapState.last) {

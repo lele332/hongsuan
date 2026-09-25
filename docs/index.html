@@ -441,10 +441,33 @@
   <h2>汇水区勾绘与量算 <span style="font-weight:400;font-size:13px;color:var(--text2)">底图本地导入 · 离线可用 · 结果直连方法 C</span></h2>
   <div class="hint" style="margin-top:0">
     <b>为什么不接在线地图：</b>在线底图涉及审图号与边界合规，且离线单文件版断网不可用。这里改为<b>你自己导入地形图/影像截图</b>做底图，比例尺由你在图上标定，全程离线、数据来源你自持。
-    <br><b>用法：</b>① 导入底图 → ② 选「标定比例尺」，在图上点两点（一段你已知实际距离的线段，如道路、等高线间距）并填实际距离 → ③ 选「勾汇水区」，沿分水岭点一圈 → ④ 可选「勾主河沟」并填上下游高程 → ⑤ 点计算，F / L / I 自动算出，可一键填入方法 C。
+    <br><b>用法（在线底图）：</b>填入天地图 tk（其官网免费申请）→ 设中心经纬度与级别 → 加载底图 → 选「勾汇水区」沿分水岭点一圈 → 点计算，<b>F 由经纬度直接算出，不需要人工标比例尺</b>。
+    <br><b>用法（本地底图）：</b>导入地形图截图 → 标定比例尺 → 勾绘 → 计算（同上）。
+    <br><span style="color:var(--red)">合规说明：在线底图仅用于屏幕显示，不随 SVG/计算书导出，也不内置到离线版；不使用 OSM 等境外底图（其境内边界与地名不符合国家标准）。</span>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px">
-    <input type="file" id="mapImg" accept="image/*" style="font-size:12px">
+    <span>底图方式</span>
+    <select id="mapSrc" style="width:150px">
+      <option value="online">在线底图（天地图）</option>
+      <option value="local">本地图片（离线可用）</option>
+    </select>
+    <span id="mapOnlineCtl" style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span>tk</span><input type="text" id="mapTk" placeholder="天地图官网免费申请" style="width:150px">
+      <select id="mapLayer" style="width:80px">
+        <option value="img_w">影像</option>
+        <option value="ter_w">地形</option>
+        <option value="vec_w">矢量</option>
+      </select>
+      <span>中心经度</span><input type="number" id="mapLon" value="112.9388" step="0.0001" style="width:100px">
+      <span>纬度</span><input type="number" id="mapLat" value="28.2282" step="0.0001" style="width:100px">
+      <span>级别</span><input type="number" id="mapZ" value="12" min="1" max="18" step="1" style="width:56px">
+      <button class="btn" id="mapLoad">加载底图</button>
+      <button class="btn ghost" id="mapZoomOut">−</button>
+      <button class="btn ghost" id="mapZoomIn">＋</button>
+    </span>
+    <span id="mapLocalCtl" style="display:none">
+      <input type="file" id="mapImg" accept="image/*" style="font-size:12px">
+    </span>
     <select id="mapMode" style="width:130px">
       <option value="calib">① 标定比例尺</option>
       <option value="poly">② 勾汇水区</option>
