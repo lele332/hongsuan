@@ -670,6 +670,93 @@
   };
   var calcLog = new CalcLog();
 
+  // src/core/helpContent.ts
+  var HELP_SECTIONS = [
+    {
+      id: "flow",
+      title: "\u4E00\u3001\u8BBE\u8BA1\u6D41\u91CF\u63A8\u6C42\uFF08\u7B2C 6 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "6.2", title: "\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u6709\u5B9E\u6D4B\u7CFB\u5217\u65F6\uFF0C\u7528\u77E9\u6CD5\u521D\u4F30\u7EDF\u8BA1\u53C2\u6570\uFF0C\u518D\u6309\u9002\u7EBF\u6CD5\u8C03\u6574 Cv\u3001Cs\uFF08Cs \u5E38\u53D6 m\xB7Cv\uFF0Cm \u4E00\u822C 2~4\uFF09\uFF0C\u4F7F\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u62DF\u5408\u6700\u4F73\u3002", page: "P19" },
+        { no: "6.2.5", title: "\u53C2\u6570\u521D\u4F30\u65B9\u6CD5", summary: "\u77E9\u6CD5\uFF08\u8F6F\u4EF6\u9ED8\u8BA4\uFF09\u4E0E\u4E09\u70B9\u6CD5\uFF08\u53D6 P=5%\u300150%\u300195% \u4E09\u70B9\uFF0C\u7531 S \u503C\u53CD\u89E3 Cs\uFF09\u5E76\u7528\uFF1B\u8F6F\u4EF6\u53E6\u63D0\u4F9B\u6700\u5C0F\u4E8C\u4E58\u81EA\u52A8\u5BFB\u4F18\u4F5C\u5BF9\u7167\u3002", page: "P19~20" },
+        { no: "6.3", title: "\u5229\u7528\u5386\u53F2\u6D2A\u6C34\u4F4D\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u65E0\u5B9E\u6D4B\u7CFB\u5217\u4F46\u6709\u53EF\u9760\u6D2A\u75D5\u65F6\uFF0C\u7528\u66FC\u5B81\u516C\u5F0F\u7531\u6D2A\u6C34\u4F4D\u3001\u6BD4\u964D\u3001\u7CD9\u7387\u53CD\u63A8\u6D41\u91CF\uFF1B\u6709\u4E24\u6B21\u4EE5\u4E0A\u6D2A\u6C34\u65F6\u6309\u89C4\u8303\u7EFC\u5408\u63A8\u7B97\u3002", page: "P21" },
+        { no: "6.3.1-4", title: "\u6C34\u9762\u7EBF\u8BD5\u7B97\uFF08\u8F6F\u4EF6\u65B0\u589E\uFF09", summary: "\u5047\u5B9A\u6D41\u91CF\u7531\u4E0B\u6E38\u6D2A\u75D5\u5411\u4E0A\u6E38\u63A8\u7B97\u6C34\u9762\u7EBF\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5\u5BF9\u7167\u8FED\u4EE3\uFF1B\u8F6F\u4EF6\u63D0\u4F9B\u76F4\u63A5\u6B65\u8FDB\u6CD5\u5256\u9762\u8BA1\u7B97\u4E0E\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\u3002", page: "P21~23" },
+        { no: "6.4", title: "\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u7684\u5176\u4ED6\u65B9\u6CD5", summary: "\u65E0\u8D44\u6599\u5730\u533A\u91C7\u7528\u5730\u533A\u7ECF\u9A8C\u516C\u5F0F\u3001\u66B4\u96E8\u63A8\u7406\u6CD5\u3001\u5F84\u6D41\u5F62\u6210\u6CD5\u7B49\uFF08\u8BE6\u89C1\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B\u7B2C 6 \u7AE0\uFF09\u3002", page: "P23" },
+        { no: "6.6", title: "\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", summary: "\u8F6F\u4EF6\u5B9E\u73B0\u540C\u500D\u6BD4\u653E\u5927\u6CD5 kg=Qp/Q\u5178\u578B\u5CF0\uFF1B\u540C\u9891\u7387\u653E\u5927\u6CD5\u6D89\u53CA\u65F6\u6BB5\u6D2A\u91CF\u5212\u5206\u89C4\u5219\uFF0C\u89C4\u8303\u539F\u6587\u5F85\u6838\uFF0C\u672C\u7248\u672A\u63D0\u4F9B\u3002", page: "P24" }
+      ]
+    },
+    {
+      id: "opening",
+      title: "\u4E8C\u3001\u6865\u5B54\u8BBE\u8BA1\uFF08\u7B2C 7 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "7.2.1-1", title: "\u6CB3\u69FD\u5BBD\u5EA6\u516C\u5F0F\uFF08\u8F6F\u4EF6\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Kq\xB7(Qp/Qc)^n\u2083\xB7Bc\uFF0C\u9002\u7528\u4E8E\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u3001\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5\u53CA\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u3002", page: "P25" },
+        { no: "\u8868 7.2.1", title: "Kq\u3001n\u2083 \u53D6\u503C", summary: "\u7A33\u5B9A\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF090.84 / 0.90\uFF1B\u6B21\u7A33\u5B9A\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF090.95 / 0.87\uFF1B\u4E0D\u7A33\u5B9A\uFF08\u6EE9\u69FD\u53EF\u5206\uFF090.69 / 1.59\u3002", page: "P26" },
+        { no: "7.2.1-2~3", title: "\u5BBD\u6EE9\u6CB3\u6BB5\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u53E6\u6709\u5355\u5BBD\u6D41\u91CF\u516C\u5F0F\uFF0C\u9700 \u03B2 \u6C34\u6D41\u538B\u7F29\u7CFB\u6570\u7B49\u53C2\u6570\uFF1B\u89C4\u8303\u539F\u6587\u4E3A\u56FE\u7247\uFF0C\u5F85\u5F55\u5165\u540E\u8865\u9F50\u3002", page: "P26" },
+        { no: "7.2.1-4~6", title: "\u6EE9\u69FD\u96BE\u5206\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u53E6\u6709\u57FA\u672C\u6CB3\u69FD\u5BBD\u5EA6 B0 \u516C\u5F0F\uFF0C\u6D89\u53CA\u6D2A\u5CF0\u6D41\u91CF\u5747\u503C\u3001\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84\u3001\u9891\u7387\u6362\u7B97\u7CFB\u6570\uFF1B\u5F85\u89C4\u8303\u539F\u6587\u5F55\u5165\u3002", page: "P26" },
+        { no: "7.2.2", title: "\u6865\u957F\u7EFC\u5408\u8BBA\u8BC1", summary: "\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u6700\u7EC8\u6865\u957F\u5E94\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u5F15\u9053\u7EB5\u5761\u4E0E\u53F0\u540E\u586B\u571F\u9AD8\u5EA6\u6280\u672F\u7ECF\u6D4E\u6BD4\u8F83\u786E\u5B9A\u3002", page: "P26" }
+      ]
+    },
+    {
+      id: "scour",
+      title: "\u4E09\u3001\u58A9\u53F0\u51B2\u5237\u4E0E\u57CB\u6DF1\uFF08\u7B2C 8 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "8.3.1-4", title: "64-1 \u4FEE\u6B63\u5F0F\uFF08\u4E00\u822C\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hp = [A\xB7(Q2/(\u03BC\xB7Bcj))\xB7(hmc/hcq)^(5/3) / (E\xB7d\u0304^(1/6))]^(3/5)\uFF1B\u975E\u9ECF\u6027\u571F\u6CB3\u69FD\u90E8\u5206\u3002", page: "P30" },
+        { no: "\u8868 8.3.1-2", title: "\u542B\u6C99\u91CF\u7CFB\u6570 E\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6C5B\u671F\u542B\u6C99\u91CF \u03C1<1.0\u21920.46\uFF1B1~10\u21920.66\uFF1B>10\u21920.86\uFF08kg/m\xB3\uFF09\u3002", page: "P31" },
+        { no: "8.3.3-2", title: "\u884C\u8FD1\u6D41\u901F\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "\u91C7\u7528 64-1 \u65F6 v = E\xB7d\u0304^(1/6)\xB7hp^(2/3)\uFF0C\u53EF\u7531 64-1 \u516C\u5F0F\u63A8\u5BFC\u81EA\u6D3D\uFF08\u8F6F\u4EF6\u5DF2\u505A\u95ED\u5408\u6821\u9A8C\uFF09\u3002", page: "P32" },
+        { no: "8.4.1", title: "65-2 \u5F0F\uFF08\u5C40\u90E8\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hb = K\u03BE\xB7K\u03B72\xB7B1^0.6\xB7hp^0.15\xB7[(v\u2212v0\u2032)/v0]^n2\uFF1Bv\u2264v0\u2032 \u65F6\u4E0D\u51B2\u5237\u3002K\u03BE \u6309\u9644\u5F55 C \u58A9\u5F62\u67E5\u8868\u624B\u586B\u3002", page: "P33" },
+        { no: "8.6.1~8.6.2", title: "\u57FA\u5E95\u6700\u5C0F\u57CB\u7F6E\u6DF1\u5EA6", summary: "\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u3001\u4E00\u822C\u3001\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF1B\u975E\u5CA9\u77F3\u6CB3\u5E8A\u8FD8\u5E94\u6309\u8868 8.6.2 \u52A0\u57CB\u6DF1\u5B89\u5168\u503C\uFF08\u8BE5\u8868\u672C\u7248\u672A\u5185\u7F6E\uFF0C\u9700\u67E5\u89C4\u8303\u539F\u8868\uFF09\u3002", page: "P35~36" },
+        { no: "8.4.3 / \u9644\u5F55D", title: "\u6865\u53F0\u51B2\u5237\u4E0E\u5CA9\u77F3\u51B2\u5237\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u6865\u53F0\u5C40\u90E8\u51B2\u5237\u6309 8.4.3\uFF08\u53F0\u5F62\u7CFB\u6570\u8868 8.4.3\uFF09\uFF1B\u5CA9\u77F3\u51B2\u5237\u6309\u9644\u5F55 D \u5206\u6790\u3002", page: "P33 / P77" }
+      ]
+    },
+    {
+      id: "culvert",
+      title: "\u56DB\u3001\u65E0\u8D44\u6599\u5730\u533A\u4E0E\u6DB5\u6D1E\u6C34\u6587\uFF08\u6DB5\u6D1E\u89C4\u8303\uFF09",
+      spec: "JTG/T 3365-02\u20142020",
+      items: [
+        { no: "6.3", title: "\u5F84\u6D41\u5F62\u6210\u6CD5\uFF08\u65B9\u6CD5 C \u4E4B\u4E00\uFF09", summary: "Qp = \u03C8\xB7(h\u2212z)^1.5\xB7F^0.8\xB7\u03B2\xB7\u03B3\xB7\u03B4\uFF1B\u9002\u7528\u6C47\u6C34\u9762\u79EF\u4E0D\u5927\u4E8E 30 km\xB2 \u7684\u5C0F\u6D41\u57DF\u3002", page: "P37" },
+        { no: "\u8868 B-9", title: "\u5F84\u6D41\u539A\u5EA6 h\uFF08\u5DF2\u5185\u7F6E\u5168\u8868\uFF09", summary: "18 \u66B4\u96E8\u5206\u533A \xD7 \u571F\u7684\u7C7B\u5C5E \u2160~\u2165 \xD7 \u9891\u7387 1%/2%/4% \xD7 \u6C47\u6D41\u65F6\u95F4 30/45/60/80 min\uFF0C\u5171 108 \u884C\uFF0C\u652F\u6301 \u03C4 \u7EBF\u6027\u4E0E\u9891\u7387\u5BF9\u6570\u63D2\u503C\u3002", page: "P104~107" },
+        { no: "\u8868 B-5 / B-8", title: "\u03C8 \u4E0E\u6C47\u6D41\u65F6\u95F4 \u03C4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u03C8 \u6309\u5730\u5F62\u4E0E\u4E3B\u6CB3\u6C9F\u5761\u5EA6\u3001\u6C47\u6C34\u9762\u79EF\u6863\u53D6\uFF1B\u03C4 \u6309 F \u5206\u6863\uFF1AF\u226410\u219230\u300110<F\u226420\u219245\u300120<F\u226430\u219280 min\u3002", page: "P100 / P104" },
+        { no: "\u8868 B-10~B-13", title: "z\u3001\u03B2\u3001\u03B3\u3001\u03B4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6EDE\u7559\u539A\u5EA6 z \u6309\u5730\u9762\u7279\u5F81\uFF1B\u03B2 \u6309\u91CD\u5FC3\u8DDD\u6DB5\u4F4D\u8DDD\u79BB\u4E0E\u5730\u5F62\uFF1B\u03B3 \u6309\u6C47\u6D41\u65F6\u95F4\u4E0E\u6C47\u6C34\u533A\u5C3A\u5BF8\u53CA\u6C14\u5019\u533A\uFF1B\u03B4 \u6309\u6E56\u6CCA\u7387\u3002", page: "P108~109" },
+        { no: "\u8868 B-6 / B-14", title: "\u66B4\u96E8\u5206\u533A\u4E0E Cv \u5E73\u5747\u503C\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "18 \u4E2A\u66B4\u96E8\u5206\u533A\u7684\u754C\u7EBF\u4E0E\u8986\u76D6\u8303\u56F4\u53EF\u5173\u952E\u8BCD\u68C0\u7D22\uFF08\u7701\u4EFD/\u5C71\u5DDD\uFF09\uFF1B\u5C0F\u6D41\u57DF Cv \u5E73\u5747\u503C\u6309\u571F\u7684\u5438\u6C34\u7C7B\u5C5E\u53D6\u3002", page: "P100~101 / P109" }
+      ]
+    }
+  ];
+  var HELP_SOURCES = [
+    {
+      name: "JTG C30\u20142015\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300B",
+      detail: "\u4EA4\u901A\u8FD0\u8F93\u90E8\u653F\u5E9C\u4FE1\u606F\u516C\u5F00\u7F51\u5168\u6587 PDF\uFF08126 \u9875\uFF0C\u626B\u63CF\u7248\uFF09\u3002\u7B2C 6/7/8 \u7AE0\u6761\u6587\u4E0E\u7CFB\u6570\u8868\u7ECF\u6E32\u67D3 OCR \u5B9A\u4F4D\u540E\u6838\u5BF9\u3002",
+      url: "https://xxgk.mot.gov.cn/2020/jigou/glj/202006/P020240607596475014848.pdf"
+    },
+    {
+      name: "JTG/T 3365-02\u20142020\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B",
+      detail: "\u4EA4\u901A\u8FD0\u8F93\u90E8\u516C\u544A 2020 \u5E74\u7B2C 88 \u53F7\u9644\u4EF6\uFF08\u4E2D\u56FD\u653F\u5E9C\u7F51\u516C\u5F00\u5168\u6587 PDF\uFF0C118 \u9875\u6587\u5B57\u7248\uFF09\u3002\u9644\u5F55 B \u5168\u90E8\u6C34\u6587\u67E5\u8868\u7531\u6B64\u63D0\u53D6\u3002",
+      url: "https://www.gov.cn/zhengce/zhengceku/2020-11/20/content_5562849.htm"
+    },
+    {
+      name: "\u63D0\u53D6\u4E0E\u6821\u9A8C\u811A\u672C",
+      detail: "extract_appendix_b.py\uFF08\u8868 B-9\uFF09\xB7 extract_aux_tables.py\uFF08B-5/B-6/B-8/B-10~B-14\uFF09\xB7 ocr_spec_pages.py\uFF08\u626B\u63CF\u7248\u7AE0\u8282 OCR\uFF09\xB7 gen_*_ts.py\uFF08\u751F\u6210\u5185\u7F6E\u6570\u636E\u6A21\u5757\uFF09\u3002"
+    },
+    {
+      name: "\u5916\u90E8\u7B97\u4F8B\u4E92\u8BC1",
+      detail: "\u516C\u5F0F\u7ED3\u6784\u4E0E\u7CFB\u6570\u7ECF\u516C\u5F00\u5DE5\u7A0B\u7B97\u4F8B\u4E0E\u671F\u520A\u8BBA\u6587\u6240\u5F15\u89C4\u8303\u516C\u5F0F\u4EA4\u53C9\u9A8C\u8BC1\uFF08\u6865\u5B54 154.16 m / 23.52 m \u4E24\u4F8B\uFF1B\u51B2\u5237\u51B2\u6B62\u6D41\u901F\u95ED\u5408\u6821\u9A8C\uFF09\u3002"
+    }
+  ];
+  var HELP_FAQ = [
+    { q: "\u63D0\u793A\u300C\u5F84\u6D41\u539A\u5EA6\u8868\u4E2D\u6CA1\u6709\u5206\u533A X / \u571F\u58E4 Y\u300D\uFF1F", a: "\u8BE5\u5206\u533A\u8BE5\u571F\u7C7B\u5728\u89C4\u8303\u539F\u8868\u4E2D\u4E3A\u300C-\u300D\uFF08\u65E0\u8868\u503C\uFF09\uFF0C\u8F6F\u4EF6\u6309\u7F3A\u503C\u5254\u9664\uFF0C\u4E0D\u7ED9\u4F30\u7B97\u6570\u2014\u2014\u8BF7\u6539\u7528\u76F8\u90BB\u571F\u7C7B\u6216\u67E5\u89C4\u8303\u539F\u8868\u786E\u8BA4\u3002" },
+    { q: "\u67E5\u51FA\u7684 h \u540E\u9762\u6807\u6CE8\u300C\u5916\u63A8\u300D\u662F\u4EC0\u4E48\u610F\u601D\uFF1F", a: "\u8868\u5217\u9891\u7387\u53EA\u6709 1%/2%/4%\uFF08\u91CD\u73B0\u671F 100/50/25 \u5E74\uFF09\u3002\u4F60\u8F93\u5165\u7684\u9891\u7387\u5728\u8868\u5916\u65F6\uFF0C\u8F6F\u4EF6\u6309\u5BF9\u6570\u9891\u7387\u8F74\u5916\u63A8\u7ED9\u51FA\u53C2\u8003\u503C\uFF0C\u5E76\u660E\u786E\u6807\u6CE8\uFF0C\u4E0D\u80FD\u5F53\u8868\u503C\u7528\u3002" },
+    { q: "\u6865\u5B54\u957F\u5EA6\u7B97\u51FA\u6765\u5C31\u662F\u6700\u7EC8\u6865\u957F\u5417\uFF1F", a: "\u4E0D\u662F\u3002\u89C4\u8303 7.2.2 \u660E\u786E\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u8FD8\u9700\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u7EB5\u5761\u7EFC\u5408\u8BBA\u8BC1\u3002" },
+    { q: "\u51B2\u5237\u8BA1\u7B97\u91CC K\u03BE \u600E\u4E48\u53D6\uFF1F", a: "\u6309\u89C4\u8303\u9644\u5F55 C \u4F9D\u58A9\u5F62\uFF08\u5706\u7AEF\u5F62\u3001\u5C16\u7AEF\u5F62\u3001\u77E9\u5F62\u7B49\uFF09\u67E5\u8868\u3002\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF0C\u9ED8\u8BA4 1.0 \u5E76\u63D0\u793A\u590D\u6838\u3002" },
+    { q: "\u4E3A\u4EC0\u4E48\u67D0\u4E9B\u7CFB\u6570\u8868\u6CA1\u5185\u7F6E\uFF1F", a: "\u51E1\u662F\u626B\u63CF\u7248\u4E2D\u516C\u5F0F\u672C\u4F53\u4E3A\u56FE\u7247\u3001\u6216\u8868\u683C\u6863\u4F4D\u8FB9\u754C OCR \u4E0D\u5B8C\u6574\u7684\uFF0C\u4E00\u5F8B\u4E0D\u5185\u7F6E\u53EF\u7591\u6570\u636E\uFF0C\u754C\u9762\u4F1A\u7EA2\u5B57\u8BF4\u660E\u5F85\u5F55\u3002" }
+  ];
+  var HELP_VALIDATION = [
+    "\u6559\u6750\u300A\u6865\u6DB5\u6C34\u6587\u300B\u7B2C\u4E94\u7248\u4F8B 3-1-1 \u5BF9\u6807\u300A\u6865\u4F4D\u8BBE\u8BA1\u8BA1\u7B97\u7CFB\u7EDF\u300BQW2.0\uFF1AQ\u2081% 4824 / 4840\uFF0CQ\u2082% 4301 / 4311\uFF0CQ\u2080.\u2083\u2083% 5647 / 5666\uFF0C\u504F\u5DEE\u5747 \u22640.35%",
+    "\u6C34\u6587\u7B97\u4F8B T1~T4 \u4E0E\u516C\u5F00\u8D44\u6599\u4EA4\u53C9\u6838\u5BF9\uFF0C\u5E76\u7EA0\u6B63\u4E24\u5904\u516C\u5F00\u8D44\u6599\u52D8\u8BEF\uFF08\u03A3d\xB2\u3001\u03A6 \u6821\u6838\u503C\uFF09",
+    "\u5355\u5143\u6D4B\u8BD5\u8986\u76D6\u7EDF\u8BA1\u3001\u9002\u7EBF\u3001\u4E09\u70B9\u6CD5\u3001\u81EA\u52A8\u5BFB\u4F18\u3001\u8D1D\u53F6\u65AF\u3001\u65B9\u6CD5 B/C\u3001\u6C34\u9762\u7EBF\u3001\u8FC7\u7A0B\u7EBF\u3001\u67E5\u8868\u3001\u6865\u5B54\u3001\u51B2\u5237\u3001\u65E5\u5FD7",
+    "\u4E09\u7AEF E2E\uFF1A\u7F51\u9875\u7248\u3001Electron \u684C\u9762\u7248\u3001\u79BB\u7EBF\u5355\u6587\u4EF6\u7248\u5168\u6D41\u7A0B\u9A8C\u8BC1"
+  ];
+
   // src/core/bridgeOpening.ts
   var REACH_TABLE = {
     stable: {
@@ -1719,79 +1806,39 @@
       }
     };
   });
-  $("mSeries").onclick = () => {
-    state.mode = "series";
-    $("mSeries").classList.add("on");
-    $("mParams").classList.remove("on");
-    $("mHist").classList.remove("on");
-    $("mNoData").classList.remove("on");
-    $("mHydro").classList.remove("on");
-    $("seriesBox").style.display = "";
-    $("paramsBox").style.display = "none";
-    $("histBox").style.display = "none";
-    $("noDataBox").style.display = "none";
-    $("hydroBox").style.display = "none";
-    setFitCardsVisible(true);
+  var MODE_BTN = {
+    series: "mSeries",
+    params: "mParams",
+    hist: "mHist",
+    noData: "mNoData",
+    hydro: "mHydro",
+    help: "mHelp"
   };
-  $("mParams").onclick = () => {
-    state.mode = "params";
-    $("mParams").classList.add("on");
-    $("mSeries").classList.remove("on");
-    $("mHist").classList.remove("on");
-    $("mNoData").classList.remove("on");
-    $("mHydro").classList.remove("on");
-    $("seriesBox").style.display = "none";
-    $("paramsBox").style.display = "";
-    $("histBox").style.display = "none";
-    $("noDataBox").style.display = "none";
-    $("hydroBox").style.display = "none";
-    syncParamInputs();
-    setFitCardsVisible(true);
-    render();
+  var MODE_BOX = {
+    series: "seriesBox",
+    params: "paramsBox",
+    hist: "histBox",
+    noData: "noDataBox",
+    hydro: "hydroBox",
+    help: "helpBox"
   };
-  $("mHist").onclick = () => {
-    state.mode = "histB";
-    $("mHist").classList.add("on");
-    $("mSeries").classList.remove("on");
-    $("mParams").classList.remove("on");
-    $("mNoData").classList.remove("on");
-    $("mHydro").classList.remove("on");
-    $("seriesBox").style.display = "none";
-    $("paramsBox").style.display = "none";
-    $("histBox").style.display = "";
-    $("noDataBox").style.display = "none";
-    $("hydroBox").style.display = "none";
-    setFitCardsVisible(false);
-  };
-  $("mNoData").onclick = () => {
-    state.mode = "noData";
-    $("mNoData").classList.add("on");
-    $("mSeries").classList.remove("on");
-    $("mParams").classList.remove("on");
-    $("mHist").classList.remove("on");
-    $("mHydro").classList.remove("on");
-    $("seriesBox").style.display = "none";
-    $("paramsBox").style.display = "none";
-    $("histBox").style.display = "none";
-    $("noDataBox").style.display = "";
-    $("hydroBox").style.display = "none";
-    setFitCardsVisible(false);
-    calcMethodC();
-  };
-  $("mHydro").onclick = () => {
-    state.mode = "hydro";
-    $("mHydro").classList.add("on");
-    $("mSeries").classList.remove("on");
-    $("mParams").classList.remove("on");
-    $("mHist").classList.remove("on");
-    $("mNoData").classList.remove("on");
-    $("seriesBox").style.display = "none";
-    $("paramsBox").style.display = "none";
-    $("histBox").style.display = "none";
-    $("noDataBox").style.display = "none";
-    $("hydroBox").style.display = "";
-    setFitCardsVisible(false);
-  };
+  function switchMode(mode) {
+    state.mode = mode === "hist" ? "histB" : mode;
+    for (const key of Object.keys(MODE_BTN)) {
+      $(MODE_BTN[key]).classList.toggle("on", key === mode);
+      $(MODE_BOX[key]).style.display = key === mode ? "" : "none";
+    }
+    setFitCardsVisible(mode === "series" || mode === "params");
+    if (mode === "params") {
+      syncParamInputs();
+      render();
+    }
+    if (mode === "noData") calcMethodC();
+    if (mode === "help") renderHelp();
+  }
+  for (const key of Object.keys(MODE_BTN)) {
+    $(MODE_BTN[key]).onclick = () => switchMode(key);
+  }
   function setFitCardsVisible(v) {
     for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
       const el = document.querySelector(sel);
@@ -2493,6 +2540,63 @@
         note.appendChild(d);
       }
     };
+  }
+  var helpRendered = false;
+  function renderHelp() {
+    if (helpRendered) return;
+    const secBox = $("helpSections");
+    for (const sec of HELP_SECTIONS) {
+      const d = document.createElement("details");
+      d.open = true;
+      d.style.marginTop = "10px";
+      const s = document.createElement("summary");
+      s.style.cursor = "pointer";
+      s.style.fontSize = "13px";
+      s.style.fontWeight = "500";
+      s.style.color = "var(--blue)";
+      s.textContent = `${sec.title}\uFF08${sec.spec}\uFF09`;
+      d.appendChild(s);
+      const table = document.createElement("table");
+      table.className = "ltab";
+      table.style.fontSize = "12px";
+      for (const it of sec.items) {
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        td1.style.whiteSpace = "nowrap";
+        td1.innerHTML = `<b>${it.no}</b>` + (it.page ? `<br><span style="color:var(--text2)">${it.page}</span>` : "");
+        const td2 = document.createElement("td");
+        td2.innerHTML = `<b>${it.title}</b><br><span style="color:var(--text2)">${it.summary}</span>`;
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
+      }
+      d.appendChild(table);
+      secBox.appendChild(d);
+    }
+    const srcBox = $("helpSources");
+    for (const s of HELP_SOURCES) {
+      const d = document.createElement("div");
+      d.style.marginBottom = "8px";
+      const link = s.url ? `<br><a href="${s.url}" target="_blank" rel="noopener" style="color:var(--blue);font-size:12px">${s.url}</a>` : "";
+      d.innerHTML = `<b>${s.name}</b><br><span style="color:var(--text2);font-size:12px">${s.detail}</span>${link}`;
+      srcBox.appendChild(d);
+    }
+    const faqBox = $("helpFaq");
+    for (const f of HELP_FAQ) {
+      const d = document.createElement("div");
+      d.style.marginBottom = "8px";
+      d.innerHTML = `<b>\u95EE\uFF1A${f.q}</b><br><span style="color:var(--text2);font-size:12px">\u7B54\uFF1A${f.a}</span>`;
+      faqBox.appendChild(d);
+    }
+    const valBox = $("helpValidation");
+    for (const v of HELP_VALIDATION) {
+      const d = document.createElement("div");
+      d.style.fontSize = "12px";
+      d.style.color = "var(--text2)";
+      d.textContent = "\xB7 " + v;
+      valBox.appendChild(d);
+    }
+    helpRendered = true;
   }
   function logCalc(module, inputs, results, basis, params) {
     try {

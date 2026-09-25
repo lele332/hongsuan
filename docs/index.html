@@ -121,6 +121,7 @@
   <button id="mParams">直接参数模式</button>
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">无资料地区</button>
+<button id="mHelp">帮助</button>
   <button id="mHydro">设计洪水过程线</button>
 </div></div>
 
@@ -434,6 +435,27 @@
       </div>
     </div>
   </div>
+
+<div id="helpBox" style="display:none">
+  <h2>帮助中心 <span style="font-weight:400;font-size:13px;color:var(--text2)">规范条文速查 · 数据来源 · 常见问题</span></h2>
+  <div class="hint" style="margin-top:0">
+    下面每一条都注明规范条号与页码，只摘要点、不复制原文，方便你对照纸质规范核对。
+    内置数据的来源全部列出，可自行下载原始文件验证。
+  </div>
+  <div id="helpSections"></div>
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">数据来源与出处</summary>
+    <div id="helpSources" style="margin-top:8px"></div>
+  </details>
+  <details style="margin-top:10px">
+    <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">常见问题</summary>
+    <div id="helpFaq" style="margin-top:8px"></div>
+  </details>
+  <details style="margin-top:10px">
+    <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">计算正确性验证</summary>
+    <div id="helpValidation" style="margin-top:8px"></div>
+  </details>
+</div>
 
 <div id="hydroBox" style="display:none">
   <h2>设计洪水过程线 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.6 同倍比放大法，k<sub>g</sub> = Q<sub>p</sub> / Q<sub>典峰</sub></span></h2>
