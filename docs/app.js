@@ -670,6 +670,57 @@
   };
   var calcLog = new CalcLog();
 
+  // src/core/bridgeOpening.ts
+  var REACH_TABLE = {
+    stable: {
+      label: "\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF09",
+      Kq: 0.84,
+      n3: 0.9,
+      applies: "\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u6CB3\u6BB5"
+    },
+    substable: {
+      label: "\u6B21\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF09",
+      Kq: 0.95,
+      n3: 0.87,
+      applies: "\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5"
+    },
+    unstable: {
+      label: "\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u6EE9\u3001\u69FD\u53EF\u5206\uFF09",
+      Kq: 0.69,
+      n3: 1.59,
+      applies: "\u6EE9\u3001\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5"
+    }
+  };
+  function minBridgeOpening(input) {
+    const { Qp, Qc, Bc, reach } = input;
+    const warnings = [];
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new Error("\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new Error("\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new Error("\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    const coef = REACH_TABLE[reach];
+    if (!coef) throw new Error(`\u6CB3\u6BB5\u7C7B\u578B\u5FC5\u987B\u662F stable / substable / unstable\uFF0C\u6536\u5230 ${String(reach)}`);
+    const ratio = Qp / Qc;
+    const Qt = Qp - Qc;
+    if (Qt < 0) {
+      warnings.push("\u6CB3\u6EE9\u6D41\u91CF Qp\u2212Qc \u4E3A\u8D1F\uFF1A\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u91CF\u4E0E\u6CB3\u69FD\u6D41\u91CF\uFF08\u901A\u5E38 Qp \u5E94\u5927\u4E8E Qc\uFF09");
+    }
+    if (ratio > 3) {
+      warnings.push(`Qp/Qc=${ratio.toFixed(2)} \u504F\u5927\uFF0C\u6865\u5B54\u5C06\u663E\u8457\u538B\u7F29\u6CB3\u6EE9\uFF0C\u5E94\u590D\u6838\u6CB3\u6BB5\u5206\u7C7B\u4E0E\u51B2\u5237\u5F71\u54CD`);
+    }
+    if (reach === "unstable" && ratio > 2) {
+      warnings.push("\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u5BF9\u6D41\u91CF\u6BD4\u654F\u611F\uFF08n3=1.59\uFF09\uFF0C\u5EFA\u8BAE\u7ED3\u5408\u6CB3\u5E8A\u6F14\u53D8\u5206\u6790\u7EFC\u5408\u786E\u5B9A\u6865\u957F");
+    }
+    const Lj = coef.Kq * Math.pow(ratio, coef.n3) * Bc;
+    return {
+      Lj: Math.round(Lj * 100) / 100,
+      Kq: coef.Kq,
+      n3: coef.n3,
+      Qt: Math.round(Qt * 100) / 100,
+      ratio: Math.round(ratio * 1e4) / 1e4,
+      warnings
+    };
+  }
+
   // src/core/threePoint.ts
   function threePointFit(pts) {
     if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
@@ -2096,6 +2147,65 @@
     out.textContent = `\u547D\u4E2D\u7B2C ${hits.join("\u3001")} \u533A \u2192 \u5DF2\u586B\u5165 ${hits[0]} \u533A\uFF1B${z.range}`;
     out.style.color = "var(--text2)";
   };
+  function calcBridgeOpening() {
+    const err = $("opErr");
+    const out = $("opOut");
+    const detail = $("opDetail");
+    try {
+      const Qp = +$("opQp").value, Qc = +$("opQc").value, Bc = +$("opBc").value;
+      const reach = $("opReach").value;
+      const r = minBridgeOpening({ Qp, Qc, Bc, reach });
+      out.textContent = r.Lj.toFixed(2);
+      const coef = REACH_TABLE[reach];
+      detail.innerHTML = "";
+      const lines = [
+        `Lj = ${r.Kq} \xD7 (${Qp}/${Qc})<sup>${r.n3}</sup> \xD7 ${Bc} = <b>${r.Lj.toFixed(2)} m</b>`,
+        `\u6CB3\u6BB5\uFF1A${coef.label}\uFF08Kq=${r.Kq}\uFF0Cn\u2083=${r.n3}\uFF09`,
+        `\u6D41\u91CF\u6BD4 Qp/Qc = ${r.ratio.toFixed(3)}\uFF0C\u6CB3\u6EE9\u6D41\u91CF Qt = Qp\u2212Qc = ${r.Qt.toFixed(2)} m\xB3/s`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u6700\u5C0F\u51C0\u957F\u5EA6",
+        { \u8BBE\u8BA1\u6D41\u91CFQp: Qp + " m\xB3/s", \u6CB3\u69FD\u6D41\u91CFQc: Qc + " m\xB3/s", \u6CB3\u69FD\u5BBD\u5EA6Bc: Bc + " m", \u6CB3\u6BB5: coef.label },
+        { Lj: r.Lj.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C7.2.1\u6761\uFF08\u516C\u5F0F7.2.1-1\uFF0C\u88687.2.1\uFF09",
+        { Kq: r.Kq, n3: r.n3, "Qp/Qc": r.ratio.toFixed(3) }
+      );
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      err.textContent = e instanceof Error ? e.message : String(e);
+    }
+  }
+  if ($("opGo")) {
+    $("opGo").onclick = calcBridgeOpening;
+    $("opUseQ").onclick = () => {
+      const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
+      const q = Number(raw);
+      if (Number.isFinite(q) && q > 0) {
+        $("opQp").value = String(q);
+        calcBridgeOpening();
+      } else {
+        const err = $("opErr");
+        err.style.display = "block";
+        err.textContent = "\u5F53\u524D\u8FD8\u6CA1\u6709\u6709\u6548\u7684\u8BBE\u8BA1\u6D41\u91CF\uFF0C\u8BF7\u5148\u8BA1\u7B97\u5E76\u9002\u7EBF";
+      }
+    };
+    const reachBtns = [["reach0", "stable"], ["reach1", "substable"], ["reach2", "unstable"]];
+    for (const [btnId, val] of reachBtns) {
+      $(btnId).onclick = () => {
+        $("opReach").value = val;
+        calcBridgeOpening();
+      };
+    }
+  }
   function logCalc(module, inputs, results, basis, params) {
     try {
       calcLog.add({ module, inputs, results, basis, params });

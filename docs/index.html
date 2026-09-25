@@ -167,6 +167,40 @@
     </div>
     <button class="btn" id="btnCalc">计算并适线</button>
     <button class="btn ghost" id="btnT3">载入算例 T3 参数</button>
+
+    <details id="openBox" style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥孔最小净长度（规范第 7 章 · 桥孔设计）</summary>
+      <div style="margin-top:10px">
+        <div class="hint" style="margin-top:0">
+          公式 7.2.1-1（河槽宽度公式）：<b>L<sub>j</sub> = K<sub>q</sub>·(Q<sub>p</sub>/Q<sub>c</sub>)<sup>n₃</sup>·B<sub>c</sub></b>，
+          适用于开阔、顺直微弯、分汊、弯曲河段及滩槽可分的不稳定河段；K<sub>q</sub>、n₃ 按表 7.2.1 取。
+          <span style="color:var(--red)">峡谷河段按地形布孔、不作此计算；宽滩河段与滩槽难分不稳定河段另有公式，待规范原文录入后补齐。</span>
+        </div>
+        <table class="ltab"><tr><th colspan="4">表 7.2.1 K<sub>q</sub>、n₃ 值</th></tr>
+          <tr><td>稳定（开阔、顺直微弯）</td><td>Kq=0.84</td><td>n₃=0.90</td><td><button class="fillBtn" id="reach0">选用</button></td></tr>
+          <tr><td>次稳定（分汊、弯曲）</td><td>Kq=0.95</td><td>n₃=0.87</td><td><button class="fillBtn" id="reach1">选用</button></td></tr>
+          <tr><td>不稳定（滩、槽可分）</td><td>Kq=0.69</td><td>n₃=1.59</td><td><button class="fillBtn" id="reach2">选用</button></td></tr>
+        </table>
+        <div class="row">
+          <div><label>设计流量 Q<sub>p</sub>（m³/s）</label><input type="number" id="opQp" value="5500" step="any" min="0.01"></div>
+          <div><label>河槽流量 Q<sub>c</sub>（m³/s）</label><input type="number" id="opQc" value="4722" step="any" min="0.01"></div>
+          <div><label>河槽宽度 B<sub>c</sub>（m）</label><input type="number" id="opBc" value="159.98" step="any" min="0.01"></div>
+          <div><label>河段类型</label><select id="opReach" style="width:150px">
+            <option value="stable">稳定（开阔、顺直微弯）</option>
+            <option value="substable">次稳定（分汊、弯曲）</option>
+            <option value="unstable">不稳定（滩、槽可分）</option>
+          </select></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" id="opUseQ">用当前设计流量</button>
+          <button class="btn" id="opGo">计算桥孔最小净长度</button>
+        </div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">桥孔最小净长度 L<sub>j</sub>（m）</div><div class="v" id="opOut">—</div></div>
+        <div id="opDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        <div class="err" id="opErr"></div>
+        <div class="hint">规范 7.2.2：最小净长度只是下限，最终桥长还需结合桥位地形、河床地质、桥前壅水、冲刷深度、引道纵坡与台后填土高度综合论证确定。</div>
+      </div>
+    </details>
   </div>
   <div id="paramsBox" style="display:none">
     <h2>统计参数（适线采用值）</h2>
