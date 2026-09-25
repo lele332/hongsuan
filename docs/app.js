@@ -3449,12 +3449,94 @@
   function kvText(o) {
     return !o ? "\u2014" : Object.entries(o).map(([k, v]) => `${k}=${v}`).join("\uFF1B");
   }
+  var logExpandedAll = false;
+  function logSummary(e) {
+    const r = e.results ?? {};
+    const keys = Object.keys(r).slice(0, 3);
+    return keys.length ? keys.map((k) => `${k}=${r[k]}`).join("\uFF1B") : "\u2014";
+  }
+  function refreshModuleFilter() {
+    const sel = $("logModule");
+    if (!sel) return;
+    const cur = sel.value;
+    const mods = [...new Set(calcLog.recent(0).map((e) => e.module))].sort();
+    sel.innerHTML = '<option value="">\u5168\u90E8\u6A21\u5757</option>' + mods.map((m) => `<option value="${m}">${m}</option>`).join("");
+    sel.value = cur;
+  }
   function renderCalcLog() {
+    const list = $("logList");
     const body = $("logBody");
-    if (!body) return;
-    const rows = calcLog.recent(30);
+    if (!list || !body) return;
+    const kw = ($("logSearch").value || "").trim();
+    const mod = $("logModule").value;
+    const limit = Number($("logLimit").value || 10);
+    refreshModuleFilter();
+    let rows = calcLog.recent(0).slice().reverse();
+    if (mod) rows = rows.filter((e) => e.module === mod);
+    if (kw) {
+      const hay = (e) => `${e.module} ${kvText(e.inputs)} ${kvText(e.params)} ${kvText(e.results)} ${e.basis}`;
+      rows = rows.filter((e) => hay(e).includes(kw));
+    }
+    const shown = limit > 0 ? rows.slice(0, limit) : rows;
+    list.innerHTML = "";
+    if (shown.length === 0) {
+      const empty = document.createElement("div");
+      empty.style.fontSize = "12px";
+      empty.style.color = "var(--text3)";
+      empty.textContent = kw || mod ? "\u6CA1\u6709\u5339\u914D\u7684\u65E5\u5FD7\u6761\u76EE" : "\u8FD8\u6CA1\u6709\u8BA1\u7B97\u8BB0\u5F55\uFF0C\u505A\u4EFB\u4F55\u4E00\u6B21\u8BA1\u7B97\u540E\u8FD9\u91CC\u4F1A\u81EA\u52A8\u7559\u75D5";
+      list.appendChild(empty);
+    }
+    for (const e of shown) {
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden";
+      const head = document.createElement("div");
+      head.style.cssText = "display:flex;gap:10px;align-items:center;padding:7px 10px;cursor:pointer;background:#fafafa;font-size:12.5px";
+      const tm = document.createElement("span");
+      tm.style.cssText = "color:var(--text3);font-variant-numeric:tabular-nums;flex:none";
+      tm.textContent = new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false });
+      const md = document.createElement("span");
+      md.style.cssText = "font-weight:600;flex:none;min-width:120px";
+      md.textContent = e.module;
+      const sm = document.createElement("span");
+      sm.style.cssText = "color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      sm.textContent = logSummary(e);
+      const caret = document.createElement("span");
+      caret.style.cssText = "margin-left:auto;color:var(--text3);flex:none";
+      caret.textContent = "\u25B8";
+      head.append(tm, md, sm, caret);
+      wrap.appendChild(head);
+      const detail = document.createElement("div");
+      detail.style.cssText = "padding:8px 10px;font-size:12px;color:var(--text2);border-top:1px solid var(--border);display:none";
+      for (const [label, obj] of [
+        ["\u4E3B\u8981\u8F93\u5165", e.inputs],
+        ["\u91C7\u7528/\u4E2D\u95F4\u503C", e.params],
+        ["\u7ED3\u679C", e.results]
+      ]) {
+        if (!obj || Object.keys(obj).length === 0) continue;
+        const d = document.createElement("div");
+        d.style.marginBottom = "4px";
+        d.textContent = `${label}\uFF1A${kvText(obj)}`;
+        detail.appendChild(d);
+      }
+      const b = document.createElement("div");
+      b.style.color = "var(--text3)";
+      b.textContent = `\u4F9D\u636E\uFF1A${e.basis}`;
+      detail.appendChild(b);
+      wrap.appendChild(detail);
+      let open = logExpandedAll;
+      const apply = () => {
+        detail.style.display = open ? "" : "none";
+        caret.textContent = open ? "\u25BE" : "\u25B8";
+      };
+      head.onclick = () => {
+        open = !open;
+        apply();
+      };
+      apply();
+      list.appendChild(wrap);
+    }
     body.innerHTML = "";
-    for (const e of rows) {
+    for (const e of shown) {
       const tr = document.createElement("tr");
       for (const text of [
         new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false }),
@@ -3471,7 +3553,22 @@
       body.appendChild(tr);
     }
     const cnt = $("logCount");
-    if (cnt) cnt.textContent = `\u5171 ${calcLog.size()} \u6761\uFF08\u663E\u793A\u6700\u8FD1 ${rows.length} \u6761\uFF09`;
+    if (cnt) {
+      cnt.textContent = `\u5171 ${calcLog.size()} \u6761\uFF0C\u5F53\u524D\u663E\u793A ${shown.length} \u6761` + (kw || mod ? "\uFF08\u5DF2\u8FC7\u6EE4\uFF09" : "");
+    }
+  }
+  if ($("logSearch")) {
+    $("logSearch").oninput = renderCalcLog;
+    $("logModule").onchange = renderCalcLog;
+    $("logLimit").onchange = renderCalcLog;
+    $("logExpandAll").onclick = () => {
+      logExpandedAll = true;
+      renderCalcLog();
+    };
+    $("logCollapseAll").onclick = () => {
+      logExpandedAll = false;
+      renderCalcLog();
+    };
   }
   var logTimer;
   var lastSig = "";

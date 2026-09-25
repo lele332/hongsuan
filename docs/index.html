@@ -58,7 +58,8 @@
     padding: 5px 8px; font-size: 13px; outline: none; background: #fff; color: var(--text);
   }
   input[type=number]:focus, select:focus { border-color: var(--blue); }
-  .row { display: flex; gap: 12px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .row > div { flex: 1 1 180px; min-width: 160px; }
   .row > div { flex: 1; }
   .btn {
     display: inline-block; background: var(--blue); color: #fff; border: 0;
@@ -756,12 +757,23 @@
   <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">计算日志（可追溯：每次计算的时间 · 模块 · 输入 · 采用值 · 结果 · 规范依据）</summary>
   <div style="margin-top:10px">
     <div class="hint" style="margin-top:0">日志随计算自动记录（同一组参数只记一条，避免拖滑块时刷屏），可导出为 Markdown 附在计算书后，也可导出 JSON 存档。清空只影响本机记录，不影响任何计算结果。</div>
-    <div style="overflow-x:auto">
-      <table class="ltab" style="font-size:11.5px">
-        <thead><tr><th>时间</th><th>模块</th><th>主要输入</th><th>采用/中间值</th><th>结果</th><th>规范依据</th></tr></thead>
-        <tbody id="logBody"></tbody>
-      </table>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <input type="text" id="logSearch" placeholder="检索：模块名 / 输入 / 结果关键词" style="min-width:200px;flex:1">
+      <select id="logModule" style="width:170px"><option value="">全部模块</option></select>
+      <select id="logLimit" style="width:120px">
+        <option value="10">最近 10 条</option>
+        <option value="20">最近 20 条</option>
+        <option value="50">最近 50 条</option>
+        <option value="0">全部</option>
+      </select>
+      <button class="btn ghost" id="logExpandAll" style="padding:4px 12px;font-size:12.5px">展开全部</button>
+      <button class="btn ghost" id="logCollapseAll" style="padding:4px 12px;font-size:12.5px">全部收起</button>
     </div>
+    <div id="logList"></div>
+    <table class="ltab" style="font-size:11.5px;display:none">
+      <thead><tr><th>时间</th><th>模块</th><th>主要输入</th><th>采用/中间值</th><th>结果</th><th>规范依据</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
       <button class="btn" id="logExportMd">导出 Markdown</button>
       <button class="btn" id="logExportJson">导出 JSON</button>
