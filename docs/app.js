@@ -3203,6 +3203,65 @@
     ${bridgesSvg}
   </svg>`;
   }
+  var ssmLast = null;
+  function ssmTakeScour(idx) {
+    const tip = $("ssmTakeTip");
+    try {
+      if (!ssmLast) throw new Error("\u8BF7\u5148\u63A8\u7B97\u6C34\u9762\u7EBF");
+      const { secs, result, units, Q } = ssmLast;
+      const sec = secs[idx], sr = result.sections[idx];
+      if (!sec || !sr) throw new Error("\u65AD\u9762\u4E0D\u5B58\u5728\uFF0C\u8BF7\u91CD\u65B0\u63A8\u7B97\u6C34\u9762\u7EBF");
+      const wse = sr.wse;
+      const props = sectionProps(sec, wse, units);
+      const ch = props.zones[1];
+      if (!(ch.A > 0) || !(ch.T > 0)) throw new Error(`\u65AD\u9762 ${sec.id} \u6CB3\u69FD\u533A\u5728\u63A8\u7B97\u6C34\u4F4D ${wse.toFixed(2)} \u4E0B\u4E0D\u8FC7\u6C34\uFF0C\u65E0\u6CD5\u53D6\u503C`);
+      if (!(props.K > 0) || !(props.A > 0) || !(props.T > 0)) throw new Error("\u65AD\u9762\u6C34\u529B\u8981\u7D20\u5F02\u5E38\uFF08K/A/T=0\uFF09\uFF0C\u65E0\u6CD5\u53D6\u503C");
+      let bedCh = Infinity;
+      for (const p of sec.pts) if (sec.bankL - 1e-9 <= p.x && p.x <= sec.bankR + 1e-9) bedCh = Math.min(bedCh, p.z);
+      if (!Number.isFinite(bedCh)) throw new Error("\u6CB3\u69FD\u533A\u95F4\u5185\u6CA1\u6709\u6D4B\u70B9");
+      const L = units === "EN" ? 0.3048 : 1;
+      const QF = units === "EN" ? 0.0283168 : 1;
+      const Qch = Q * ch.K / props.K;
+      const Bcj = ch.T * L;
+      const Hmc = (wse - bedCh) * L;
+      const Hcq = ch.A / ch.T * L;
+      if (!(Hmc > 0)) throw new Error(`\u65AD\u9762 ${sec.id} \u6CB3\u69FD\u6700\u4F4E\u6CB3\u5E95 ${bedCh.toFixed(2)} \u9AD8\u4E8E\u63A8\u7B97\u6C34\u4F4D\uFF0Ch_mc \u2264 0`);
+      if (!(Qch > 0)) throw new Error("\u6CB3\u69FD\u5206\u6D41\u91CF Q\u2082 \u2264 0\uFF08\u6CB3\u69FD\u8F93\u8FD0\u7387\u5360\u6BD4\u4E3A 0\uFF09");
+      const set2 = (id, val, fmt2) => {
+        $(id).value = fmt2(val);
+      };
+      set2("scQ2", Qch * QF, (x) => x.toFixed(1));
+      set2("scBcj", Bcj, (x) => x.toFixed(1));
+      set2("scHmc", Hmc, (x) => x.toFixed(2));
+      set2("scHcq", Hcq, (x) => x.toFixed(2));
+      set2("lsV", Qch / ch.A * L, (x) => x.toFixed(2));
+      set2("abV", Q / props.A * L, (x) => x.toFixed(2));
+      set2("abH", props.A / props.T * L, (x) => x.toFixed(2));
+      let aTip = "";
+      try {
+        const a = concentrationFactorA(Bcj, Hcq);
+        set2("scA", a.A, (x) => x.toFixed(2));
+        aTip = a.capped ? `A=${a.A.toFixed(2)}\uFF08\u53CD\u7B97\u503C\u8D85 1.8\uFF0C\u6309\u89C4\u8303\u53D6\u4E0A\u9650\uFF09` : `A=${a.A.toFixed(2)}\uFF08\u7531 SSM \u6CB3\u69FD\u5BBD ${Bcj.toFixed(1)} m / \u5E73\u5747\u6C34\u6DF1 ${Hcq.toFixed(2)} m \u53CD\u7B97\uFF09`;
+        const at = $("scATip");
+        at.textContent = "SSM \u53D6\u503C\uFF1A" + aTip;
+      } catch {
+      }
+      tip.style.display = "";
+      tip.innerHTML = `\u5DF2\u5C06\u65AD\u9762 <b>${sec.id}</b>\uFF08WSE=${wse.toFixed(3)}${units === "EN" ? " ft\uFF0C\u5DF2\u6362\u7B97\u4E3A SI" : ""}\uFF09\u7684\u6CB3\u69FD\u8981\u7D20\u586B\u5165\u51B2\u5237\u6A21\u5757\uFF1A
+      Q\u2082=${(Qch * QF).toFixed(1)} m\xB3/s\uFF08\u6309\u8F93\u8FD0\u7387 K \u5206\u914D\uFF09\u3001B<sub>cj</sub>=${Bcj.toFixed(1)} m\uFF08\u6CB3\u69FD\u6C34\u9762\u5BBD\uFF0C\u6309\u6865\u5B54\u5E03\u7F6E\u4FEE\u6B63\uFF09\u3001
+      h<sub>mc</sub>=${Hmc.toFixed(2)} m\u3001h<sub>cq</sub>=${Hcq.toFixed(2)} m\u3001\u884C\u8FD1\u6D41\u901F v=${(Qch / ch.A * L).toFixed(2)} m/s\u3002
+      ${aTip ? aTip + "\u3002" : ""}<span style="color:var(--amber)">\u4ECD\u9700\u624B\u586B\uFF1A\u03BC\u3001\u542B\u6C99\u91CF \u03C1\u3001\u6CE5\u6C99 d\u0304\u3001\u58A9\u5BBD B\u2081\u3001\u58A9\u5F62 K<sub>\u03BE</sub></span>\uFF1B
+      \u884C\u8FD1\u6D41\u901F\u4E3A\u5EFA\u6865\u524D\u6CB3\u69FD\u5E73\u5747\u6D41\u901F\uFF0C\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u540E\u53EF\u7528\u300C\u7528\u4E00\u822C\u51B2\u5237\u7ED3\u679C\u63A8\u7B97 v\u300D\u6309 8.3.3-2 \u7CBE\u7B97\u3002`;
+      calcScour();
+    } catch (e) {
+      tip.style.display = "";
+      tip.textContent = "\u53D6\u503C\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e));
+    }
+  }
+  $("ssmResult").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button.ssmTakeBtn");
+    if (btn) ssmTakeScour(+btn.dataset.idx);
+  });
   function calcSsm() {
     try {
       const Q = +$("ssmQ").value;
@@ -3211,6 +3270,7 @@
       const boundary = bdKind === "wse" ? { kind: "wse", wse: +$("ssmWse").value } : { kind: "normalDepth", S0: +$("ssmS0").value };
       const secs = parseSsmSections($("ssmText").value);
       const r = ssmProfileRun(secs, { Q, boundary, units });
+      ssmLast = { secs, result: r, units, Q };
       const u = units === "SI" ? { q: "m\xB3/s", l: "m", v: "m/s", a: "m\xB2" } : { q: "cfs", l: "ft", v: "ft/s", a: "ft\xB2" };
       const bridges = new Map(secs.filter((s) => s.bridge).map((s) => [s.id, { width: s.bridge.width, deckZ: s.bridge.deckZ }]));
       const nBridge = bridges.size;
@@ -3225,10 +3285,11 @@
       </div>
       ${ssmSvgProfile(r, units, bridges)}
       <table class="ltab" style="margin-top:10px">
-        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09\xB7 C<sub>\u91C7\u7528</sub></th></tr>
-        ${r.sections.map((s, i) => `<tr><td>${s.id}${badge(s)}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : `${s.hL.toFixed(3)}${s.c !== void 0 ? `\uFF08${s.cKind === "expansion" ? "\u6269" : "\u7F29"} ${s.c}\uFF09` : ""}`}</td></tr>`).join("")}
+        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09\xB7 C<sub>\u91C7\u7528</sub></th><th>\u53D6\u503C</th></tr>
+        ${r.sections.map((s, i) => `<tr><td>${s.id}${badge(s)}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : `${s.hL.toFixed(3)}${s.c !== void 0 ? `\uFF08${s.cKind === "expansion" ? "\u6269" : "\u7F29"} ${s.c}\uFF09` : ""}`}</td><td><button class="btn ssmTakeBtn" data-idx="${i}" style="padding:2px 8px;font-size:11px">\u2192\u51B2\u5237</button></td></tr>`).join("")}
       </table>
-      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002${nBridge > 0 ? "\u6865\u6881\u6CB3\u6BB5\uFF08\u6807\u300C\u6865\u300D\u65AD\u9762\uFF09\uFF1AL\u0304=\u6865\u5BBD\u3001C=\u6865\u6881 BR \u7CFB\u6570\uFF0C\u58C5\u6C34\u6309 HEC-RAS energy \u6CD5\u5185\u4E1A\u8BA1\u5165\uFF1B\u6C34\u4F4D \u2265 \u6881\u5E95\u9AD8\u7A0B\u65F6\u63D0\u793A\u5830\u6D41/\u538B\u529B\u6D41\u8D85\u8303\u56F4\u3002" : "\u542B\u6865\u6CB3\u6BB5\u53EF\u5728\u65AD\u9762\u5934\u52A0 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570,\u6881\u5E95\u9AD8\u7A0B \u8BA1\u5165\u6865\u6881\u58C5\u6C34\uFF08HEC-RAS energy \u6CD5\uFF09\u3002"}\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u5168 9 \u65AD\u9762 |\u0394WSE|\u22640.1 ft\uFF08\u6865\u5185\u6BB5 \u22640.05 ft\uFF09\u3002</div>`);
+      <div id="ssmTakeTip" style="display:none;font-size:12px;color:var(--text2);margin-top:8px;padding:8px 10px;background:rgba(0,122,255,.06);border-radius:6px"></div>
+      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002${nBridge > 0 ? "\u6865\u6881\u6CB3\u6BB5\uFF08\u6807\u300C\u6865\u300D\u65AD\u9762\uFF09\uFF1AL\u0304=\u6865\u5BBD\u3001C=\u6865\u6881 BR \u7CFB\u6570\uFF0C\u58C5\u6C34\u6309 HEC-RAS energy \u6CD5\u5185\u4E1A\u8BA1\u5165\uFF1B\u6C34\u4F4D \u2265 \u6881\u5E95\u9AD8\u7A0B\u65F6\u63D0\u793A\u5830\u6D41/\u538B\u529B\u6D41\u8D85\u8303\u56F4\u3002" : "\u542B\u6865\u6CB3\u6BB5\u53EF\u5728\u65AD\u9762\u5934\u52A0 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570,\u6881\u5E95\u9AD8\u7A0B \u8BA1\u5165\u6865\u6881\u58C5\u6C34\uFF08HEC-RAS energy \u6CD5\uFF09\u3002"}\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u5168 9 \u65AD\u9762 |\u0394WSE|\u22640.1 ft\uFF08\u6865\u5185\u6BB5 \u22640.05 ft\uFF09\u3002\u70B9\u6BCF\u884C\u300C\u2192\u51B2\u5237\u300D\u53EF\u5C06\u8BE5\u65AD\u9762\u6CB3\u69FD\u8981\u7D20\uFF08Q\u2082 \u6309 K \u5206\u914D\u3001B<sub>cj</sub>\u3001h<sub>mc</sub>\u3001h<sub>cq</sub>\u3001A\u3001v\uFF09\u4E00\u952E\u586B\u5165\u51B2\u5237\u6A21\u5757\uFF08\u82F1\u5236\u81EA\u52A8\u6362\u7B97 SI\uFF09\u3002</div>`);
       logCalc(
         "\u6C34\u9762\u7EBF \xB7 \u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\uFF09",
         { \u65AD\u9762\u6570: String(secs.length), \u6D41\u91CFQ: Q + " " + u.q, \u4E0B\u6E38\u8FB9\u754C: r.notes[r.notes.length - 1] },
@@ -4825,7 +4886,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.2",
+        appVersion: "0.11.4",
         data: multi.data,
         plans: multi.plans
       };
@@ -5188,7 +5249,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.2 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.4 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -5441,7 +5502,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.3");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.4");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
