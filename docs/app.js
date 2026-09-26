@@ -985,6 +985,44 @@
     };
   }
 
+  // src/core/burialTable.ts
+  var DEPTH_STOPS = [3, 5, 10, 15, 20];
+  var DELTA_MAJOR = [1.5, 2, 2.5, 3, 3.5];
+  var DELTA_GRAND = [2, 2.5, 3, 3.5, 4];
+  function burialDelta(totalScour2, cls) {
+    if (!Number.isFinite(totalScour2)) {
+      throw new HsError({ code: "E_INPUT_FINITE", field: "state.ts.tsTotal", value: totalScour2, message: "\u603B\u51B2\u5237\u6DF1\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C\uFF08m\uFF09", normRef: "JTG C30\u20142015 \u88688.6.2" });
+    }
+    if (totalScour2 < 0) {
+      throw new HsError({ code: "E_INPUT_RANGE", field: "state.ts.tsTotal", value: totalScour2, message: "\u603B\u51B2\u5237\u6DF1\u5EA6\u4E0D\u80FD\u4E3A\u8D1F\uFF08m\uFF09", normRef: "JTG C30\u20142015 \u88688.6.2" });
+    }
+    const table = cls === "grand" ? DELTA_GRAND : DELTA_MAJOR;
+    const label = cls === "grand" ? "\u7279\u5927\u6865" : "\u5927\u6865\u3001\u4E2D\u6865\u3001\u5C0F\u6865";
+    if (totalScour2 <= DEPTH_STOPS[0]) {
+      return { delta: table[0], band: `\u603B\u51B2\u5237 ${totalScour2.toFixed(2)} m \u2264 3 m\uFF0C\u6309\u9996\u6863`, interpolated: false };
+    }
+    if (totalScour2 >= DEPTH_STOPS[DEPTH_STOPS.length - 1]) {
+      return {
+        delta: table[table.length - 1],
+        band: `\u603B\u51B2\u5237 ${totalScour2.toFixed(2)} m \u2265 20 m\uFF08\u8D85\u51FA\u8868\u5217\u6700\u5927\u6863\uFF0C\u6309\u672B\u6863\uFF1B\u8D44\u6599\u65E0\u628A\u63E1\u65F6\u53EF\u9002\u5F53\u52A0\u5927\uFF09`,
+        interpolated: false
+      };
+    }
+    for (let i = 0; i < DEPTH_STOPS.length - 1; i++) {
+      const lo = DEPTH_STOPS[i], hi = DEPTH_STOPS[i + 1];
+      if (totalScour2 >= lo && totalScour2 <= hi) {
+        const t = (totalScour2 - lo) / (hi - lo);
+        const delta = table[i] + (table[i + 1] - table[i]) * t;
+        return {
+          delta: Math.round(delta * 100) / 100,
+          band: `${label}\uFF0C${lo}~${hi} m \u6863\u95F4\u63D2\u503C`,
+          interpolated: true
+        };
+      }
+    }
+    throw new HsError({ code: "E_INTERNAL", message: "\u88688.6.2 \u63D2\u503C\u5206\u652F\u672A\u8986\u76D6" });
+  }
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -3186,6 +3224,15 @@
         const d = document.createElement("div");
         d.textContent = "\xB7 " + n;
         note.appendChild(d);
+      }
+      try {
+        const dm = burialDelta(r.total, "major");
+        const dg = burialDelta(r.total, "grand");
+        const d = document.createElement("div");
+        d.style.marginTop = "6px";
+        d.innerHTML = `\u57FA\u5E95\u57CB\u6DF1\u5B89\u5168\u503C\uFF08\u8868 8.6.2\uFF09\uFF1A\u5927\u4E2D\u6865 <b>\u2265 ${dm.delta} m</b>\uFF0C\u7279\u5927\u6865 <b>\u2265 ${dg.delta} m</b><span style="color:var(--text3)">\uFF08${dm.band}\uFF1B\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF09</span>`;
+        note.appendChild(d);
+      } catch {
       }
     };
   }
