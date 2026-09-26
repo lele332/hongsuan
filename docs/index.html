@@ -287,6 +287,41 @@
           <div id="lsDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
           <div class="err" id="lsErr"></div>
 
+          <div style="border-top:1px dashed var(--border);margin-top:14px;padding-top:10px">
+            <h4 style="margin:0 0 6px;font-size:13px;color:var(--text)">桥台局部冲刷（规范 8.4.3，可选）</h4>
+            <div class="hint" style="margin-top:0">
+              <b>8.4.3-1</b>（阻水面积法）hs = 1.95·Fr<sup>0.2</sup>·A<sub>z</sub><sup>0.5</sup>·C<sub>A</sub>·C<sub>α</sub>；
+              <b>8.4.3-2</b>（水深法）h<sub>b</sub> = 1.17·K<sub>ξ</sub>·k<sub>α</sub>·h<sub>p</sub>·(l/h<sub>p</sub>)<sup>0.6</sup>·(d<sub>0</sub>/h<sub>p</sub>)<sup>−0.15|−0.10</sup>·[(v−v'<sub>0</sub>)²/(g·h<sub>p</sub>)]<sup>0.15</sup>
+              <br><span style="color:var(--red)">台形系数 K<sub>ξ</sub>、形状系数 C<sub>A</sub> 按表 8.4.3 手填（软件不内置该表）。</span>
+            </div>
+            <div class="row">
+              <div><label>公式</label><select id="abFormula" style="width:250px">
+                <option value="f1">8.4.3-1 阻水面积法（hs）</option>
+                <option value="f2">8.4.3-2 一般冲刷后水深法（hb）</option>
+              </select></div>
+              <div><label>河道平均流速 v（m/s）</label><input type="number" id="abV" value="3.81" step="any" min="0.01"></div>
+              <div><label>河道平均水深 h（m）</label><input type="number" id="abH" value="4.22" step="any" min="0.01"></div>
+            </div>
+            <div class="row">
+              <div><label>阻水面积 A<sub>z</sub>（m²）</label><input type="number" id="abAz" value="13.00" step="any" min="0.01"></div>
+              <div><label>桥台形状系数 C<sub>A</sub></label><input type="number" id="abCA" value="0.95" step="any" min="0.01"></div>
+              <div><label>交角 α（度，≤90）</label><input type="number" id="abAlpha" value="90" step="1" min="1" max="90"></div>
+            </div>
+            <div class="row" id="ab2Row" style="display:none">
+              <div><label>台形系数 K<sub>ξ</sub>（表8.4.3）</label><input type="number" id="abKxi" value="0.42" step="any" min="0.01"></div>
+              <div><label>一般冲刷后水深 h<sub>p</sub>（m）</label><input type="number" id="abHp" value="5.0" step="any" min="0.01"></div>
+              <div><label>桥台长度 l（m，垂直流向）</label><input type="number" id="abL" value="25.5" step="any" min="0.01"></div>
+              <div><label>泥沙粒径 d<sub>0</sub>（mm）</label><input type="number" id="abD0" value="0.42" step="any" min="0.001"></div>
+              <div><label>起冲流速 v'<sub>0</sub>（m/s）</label><input type="number" id="abV0s" value="1.0" step="any" min="0"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <button class="btn" id="abGo">计算桥台局部冲刷</button>
+            </div>
+            <div class="metric hl" style="margin-top:10px"><div class="k">桥台局部冲刷深度（m）</div><div class="v" id="abOut">—</div></div>
+            <div id="abDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+            <div class="err" id="abErr"></div>
+          </div>
+
           <div class="row" style="margin-top:10px">
             <div><label>自然演变冲刷（m，无资料填 0）</label><input type="number" id="tsNat" value="0" step="any" min="0"></div>
             <div style="display:flex;align-items:flex-end"><button class="btn" id="tsGo">汇总总冲刷深度</button></div>

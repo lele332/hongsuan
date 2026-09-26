@@ -879,6 +879,112 @@
     };
   }
 
+  // src/core/abutmentScour.ts
+  var VH1_BANDS = [
+    [0.05, 0.25, 0.35, 0.32],
+    // 细沙
+    [0.25, 0.5, 0.32, 0.4],
+    // 中沙
+    [0.5, 2, 0.4, 0.6],
+    // 粗沙
+    [2, 5, 0.6, 0.9],
+    // 圆砾小
+    [5, 10, 0.9, 1.2],
+    // 圆砾中
+    [10, 20, 1.2, 1.5],
+    // 圆砾大
+    [20, 40, 1.5, 2],
+    // 卵石小
+    [40, 60, 2, 2.3],
+    // 卵石中
+    [60, 200, 2.3, 3.6],
+    // 卵石大
+    [200, 400, 3.6, 4.7],
+    // 漂石小
+    [400, 800, 4.7, 6]
+    // 漂石中
+  ];
+  function vH1Of(d50) {
+    if (!Number.isFinite(d50) || d50 <= 0) {
+      throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpD50", value: d50, message: "\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84\u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", normRef: "JTG C30\u20142015 \u88688.3.1-3" });
+    }
+    if (d50 > 800) return { vH1: 6, band: `\u6F02\u77F3\u5927\uFF08d\u0304>${d50}mm > 800\uFF09\uFF1AvH1 > 6.00\uFF0C\u6309 6.00 \u4FDD\u5B88\u53D6` };
+    for (const [lo, hi, vlo, vhi] of VH1_BANDS) {
+      if (d50 >= lo && d50 <= hi) {
+        const t = hi > lo ? (Math.log(d50) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) : 0;
+        const vH1 = vlo + (vhi - vlo) * t;
+        const name = bandName(lo, hi);
+        return { vH1, band: `${name}\uFF08d\u0304=${d50}mm \u2208 [${lo}, ${hi}]\uFF09` };
+      }
+    }
+    return { vH1: 0.35, band: `d\u0304=${d50}mm \u5C0F\u4E8E\u8868\u5217\u6700\u5C0F\u6863 0.05\uFF0C\u6309\u7EC6\u6C99\u4E0B\u9650 0.35 \u4FDD\u5B88\u53D6\uFF08\u5EFA\u8BAE\u4EBA\u5DE5\u590D\u6838\uFF09` };
+  }
+  function bandName(lo, hi) {
+    const m = {
+      "0.05-0.25": "\u7EC6\u6C99",
+      "0.25-0.5": "\u4E2D\u6C99",
+      "0.5-2": "\u7C97\u6C99",
+      "2-5": "\u5706\u783E\uFF08\u5C0F\uFF09",
+      "5-10": "\u5706\u783E\uFF08\u4E2D\uFF09",
+      "10-20": "\u5706\u783E\uFF08\u5927\uFF09",
+      "20-40": "\u5375\u77F3\uFF08\u5C0F\uFF09",
+      "40-60": "\u5375\u77F3\uFF08\u4E2D\uFF09",
+      "60-200": "\u5375\u77F3\uFF08\u5927\uFF09",
+      "200-400": "\u6F02\u77F3\uFF08\u5C0F\uFF09",
+      "400-800": "\u6F02\u77F3\uFF08\u4E2D\uFF09"
+    };
+    return m[`${lo}-${hi}`] ?? "\u975E\u9ECF\u6027\u571F";
+  }
+  function floodplainScour(p) {
+    const { A, Qt, mu, Btj, htm, htq, d50 } = p;
+    if (!Number.isFinite(A) || A <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpA", value: A, message: "\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A \u5FC5\u987B\u4E3A\u6B63", normRef: "JTG C30\u20142015 8.3.1" });
+    if (!Number.isFinite(Qt) || Qt <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpQt", value: Qt, message: "\u6CB3\u6EE9\u6D41\u91CF Qt \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u6EE9\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
+    if (!Number.isFinite(Btj) || Btj <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpBtj", value: Btj, message: "\u6CB3\u6EE9\u6865\u5B54\u51C0\u957F Btj \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(htm) || htm <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpHtm", value: htm, message: "\u6CB3\u6EE9\u6700\u5927\u6C34\u6DF1 htm \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(htq) || htq <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpHtq", value: htq, message: "\u6CB3\u6EE9\u5E73\u5747\u6C34\u6DF1 htq \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    const { vH1, band } = vH1Of(d50);
+    const hp = Math.pow(A * (Qt / (mu * Btj)) * Math.pow(htm / htq, 5 / 3) / vH1, 5 / 6);
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      depth: Math.round((hp - htm) * 1e3) / 1e3,
+      vH1,
+      band
+    };
+  }
+  function abutmentScour1(p) {
+    const { v, h, Az, CA, alpha } = p;
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abV", value: v, message: "\u5929\u7136\u6CB3\u9053\u5E73\u5747\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(h) || h <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abH", value: h, message: "\u5929\u7136\u6CB3\u9053\u5E73\u5747\u6C34\u6DF1 h \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(Az) || Az <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abAz", value: Az, message: "\u6865\u53F0\u3001\u8DEF\u5824\u963B\u6C34\u9762\u79EF Az \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB2\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(CA) || CA <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abCA", value: CA, message: "\u6865\u53F0\u5F62\u72B6\u7CFB\u6570 CA \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u6865\u53F0\u5F62\u5F0F\u53D6\u7528\uFF08\u5982 U \u578B 0.95\uFF09", normRef: "JTG C30\u20142015 8.4.3" });
+    if (!(alpha > 0 && alpha <= 90)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abAlpha", value: alpha, message: "\u6865\u53F0\u4E0E\u6C34\u6D41\u4EA4\u89D2 \u03B1 \u5E94\u5728 (0\xB0, 90\xB0]", normRef: "JTG C30\u20142015 8.4.3" });
+    const Fr = v * v / (9.81 * h);
+    const Calpha = Math.pow(alpha / 90, 0.15);
+    const hs = 1.95 * Math.pow(Fr, 0.2) * Math.pow(Az, 0.5) * CA * Calpha;
+    return { hs: Math.round(hs * 1e3) / 1e3, Fr: Math.round(Fr * 1e3) / 1e3, Calpha };
+  }
+  function abutmentScour2(p) {
+    const { Kxi, alpha, hp, l, d0, v, v0s } = p;
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abKxi", value: Kxi, message: "\u53F0\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u8868 8.4.3 \u4F9D\u53F0\u5F62\u53D6\u7528\uFF08\u672C\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF09", normRef: "JTG C30\u20142015 \u88688.4.3" });
+    if (!(alpha > 0 && alpha <= 90)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abAlpha", value: alpha, message: "\u4EA4\u89D2 \u03B1 \u5E94\u5728 (0\xB0, 90\xB0]", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(hp) || hp <= 0) throw new HsError({ code: "E_DEPENDENCY", field: "state.ab2.abHp", value: hp, message: "\u9700\u8981\u6865\u53F0\u5904\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp", suggestion: "\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(l) || l <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abL", value: l, message: "\u5782\u76F4\u4E8E\u6C34\u6D41\u6D41\u5411\u7684\u6865\u53F0\u957F\u5EA6 l \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(d0) || d0 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abD0", value: d0, message: "\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d0 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV", value: v, message: "\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(v0s) || v0s < 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV0s", value: v0s, message: "\u8D77\u51B2\u6D41\u901F v'0 \u5E94 \u2265 0\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (v <= v0s) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV", value: v, message: `\u884C\u8FD1\u6D41\u901F v=${v} \u672A\u8D85\u8FC7\u8D77\u51B2\u6D41\u901F v'0=${v0s}\uFF0C\u4E0D\u4EA7\u751F\u6865\u53F0\u5C40\u90E8\u51B2\u5237`, suggestion: "\u7ED3\u679C\u53EF\u53D6 hb = 0\uFF08\u4E0D\u51B2\u5237\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    const kalpha = Math.pow(alpha / 90, 0.2);
+    const ratio = hp / d0;
+    const dexp = ratio <= 500 ? -0.15 : -0.1;
+    const hb = 1.17 * Kxi * kalpha * hp * Math.pow(l / hp, 0.6) * Math.pow(d0 / hp, dexp) * Math.pow((v - v0s) ** 2 / (9.81 * hp), 0.15);
+    return {
+      hb: Math.round(hb * 1e3) / 1e3,
+      kalpha,
+      exponentNote: `hp/d0 = ${ratio.toFixed(1)} ${ratio <= 500 ? "\u2264 500\uFF0C\u6307\u6570 \u22120.15" : "> 500\uFF0C\u6307\u6570 \u22120.10"}`
+    };
+  }
+
   // src/core/catchment.ts
   function polygonAreaPx(pts) {
     if (!Array.isArray(pts) || pts.length < 3) return 0;
@@ -2884,6 +2990,31 @@
         );
         return;
       }
+      if ($("scPart").value === "floodplain") {
+        const r2 = floodplainScour({
+          A: vOf("scA"),
+          Qt: vOf("scQ2"),
+          mu: vOf("scMu"),
+          Btj: vOf("scBcj"),
+          htm: vOf("scHmc"),
+          htq: vOf("scHcq"),
+          d50: vOf("scD50")
+        });
+        lastGeneralHp = r2.hp;
+        lastGeneralHy = r2.depth;
+        lastScourE = NaN;
+        lastD50 = NaN;
+        out.textContent = r2.hp.toFixed(2);
+        detail.innerHTML = `hp = [ A\xB7(Qt/(\u03BC\xB7B<sub>tj</sub>))\xB7(h<sub>tm</sub>/h<sub>tq</sub>)<sup>5/3</sup> \xF7 v<sub>H1</sub> ]<sup>5/6</sup> = <b>${r2.hp.toFixed(2)} m</b><br>v<sub>H1</sub> = ${r2.vH1.toFixed(2)} m/s\uFF08${r2.band}\uFF09\uFF5C \u51B2\u5237\u6DF1\u5EA6 = <b>${r2.depth.toFixed(2)} m</b><br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.1-5\uFF08\u975E\u9ECF\u6027\u571F\u6CB3\u6EE9\uFF1B\u8868 8.3.1-3 \u5DF2\u5185\u7F6E\u5BF9\u6570\u63D2\u503C\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u4E00\u822C\u51B2\u5237 \xB7 \u975E\u9ECF\u6027\u571F\u6CB3\u6EE9\uFF088.3.1-5\uFF09",
+          { \u6CB3\u6EE9\u6D41\u91CFQt: vOf("scQ2"), \u6CB3\u6EE9\u51C0\u957FBtj: vOf("scBcj"), \u6700\u5927\u6C34\u6DF1htm: vOf("scHmc"), \u5E73\u5747\u6C34\u6DF1htq: vOf("scHcq"), \u6CE5\u6C99\u7C92\u5F84d: vOf("scD50") },
+          { vH1: r2.vH1.toFixed(2) + " m/s", hp: r2.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6: r2.depth.toFixed(2) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F8.3.1-5 + \u88688.3.1-3\uFF08\u6CB3\u6EE9\u4E0D\u51B2\u5237\u6D41\u901F\uFF09"
+        );
+        return;
+      }
       const Q2 = +$("scQ2").value, mu = +$("scMu").value, Bcj = +$("scBcj").value;
       const hmc = +$("scHmc").value, hcq = +$("scHcq").value, d50 = +$("scD50").value;
       const rho = +$("scRho").value;
@@ -2943,7 +3074,7 @@
       const clay = $("scSoil").value === "clay";
       $("scHintNonclay").style.display = clay ? "none" : "";
       $("scHintClay").style.display = clay ? "" : "none";
-      $("scPart").style.display = clay ? "" : "none";
+      $("scPart").style.display = "";
       $("scIL").style.display = clay ? "" : "none";
     };
     $("scGo").onclick = calcScour;
@@ -3673,6 +3804,7 @@
       { title: "\u8BA1\u7B97\u4E00\u822C\u51B2\u5237\uFF0864-1\uFF09", hint: "\u8BA1\u7B97", run: click("scGo") },
       { title: "\u8BA1\u7B97\u5C40\u90E8\u51B2\u5237\uFF0865-2\uFF09", hint: "\u8BA1\u7B97", run: click("lsGo") },
       { title: "\u6C47\u603B\u603B\u51B2\u5237\u6DF1\u5EA6", hint: "\u8BA1\u7B97", run: click("tsGo") },
+      { title: "\u8BA1\u7B97\u6865\u53F0\u5C40\u90E8\u51B2\u5237\uFF088.4.3\uFF09", hint: "\u8BA1\u7B97", run: click("abGo") },
       { title: "\u5730\u56FE\uFF1A\u8BA1\u7B97\u6C47\u6C34\u533A F / L / I", hint: "\u8BA1\u7B97", run: click("mapGo") },
       { title: "\u5730\u56FE\uFF1A\u628A F \u586B\u5165\u65B9\u6CD5 C", hint: "\u8BA1\u7B97", run: click("mapFill") },
       { title: "\u67E5\u5F84\u6D41\u539A\u5EA6 h \u5E76\u586B\u5165", hint: "\u67E5\u8868", run: click("lkGo") },
@@ -3961,6 +4093,37 @@
         }
       };
       r.readAsText(f, "utf-8");
+    };
+  }
+  function calcAbutment() {
+    const err = $("abErr"), out = $("abOut"), detail = $("abDetail");
+    const vOf = (id) => +$(id).value;
+    try {
+      const f = $("abFormula").value;
+      if (f === "f1") {
+        const r = abutmentScour1({ v: vOf("abV"), h: vOf("abH"), Az: vOf("abAz"), CA: vOf("abCA"), alpha: vOf("abAlpha") });
+        out.textContent = r.hs.toFixed(2);
+        detail.innerHTML = `hs = 1.95\xB7Fr<sup>0.2</sup>\xB7A<sub>z</sub><sup>0.5</sup>\xB7C<sub>A</sub>\xB7C<sub>\u03B1</sub> = <b>${r.hs.toFixed(2)} m</b><br>Fr = v\xB2/(g\xB7h) = ${r.Fr} \uFF5C C<sub>\u03B1</sub> = (\u03B1/90)<sup>0.15</sup> = ${r.Calpha.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.4.3-1\uFF08\u6865\u53F0\u963B\u6C34\u9762\u79EF\u6CD5\uFF09</span>`;
+        logCalc("\u6865\u53F0\u5C40\u90E8\u51B2\u5237 \xB7 8.4.3-1", { \u6D41\u901Fv: vOf("abV"), \u6C34\u6DF1h: vOf("abH"), \u963B\u6C34\u9762\u79EFAz: vOf("abAz"), \u5F62\u72B6\u7CFB\u6570CA: vOf("abCA"), \u4EA4\u89D2\u03B1: vOf("abAlpha") }, { Fr: String(r.Fr), hs: r.hs.toFixed(2) + " m" }, "JTG C30\u20142015 \u516C\u5F0F8.4.3-1");
+      } else {
+        const r = abutmentScour2({ Kxi: vOf("abKxi"), alpha: vOf("abAlpha"), hp: vOf("abHp"), l: vOf("abL"), d0: vOf("abD0"), v: vOf("abV"), v0s: vOf("abV0s") });
+        out.textContent = r.hb.toFixed(2);
+        detail.innerHTML = `hb = 1.17\xB7K<sub>\u03BE</sub>\xB7k<sub>\u03B1</sub>\xB7h<sub>p</sub>\xB7(l/h<sub>p</sub>)<sup>0.6</sup>\xB7(d<sub>0</sub>/h<sub>p</sub>)<sup>\u2026</sup>\xB7[(v\u2212v'<sub>0</sub>)\xB2/(g\xB7h<sub>p</sub>)]<sup>0.15</sup> = <b>${r.hb.toFixed(2)} m</b><br>${r.exponentNote} \uFF5C k<sub>\u03B1</sub> = (\u03B1/90)<sup>0.2</sup> = ${r.kalpha.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.4.3-2\uFF08\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1\u6CD5\uFF09</span>`;
+        logCalc("\u6865\u53F0\u5C40\u90E8\u51B2\u5237 \xB7 8.4.3-2", { \u53F0\u5F62\u7CFB\u6570K: vOf("abKxi"), \u4EA4\u89D2\u03B1: vOf("abAlpha"), \u6C34\u6DF1hp: vOf("abHp"), \u6865\u53F0\u957Fl: vOf("abL"), \u7C92\u5F84d0: vOf("abD0"), \u6D41\u901Fv: vOf("abV"), \u8D77\u51B2\u6D41\u901F: vOf("abV0s") }, { hb: r.hb.toFixed(2) + " m" }, "JTG C30\u20142015 \u516C\u5F0F8.4.3-2");
+      }
+      err.style.display = "none";
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  if ($("abGo")) {
+    $("abGo").onclick = calcAbutment;
+    $("abFormula").onchange = () => {
+      const f2 = $("abFormula").value === "f2";
+      $("ab2Row").style.display = f2 ? "" : "none";
     };
   }
   function logCalc(module, inputs, results, basis, params) {
