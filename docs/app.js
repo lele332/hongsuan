@@ -1187,8 +1187,8 @@
       items: [
         { no: "7.2.1-1", title: "\u6CB3\u69FD\u5BBD\u5EA6\u516C\u5F0F\uFF08\u8F6F\u4EF6\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Kq\xB7(Qp/Qc)^n\u2083\xB7Bc\uFF0C\u9002\u7528\u4E8E\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u3001\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5\u53CA\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u3002", page: "P25" },
         { no: "\u8868 7.2.1", title: "Kq\u3001n\u2083 \u53D6\u503C", summary: "\u7A33\u5B9A\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF090.84 / 0.90\uFF1B\u6B21\u7A33\u5B9A\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF090.95 / 0.87\uFF1B\u4E0D\u7A33\u5B9A\uFF08\u6EE9\u69FD\u53EF\u5206\uFF090.69 / 1.59\u3002", page: "P26" },
-        { no: "7.2.1-2~3", title: "\u5BBD\u6EE9\u6CB3\u6BB5\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u53E6\u6709\u5355\u5BBD\u6D41\u91CF\u516C\u5F0F\uFF0C\u9700 \u03B2 \u6C34\u6D41\u538B\u7F29\u7CFB\u6570\u7B49\u53C2\u6570\uFF1B\u89C4\u8303\u539F\u6587\u4E3A\u56FE\u7247\uFF0C\u5F85\u5F55\u5165\u540E\u8865\u9F50\u3002", page: "P26" },
-        { no: "7.2.1-4~6", title: "\u6EE9\u69FD\u96BE\u5206\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u53E6\u6709\u57FA\u672C\u6CB3\u69FD\u5BBD\u5EA6 B0 \u516C\u5F0F\uFF0C\u6D89\u53CA\u6D2A\u5CF0\u6D41\u91CF\u5747\u503C\u3001\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84\u3001\u9891\u7387\u6362\u7B97\u7CFB\u6570\uFF1B\u5F85\u89C4\u8303\u539F\u6587\u5F55\u5165\u3002", page: "P26" },
+        { no: "7.2.1-2", title: "\u5BBD\u6EE9\u6CB3\u6BB5\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Qp/(\u03B2\xB7qc)\uFF0C\u03B2 = 1.19\xB7(Qc/Qt)^0.10\uFF1B\u6CB3\u69FD\u5355\u5BBD\u6D41\u91CF qc \u6309\u7A33\u5B9A/\u6B21\u7A33\u5B9A\u6CB3\u6BB5\u5206\u522B\u8BA1\u7B97\u3002", page: "P26" },
+        { no: "7.2.1-4~6", title: "\u6EE9\u69FD\u96BE\u5206\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Cp\xB7B\u2080\uFF0CB\u2080 = 16.07\xB7Q\u0304^0.24/d\u0304^0.30\uFF08\u57FA\u672C\u6CB3\u69FD\u5BBD\u5EA6\uFF09\uFF0CCp = (Qp/Q\u2082%)^0.33 \u9891\u7387\u6362\u7B97\u7CFB\u6570\u3002", page: "P26" },
         { no: "7.2.2", title: "\u6865\u957F\u7EFC\u5408\u8BBA\u8BC1", summary: "\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u6700\u7EC8\u6865\u957F\u5E94\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u5F15\u9053\u7EB5\u5761\u4E0E\u53F0\u540E\u586B\u571F\u9AD8\u5EA6\u6280\u672F\u7ECF\u6D4E\u6BD4\u8F83\u786E\u5B9A\u3002", page: "P26" }
       ]
     },
@@ -1200,9 +1200,11 @@
         { no: "8.3.1-4", title: "64-1 \u4FEE\u6B63\u5F0F\uFF08\u4E00\u822C\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hp = [A\xB7(Q2/(\u03BC\xB7Bcj))\xB7(hmc/hcq)^(5/3) / (E\xB7d\u0304^(1/6))]^(3/5)\uFF1B\u975E\u9ECF\u6027\u571F\u6CB3\u69FD\u90E8\u5206\u3002", page: "P30" },
         { no: "\u8868 8.3.1-2", title: "\u542B\u6C99\u91CF\u7CFB\u6570 E\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6C5B\u671F\u542B\u6C99\u91CF \u03C1<1.0\u21920.46\uFF1B1~10\u21920.66\uFF1B>10\u21920.86\uFF08kg/m\xB3\uFF09\u3002", page: "P31" },
         { no: "8.3.3-2", title: "\u884C\u8FD1\u6D41\u901F\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "\u91C7\u7528 64-1 \u65F6 v = E\xB7d\u0304^(1/6)\xB7hp^(2/3)\uFF0C\u53EF\u7531 64-1 \u516C\u5F0F\u63A8\u5BFC\u81EA\u6D3D\uFF08\u8F6F\u4EF6\u5DF2\u505A\u95ED\u5408\u6821\u9A8C\uFF09\u3002", page: "P32" },
-        { no: "8.4.1", title: "65-2 \u5F0F\uFF08\u5C40\u90E8\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hb = K\u03BE\xB7K\u03B72\xB7B1^0.6\xB7hp^0.15\xB7[(v\u2212v0\u2032)/v0]^n2\uFF1Bv\u2264v0\u2032 \u65F6\u4E0D\u51B2\u5237\u3002K\u03BE \u6309\u9644\u5F55 C \u58A9\u5F62\u67E5\u8868\u624B\u586B\u3002", page: "P33" },
-        { no: "8.6.1~8.6.2", title: "\u57FA\u5E95\u6700\u5C0F\u57CB\u7F6E\u6DF1\u5EA6", summary: "\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u3001\u4E00\u822C\u3001\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF1B\u975E\u5CA9\u77F3\u6CB3\u5E8A\u8FD8\u5E94\u6309\u8868 8.6.2 \u52A0\u57CB\u6DF1\u5B89\u5168\u503C\uFF08\u8BE5\u8868\u672C\u7248\u672A\u5185\u7F6E\uFF0C\u9700\u67E5\u89C4\u8303\u539F\u8868\uFF09\u3002", page: "P35~36" },
-        { no: "8.4.3 / \u9644\u5F55D", title: "\u6865\u53F0\u51B2\u5237\u4E0E\u5CA9\u77F3\u51B2\u5237\uFF08\u5F85\u5B9E\u73B0\uFF09", summary: "\u6865\u53F0\u5C40\u90E8\u51B2\u5237\u6309 8.4.3\uFF08\u53F0\u5F62\u7CFB\u6570\u8868 8.4.3\uFF09\uFF1B\u5CA9\u77F3\u51B2\u5237\u6309\u9644\u5F55 D \u5206\u6790\u3002", page: "P33 / P77" }
+        { no: "8.4.1", title: "65-2 \u5F0F\uFF08\u5C40\u90E8\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hb = K\u03BE\xB7K\u03B72\xB7B1^0.6\xB7hp^0.15\xB7[(v\u2212v0\u2032)/v0]^n2\uFF1Bv\u2264v0\u2032 \u65F6\u4E0D\u51B2\u5237\u3002K\u03BE \u5DF2\u5185\u7F6E\u9644\u5F55 C \u5168 12 \u79CD\u58A9\u5F62\u901F\u67E5\uFF08\u754C\u9762\u70B9\u503C\u586B\u5165\uFF09\u3002", page: "P33" },
+        { no: "8.6.1~8.6.2", title: "\u57FA\u5E95\u6700\u5C0F\u57CB\u7F6E\u6DF1\u5EA6\uFF08\u8868 8.6.2 \u5DF2\u5185\u7F6E\uFF09", summary: "\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u3001\u4E00\u822C\u3001\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF1B\u975E\u5CA9\u77F3\u6CB3\u5E8A\u6309\u8868 8.6.2 \u52A0\u57CB\u6DF1\u5B89\u5168\u503C \u0394\uFF08\u5927\u4E2D\u6865 1.5~3.5\u3001\u7279\u5927\u6865 2.0~4.0\uFF0C\u6863\u95F4\u7EBF\u6027\u63D2\u503C\uFF09\u3002", page: "P35~36" },
+        { no: "\u9644\u5F55 C", title: "\u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u5168 12 \u79CD\u58A9\u5F62\uFF1A\u5355\u5706\u67F1 1.00\u3001\u53CC\u5706\u67F1\u5E26\u8054\u7CFB\u6881 \u03B1 \u6863\u8868\u3001\u5C16\u7AEF\u5F62 \u03B8 \u6863\u8868\uFF08\u53EF\u63D2\u503C\uFF09\u3001\u6869\u7FA4 K\u03BE=K\u03BE\u2081K\u03BE\u2098\u3001\u5927\u76F4\u5F84\u56F4\u5830 k_cd \u516C\u5F0F\u7B49\uFF1B\u66F2\u7EBF\u578B\uFF08\u5706\u7AEF\u5F62/\u6C89\u4E95\u7EC4\u5408\uFF09\u7ED9\u67E5\u56FE\u63D0\u793A\u3002", page: "P73~76" },
+        { no: "\u9644\u5F55 D", title: "\u5CA9\u77F3\u5730\u57FA\u6865\u58A9\u51B2\u5237\u53CA\u57FA\u5E95\u57CB\u6DF1\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u2160\u6781\u8F6F\u5CA9/\u2161\u2081\u8F6F\u5CA9/\u2161\u2082\u8F83\u8F6F\u5CA9/\u2162\u786C\u8D28\u5CA9 \xD7 \u6C34\u6DF1\u4E09\u6863\uFF08<2 / 2~10 / >10 m\uFF09\u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6\uFF0C\u542B\u6CE8 7 \u6761\uFF1B\u754C\u9762\u300C\u5CA9\u77F3\u6CB3\u5E8A\u57FA\u5E95\u57CB\u6DF1\u300D\u53EF\u67E5\u3002", page: "P77~78" },
+        { no: "8.4.3", title: "\u6865\u53F0\u51B2\u5237\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "8.4.3-1 \u963B\u6C34\u9762\u79EF\u6CD5\u4E0E 8.4.3-2 \u6C34\u6DF1\u6CD5\u4E24\u5F0F\u5747\u5B9E\u73B0\uFF1B\u53F0\u5F62\u7CFB\u6570 K\u03BE\u3001\u5F62\u72B6\u7CFB\u6570 C_A \u6309\u8868 8.4.3 \u624B\u586B\u3002", page: "P33" }
       ]
     },
     {
@@ -1223,6 +1225,10 @@
       name: "JTG C30\u20142015\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300B",
       detail: "\u4EA4\u901A\u8FD0\u8F93\u90E8\u653F\u5E9C\u4FE1\u606F\u516C\u5F00\u7F51\u5168\u6587 PDF\uFF08126 \u9875\uFF0C\u626B\u63CF\u7248\uFF09\u3002\u7B2C 6/7/8 \u7AE0\u6761\u6587\u4E0E\u7CFB\u6570\u8868\u7ECF\u6E32\u67D3 OCR \u5B9A\u4F4D\u540E\u6838\u5BF9\u3002",
       url: "https://xxgk.mot.gov.cn/2020/jigou/glj/202006/P020240607596475014848.pdf"
+    },
+    {
+      name: "JTG C30\u20142015 \u5B8C\u6574\u7248\uFF08\u542B\u9644\u5F55 A~E\uFF09",
+      detail: "\u9644\u5F55 C \u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF0812 \u79CD\u58A9\u5F62\uFF0CP73~76\uFF09\u4E0E\u9644\u5F55 D \u5CA9\u77F3\u5730\u57FA\u6865\u58A9\u51B2\u5237\u53CA\u57FA\u5E95\u57CB\u6DF1\uFF08P77~78\uFF09\u7531\u5B8C\u6574\u7248 PDF \u6E32\u67D3\u8BFB\u56FE\u63D0\u53D6\uFF0C\u7F16\u53F7 11/12 \u516C\u5F0F\u7ECF\u7B2C\u4E09\u65B9\u89C4\u8303\u5E93\u6587\u672C\u4EA4\u53C9\u9A8C\u8BC1\u3002"
     },
     {
       name: "JTG/T 3365-02\u20142020\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B",
@@ -1401,7 +1407,7 @@
     if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
     if (!Number.isFinite(B1) || B1 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsB1", value: B1, message: "\u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6 B1 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6309\u9644\u5F55 C \u58A9\u5BBD\u8BA1\u7B97\u53D6\u7528", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
     if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
-    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsKxi", value: Kxi, message: "\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u9644\u5F55 C \u4F9D\u58A9\u5F62\u67E5\u8868\u53D6\u7528\uFF08\u672C\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF09", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsKxi", value: Kxi, message: "\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u70B9\u5F00\u754C\u9762\u300C\u58A9\u5F62\u901F\u67E5\uFF08\u9644\u5F55C\uFF09\u300D\u6309\u58A9\u5F62\u53D6\u503C", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
     const v0 = incipientVelocity(d50);
     const v0p = startScourVelocity(d50);
     const Keta2 = grainFactor(d50);
@@ -1443,10 +1449,197 @@
     }
     const notes = [
       "\u89C4\u8303 8.6.1\uFF1A\u57FA\u5E95\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u3001\u4E00\u822C\u51B2\u5237\u548C\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF0C\u5E76\u7B26\u5408 JTG D63",
-      "\u89C4\u8303 8.6.2\uFF1A\u975E\u5CA9\u77F3\u6CB3\u5E8A\u58A9\u53F0\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF0C\u5B89\u5168\u503C\u6309\u8868 8.6.2 \u53D6\uFF08\u672C\u7248\u672A\u5185\u7F6E\u8BE5\u8868\uFF0C\u9700\u67E5\u89C4\u8303\u539F\u8868\uFF09"
+      "\u89C4\u8303 8.6.2\uFF1A\u975E\u5CA9\u77F3\u6CB3\u5E8A\u58A9\u53F0\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF0C\u5B89\u5168\u503C \u0394 \u5DF2\u5185\u7F6E\uFF08burialDelta \u6309\u8868 8.6.2 \u6863\u95F4\u63D2\u503C\uFF09\uFF1B\u5CA9\u77F3\u6CB3\u5E8A\u6539\u7528\u9644\u5F55 D \u8868 D\uFF08\u754C\u9762\u300C\u5CA9\u77F3\u6CB3\u5E8A\u57FA\u5E95\u57CB\u6DF1\u300D\u53EF\u67E5\uFF09"
     ];
     if (natural === 0) notes.push("\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u6309 0 \u8BA1\u5165\uFF1A\u82E5\u6709\u6CB3\u9053\u6F14\u53D8\u8D44\u6599\u5E94\u8865\u5145");
     return { total: Math.round((natural + general + local) * 1e3) / 1e3, notes };
+  }
+
+  // src/core/pierShape.ts
+  var PIER_TABLE_C = [
+    {
+      no: 1,
+      name: "\u5355\u5706\u67F1\uFF08\u5706\u5F62\u58A9\uFF09",
+      kind: "exact",
+      kxi: "K\u03BE = 1.00",
+      b1: "B\u2081 = d\uFF08d \u4E3A\u58A9\u5F84\uFF09"
+    },
+    {
+      no: 2,
+      name: "\u53CC\u5706\u67F1\uFF08\u5E76\u8054\u58A9\uFF09",
+      kind: "exact",
+      kxi: "\u4E0D\u5E26\u8054\u7CFB\u6881 K\u03BE = 1.00\uFF1B\u5E26\u8054\u7CFB\u6881\u6309 \u03B1 \u6863\u8868\uFF1A0\xB0\u21921.00\u300115\xB0\u21921.05\u300130\xB0\u21921.10\u300145\xB0\u21921.15",
+      b1: "B\u2081 = d",
+      note: "\u03B1 \u4E3A\u6865\u8F74\u6CD5\u7EBF\u4E0E\u6C34\u6D41\u65B9\u5411\u6240\u5939\u9510\u89D2\uFF1B\u6863\u95F4\u53EF\u5185\u63D2"
+    },
+    {
+      no: 3,
+      name: "\u5706\u7AEF\u5F62\u58A9",
+      kind: "curve",
+      kxi: "\u968F\u659C\u4EA4\u89D2 \u03B1 \u53D8\u5316\u7684\u66F2\u7EBF\uFF1A\u03B1=0\xB0 \u7EA6\u4F4E\u81F3 0.9 \u9644\u8FD1\uFF0C\u968F \u03B1 \u589E\u5927\u5347\u81F3\u7EA6 1.1\uFF08\u8BFB\u56FE\u91CF\u7EA7\uFF09\uFF0C\u7CBE\u786E\u503C\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF",
+      b1: "B\u2081 = (L\u2212b)\xB7sin\u03B1 + b\uFF08\u03B1=0 \u65F6\u6B63\u4EA4\u7528 B\u2081=b\uFF09",
+      note: "L \u4E3A\u58A9\u957F\u3001b \u4E3A\u58A9\u5BBD"
+    },
+    {
+      no: 4,
+      name: "\u5C16\u7AEF\u5F62\u58A9",
+      kind: "exact",
+      kxi: "\u4E0E\u6C34\u6D41\u6B63\u4EA4\u65F6\u6309\u8FCE\u6C34\u89D2 \u03B8 \u6863\u8868\uFF1A45\xB0\u21920.70\u300160\xB0\u21920.84\u300175\xB0\u21920.90\u300190\xB0\u21920.95\u3001120\xB0\u21921.10\uFF1B\u03B8=90\xB0 \u659C\u4EA4\u65F6\u53E6\u6709 K\u03BE-\u03B1 \u66F2\u7EBF\uFF08\u7EA6 0.9~1.1\uFF0C\u67E5\u56FE\uFF09",
+      b1: "B\u2081 = (L\u2212b)\xB7sin\u03B1 + b\uFF08\u4E3A\u7B80\u5316\u65F6\u6309\u5706\u7AEF\u58A9\u8BA1\u7B97\uFF09",
+      note: "\u03B8 \u4E3A\u5C16\u7AEF\u8FCE\u6C34\u89D2\uFF1B\u6B63\u4EA4\u6863\u95F4\u53EF\u5185\u63D2"
+    },
+    {
+      no: 5,
+      name: "\u6C89\u4E95\u57FA\u7840",
+      kind: "curve",
+      kxi: "K\u03BE-\u03B1 \u66F2\u7EBF\uFF08\u03B1=0\xB0~80\xB0\uFF0C\u91CF\u7EA7\u7EA6 1.0~1.3\uFF0C\u8BFB\u56FE\u7EA6 1.2 \u4E0A\u4E0B\uFF09\uFF0C\u7CBE\u786E\u503C\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0CB\u2081\u2032=L\u2081sin\u03B1+b\u2081cos\u03B1\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1",
+      note: "h \u4E3A\u603B\u6C34\u6DF1\uFF0Ch\u2081/h\u2082 \u4E3A\u58A9\u8EAB/\u6C89\u4E95\u5404\u81EA\u6C34\u6DF1"
+    },
+    {
+      no: 6,
+      name: "\u6C89\u4E95 + \u5706\u7AEF\u5F62\u58A9\u8EAB\uFF08\u7EC4\u5408\uFF09",
+      kind: "curve",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2082\uFF1AK\u03BE\u2081 \u6309 h\u2082/h \u67E5\u66F2\u7EBF\uFF080.98~1.2\uFF09\uFF0CK\u03BE\u2082 \u6309 \u03B1 \u67E5\u5706\u7AEF/\u77E9\u5F62\u53CC\u66F2\u7EBF\uFF08\u7EA6 0.9~1.2\uFF09\uFF1B\u4E24\u7EBF\u76F8\u5DEE\u8F83\u5927\u65F6\u6309 h\u2081\u3001h\u2082 \u6BD4\u4F8B\u5B9A\u70B9\u53D6\u503C",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0C\u5706\u7AEF B\u2081\u2032=(L\u2081\u2212b\u2081)sin\u03B1+b\u2081\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1"
+    },
+    {
+      no: 7,
+      name: "\u6C89\u4E95 + \u5C16\u7AEF\u5F62\u58A9\u8EAB\uFF08\u7EC4\u5408\uFF09",
+      kind: "curve",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2082\uFF1A\u6B63\u4EA4\u65F6 K\u03BE\u2081 \u6309 h\u2082/h \u66F2\u7EBF\u65CF\uFF08\u03B8=60\xB0/90\xB0/120\xB0 \u4E09\u6761\uFF0C\u7EA6 0.8~1.2\uFF09\uFF1B\u03B8=90\xB0 \u659C\u4EA4\u65F6 K\u03BE\u2082 \u6309 \u03B1 \u67E5\u5C16\u7AEF/\u77E9\u5F62\u53CC\u66F2\u7EBF\uFF1B\u5176\u4ED6\u89D2\u5EA6\u53EF\u8865\u63D2\u53D6\u503C",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0CB\u2081\u2032=(L\u2081\u2212b\u2081)sin\u03B1+b\u2081\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1"
+    },
+    {
+      no: 8,
+      name: "\u6269\u5927\u57FA\u7840",
+      kind: "note",
+      kxi: "\u91C7\u7528\u4E0E\u6C34\u6D41\u6B63\u4EA4\u65F6\u7684\u58A9\u5F62\u7CFB\u6570\uFF08\u6309\u4E0A\u90E8\u58A9\u8EAB\u5F62\u72B6\u53D6\u7F16\u53F7 1/3/4 \u7684\u503C\uFF09",
+      b1: "\u6B63\u4EA4 B\u2081 = b\uFF1B\u659C\u4EA4 B\u2081\u2032 = (L\u2212b)\xB7sin\u03B1 + b"
+    },
+    {
+      no: 9,
+      name: "\u6869\u7FA4\uFF08\u7FA4\u6869\u57FA\u7840\uFF09",
+      kind: "formula",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2098\uFF1BK\u03BE\u2098 = 1 + 5\xB7[(m\u22121)\u03C6/B\u2098]\u2074\uFF08m \u4E3A\u6869\u7684\u6392\u6570\uFF0C\u03C6 \u4E3A\u6869\u5F84\uFF0CB\u2098 \u4E3A\u6869\u7FA4\u5782\u76F4\u6C34\u6D41\u65B9\u5411\u5206\u5E03\u5BBD\u5EA6\uFF09\uFF1B\u5355\u6869\u67F1\u4F53\u7CFB\u6570\u6309\u7F16\u53F7 (1)(2)(3)(5) \u786E\u5B9A\uFF0C\u591A\u4E3A\u5706\u67F1\u65F6 K\u03BE\u2081=1.0",
+      b1: "B\u2081 = \u03C6"
+    },
+    {
+      no: 10,
+      name: "\u6869\u627F\u53F0\u6865\u58A9",
+      kind: "note",
+      kxi: "\u627F\u53F0\u5E95\u9762\u4F4E\u4E8E\u4E00\u822C\u51B2\u5237\u7EBF\u65F6\u6309\u4E0A\u90E8\u5B9E\u4F53\u8BA1\u7B97\uFF1B\u627F\u53F0\u5E95\u9762\u9AD8\u4E8E\u6C34\u9762\u6309\u6392\u67B6\u5F0F\u8BA1\u7B97\u3002\u627F\u53F0\u5E95\u9762\u76F8\u5BF9\u9AD8\u5EA6 0\u2264h\u2082/h\u2083\u22641.0 \u65F6\u7528\u89C4\u8303\u4E13\u7528\u516C\u5F0F\uFF08\u542B\u6DF9\u6CA1\u6869\u67F1\u6298\u51CF\u7CFB\u6570 K\u2083\u03C6 \u66F2\u7EBF\u65CF\uFF0C\u6309\u627F\u53F0\u539A\u5EA6/\u6C34\u6DF1 0.1/0.2/0.3 \u5206\u6863\uFF09\uFF0C\u8BE6\u89C1\u89C4\u8303\u9644\u5F55 C \u7F16\u53F7 10",
+      b1: "\u6309\u7F16\u53F7 (9) \u4E0E\u627F\u53F0\u51E0\u4F55\u7EC4\u5408\u786E\u5B9A",
+      note: "\u4E13\u7528\u516C\u5F0F\u4F9D\u8D56 65-1 \u5F0F\u53C2\u6570\uFF08K\u03BE\u2081\u3001v\u2080\u3001v\u2080\u2032\u3001n\u2081 \u7B49\uFF09\uFF0C\u5EFA\u8BAE\u67E5\u89C4\u8303\u539F\u56FE\u9010\u9879\u4EE3\u5165"
+    },
+    {
+      no: 11,
+      name: "\u5927\u76F4\u5F84\u56F4\u5830\u7FA4\u6869",
+      kind: "formula",
+      kxi: "h_b = k_cd\xB7h_by\uFF1Bk_cd = 0.2 + 0.4\xB7(c/h)^0.3\xB7[1 + (z/h_by)^0.6]\uFF0Ch_by \u4E3A\u6309\u7F16\u53F7 (1) \u58A9\u5F62\u7B97\u5F97\u7684\u5C40\u90E8\u51B2\u5237\u6DF1\u5EA6",
+      b1: "B\u2081 = d",
+      note: "\u9002\u7528\u8303\u56F4\uFF1A0.2\u2264c/h\u22641.0\uFF0C0.2\u2264z/h_by\u22641.0"
+    },
+    {
+      no: 12,
+      name: "\u5DE5\u5B57\u627F\u53F0\u5927\u76F4\u5F84\u57FA\u6869\u7EC4\u5408\u58A9",
+      kind: "formula",
+      kxi: "h_b = k_\u03B1\xB7k_xh\xB7h_by\uFF1Bk_\u03B1 = \u22120.57\u03B1\xB2 + 0.57\u03B1 + 1\uFF08\u03B1 \u4EE5\u5F27\u5EA6\u8BA1\uFF0C0~0.785\uFF09\uFF1Bk_xh = 1.22h_x2(1+h\u2080/h) + 1.18(\u03C6/B\u2081)^0.6\xB7(h_d/h)\uFF0Ch_by \u6309\u7F16\u53F7 (1) \u58A9\u5F62\u8BA1\u7B97",
+      b1: "B\u2081",
+      note: "\u9002\u7528\u8303\u56F4\uFF1AD=2\u03C6\uFF0C0.2<h\u2082/h<0.5\uFF0C0<h_d/h<1.0\uFF0C\u03B1=0~0.785"
+    }
+  ];
+  function pierKxi2(alphaDeg) {
+    const stops = [0, 15, 30, 45];
+    const vals = [1, 1.05, 1.1, 1.15];
+    return interpStops(alphaDeg, stops, vals);
+  }
+  function pierKxi4(thetaDeg) {
+    const stops = [45, 60, 75, 90, 120];
+    const vals = [0.7, 0.84, 0.9, 0.95, 1.1];
+    return interpStops(thetaDeg, stops, vals);
+  }
+  function interpStops(x, stops, vals) {
+    if (!Number.isFinite(x)) throw new Error("\u89D2\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C\uFF08\u5EA6\uFF09");
+    if (x <= stops[0]) return vals[0];
+    if (x >= stops[stops.length - 1]) return vals[vals.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (x >= stops[i] && x <= stops[i + 1]) {
+        const t = (x - stops[i]) / (stops[i + 1] - stops[i]);
+        return Math.round((vals[i] + (vals[i + 1] - vals[i]) * t) * 1e3) / 1e3;
+      }
+    }
+    throw new Error("\u63D2\u503C\u5206\u652F\u672A\u8986\u76D6");
+  }
+  var ROCK_TABLE_D = [
+    {
+      cls: "\u2160",
+      group: "\u6781\u8F6F\u5CA9",
+      strength: "<5",
+      ucMin: 0,
+      ucMax: 5,
+      bridges: 2,
+      maxScour: "0.65~3.0",
+      hlt2: "3~4",
+      h2to10: "4~5",
+      hgt10: "5~7",
+      feature: "\u6210\u5206\u4EE5\u957F\u77F3\u4E3A\u4E3B\uFF0C\u77F3\u82F1\u51DD\u7070\u788E\u5C51\u3001\u4E91\u6BCD\u6B21\u4E4B\uFF1B\u4EE5\u9ECF\u571F\u53CA\u94C1\u8D28\u80F6\u7ED3\uFF0C\u80F6\u7ED3\u4E0D\u826F\uFF0C\u7528\u624B\u53EF\u634F\u6210\u6563\u7802\uFF1B\u6DCB\u6EE4\u73B0\u8C61\u660E\u663E\uFF0C\u4F46\u7ED3\u6784\u5747\u5300\uFF0C\u8282\u7406\u3001\u88C2\u9699\u4E0D\u53D1\u80B2\u3002\u5176\u4ED6\u5CA9\u77F3\u5982\u98CE\u5316\u4E25\u91CD\uFF0C\u8282\u7406\u3001\u88C2\u9699\u53D1\u80B2\uFF0C\u5F3A\u5EA6\u5C0F\u4E8E 5MPa\uFF0C\u7528\u9550\u3001\u9539\u6613\u6316\u52A8\u8005"
+    },
+    {
+      cls: "\u2161\u2081",
+      group: "\u8F6F\u5CA9\uFF08\u8F6F\u8D28\u5CA9\uFF09",
+      strength: "5~15",
+      ucMin: 5,
+      ucMax: 15,
+      bridges: 10,
+      maxScour: "0.4~2.0",
+      hlt2: "2~3",
+      h2to10: "3~4",
+      hgt10: "4~5",
+      feature: "\u6210\u5206\u4EE5\u9ECF\u571F\u4E3A\u4E3B\uFF0C\u65B9\u89E3\u77F3\u3001\u4E91\u6BCD\u3001\u77F3\u82F1\u6B21\u4E4B\uFF1B\u80F6\u7ED3\u6210\u5206\u4EE5\u6CE5\u8D28\u4E3A\u4E3B\uFF0C\u9499\u8D28\u6B21\u4E4B\uFF1B\u5E72\u88C2\u73B0\u8C61\u4E25\u91CD\uFF0C\u6613\u98CE\u5316\uFF0C\u5904\u4E8E\u6C34\u4E0B\u65F6\u6574\u4F53\u6027\u5C1A\u597D\uFF1B\u4E0D\u6613\u900F\u6C34\uFF0C\u66B4\u9732\u540E\u6613\u5E72\u88C2\u6210\u788E\u5757\u3002\u5176\u4ED6\u5982\u98CE\u5316\u8F83\u4E25\u91CD\uFF0C\u8282\u7406\u8F83\u53D1\u80B2\uFF0C\u4F46\u9047\u6C34\u5D29\u89E3\u6210\u571F\u72B6\u7684\u5CA9\u5757"
+    },
+    {
+      cls: "\u2161\u2082",
+      group: "\u8F6F\u5CA9\uFF08\u8F83\u8F6F\u5CA9\uFF09",
+      strength: "15~30",
+      ucMin: 15,
+      ucMax: 30,
+      bridges: 9,
+      maxScour: "0.4~1.25",
+      hlt2: "1~2",
+      h2to10: "2~3",
+      hgt10: "3~4",
+      feature: "\u7802\u5CA9\u6210\u5206\u540C\u4E0A\uFF0C\u5939\u7802\u9897\u7C92\uFF1B\u7802\u5CA9\u4EE5\u77F3\u82F1\u4E3A\u4E3B\uFF0C\u957F\u77F3\u3001\u4E91\u6BCD\u6B21\u4E4B\uFF0C\u4EE5\u78F7\u3001\u9499\u8D28\u7B49\u80F6\u7ED3\u3002\u9875\u5CA9\u4EE5\u7845\u8D28\u4E0E\u6CE5\u8D28\u7B49\u80F6\u7ED3\u3002\u80F6\u7ED3\u7269\u4EE5\u6CE5\u8D28\u3001\u9499\u8D28\u4E3A\u4E3B\uFF0C\u7802\u8D28\u6B21\u4E4B\uFF0C\u5C42\u7406\u3001\u8282\u7406\u8F83\u660E\u663E\u3002\u7802\u9875\u5CA9\u5728\u6C34\u9646\u4EA4\u66FF\u5904\u6613\u4E8E\u5E72\u88C2\u3001\u5D29\u89E3"
+    },
+    {
+      cls: "\u2162",
+      group: "\u786C\u8D28\u5CA9\uFF08\u8F83\u786C\u5CA9\u3001\u575A\u786C\u5CA9\uFF09",
+      strength: ">30",
+      ucMin: 30,
+      ucMax: null,
+      bridges: 9,
+      maxScour: "0.4~0.7",
+      hlt2: "0.2~1.0",
+      h2to10: "0.2~2.0",
+      hgt10: "0.5~3.0",
+      feature: "\u677F\u5CA9\u3001\u9499\u8D28\u7802\u5CA9\u3001\u5CA9\u6D46\u5CA9\uFF08\u82B1\u5C97\u5CA9\u3001\u77F3\u7070\u5CA9\u7B49\uFF09\u3001\u77F3\u82F1\u7802\u5CA9\u3001\u6D41\u7EB9\u5CA9\u3001\u82B1\u5C97\u5CA9\u7C7B\u7B49\u3002\u5CA9\u77F3\u575A\u786C\uFF0C\u5F3A\u5EA6\u867D\u5927\u4E8E 30MPa\uFF0C\u4F46\u8282\u7406\u3001\u88C2\u9699\u3001\u5C42\u7406\u975E\u5E38\u53D1\u80B2\uFF0C\u5E94\u8003\u8651\u51B2\u5237\u3002\u5982\u5CA9\u4F53\u5B8C\u6574\u8282\u7406\u3001\u88C2\u9699\u5C11\u91CF\uFF0C\u98CE\u5316\u5F88\u5FAE\u5F31\uFF0C\u53EF\u4E0D\u8BA1\u51B2\u5237\uFF0C\u4F46\u57FA\u5E95\u4E5F\u5B9C\u57CB\u5165\u5CA9\u9762 0.2~0.5m"
+    }
+  ];
+  function rockBurial(cls, band) {
+    const norm = cls.trim().replace(/\s/g, "");
+    const row = ROCK_TABLE_D.find((r) => {
+      const alias = r.cls.replace(/Ⅰ/g, "I").replace(/Ⅱ/g, "II").replace(/Ⅲ/g, "III").replace(/₁/g, "1").replace(/₂/g, "2");
+      return r.cls === norm || alias === norm.toUpperCase();
+    });
+    if (!row) {
+      throw new Error(`\u5CA9\u77F3\u7C7B\u522B ${cls} \u4E0D\u5728\u9644\u5F55 D \u8868\u5217\uFF08\u5E94\u4E3A \u2160 / \u2161\u2081 / \u2161\u2082 / \u2162\uFF09`);
+    }
+    const map = {
+      lt2: { label: "h < 2 m", range: row.hlt2 },
+      "2to10": { label: "h = 2~10 m", range: row.h2to10 },
+      gt10: { label: "h > 10 m", range: row.hgt10 }
+    };
+    return { row, bandLabel: map[band].label, range: map[band].range };
   }
 
   // src/core/threePoint.ts
@@ -3148,6 +3341,86 @@
   var lastGeneralHy = 0;
   var lastScourE = 0.66;
   var lastD50 = 0.14;
+  function buildPierQuick() {
+    const box = $("pierQuick");
+    if (!box) return;
+    const esc2 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let html = `<table class="ltab"><tr><th colspan="3">\u9644\u5F55 C \u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF08JTG C30\u20142015\uFF0C\u5168 12 \u79CD\u58A9\u5F62\uFF09</th></tr>`;
+    for (const p of PIER_TABLE_C) {
+      if (p.kind === "exact") {
+        const anchors = [];
+        if (p.no === 1) anchors.push(["\u5355\u5706\u67F1\uFF08\u5706\u5F62\u58A9\uFF09", 1]);
+        if (p.no === 2) {
+          anchors.push(
+            ["\u53CC\u5706\u67F1\xB7\u4E0D\u5E26\u8054\u7CFB\u6881", 1],
+            ["\u53CC\u5706\u67F1\xB7\u5E26\u8054\u7CFB\u6881 \u03B1=0\xB0", pierKxi2(0)],
+            ["\u03B1=15\xB0", pierKxi2(15)],
+            ["\u03B1=30\xB0", pierKxi2(30)],
+            ["\u03B1=45\xB0", pierKxi2(45)]
+          );
+        }
+        if (p.no === 4) {
+          anchors.push(
+            ["\u5C16\u7AEF\u5F62 \u03B8=45\xB0", pierKxi4(45)],
+            ["\u03B8=60\xB0", pierKxi4(60)],
+            ["\u03B8=75\xB0", pierKxi4(75)],
+            ["\u03B8=90\xB0", pierKxi4(90)],
+            ["\u03B8=120\xB0", pierKxi4(120)]
+          );
+        }
+        for (const [label, kxi] of anchors) {
+          html += `<tr><td>\u2116${p.no} ${esc2(label)}</td><td class="v">K\u03BE = ${kxi.toFixed(2)}</td><td><button class="btn" data-kxi="${kxi}" style="padding:2px 10px;font-size:12px">\u586B\u5165</button></td></tr>`;
+        }
+        if (p.note) html += `<tr><td colspan="3" style="color:var(--text2);font-size:11px">${esc2("\u6CE8\uFF1A" + p.note)}</td></tr>`;
+      } else {
+        const tag = p.kind === "curve" ? "\u9700\u67E5\u89C4\u8303\u66F2\u7EBF" : p.kind === "formula" ? "\u6309\u4E13\u7528\u516C\u5F0F" : "\u6587\u5B57\u8BF4\u660E";
+        html += `<tr><td>\u2116${p.no} ${esc2(p.name)}</td><td colspan="2" style="font-size:12px">${esc2(p.kxi)}<br><span style="color:var(--text2)">B\u2081\uFF1A${esc2(p.b1)}</span><br><span style="color:var(--amber)">[${tag}]${p.note ? " " + esc2(p.note) : ""}</span></td></tr>`;
+      }
+    }
+    html += `</table><div style="font-size:11px;color:var(--text2);margin-top:4px">\u6765\u6E90\uFF1AJTG C30\u20142015 \u9644\u5F55 C\uFF08\u5B8C\u6574\u7248 P73~76\uFF09\u3002\u66F2\u7EBF\u578B\u58A9\u5F62\u7684\u7CBE\u786E\u503C\u8BF7\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF\u56FE\uFF1B\u70B9\u300C\u586B\u5165\u300D\u540E\u4ECD\u5E94\u6309\u58A9\u5F62\u590D\u6838\u3002</div>`;
+    box.innerHTML = html;
+    box.onclick = (ev) => {
+      const btn = ev.target.closest("button[data-kxi]");
+      if (!btn) return;
+      const inp = $("lsKxi");
+      inp.value = btn.dataset.kxi ?? "";
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      const old = btn.textContent;
+      btn.textContent = "\u2713 \u5DF2\u586B\u5165";
+      setTimeout(() => {
+        btn.textContent = old;
+      }, 1200);
+      logCalc(
+        "\u51B2\u5237 \xB7 \u9644\u5F55C\u58A9\u5F62\u901F\u67E5",
+        { \u53D6\u503C: btn.dataset.kxi ?? "" },
+        { K\u03BE: inp.value },
+        "JTG C30\u20142015 \u9644\u5F55 C \u8868 C",
+        {}
+      );
+    };
+  }
+  function setupRockBurial() {
+    const go = $("rockGo"), out = $("rockOut");
+    if (!go || !out) return;
+    const esc2 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    go.onclick = () => {
+      try {
+        const cls = $("rockCls").value;
+        const band = $("rockBand").value;
+        const r = rockBurial(cls, band);
+        out.innerHTML = `<div style="font-size:13px;color:var(--text)"><b>${esc2(r.row.cls)} ${esc2(r.row.group)}</b>\uFF08\u5F3A\u5EA6 ${esc2(r.row.strength)} MPa\uFF0C\u8C03\u67E5 ${r.row.bridges} \u5EA7\u6865\uFF0C\u5404\u6865\u6700\u5927\u51B2\u5237 ${esc2(r.row.maxScour)} m\uFF09\u2192 <b style="color:var(--blue)">${esc2(r.bandLabel)}\uFF1A\u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6 ${esc2(r.range)} m</b>\uFF08\u81EA\u5CA9\u9762\u7B97\u8D77\uFF0C\u542B\u98CE\u5316\u5C42\uFF09</div><div style="margin-top:4px">\u5CA9\u77F3\u7279\u5F81\uFF1A${esc2(r.row.feature)}</div><div style="margin-top:4px;color:var(--amber)">\u6CE8 1\uFF1A\u6761\u4EF6\u597D\u53D6\u4E0B\u9650\u3001\u6761\u4EF6\u5DEE\u53D6\u4E0A\u9650\uFF1B\u6CE8 2\uFF1A\u975E\u4E3B\u6D41\u90E8\u5206\u53CA\u6D41\u901F\u8F83\u5C0F\u7684\u6865\u58A9\u53EF\u9002\u5F53\u51CF\u5C11\u57CB\u6DF1\uFF1B\u6CE8 6\uFF1A\u6869\u57FA\u7840\u53EF\u4F5C\u4E3A\u6700\u5927\u51B2\u5237\u7EBF\u4F4D\u7F6E\u3002</div>`;
+        logCalc(
+          "\u51B2\u5237 \xB7 \u9644\u5F55D\u5CA9\u77F3\u57CB\u6DF1",
+          { \u7C7B\u522B: cls, \u6C34\u6DF1\u6863: r.bandLabel },
+          { \u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6: r.range + " m" },
+          "JTG C30\u20142015 \u9644\u5F55 D \u8868 D",
+          { \u5F3A\u5EA6\u6863: r.row.strength, \u8C03\u67E5\u6865\u6881\u6570: r.row.bridges }
+        );
+      } catch (e) {
+        out.innerHTML = `<span style="color:var(--red)">${esc2(e instanceof Error ? e.message : String(e))}</span>`;
+      }
+    };
+  }
   function calcLocalScour() {
     const err = $("lsErr"), out = $("lsOut"), detail = $("lsDetail");
     try {
@@ -3195,6 +3468,8 @@
     $("lsGo").onclick = () => {
       calcLocalScour();
     };
+    buildPierQuick();
+    setupRockBurial();
     $("lsUseV").onclick = () => {
       try {
         if (lastGeneralHp <= 0) throw new Error("\u8BF7\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97");
