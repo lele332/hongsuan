@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.1</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.2</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -116,7 +116,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.1</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.2</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -429,6 +429,27 @@
     </div>
     <div class="err" id="wsErr" style="margin-top:8px"></div>
     <div id="wsResult" style="display:none;margin-top:12px"></div>
+
+    <h3 style="margin-top:26px;font-size:15px">复式断面标准步长法（SSM · 天然河道水面线）<span style="color:#34c759;font-size:11px">✓ HEC-RAS 官方算例回归验证</span></h3>
+    <div class="hint" style="margin-top:0">天然河道任意测点断面 × 左滩/河槽/右滩三区：子区输运率 K<sub>i</sub>=(K<sub>n</sub>/n<sub>i</sub>)A<sub>i</sub>R<sub>i</sub><sup>2/3</sup>，动能修正 α，摩阻坡 S<sub>f</sub>=(2Q/(K<sub>下</sub>+K<sub>上</sub>))²，滩槽加权河长，由下游控制断面逐段上推解能量方程——JTG C30-2015 6.3.1 试算法的天然河道实现，方法对齐 HEC-RAS（USACE）。回归验证：HEC-RAS 7.0.1 官方 SCOUR 算例 9 断面 30000 cfs，非桥梁断面 |ΔWSE| ≤ 0.05 ft。</div>
+    <div class="row">
+      <div><label>流量 Q</label><input type="number" id="ssmQ" value="500" step="any" min="0.001"></div>
+      <div><label>单位制</label><select id="ssmUnits"><option value="SI" selected>米制 m³/s</option><option value="EN">英制 cfs·ft</option></select></div>
+      <div><label>下游边界</label><select id="ssmBd"><option value="normalDepth" selected>正常水深（河底比降）</option><option value="wse">给定水位</option></select></div>
+      <div><label>边界比降 S0</label><input type="number" id="ssmS0" value="0.0009" step="any" min="0.000001"></div>
+      <div><label>边界水位（给定水位时）</label><input type="number" id="ssmWse" value="" step="any" placeholder="选「给定水位」时填写"></div>
+    </div>
+    <label style="margin-top:6px">断面数据（每段一个断面头 + 测点行，见格式说明）</label>
+    <div class="hint" style="margin-top:4px;font-size:11.5px">断面头：<code>[站号] L=左滩河长,河槽,右滩 C=扩张,收缩 n=左滩,河槽,右滩糙率 bank=滩槽左界,右界 ineff=桩号,高程,L;桩号,高程,R</code>（L/C/ineff 可省略）；随后每行「桩号,高程」测点（一行可多点，数字成对）。<b>断面按下游 → 上游排列</b>；河长为「本断面至下游相邻断面」；最下游断面 L 填 0。</div>
+    <textarea id="ssmText" rows="10" style="margin-top:4px;font-variant-numeric:tabular-nums" placeholder="点击下方「中文示例」或「HEC-RAS 算例」载入，或直接粘贴断面数据"></textarea>
+    <div class="row" style="margin-top:6px">
+      <button class="btn" id="btnSsmDemoSi">中文示例（SI）</button>
+      <button class="btn" id="btnSsmDemoHec">HEC-RAS 算例（英制 9 断面）</button>
+      <button class="btn" id="btnSsmRun" style="background:var(--blue);color:#fff">推算水面线</button>
+      <button class="btn" id="btnSsmClear">清空</button>
+    </div>
+    <div class="err" id="ssmErr" style="margin-top:8px"></div>
+    <div id="ssmResult" style="display:none;margin-top:12px"></div>
   </div>
 
   <div id="noDataBox" style="display:none">
@@ -855,7 +876,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.1<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.2<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>

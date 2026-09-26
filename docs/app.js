@@ -696,6 +696,291 @@
     }
   };
 
+  // src/core/ssmProfile.ts
+  var KN = { SI: 1, EN: 1.486 };
+  var GRAV = { SI: 9.8, EN: 32.2 };
+  function zAt(pts, x) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (pts[i].x <= x && x <= pts[i + 1].x) {
+        const dx = pts[i + 1].x - pts[i].x;
+        const t = dx !== 0 ? (x - pts[i].x) / dx : 0;
+        return pts[i].z + t * (pts[i + 1].z - pts[i].z);
+      }
+    }
+    return pts[pts.length - 1].z;
+  }
+  function segIntegrate(pts, lo, hi, wse) {
+    const seg = [];
+    for (const p of pts) if (lo - 1e-9 <= p.x && p.x <= hi + 1e-9) seg.push(p);
+    if (seg.length === 0 || seg[0].x > lo + 1e-9) seg.unshift({ x: lo, z: zAt(pts, lo) });
+    if (seg[seg.length - 1].x < hi - 1e-9) seg.push({ x: hi, z: zAt(pts, hi) });
+    let A = 0, P = 0, T = 0;
+    for (let i = 0; i < seg.length - 1; i++) {
+      const s1 = seg[i].x, z1 = seg[i].z, s2 = seg[i + 1].x, z2 = seg[i + 1].z;
+      if (s2 === s1) continue;
+      const d1 = wse - z1, d2 = wse - z2;
+      if (d1 <= 0 && d2 <= 0) continue;
+      if (d1 > 0 && d2 > 0) {
+        A += 0.5 * (d1 + d2) * (s2 - s1);
+        P += Math.hypot(s2 - s1, z2 - z1);
+        T += s2 - s1;
+      } else if (d1 > 0) {
+        const sf = s1 + (s2 - s1) * d1 / (d1 - d2);
+        A += 0.5 * d1 * (sf - s1);
+        P += Math.hypot(sf - s1, wse - z1);
+        T += sf - s1;
+      } else {
+        const sf = s1 + (s2 - s1) * -d1 / (d2 - d1);
+        A += 0.5 * d2 * (s2 - sf);
+        P += Math.hypot(s2 - sf, d2);
+        T += s2 - sf;
+      }
+    }
+    return { A, P, T };
+  }
+  function validateSection(sec) {
+    const fail = (msg, suggestion) => {
+      throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.section.${sec.id}`, message: `\u65AD\u9762 ${sec.id}\uFF1A${msg}`, suggestion: suggestion ?? "\u8BF7\u68C0\u67E5\u65AD\u9762\u6570\u636E" });
+    };
+    if (!Array.isArray(sec.pts) || sec.pts.length < 2) fail("\u6D4B\u70B9\u81F3\u5C11\u9700\u8981 2 \u4E2A");
+    for (const p of sec.pts) if (!Number.isFinite(p.x) || !Number.isFinite(p.z)) fail("\u6D4B\u70B9\u6869\u53F7/\u9AD8\u7A0B\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    for (let i = 1; i < sec.pts.length; i++) if (sec.pts[i].x <= sec.pts[i - 1].x) fail("\u6D4B\u70B9\u6869\u53F7\u5FC5\u987B\u4E25\u683C\u5347\u5E8F", "\u6309\u6869\u53F7\u4ECE\u5C0F\u5230\u5927\u9010\u884C\u8F93\u5165");
+    const x0 = sec.pts[0].x, xE = sec.pts[sec.pts.length - 1].x;
+    if (!(sec.bankL > x0 - 1e-9 && sec.bankL < sec.bankR && sec.bankR < xE + 1e-9)) fail(`\u6EE9\u69FD\u5206\u754C\u6869\u53F7\u9700\u6EE1\u8DB3 ${x0} < bankL < bankR < ${xE}`);
+    for (const [k, v] of [["nLob", sec.nLob], ["nCh", sec.nCh], ["nRob", sec.nRob]])
+      if (!(v > 0) || !Number.isFinite(v)) fail(`\u7CD9\u7387 ${k} \u5FC5\u987B\u4E3A\u6B63\u6570`);
+    for (const [k, v] of [["lenLob", sec.lenLob], ["lenCh", sec.lenCh], ["lenRob", sec.lenRob], ["cExpan", sec.cExpan], ["cContr", sec.cContr]])
+      if (!Number.isFinite(v) || v < 0) fail(`${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6709\u9650\u6570`);
+  }
+  function sectionProps(sec, wse, units) {
+    validateSection(sec);
+    const kn = KN[units];
+    const x0 = sec.pts[0].x, xE = sec.pts[sec.pts.length - 1].x;
+    const ranges = [
+      { zone: "lob", lo: x0, hi: sec.bankL, n: sec.nLob, len: sec.lenLob },
+      { zone: "ch", lo: sec.bankL, hi: sec.bankR, n: sec.nCh, len: sec.lenCh },
+      { zone: "rob", lo: sec.bankR, hi: xE, n: sec.nRob, len: sec.lenRob }
+    ];
+    const zones = [];
+    for (const r of ranges) {
+      let lo = r.lo, hi = r.hi;
+      for (const im of sec.ineff ?? []) {
+        if (wse < im.z) {
+          if (im.side === "L") lo = Math.max(lo, im.x);
+          else hi = Math.min(hi, im.x);
+        }
+      }
+      const g = hi > lo ? segIntegrate(sec.pts, lo, hi, wse) : { A: 0, P: 0, T: 0 };
+      const K2 = g.A > 1e-9 && g.P > 0 ? kn / r.n * g.A * Math.pow(g.A / g.P, 2 / 3) : 0;
+      zones.push({ zone: r.zone, A: g.A, K: K2, P: g.P, T: g.T });
+    }
+    const A = zones.reduce((s, z) => s + z.A, 0);
+    const K = zones.reduce((s, z) => s + z.K, 0);
+    const P = zones.reduce((s, z) => s + z.P, 0);
+    const T = zones.reduce((s, z) => s + z.T, 0);
+    let alpha = 1;
+    if (K > 0 && A > 0) {
+      const num2 = zones.reduce((s, z) => z.A > 0 ? s + z.K ** 3 / z.A ** 2 : s, 0);
+      alpha = num2 * A * A / K ** 3;
+    }
+    return { A, K, P, T, alpha, zones: [zones[0], zones[1], zones[2]] };
+  }
+  function normalDepthWSE(sec, S0, Q, units) {
+    if (!(S0 > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.boundary.S0", message: "\u8FB9\u754C\u6CB3\u5E95\u6BD4\u964D\u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6B63\u5E38\u6C34\u6DF1\u8FB9\u754C\u9700\u8981\u4E0B\u6E38\u6CB3\u6BB5\u6BD4\u964D S0 > 0" });
+    if (!(Q > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.Q", message: "\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63" });
+    const zmin = Math.min(...sec.pts.map((p) => p.z));
+    const f = (w) => sectionProps(sec, w, units).K * Math.sqrt(S0) - Q;
+    let lo = zmin, hi = zmin + 5;
+    let guard = 0;
+    while (f(hi) < 0 && guard++ < 60) {
+      lo = hi;
+      hi = zmin + (hi - zmin) * 2;
+    }
+    if (f(hi) < 0) throw new HsError({ code: "E_CONVERGE", field: "ssm.boundary", message: `\u65AD\u9762 ${sec.id} \u6B63\u5E38\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650\uFF08K\xB7\u221AS0 \u8FBE\u4E0D\u5230 Q=${Q}\uFF09`, suggestion: "\u68C0\u67E5\u6D41\u91CF\u4E0E\u7CD9\u7387\u662F\u5426\u5408\u7406\uFF08\u7CD9\u7387\u8FC7\u5927\u6216\u6D41\u91CF\u8FC7\u5927\u90FD\u4F1A\u63A8\u9AD8\u6B63\u5E38\u6C34\u6DF1\uFF09" });
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) < 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function stepUpstream(secD, secU, wseD, Q, units, wseGuess) {
+    const g = GRAV[units];
+    const pd = sectionProps(secD, wseD, units);
+    if (!(pd.A > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.wse.${secD.id}`, message: `\u4E0B\u6E38\u65AD\u9762 ${secD.id} \u5728\u6C34\u4F4D ${wseD} \u4E0B\u4E0D\u8FC7\u6C34`, suggestion: "\u63D0\u9AD8\u4E0B\u6E38\u8D77\u59CB\u6C34\u4F4D\uFF08\u6216\u6539\u7528\u6B63\u5E38\u6C34\u6DF1\u8FB9\u754C\uFF09" });
+    const vd = Q / pd.A, hvd = pd.alpha * vd * vd / (2 * g);
+    const zminU = Math.min(...secU.pts.map((p) => p.z));
+    const Ls = [secU.lenLob, secU.lenCh, secU.lenRob];
+    const evaluate = (wseU) => {
+      const pu = sectionProps(secU, wseU, units);
+      if (!(pu.A > 0)) return { r: wseU - (zminU + 0.01) - 1, info: null };
+      const vu = Q / pu.A, hvu = pu.alpha * vu * vu / (2 * g);
+      let wsum = 0, lsum = 0;
+      for (let i = 0; i < 3; i++) {
+        const w = (pd.zones[i].K + pu.zones[i].K) / 2;
+        wsum += w;
+        lsum += w * Ls[i];
+      }
+      const Lbar = wsum > 0 ? lsum / wsum : secU.lenCh;
+      const sf = (2 * Q / (pd.K + pu.K)) ** 2;
+      const isContr = hvu > hvd;
+      const c = isContr ? secU.cContr : secU.cExpan;
+      const hL = Lbar * sf + c * Math.abs(hvu - hvd);
+      return { r: wseU - (wseD + hvd - hvu + hL), info: { props: pu, v: vu, hv: hvu, sf, Lbar, hL, c, cKind: isContr ? "contraction" : "expansion" } };
+    };
+    let wse = wseGuess ?? wseD + 0.5;
+    let info = null;
+    let iters = 0, ok = false;
+    for (; iters < 200; iters++) {
+      const { r, info: inf } = evaluate(wse);
+      info = inf;
+      if (Math.abs(r) < 1e-6) {
+        ok = true;
+        break;
+      }
+      const r2 = evaluate(wse + 0.01).r;
+      const slope = Math.abs(r2 - r) > 1e-12 ? (r2 - r) / 0.01 : 1;
+      let next = wse - r / slope;
+      if (!(zminU - 1 < next && next < zminU + 80)) next = (wse + next) / 2;
+      if (Math.abs(next - wse) < 1e-8) {
+        wse = next;
+        break;
+      }
+      wse = next;
+    }
+    if (!ok) {
+      const { r } = evaluate(wse);
+      ok = Math.abs(r) < 0.01;
+    }
+    if (!ok) {
+      wse = wseD + 0.01;
+      for (let i = 0; i < 500; i++) {
+        iters++;
+        const { r, info: inf } = evaluate(wse);
+        info = inf;
+        if (Math.abs(r) < 1e-6) {
+          ok = true;
+          break;
+        }
+        const next = wse - r;
+        if (!(zminU - 1 < next && next < zminU + 80)) break;
+        if (Math.abs(next - wse) < 1e-9) {
+          wse = next;
+          ok = true;
+          break;
+        }
+        wse = next;
+      }
+    }
+    const fin = evaluate(wse);
+    if (fin.info === null || Math.abs(fin.r) > 0.01) {
+      throw new HsError({
+        code: "E_CONVERGE",
+        field: `ssm.step.${secU.id}`,
+        message: `\u65AD\u9762 ${secU.id} \u80FD\u91CF\u65B9\u7A0B\u8FED\u4EE3\u4E0D\u6536\u655B\uFF08\u6B8B\u5DEE ${fin.r.toFixed(4)}\uFF09`,
+        suggestion: "\u591A\u4E3A\u6025\u6D41\u6216\u6C34\u4F4D\u63A5\u8FD1\u4E34\u754C\uFF1A\u68C0\u67E5\u65AD\u9762\u7CD9\u7387/\u6CB3\u957F/\u6D41\u91CF\u662F\u5426\u5408\u7406\uFF1B\u6025\u6D41\u63A7\u5236\u65AD\u9762\u5E94\u5728\u4E0A\u6E38"
+      });
+    }
+    return { wse, ...fin.info, v: fin.info.v, iters, residual: fin.r };
+  }
+  function ssmProfileRun(sections, opts) {
+    if (sections.length < 1) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.sections", message: "\u81F3\u5C11\u9700\u8981 1 \u4E2A\u65AD\u9762", suggestion: "\u5728\u65AD\u9762\u8868\u4E2D\u6DFB\u52A0\u65AD\u9762" });
+    if (!(opts.Q > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.Q", message: "\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63" });
+    const g = GRAV[opts.units];
+    const notes = [];
+    const bd = opts.boundary.kind === "normalDepth" ? normalDepthWSE(sections[0], opts.boundary.S0, opts.Q, opts.units) : opts.boundary.wse;
+    const results = [];
+    let maxFr = 0, x = 0;
+    for (let i = 0; i < sections.length; i++) {
+      const sec = sections[i];
+      const isBoundary = i === 0;
+      const st = isBoundary ? { wse: bd, props: sectionProps(sec, bd, opts.units), sf: NaN, hL: NaN, Lbar: NaN, c: void 0, cKind: void 0 } : stepUpstream(sections[i - 1], sec, results[i - 1].wse, opts.Q, opts.units);
+      if (!(st.props.A > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.wse.${sec.id}`, message: `\u65AD\u9762 ${sec.id} \u5728\u63A8\u7B97\u6C34\u4F4D\u4E0B\u4E0D\u8FC7\u6C34`, suggestion: "\u68C0\u67E5\u65AD\u9762\u6570\u636E\u6216\u4E0B\u6E38\u8D77\u59CB\u6C34\u4F4D" });
+      const v = opts.Q / st.props.A;
+      const fr = Math.sqrt(v * v * st.props.T / (g * st.props.A));
+      maxFr = Math.max(maxFr, fr);
+      results.push({
+        id: sec.id,
+        x,
+        wse: st.wse,
+        bed: Math.min(...sec.pts.map((p) => p.z)),
+        A: st.props.A,
+        K: st.props.K,
+        T: st.props.T,
+        alpha: st.props.alpha,
+        v,
+        fr,
+        hv: st.props.alpha * v * v / (2 * g),
+        sf: st.sf,
+        hL: st.hL,
+        Lbar: st.Lbar,
+        c: st.c,
+        cKind: st.cKind
+      });
+      if (i > 0) x += sections[i].lenCh;
+    }
+    if (maxFr >= 1) notes.push(`\u65AD\u9762\u6700\u5927 Fr=${maxFr.toFixed(3)} \u2265 1\uFF08\u6025\u6D41\uFF09\uFF1A\u6807\u51C6\u6B65\u957F\u6CD5\u5047\u8BBE\u7F13\u6D41\uFF0C\u6210\u679C\u9700\u4EBA\u5DE5\u590D\u6838`);
+    notes.push(opts.boundary.kind === "normalDepth" ? `\u4E0B\u6E38\u8FB9\u754C\uFF1A\u6B63\u5E38\u6C34\u6DF1\uFF08S0=${opts.boundary.S0}\uFF09\u2192 WSE=${bd.toFixed(3)}` : `\u4E0B\u6E38\u8FB9\u754C\uFF1A\u7ED9\u5B9A\u6C34\u4F4D ${bd}`);
+    return { boundaryWse: bd, sections: results, maxFr, notes };
+  }
+  function parseSsmSections(text) {
+    const sections = [];
+    const num2 = (s, what) => {
+      const v = Number(s);
+      if (!Number.isFinite(v)) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u300C${what}\u300D\u4E0D\u662F\u6709\u6548\u6570\u5B57`, value: s });
+      return v;
+    };
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      if (line.startsWith("[")) {
+        const m = line.match(/^\[([^\]]+)\]\s*(.*)$/);
+        if (!m) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u65AD\u9762\u5934\u683C\u5F0F\u9519\u8BEF\uFF1A${line}`, suggestion: "\u5F62\u5982 [CS1] L=500,400,500 C=0.3,0.1 n=0.05,0.032,0.05 bank=1100,1500" });
+        const rest = m[2];
+        const get = (key) => rest.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`))?.[1].split(",");
+        const L = get("L"), C = get("C"), n = get("n"), bank = get("bank");
+        const ineffStr = rest.match(/(?:^|\s)ineff=([^\s]+)/)?.[1];
+        if (!n || !bank) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.text", message: `\u65AD\u9762 ${m[1]} \u5934\u7F3A n= \u6216 bank=`, suggestion: "n=\u5DE6\u6EE9,\u6CB3\u69FD,\u53F3\u6EE9\u7CD9\u7387\uFF1Bbank=\u6EE9\u69FD\u5206\u754C\u6869\u53F7" });
+        const ineff = ineffStr ? ineffStr.split(";").map((seg) => {
+          const p = seg.split(",");
+          if (p.length < 3 || p[2] !== "L" && p[2] !== "R") throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `ineff \u683C\u5F0F\u9519\u8BEF\uFF1A${seg}`, suggestion: "\u5F62\u5982 ineff=\u6869\u53F7,\u9AD8\u7A0B,L;\u6869\u53F7,\u9AD8\u7A0B,R" });
+          return { x: num2(p[0], "ineff \u6869\u53F7"), z: num2(p[1], "ineff \u9AD8\u7A0B"), side: p[2] };
+        }) : void 0;
+        sections.push({
+          id: m[1].trim(),
+          pts: [],
+          nLob: num2(n[0], "n \u5DE6\u6EE9\u7CD9\u7387"),
+          nCh: num2(n[1], "n \u6CB3\u69FD\u7CD9\u7387"),
+          nRob: num2(n[2], "n \u53F3\u6EE9\u7CD9\u7387"),
+          bankL: num2(bank[0], "bank \u5DE6\u754C"),
+          bankR: num2(bank[1], "bank \u53F3\u754C"),
+          lenLob: num2(L?.[0] ?? "0", "L \u5DE6\u6EE9\u6CB3\u957F"),
+          lenCh: num2(L?.[1] ?? "0", "L \u6CB3\u69FD\u6CB3\u957F"),
+          lenRob: num2(L?.[2] ?? "0", "L \u53F3\u6EE9\u6CB3\u957F"),
+          cExpan: num2(C?.[0] ?? "0.3", "C \u6269\u5F20"),
+          cContr: num2(C?.[1] ?? "0.1", "C \u6536\u7F29"),
+          ineff
+        });
+        continue;
+      }
+      if (sections.length === 0) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u9996\u884C\u5FC5\u987B\u662F\u65AD\u9762\u5934\uFF08[id] \u2026\uFF09\uFF1A${line}`, suggestion: "\u5F62\u5982 [CS1] L=500,400,500 C=0.3,0.1 n=0.05,0.032,0.05 bank=1100,1500" });
+      const parts = line.split(/[,\s，]+/).filter(Boolean);
+      if (parts.length < 2) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u6D4B\u70B9\u884C\u9700\u8981\u300C\u6869\u53F7,\u9AD8\u7A0B\u300D\u4E24\u4E2A\u6570\uFF1A${line}`, suggestion: "\u4E00\u884C\u53EF\u5199\u591A\u4E2A\u6D4B\u70B9\uFF08\u6570\u5B57\u6210\u5BF9\uFF09\uFF0C\u5982 0,10 100,5 200,10" });
+      if (parts.length % 2 !== 0) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u6D4B\u70B9\u884C\u6570\u5B57\u5FC5\u987B\u6210\u5BF9\uFF08\u6869\u53F7,\u9AD8\u7A0B\uFF09\uFF1A${line}`, suggestion: "\u68C0\u67E5\u662F\u5426\u6709\u6F0F\u5199\u7684\u6869\u53F7\u6216\u9AD8\u7A0B" });
+      const pts = sections[sections.length - 1].pts;
+      for (let i = 0; i < parts.length; i += 2)
+        pts.push({ x: num2(parts[i], "\u6D4B\u70B9\u6869\u53F7"), z: num2(parts[i + 1], "\u6D4B\u70B9\u9AD8\u7A0B") });
+    }
+    if (sections.length === 0) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.text", message: "\u672A\u89E3\u6790\u5230\u4EFB\u4F55\u65AD\u9762", suggestion: "\u6BCF\u6BB5\u4EE5 [\u65AD\u9762id] \u5934\u5F00\u59CB\uFF0C\u968F\u540E\u6BCF\u884C\u4E00\u4E2A\u300C\u6869\u53F7,\u9AD8\u7A0B\u300D\u6D4B\u70B9" });
+    for (const s of sections) validateSection(s);
+    return sections;
+  }
+
+  // src/web/ssmDemo.ts
+  var SSM_DEMO_HECRAS = "[10.00] L=0,0,0 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,16.59\n100,12.59\n200,8.59\n500,8.34\n900,7.59\n1100,6.59\n1215,3.09\n1250,2.49\n1300,0.64\n1350,2.44\n1385,2.69\n1500,6.59\n1680,7.59\n2040,8.34\n2310,8.59\n2400,12.59\n2490,16.59\n\n[10.17] L=800,900,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,18.39\n100,14.39\n200,10.39\n500,10.14\n900,9.39\n1100,8.39\n1215,4.89\n1250,4.29\n1300,2.44\n1350,4.24\n1385,4.49\n1500,8.39\n1680,9.39\n2040,10.14\n2310,10.39\n2400,14.39\n2490,18.39\n\n[10.23] L=400,300,400 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500 ineff=400,14,L;2100,14,R\n0,19\n100,15\n200,11\n500,10.75\n900,10\n1100,9\n1215,5.5\n1250,4.9\n1300,3.05\n1350,4.85\n1385,5.1\n1500,9\n1680,10\n2040,10.75\n2310,11\n2400,15\n2490,19\n\n[10.35] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=875,21.98,L;1500,21.98,R\n0,20.28\n100,16.28\n200,12.28\n500,12.03\n900,11.28\n1100,10.28\n1215,6.78\n1250,6.18\n1300,4.33\n1350,6.13\n1385,6.38\n1500,10.28\n1515.4,10.36\n1700,11.28\n2100,12.03\n2400,12.28\n2500,16.28\n2600,20.28\n\n[10.37] L=70,70,70 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=865.4,22.12,L;1515.4,22.12,R\n0,20.42\n100,16.42\n200,12.42\n500,12.17\n900,11.42\n1100,10.42\n1215,6.92\n1250,6.32\n1300,4.47\n1350,6.27\n1385,6.52\n1500,10.42\n1515.4,10.55\n1700,12.12\n2100,12.17\n2400,12.42\n2500,16.42\n2600,20.42\n\n[10.48] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1500\n0,21.7\n100,17.7\n200,13.7\n500,13.45\n900,12.7\n1100,11.7\n1215,8.2\n1250,7.6\n1300,5.75\n1350,7.55\n1385,7.8\n1500,11.7\n1700,12.7\n2100,13.45\n2400,13.7\n2500,17.7\n2600,21.7\n\n[10.55] L=500,380,500 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500\n0,22.46\n100,18.46\n200,14.46\n500,14.21\n900,13.46\n1100,12.46\n1215,8.96\n1250,8.36\n1300,6.51\n1350,8.31\n1385,8.56\n1500,12.46\n1700,13.46\n2100,14.21\n2400,14.46\n2500,18.46\n2600,22.46\n\n[10.71] L=900,800,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,24.06\n100,20.06\n200,16.06\n500,15.81\n900,15.06\n1100,14.06\n1215,10.56\n1250,9.96\n1300,8.11\n1350,9.91\n1385,10.16\n1500,14.06\n1700,15.06\n2100,15.81\n2400,16.06\n2500,20.06\n2600,24.06\n\n[10.90] L=1200,1000,1200 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,26.06\n100,22.06\n200,18.06\n500,17.81\n900,17.06\n1100,16.06\n1215,12.56\n1250,11.96\n1300,10.11\n1350,11.91\n1385,12.16\n1500,16.06\n1700,17.06\n2100,17.81\n2400,18.06\n2500,22.06\n2600,26.06";
+  var SSM_DEMO_SI = "[CS0 \u4E0B\u6E38] L=0,0,0 C=0.3,0.1 n=0.045,0.028,0.05 bank=1100,1500\n0,16.59\n100,12.59\n400,8.6\n1100,7.2\n1500,6.9\n2300,8.9\n2490,16.59\n\n[CS1] L=520,500,520 C=0.3,0.1 n=0.045,0.028,0.05 bank=1150,1550\n0,17.8\n150,13.4\n1150,7.6\n1550,7.3\n2560,9.5\n2700,17.6\n\n[CS2] L=480,460,480 C=0.3,0.1 n=0.045,0.028,0.05 bank=1120,1520\n0,19.1\n200,14.7\n1120,8.1\n1520,7.9\n2810,10.2\n2950,18.9";
+
   // src/core/plans.ts
   var MULTI_SCHEMA = "hongsuan-multiproject@1";
   function set(obj, path, value) {
@@ -1175,7 +1460,7 @@
         { no: "6.2", title: "\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u6709\u5B9E\u6D4B\u7CFB\u5217\u65F6\uFF0C\u7528\u77E9\u6CD5\u521D\u4F30\u7EDF\u8BA1\u53C2\u6570\uFF0C\u518D\u6309\u9002\u7EBF\u6CD5\u8C03\u6574 Cv\u3001Cs\uFF08Cs \u5E38\u53D6 m\xB7Cv\uFF0Cm \u4E00\u822C 2~4\uFF09\uFF0C\u4F7F\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u62DF\u5408\u6700\u4F73\u3002", page: "P19" },
         { no: "6.2.5", title: "\u53C2\u6570\u521D\u4F30\u65B9\u6CD5", summary: "\u77E9\u6CD5\uFF08\u8F6F\u4EF6\u9ED8\u8BA4\uFF09\u4E0E\u4E09\u70B9\u6CD5\uFF08\u53D6 P=5%\u300150%\u300195% \u4E09\u70B9\uFF0C\u7531 S \u503C\u53CD\u89E3 Cs\uFF09\u5E76\u7528\uFF1B\u8F6F\u4EF6\u53E6\u63D0\u4F9B\u6700\u5C0F\u4E8C\u4E58\u81EA\u52A8\u5BFB\u4F18\u4F5C\u5BF9\u7167\u3002", page: "P19~20" },
         { no: "6.3", title: "\u5229\u7528\u5386\u53F2\u6D2A\u6C34\u4F4D\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u65E0\u5B9E\u6D4B\u7CFB\u5217\u4F46\u6709\u53EF\u9760\u6D2A\u75D5\u65F6\uFF0C\u7528\u66FC\u5B81\u516C\u5F0F\u7531\u6D2A\u6C34\u4F4D\u3001\u6BD4\u964D\u3001\u7CD9\u7387\u53CD\u63A8\u6D41\u91CF\uFF1B\u6709\u4E24\u6B21\u4EE5\u4E0A\u6D2A\u6C34\u65F6\u6309\u89C4\u8303\u7EFC\u5408\u63A8\u7B97\u3002", page: "P21" },
-        { no: "6.3.1-4", title: "\u6C34\u9762\u7EBF\u8BD5\u7B97\uFF08\u8F6F\u4EF6\u65B0\u589E\uFF09", summary: "\u5047\u5B9A\u6D41\u91CF\u7531\u4E0B\u6E38\u6D2A\u75D5\u5411\u4E0A\u6E38\u63A8\u7B97\u6C34\u9762\u7EBF\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5\u5BF9\u7167\u8FED\u4EE3\uFF1B\u8F6F\u4EF6\u63D0\u4F9B\u76F4\u63A5\u6B65\u8FDB\u6CD5\u5256\u9762\u8BA1\u7B97\u4E0E\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\u3002", page: "P21~23" },
+        { no: "6.3.1-4", title: "\u6C34\u9762\u7EBF\u8BD5\u7B97\uFF08\u8F6F\u4EF6\u65B0\u589E\uFF09", summary: "\u5047\u5B9A\u6D41\u91CF\u7531\u4E0B\u6E38\u6D2A\u75D5\u5411\u4E0A\u6E38\u63A8\u7B97\u6C34\u9762\u7EBF\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5\u5BF9\u7167\u8FED\u4EE3\uFF1B\u8F6F\u4EF6\u63D0\u4F9B\u76F4\u63A5\u6B65\u8FDB\u6CD5\u5256\u9762\u8BA1\u7B97\u4E0E\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\uFF0C\u4EE5\u53CA\u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\xB7\u5929\u7136\u6CB3\u9053\u4E09\u533A\uFF0C\u65B9\u6CD5\u5BF9\u9F50 HEC-RAS\uFF0C\u5B98\u65B9\u7B97\u4F8B\u56DE\u5F52\u9A8C\u8BC1 |\u0394WSE|\u22640.05 ft\uFF09\u3002", page: "P21~23" },
         { no: "6.4", title: "\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u7684\u5176\u4ED6\u65B9\u6CD5", summary: "\u65E0\u8D44\u6599\u5730\u533A\u91C7\u7528\u5730\u533A\u7ECF\u9A8C\u516C\u5F0F\u3001\u66B4\u96E8\u63A8\u7406\u6CD5\u3001\u5F84\u6D41\u5F62\u6210\u6CD5\u7B49\uFF08\u8BE6\u89C1\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B\u7B2C 6 \u7AE0\uFF09\u3002", page: "P23" },
         { no: "6.6", title: "\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", summary: "\u8F6F\u4EF6\u5B9E\u73B0\u540C\u500D\u6BD4\u653E\u5927\u6CD5 kg=Qp/Q\u5178\u578B\u5CF0\uFF1B\u540C\u9891\u7387\u653E\u5927\u6CD5\u6D89\u53CA\u65F6\u6BB5\u6D2A\u91CF\u5212\u5206\u89C4\u5219\uFF0C\u89C4\u8303\u539F\u6587\u5F85\u6838\uFF0C\u672C\u7248\u672A\u63D0\u4F9B\u3002", page: "P24" }
       ]
@@ -2831,6 +3116,119 @@
   }
   $("btnWsProfile").onclick = calcWsProfile;
   $("btnWsSolve").onclick = calcWsSolve;
+  function ssmShow(html) {
+    $("ssmErr").textContent = "";
+    $("ssmErr").style.display = "none";
+    $("ssmResult").style.display = "";
+    $("ssmResult").innerHTML = html;
+  }
+  function ssmFail(e) {
+    $("ssmResult").style.display = "none";
+    const lines = [e instanceof Error ? e.message : String(e)];
+    if (e instanceof HsError) {
+      if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+      if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+    }
+    $("ssmErr").textContent = lines.join(" \uFF5C ");
+    $("ssmErr").style.display = "block";
+  }
+  function ssmSvgProfile(r, units) {
+    const ss = r.sections;
+    const W = 940, H = 340, L = 60, R = 30, T = 30, B = 46;
+    const xMax = Math.max(...ss.map((s) => s.x), 1);
+    const yMin = Math.min(...ss.map((s) => s.bed)), yMax = Math.max(...ss.map((s) => s.wse));
+    const span = Math.max(yMax - yMin, (yMax - yMin) * 0.2 + 0.5);
+    const y0 = yMin - span * 0.12, y1 = yMax + span * 0.18;
+    const px = (x) => L + x / xMax * (W - L - R);
+    const py = (z) => T + (1 - (z - y0) / (y1 - y0)) * (H - T - B);
+    const f = (v) => Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2);
+    const ticks = [];
+    const step = (y1 - y0) / 5;
+    for (let i = 0; i <= 5; i++) {
+      const z = y0 + step * i;
+      ticks.push(`<line x1="${L}" y1="${py(z).toFixed(1)}" x2="${W - R}" y2="${py(z).toFixed(1)}" stroke="rgba(120,120,128,.14)" stroke-width="1"/><text x="${L - 6}" y="${(py(z) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text3)">${f(z)}</text>`);
+    }
+    const bedPath = ss.map((s) => `${px(s.x).toFixed(1)},${py(s.bed).toFixed(1)}`).join(" ");
+    const wsePath = ss.map((s) => `${px(s.x).toFixed(1)},${py(s.wse).toFixed(1)}`).join(" ");
+    const marks = ss.map((s) => `
+    <line x1="${px(s.x).toFixed(1)}" y1="${py(s.bed).toFixed(1)}" x2="${px(s.x).toFixed(1)}" y2="${py(s.wse).toFixed(1)}" stroke="rgba(0,122,255,.35)" stroke-width="1" stroke-dasharray="3,3"/>
+    <circle cx="${px(s.x).toFixed(1)}" cy="${py(s.wse).toFixed(1)}" r="3" fill="var(--blue)"/>
+    <text x="${px(s.x).toFixed(1)}" y="${(py(s.wse) - 7).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--blue)">${f(s.wse)}</text>
+    <line x1="${px(s.x).toFixed(1)}" y1="${H - B + 4}" x2="${px(s.x).toFixed(1)}" y2="${H - B + 10}" stroke="var(--text3)" stroke-width="1"/>
+    <text x="${px(s.x).toFixed(1)}" y="${H - B + 24}" text-anchor="middle" font-size="10" fill="var(--text2)">${s.id}</text>`).join("");
+    const u = units === "SI" ? "m" : "ft";
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;margin-top:10px;background:rgba(120,120,128,.06);border-radius:8px">
+    <text x="${L - 6}" y="${T - 10}" text-anchor="end" font-size="10" fill="var(--text3)">\u9AD8\u7A0B\uFF08${u}\uFF09</text>
+    <text x="${W - R}" y="${H - 8}" text-anchor="end" font-size="10" fill="var(--text3)">\u6CBF\u6CB3\u69FD\u7D2F\u79EF\u6CB3\u957F\uFF08${u}\uFF09\u2192 \u4E0A\u6E38</text>
+    ${ticks.join("")}
+    <polyline points="${bedPath}" fill="none" stroke="var(--text3)" stroke-width="1.5"/>
+    <polyline points="${wsePath}" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${marks}
+  </svg>`;
+  }
+  function calcSsm() {
+    try {
+      const Q = +$("ssmQ").value;
+      const units = $("ssmUnits").value;
+      const bdKind = $("ssmBd").value;
+      const boundary = bdKind === "wse" ? { kind: "wse", wse: +$("ssmWse").value } : { kind: "normalDepth", S0: +$("ssmS0").value };
+      const secs = parseSsmSections($("ssmText").value);
+      const r = ssmProfileRun(secs, { Q, boundary, units });
+      const u = units === "SI" ? { q: "m\xB3/s", l: "m", v: "m/s", a: "m\xB2" } : { q: "cfs", l: "ft", v: "ft/s", a: "ft\xB2" };
+      ssmShow(`
+      <div class="metrics">
+        <div class="metric"><div class="k">\u65AD\u9762\u6570</div><div class="v">${r.sections.length}</div></div>
+        <div class="metric"><div class="k">\u4E0B\u6E38\u8FB9\u754C WSE\uFF08${u.l}\uFF09</div><div class="v">${r.boundaryWse.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6700\u5927 Fr</div><div class="v">${r.maxFr.toFixed(3)}${r.maxFr >= 1 ? " \u26A0\u6025\u6D41" : " \u7F13\u6D41"}</div></div>
+        <div class="metric hl"><div class="k">\u4E0A\u6E38\u672B\u7AEF WSE\uFF08${u.l}\uFF09</div><div class="v">${r.sections[r.sections.length - 1].wse.toFixed(3)}</div></div>
+      </div>
+      ${ssmSvgProfile(r, units)}
+      <table class="ltab" style="margin-top:10px">
+        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09</th></tr>
+        ${r.sections.map((s, i) => `<tr><td>${s.id}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : s.hL.toFixed(3)}</td></tr>`).join("")}
+      </table>
+      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u975E\u6865\u6881\u65AD\u9762 |\u0394WSE|\u22640.05 ft\u3002\u6865\u6881\u58C5\u6C34\uFF08P0 \u5F85\u5B9E\u73B0\uFF09\u672A\u8BA1\u5165\uFF1A\u6865\u6881\u6BB5\u6210\u679C\u504F\u4F4E\u4E8E HEC-RAS \u5C5E\u9884\u671F\u3002</div>`);
+      logCalc(
+        "\u6C34\u9762\u7EBF \xB7 \u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\uFF09",
+        { \u65AD\u9762\u6570: String(secs.length), \u6D41\u91CFQ: Q + " " + u.q, \u4E0B\u6E38\u8FB9\u754C: r.notes[r.notes.length - 1] },
+        { \u4E0A\u6E38\u672B\u7AEFWSE: r.sections[r.sections.length - 1].wse.toFixed(3) + " " + u.l, \u6700\u5927Fr: r.maxFr.toFixed(3) },
+        "JTG C30-2015 6.3.1\uFF08\u8BD5\u7B97\u6CD5\xB7\u5929\u7136\u6CB3\u9053\u7248\uFF0C\u65B9\u6CD5\u5BF9\u9F50 HEC-RAS\uFF09"
+      );
+    } catch (e) {
+      ssmFail(e);
+    }
+  }
+  $("btnSsmRun").onclick = calcSsm;
+  function ssmBdSync() {
+    const wse = $("ssmBd").value === "wse";
+    $("ssmS0").closest("div").style.display = wse ? "none" : "";
+    $("ssmWse").closest("div").style.display = wse ? "" : "none";
+  }
+  $("ssmBd").onchange = ssmBdSync;
+  $("btnSsmDemoSi").onclick = () => {
+    $("ssmUnits").value = "SI";
+    $("ssmQ").value = "500";
+    $("ssmBd").value = "normalDepth";
+    $("ssmS0").value = "0.0009";
+    $("ssmText").value = SSM_DEMO_SI;
+    ssmBdSync();
+    calcSsm();
+  };
+  $("btnSsmDemoHec").onclick = () => {
+    $("ssmUnits").value = "EN";
+    $("ssmQ").value = "30000";
+    $("ssmBd").value = "normalDepth";
+    $("ssmS0").value = "0.002";
+    $("ssmText").value = SSM_DEMO_HECRAS;
+    ssmBdSync();
+    calcSsm();
+  };
+  $("btnSsmClear").onclick = () => {
+    $("ssmText").value = "";
+    $("ssmResult").style.display = "none";
+    $("ssmErr").textContent = "";
+    scheduleSave();
+  };
   document.querySelectorAll("#nTable .fillBtn").forEach((item) => {
     const btn = item;
     btn.onclick = () => {
@@ -4386,7 +4784,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.1",
+        appVersion: "0.11.2",
         data: multi.data,
         plans: multi.plans
       };
@@ -4749,7 +5147,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.2 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -4776,6 +5174,7 @@
   var HIST_IDS = ["hf0Ac", "hf0Bc", "hf0nc", "hf0At", "hf0Bt", "hf0nt", "hf0Ipermil", "hf0T", "hf1Ac", "hf1Bc", "hf1nc", "hf1At", "hf1Bt", "hf1nt", "hf1Ipermil", "hf1T", "hbCv", "hbCs"];
   var NODATA_IDS = ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"];
   var WS_IDS = ["wsB", "wsM", "wsN", "wsS0", "wsL", "wsYc", "wsQ", "wsYup"];
+  var SSM_IDS = ["ssmQ", "ssmUnits", "ssmBd", "ssmS0", "ssmWse", "ssmText"];
   var OPEN_IDS = ["opQp", "opQc", "opBc", "opReach"];
   var SCOUR_IDS = ["scQ2", "scMu", "scBcj", "scHmc", "scHcq", "scD50", "scRho", "scA", "scBd", "scHz"];
   var LOCAL_IDS = ["lsV", "lsB1", "lsKxi"];
@@ -4812,6 +5211,7 @@
       hist: pick(HIST_IDS),
       nodata: pick(NODATA_IDS),
       wsurf: pick(WS_IDS),
+      ssm: pick(SSM_IDS),
       open: pick(OPEN_IDS),
       scour: pick(SCOUR_IDS),
       local: pick(LOCAL_IDS),
@@ -4959,6 +5359,10 @@
       const el = $(k);
       if (el && d.wsurf[k] != null) el.value = d.wsurf[k];
     }
+    if (d.ssm) for (const k in d.ssm) {
+      const el = $(k);
+      if (el && d.ssm[k] != null) el.value = d.ssm[k];
+    }
     if (d.open) for (const k in d.open) {
       const el = $(k);
       if (el && d.open[k] != null) el.value = d.open[k];
@@ -4996,7 +5400,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.1");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.2");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
@@ -5037,6 +5441,7 @@
   };
   var urlQ = new URLSearchParams(location.search);
   var restoredMode = restoreAll();
+  ssmBdSync();
   var urlMethod = urlQ.get("method");
   var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : restoredMode || "series";
   if (startMode === "params") {
