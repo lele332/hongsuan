@@ -751,6 +751,13 @@
       if (!(v > 0) || !Number.isFinite(v)) fail(`\u7CD9\u7387 ${k} \u5FC5\u987B\u4E3A\u6B63\u6570`);
     for (const [k, v] of [["lenLob", sec.lenLob], ["lenCh", sec.lenCh], ["lenRob", sec.lenRob], ["cExpan", sec.cExpan], ["cContr", sec.cContr]])
       if (!Number.isFinite(v) || v < 0) fail(`${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6709\u9650\u6570`);
+    if (sec.bridge !== void 0) {
+      const b = sec.bridge;
+      if (!Number.isFinite(b.width) || b.width <= 0) fail("\u6865\u6881 width\uFF08\u6CBF\u6C34\u6D41\u957F\u5EA6\uFF09\u5FC5\u987B\u4E3A\u6B63\u6570");
+      for (const [k, v] of [["cContr", b.cContr], ["cExpan", b.cExpan]])
+        if (!Number.isFinite(v) || v < 0) fail(`\u6865\u6881 ${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6709\u9650\u6570`);
+      if (b.deckZ !== void 0 && !Number.isFinite(b.deckZ)) fail("\u6865\u6881 deckZ\uFF08\u6865\u9762\u5E95\u9AD8\u7A0B\uFF09\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
   }
   function sectionProps(sec, wse, units) {
     validateSection(sec);
@@ -822,12 +829,13 @@
         wsum += w;
         lsum += w * Ls[i];
       }
-      const Lbar = wsum > 0 ? lsum / wsum : secU.lenCh;
+      const br = secU.bridge;
+      const Lbar = br ? br.width : wsum > 0 ? lsum / wsum : secU.lenCh;
       const sf = (2 * Q / (pd.K + pu.K)) ** 2;
-      const isContr = hvu > hvd;
-      const c = isContr ? secU.cContr : secU.cExpan;
+      const isExpan = hvu > hvd;
+      const c = br ? isExpan ? br.cExpan : br.cContr : isExpan ? secU.cExpan : secU.cContr;
       const hL = Lbar * sf + c * Math.abs(hvu - hvd);
-      return { r: wseU - (wseD + hvd - hvu + hL), info: { props: pu, v: vu, hv: hvu, sf, Lbar, hL, c, cKind: isContr ? "contraction" : "expansion" } };
+      return { r: wseU - (wseD + hvd - hvu + hL), info: { props: pu, v: vu, hv: hvu, sf, Lbar, hL, c, cKind: isExpan ? "expansion" : "contraction" } };
     };
     let wse = wseGuess ?? wseD + 0.5;
     let info = null;
@@ -900,6 +908,9 @@
       const v = opts.Q / st.props.A;
       const fr = Math.sqrt(v * v * st.props.T / (g * st.props.A));
       maxFr = Math.max(maxFr, fr);
+      if (sec.bridge?.deckZ !== void 0 && st.wse >= sec.bridge.deckZ && i > 0) {
+        notes.push(`\u65AD\u9762 ${sec.id}\uFF1A\u63A8\u7B97\u6C34\u4F4D ${st.wse.toFixed(2)} \u2265 \u6865\u9762\u5E95\u9AD8\u7A0B ${sec.bridge.deckZ}\uFF0C\u6865\u5B54\u6DF9\u6CA1\uFF08\u5830\u6D41/\u538B\u529B\u6D41\uFF09\uFF0C\u5DF2\u8D85\u51FA\u80FD\u91CF\u6CD5\u9002\u7528\u8303\u56F4\uFF0C\u6210\u679C\u9700\u6309\u5830\u6D41\u516C\u5F0F\u4EBA\u5DE5\u590D\u6838`);
+      }
       results.push({
         id: sec.id,
         x,
@@ -941,12 +952,24 @@
         const get = (key) => rest.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`))?.[1].split(",");
         const L = get("L"), C = get("C"), n = get("n"), bank = get("bank");
         const ineffStr = rest.match(/(?:^|\s)ineff=([^\s]+)/)?.[1];
+        const bridgeStr = rest.match(/(?:^|\s)bridge=([^\s]+)/)?.[1];
         if (!n || !bank) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.text", message: `\u65AD\u9762 ${m[1]} \u5934\u7F3A n= \u6216 bank=`, suggestion: "n=\u5DE6\u6EE9,\u6CB3\u69FD,\u53F3\u6EE9\u7CD9\u7387\uFF1Bbank=\u6EE9\u69FD\u5206\u754C\u6869\u53F7" });
         const ineff = ineffStr ? ineffStr.split(";").map((seg) => {
           const p = seg.split(",");
           if (p.length < 3 || p[2] !== "L" && p[2] !== "R") throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `ineff \u683C\u5F0F\u9519\u8BEF\uFF1A${seg}`, suggestion: "\u5F62\u5982 ineff=\u6869\u53F7,\u9AD8\u7A0B,L;\u6869\u53F7,\u9AD8\u7A0B,R" });
           return { x: num2(p[0], "ineff \u6869\u53F7"), z: num2(p[1], "ineff \u9AD8\u7A0B"), side: p[2] };
         }) : void 0;
+        const bridge = bridgeStr ? (() => {
+          const p = bridgeStr.split(",");
+          if (p.length < 3 || p.length > 4) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `bridge \u683C\u5F0F\u9519\u8BEF\uFF1A${bridgeStr}`, suggestion: "\u5F62\u5982 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570[,\u6865\u9762\u5E95\u9AD8\u7A0B]" });
+          const b = {
+            width: num2(p[0], "bridge \u6865\u5BBD"),
+            cContr: num2(p[1], "bridge \u6536\u7F29\u7CFB\u6570"),
+            cExpan: num2(p[2], "bridge \u6269\u5F20\u7CFB\u6570")
+          };
+          if (p[3] !== void 0) b.deckZ = num2(p[3], "bridge \u6865\u9762\u5E95\u9AD8\u7A0B");
+          return b;
+        })() : void 0;
         sections.push({
           id: m[1].trim(),
           pts: [],
@@ -960,7 +983,8 @@
           lenRob: num2(L?.[2] ?? "0", "L \u53F3\u6EE9\u6CB3\u957F"),
           cExpan: num2(C?.[0] ?? "0.3", "C \u6269\u5F20"),
           cContr: num2(C?.[1] ?? "0.1", "C \u6536\u7F29"),
-          ineff
+          ineff,
+          bridge
         });
         continue;
       }
@@ -978,7 +1002,7 @@
   }
 
   // src/web/ssmDemo.ts
-  var SSM_DEMO_HECRAS = "[10.00] L=0,0,0 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,16.59\n100,12.59\n200,8.59\n500,8.34\n900,7.59\n1100,6.59\n1215,3.09\n1250,2.49\n1300,0.64\n1350,2.44\n1385,2.69\n1500,6.59\n1680,7.59\n2040,8.34\n2310,8.59\n2400,12.59\n2490,16.59\n\n[10.17] L=800,900,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,18.39\n100,14.39\n200,10.39\n500,10.14\n900,9.39\n1100,8.39\n1215,4.89\n1250,4.29\n1300,2.44\n1350,4.24\n1385,4.49\n1500,8.39\n1680,9.39\n2040,10.14\n2310,10.39\n2400,14.39\n2490,18.39\n\n[10.23] L=400,300,400 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500 ineff=400,14,L;2100,14,R\n0,19\n100,15\n200,11\n500,10.75\n900,10\n1100,9\n1215,5.5\n1250,4.9\n1300,3.05\n1350,4.85\n1385,5.1\n1500,9\n1680,10\n2040,10.75\n2310,11\n2400,15\n2490,19\n\n[10.35] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=875,21.98,L;1500,21.98,R\n0,20.28\n100,16.28\n200,12.28\n500,12.03\n900,11.28\n1100,10.28\n1215,6.78\n1250,6.18\n1300,4.33\n1350,6.13\n1385,6.38\n1500,10.28\n1515.4,10.36\n1700,11.28\n2100,12.03\n2400,12.28\n2500,16.28\n2600,20.28\n\n[10.37] L=70,70,70 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=865.4,22.12,L;1515.4,22.12,R\n0,20.42\n100,16.42\n200,12.42\n500,12.17\n900,11.42\n1100,10.42\n1215,6.92\n1250,6.32\n1300,4.47\n1350,6.27\n1385,6.52\n1500,10.42\n1515.4,10.55\n1700,12.12\n2100,12.17\n2400,12.42\n2500,16.42\n2600,20.42\n\n[10.48] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1500\n0,21.7\n100,17.7\n200,13.7\n500,13.45\n900,12.7\n1100,11.7\n1215,8.2\n1250,7.6\n1300,5.75\n1350,7.55\n1385,7.8\n1500,11.7\n1700,12.7\n2100,13.45\n2400,13.7\n2500,17.7\n2600,21.7\n\n[10.55] L=500,380,500 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500\n0,22.46\n100,18.46\n200,14.46\n500,14.21\n900,13.46\n1100,12.46\n1215,8.96\n1250,8.36\n1300,6.51\n1350,8.31\n1385,8.56\n1500,12.46\n1700,13.46\n2100,14.21\n2400,14.46\n2500,18.46\n2600,22.46\n\n[10.71] L=900,800,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,24.06\n100,20.06\n200,16.06\n500,15.81\n900,15.06\n1100,14.06\n1215,10.56\n1250,9.96\n1300,8.11\n1350,9.91\n1385,10.16\n1500,14.06\n1700,15.06\n2100,15.81\n2400,16.06\n2500,20.06\n2600,24.06\n\n[10.90] L=1200,1000,1200 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,26.06\n100,22.06\n200,18.06\n500,17.81\n900,17.06\n1100,16.06\n1215,12.56\n1250,11.96\n1300,10.11\n1350,11.91\n1385,12.16\n1500,16.06\n1700,17.06\n2100,17.81\n2400,18.06\n2500,22.06\n2600,26.06";
+  var SSM_DEMO_HECRAS = "[10.00] L=0,0,0 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,16.59\n100,12.59\n200,8.59\n500,8.34\n900,7.59\n1100,6.59\n1215,3.09\n1250,2.49\n1300,0.64\n1350,2.44\n1385,2.69\n1500,6.59\n1680,7.59\n2040,8.34\n2310,8.59\n2400,12.59\n2490,16.59\n\n[10.17] L=800,900,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,18.39\n100,14.39\n200,10.39\n500,10.14\n900,9.39\n1100,8.39\n1215,4.89\n1250,4.29\n1300,2.44\n1350,4.24\n1385,4.49\n1500,8.39\n1680,9.39\n2040,10.14\n2310,10.39\n2400,14.39\n2490,18.39\n\n[10.23] L=400,300,400 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500 ineff=400,14,L;2100,14,R\n0,19\n100,15\n200,11\n500,10.75\n900,10\n1100,9\n1215,5.5\n1250,4.9\n1300,3.05\n1350,4.85\n1385,5.1\n1500,9\n1680,10\n2040,10.75\n2310,11\n2400,15\n2490,19\n\n[10.35] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=875,21.98,L;1500,21.98,R\n0,20.28\n100,16.28\n200,12.28\n500,12.03\n900,11.28\n1100,10.28\n1215,6.78\n1250,6.18\n1300,4.33\n1350,6.13\n1385,6.38\n1500,10.28\n1515.4,10.36\n1700,11.28\n2100,12.03\n2400,12.28\n2500,16.28\n2600,20.28\n\n[10.37] L=70,70,70 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=865.4,22.12,L;1515.4,22.12,R bridge=50,1.33,1.33,18\n0,20.42\n100,16.42\n200,12.42\n500,12.17\n900,11.42\n1100,10.42\n1215,6.92\n1250,6.32\n1300,4.47\n1350,6.27\n1385,6.52\n1500,10.42\n1515.4,10.55\n1700,12.12\n2100,12.17\n2400,12.42\n2500,16.42\n2600,20.42\n\n[10.48] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1500\n0,21.7\n100,17.7\n200,13.7\n500,13.45\n900,12.7\n1100,11.7\n1215,8.2\n1250,7.6\n1300,5.75\n1350,7.55\n1385,7.8\n1500,11.7\n1700,12.7\n2100,13.45\n2400,13.7\n2500,17.7\n2600,21.7\n\n[10.55] L=500,380,500 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500\n0,22.46\n100,18.46\n200,14.46\n500,14.21\n900,13.46\n1100,12.46\n1215,8.96\n1250,8.36\n1300,6.51\n1350,8.31\n1385,8.56\n1500,12.46\n1700,13.46\n2100,14.21\n2400,14.46\n2500,18.46\n2600,22.46\n\n[10.71] L=900,800,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,24.06\n100,20.06\n200,16.06\n500,15.81\n900,15.06\n1100,14.06\n1215,10.56\n1250,9.96\n1300,8.11\n1350,9.91\n1385,10.16\n1500,14.06\n1700,15.06\n2100,15.81\n2400,16.06\n2500,20.06\n2600,24.06\n\n[10.90] L=1200,1000,1200 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,26.06\n100,22.06\n200,18.06\n500,17.81\n900,17.06\n1100,16.06\n1215,12.56\n1250,11.96\n1300,10.11\n1350,11.91\n1385,12.16\n1500,16.06\n1700,17.06\n2100,17.81\n2400,18.06\n2500,22.06\n2600,26.06";
   var SSM_DEMO_SI = "[CS0 \u4E0B\u6E38] L=0,0,0 C=0.3,0.1 n=0.045,0.028,0.05 bank=1100,1500\n0,16.59\n100,12.59\n400,8.6\n1100,7.2\n1500,6.9\n2300,8.9\n2490,16.59\n\n[CS1] L=520,500,520 C=0.3,0.1 n=0.045,0.028,0.05 bank=1150,1550\n0,17.8\n150,13.4\n1150,7.6\n1550,7.3\n2560,9.5\n2700,17.6\n\n[CS2] L=480,460,480 C=0.3,0.1 n=0.045,0.028,0.05 bank=1120,1520\n0,19.1\n200,14.7\n1120,8.1\n1520,7.9\n2810,10.2\n2950,18.9";
 
   // src/core/plans.ts
@@ -3132,7 +3156,7 @@
     $("ssmErr").textContent = lines.join(" \uFF5C ");
     $("ssmErr").style.display = "block";
   }
-  function ssmSvgProfile(r, units) {
+  function ssmSvgProfile(r, units, bridges) {
     const ss = r.sections;
     const W = 940, H = 340, L = 60, R = 30, T = 30, B = 46;
     const xMax = Math.max(...ss.map((s) => s.x), 1);
@@ -3156,6 +3180,18 @@
     <text x="${px(s.x).toFixed(1)}" y="${(py(s.wse) - 7).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--blue)">${f(s.wse)}</text>
     <line x1="${px(s.x).toFixed(1)}" y1="${H - B + 4}" x2="${px(s.x).toFixed(1)}" y2="${H - B + 10}" stroke="var(--text3)" stroke-width="1"/>
     <text x="${px(s.x).toFixed(1)}" y="${H - B + 24}" text-anchor="middle" font-size="10" fill="var(--text2)">${s.id}</text>`).join("");
+    const bridgesSvg = ss.filter((s) => bridges.has(s.id)).map((s) => {
+      const br = bridges.get(s.id);
+      const dz = br.deckZ !== void 0 ? Math.min(Math.max(br.deckZ, y0), y1) : s.wse + span * 0.22;
+      const x1 = px(Math.max(s.x - br.width, 0)), x2 = px(s.x);
+      const flooded = br.deckZ !== void 0 && s.wse >= br.deckZ;
+      const plate = flooded ? "rgba(255,59,48,.72)" : "rgba(120,120,128,.62)";
+      return `
+    <line x1="${x1.toFixed(1)}" y1="${py(dz).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${py(dz).toFixed(1)}" stroke="${plate}" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="${x1.toFixed(1)}" y="${(py(dz) - 6).toFixed(1)}" width="${(x2 - x1).toFixed(1)}" height="6" rx="1.5" fill="${plate}"/>
+    <line x1="${x2.toFixed(1)}" y1="${(py(dz) - 6).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${py(s.bed).toFixed(1)}" stroke="${plate}" stroke-width="2"/>
+    <text x="${((x1 + x2) / 2).toFixed(1)}" y="${(py(dz) - 11).toFixed(1)}" text-anchor="middle" font-size="10" fill="${flooded ? "#ff3b30" : "var(--text2)"}">${flooded ? "\u6865\u5B54\u6DF9\u6CA1\u26A0" : "\u6865"}</text>`;
+    }).join("");
     const u = units === "SI" ? "m" : "ft";
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;margin-top:10px;background:rgba(120,120,128,.06);border-radius:8px">
     <text x="${L - 6}" y="${T - 10}" text-anchor="end" font-size="10" fill="var(--text3)">\u9AD8\u7A0B\uFF08${u}\uFF09</text>
@@ -3164,6 +3200,7 @@
     <polyline points="${bedPath}" fill="none" stroke="var(--text3)" stroke-width="1.5"/>
     <polyline points="${wsePath}" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>
     ${marks}
+    ${bridgesSvg}
   </svg>`;
   }
   function calcSsm() {
@@ -3175,19 +3212,23 @@
       const secs = parseSsmSections($("ssmText").value);
       const r = ssmProfileRun(secs, { Q, boundary, units });
       const u = units === "SI" ? { q: "m\xB3/s", l: "m", v: "m/s", a: "m\xB2" } : { q: "cfs", l: "ft", v: "ft/s", a: "ft\xB2" };
+      const bridges = new Map(secs.filter((s) => s.bridge).map((s) => [s.id, { width: s.bridge.width, deckZ: s.bridge.deckZ }]));
+      const nBridge = bridges.size;
+      const badge = (s) => bridges.has(s.id) ? ` <span style="background:rgba(0,122,255,.14);color:var(--blue);border-radius:4px;padding:0 4px;font-size:10px;font-weight:600">\u6865</span>` : "";
       ssmShow(`
       <div class="metrics">
         <div class="metric"><div class="k">\u65AD\u9762\u6570</div><div class="v">${r.sections.length}</div></div>
         <div class="metric"><div class="k">\u4E0B\u6E38\u8FB9\u754C WSE\uFF08${u.l}\uFF09</div><div class="v">${r.boundaryWse.toFixed(3)}</div></div>
         <div class="metric"><div class="k">\u6700\u5927 Fr</div><div class="v">${r.maxFr.toFixed(3)}${r.maxFr >= 1 ? " \u26A0\u6025\u6D41" : " \u7F13\u6D41"}</div></div>
+        ${nBridge > 0 ? `<div class="metric"><div class="k">\u6865\u6881\u6CB3\u6BB5</div><div class="v">${nBridge} \u6BB5</div></div>` : ""}
         <div class="metric hl"><div class="k">\u4E0A\u6E38\u672B\u7AEF WSE\uFF08${u.l}\uFF09</div><div class="v">${r.sections[r.sections.length - 1].wse.toFixed(3)}</div></div>
       </div>
-      ${ssmSvgProfile(r, units)}
+      ${ssmSvgProfile(r, units, bridges)}
       <table class="ltab" style="margin-top:10px">
-        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09</th></tr>
-        ${r.sections.map((s, i) => `<tr><td>${s.id}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : s.hL.toFixed(3)}</td></tr>`).join("")}
+        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09\xB7 C<sub>\u91C7\u7528</sub></th></tr>
+        ${r.sections.map((s, i) => `<tr><td>${s.id}${badge(s)}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : `${s.hL.toFixed(3)}${s.c !== void 0 ? `\uFF08${s.cKind === "expansion" ? "\u6269" : "\u7F29"} ${s.c}\uFF09` : ""}`}</td></tr>`).join("")}
       </table>
-      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u975E\u6865\u6881\u65AD\u9762 |\u0394WSE|\u22640.05 ft\u3002\u6865\u6881\u58C5\u6C34\uFF08P0 \u5F85\u5B9E\u73B0\uFF09\u672A\u8BA1\u5165\uFF1A\u6865\u6881\u6BB5\u6210\u679C\u504F\u4F4E\u4E8E HEC-RAS \u5C5E\u9884\u671F\u3002</div>`);
+      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002${nBridge > 0 ? "\u6865\u6881\u6CB3\u6BB5\uFF08\u6807\u300C\u6865\u300D\u65AD\u9762\uFF09\uFF1AL\u0304=\u6865\u5BBD\u3001C=\u6865\u6881 BR \u7CFB\u6570\uFF0C\u58C5\u6C34\u6309 HEC-RAS energy \u6CD5\u5185\u4E1A\u8BA1\u5165\uFF1B\u6C34\u4F4D \u2265 \u6881\u5E95\u9AD8\u7A0B\u65F6\u63D0\u793A\u5830\u6D41/\u538B\u529B\u6D41\u8D85\u8303\u56F4\u3002" : "\u542B\u6865\u6CB3\u6BB5\u53EF\u5728\u65AD\u9762\u5934\u52A0 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570,\u6881\u5E95\u9AD8\u7A0B \u8BA1\u5165\u6865\u6881\u58C5\u6C34\uFF08HEC-RAS energy \u6CD5\uFF09\u3002"}\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u5168 9 \u65AD\u9762 |\u0394WSE|\u22640.1 ft\uFF08\u6865\u5185\u6BB5 \u22640.05 ft\uFF09\u3002</div>`);
       logCalc(
         "\u6C34\u9762\u7EBF \xB7 \u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\uFF09",
         { \u65AD\u9762\u6570: String(secs.length), \u6D41\u91CFQ: Q + " " + u.q, \u4E0B\u6E38\u8FB9\u754C: r.notes[r.notes.length - 1] },
@@ -5400,7 +5441,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.2");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.3");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
