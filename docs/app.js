@@ -2233,19 +2233,19 @@
     }
     return t;
   }
-  function bestCvAt(points, mean, k, criterion) {
-    let bestCv = 0.05;
+  function bestCvAt(points, mean, k, criterion, lo0, hi0) {
+    let bestCv = lo0;
     let bestObj = Number.POSITIVE_INFINITY;
-    for (let cv = 0.05; cv <= 1.2001; cv += 0.01) {
+    for (let cv = lo0; cv <= hi0 + 1e-9; cv += 0.02) {
       const v = objective(points, mean, cv, cv * k, criterion);
       if (v < bestObj) {
         bestObj = v;
         bestCv = cv;
       }
     }
-    const lo = Math.max(0.05, bestCv - 0.02);
-    const hi = Math.min(1.2, bestCv + 0.02);
-    for (let cv = lo; cv <= hi + 1e-9; cv += 1e-3) {
+    const lo = Math.max(lo0, bestCv - 0.03);
+    const hi = Math.min(hi0, bestCv + 0.03);
+    for (let cv = lo; cv <= hi + 1e-9; cv += 3e-3) {
       const v = objective(points, mean, cv, cv * k, criterion);
       if (v < bestObj) {
         bestObj = v;
@@ -2254,19 +2254,37 @@
     }
     return { cv: bestCv, objective: bestObj };
   }
+  function bestKAt(points, mean, criterion, lo0, hi0, cvLo, cvHi) {
+    let bestK = lo0;
+    let best = { cv: 0, objective: Number.POSITIVE_INFINITY };
+    for (let k = lo0; k <= hi0 + 1e-9; k += 0.5) {
+      const r = bestCvAt(points, mean, k, criterion, cvLo, cvHi);
+      if (r.objective < best.objective) {
+        best = r;
+        bestK = k;
+      }
+    }
+    const lo = Math.max(lo0, bestK - 0.4);
+    const hi = Math.min(hi0, bestK + 0.4);
+    for (let k = lo; k <= hi + 1e-9; k += 0.1) {
+      const r = bestCvAt(points, mean, Number(k.toFixed(2)), criterion, cvLo, cvHi);
+      if (r.objective < best.objective) {
+        best = r;
+        bestK = Number(k.toFixed(2));
+      }
+    }
+    return { k: bestK, cv: best.cv, objective: best.objective };
+  }
   function recommendFit(points, input) {
     const criterion = input.criterion ?? "sse";
     const mean = input.mean;
     if (!Number.isFinite(mean) || mean <= 0) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\u6570\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
     if (!points || points.length < 3) throw new Error("\u9002\u7EBF\u81F3\u5C11\u9700\u8981 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
-    const ks = [];
-    if (input.fixedK != null) {
-      if (!(input.fixedK > 0)) throw new Error("Cs/Cv \u500D\u6BD4\u5FC5\u987B\u4E3A\u6B63\u6570");
-      ks.push(input.fixedK);
-    } else {
-      const [k0, k1] = input.kRange ?? [2, 4];
-      if (!(k1 >= k0)) throw new Error("\u500D\u6BD4\u533A\u95F4\u4E0A\u754C\u5FC5\u987B\u4E0D\u5C0F\u4E8E\u4E0B\u754C");
-      for (let k = k0; k <= k1 + 1e-9; k += 0.1) ks.push(Number(k.toFixed(2)));
+    let cvLo = 0.05;
+    let cvHi = 1.2;
+    if (input.cvHint != null && Number.isFinite(input.cvHint) && input.cvHint > 0) {
+      cvLo = Math.max(0.05, input.cvHint - 0.3);
+      cvHi = Math.min(1.2, input.cvHint + 0.3);
     }
     let best = {
       mean,
@@ -2276,18 +2294,27 @@
       criterion,
       objective: Number.POSITIVE_INFINITY
     };
-    for (const k of ks) {
-      const r = bestCvAt(points, mean, k, criterion);
-      if (r.objective < best.objective) {
+    const take = (k, cv, objectiveValue) => {
+      if (objectiveValue < best.objective) {
         best = {
           mean,
-          cv: Number(r.cv.toFixed(4)),
-          cs: Number((r.cv * k).toFixed(4)),
+          cv: Number(cv.toFixed(4)),
+          cs: Number((cv * k).toFixed(4)),
           ratio: Number(k.toFixed(2)),
           criterion,
-          objective: r.objective
+          objective: objectiveValue
         };
       }
+    };
+    if (input.fixedK != null) {
+      if (!(input.fixedK > 0)) throw new Error("Cs/Cv \u500D\u6BD4\u5FC5\u987B\u4E3A\u6B63\u6570");
+      const r = bestCvAt(points, mean, input.fixedK, criterion, cvLo, cvHi);
+      take(input.fixedK, r.cv, r.objective);
+    } else {
+      const [k0, k1] = input.kRange ?? [2, 4];
+      if (!(k1 >= k0)) throw new Error("\u500D\u6BD4\u533A\u95F4\u4E0A\u754C\u5FC5\u987B\u4E0D\u5C0F\u4E8E\u4E0B\u754C");
+      const r = bestKAt(points, mean, criterion, k0, k1, cvLo, cvHi);
+      take(r.k, r.cv, r.objective);
     }
     return best;
   }
@@ -3145,7 +3172,54 @@
     $("ratioSlider").value = String(Math.min(8, Math.max(1, cs / c)));
     syncParamInputs();
     render();
-    $("recMsg").textContent = msg;
+    flashUpdated();
+    return msg;
+  }
+  function flashUpdated() {
+    for (const id of ["cvShow", "csShow", "ratioShow", "outQ", "qrQ"]) {
+      const el = $(id);
+      if (!el) continue;
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+      window.setTimeout(() => el.classList.remove("flash"), 700);
+    }
+  }
+  var fitBusy = false;
+  var FIT_BTN_IDS = ["btnRecommend", "btnConvention3", "btnTextbook", "btnThreePoint", "btnAutoFit"];
+  function setFitBusy(busy) {
+    fitBusy = busy;
+    for (const id of FIT_BTN_IDS) {
+      const el = $(id);
+      if (!el) continue;
+      el.disabled = busy;
+      el.setAttribute("aria-busy", busy ? "true" : "false");
+    }
+    const msg = $("recMsg");
+    if (busy) msg.classList.add("busy");
+    else msg.classList.remove("busy");
+  }
+  function runFit(label, work) {
+    if (fitBusy) return;
+    if (state.pts.length < 3) {
+      alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+      return;
+    }
+    setFitBusy(true);
+    $("recMsg").textContent = `${label}\u2026`;
+    requestAnimationFrame(() => setTimeout(() => {
+      const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let tail = "";
+      try {
+        tail = work();
+        $("recMsg").textContent = tail;
+      } catch (e) {
+        $("recMsg").textContent = "\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e));
+      }
+      const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      setFitBusy(false);
+      if (tail) $("recMsg").textContent = `${tail}\u3000\u2713 \u5DF2\u5B8C\u6210\uFF08${((t1 - t0) / 1e3).toFixed(1)} s\uFF09`;
+    }, 0));
   }
   function recommendMsg(tag, r) {
     const q = qDesignOf(state.params.mean, r.cv, r.cs);
@@ -3158,31 +3232,18 @@
     }
     return s;
   }
+  var cvHintOf = () => state.stats && "cv" in state.stats ? state.stats.cv : void 0;
   $("btnRecommend").onclick = () => {
-    try {
-      if (state.pts.length < 3) {
-        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
-        return;
-      }
-      $("recMsg").textContent = "\u6B63\u5728\u6309\u9002\u7EBF\u51C6\u5219\u641C\u7D22\u6700\u4F18\u53C2\u6570\u2026";
-      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", kRange: [2, 4] });
-      applyFit(r.mean, r.cv, r.cs, recommendMsg("\u89C4\u8303\u6700\u4F18\u9002\u7EBF", r));
-    } catch (e) {
-      alert("\u63A8\u8350\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
-    }
+    runFit("\u6B63\u5728\u6309\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219\u641C\u7D22\u6700\u4F18\u53C2\u6570", () => {
+      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", kRange: [2, 4], cvHint: cvHintOf() });
+      return applyFit(r.mean, r.cv, r.cs, recommendMsg("\u89C4\u8303\u6700\u4F18\u9002\u7EBF", r));
+    });
   };
   $("btnConvention3").onclick = () => {
-    try {
-      if (state.pts.length < 3) {
-        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
-        return;
-      }
-      $("recMsg").textContent = "\u6B63\u5728\u6309 Cs=3Cv \u60EF\u4F8B\u641C\u7D22\u6700\u4F18 Cv\u2026";
-      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", fixedK: 3 });
-      applyFit(r.mean, r.cv, r.cs, recommendMsg("\u60EF\u4F8B\u9002\u7EBF Cs=3Cv", r));
-    } catch (e) {
-      alert("\u60EF\u4F8B\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
-    }
+    runFit("\u6B63\u5728\u6309 Cs=3Cv \u60EF\u4F8B\u641C\u7D22\u6700\u4F18 Cv", () => {
+      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", fixedK: 3, cvHint: cvHintOf() });
+      return applyFit(r.mean, r.cv, r.cs, recommendMsg("\u60EF\u4F8B\u9002\u7EBF Cs=3Cv", r));
+    });
   };
   $("btnTextbook").onclick = () => {
     const hit = state.exampleHit;
@@ -3191,12 +3252,12 @@
       return;
     }
     const a = hit.adopted;
-    applyFit(
+    runFit("\u6B63\u5728\u5957\u7528\u6559\u6750\u91C7\u7528\u503C", () => applyFit(
       a.mean,
       a.cv,
       a.cs,
       `\u5DF2\u91C7\u7528${hit.title}\uFF08${hit.source}\uFF09\u7684\u6559\u6750\u91C7\u7528\u503C\uFF1ACv=${a.cv}\u3001Cs=${a.cs}\uFF08=3Cv\uFF09\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(qDesignOf(a.mean, a.cv, a.cs), 0)} m\xB3/s\u3002${hit.note}`
-    );
+    ));
   };
   $("btnT3").onclick = () => {
     $("mParams").click();
@@ -5126,7 +5187,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.7",
+        appVersion: "0.11.8",
         data: multi.data,
         plans: multi.plans
       };
@@ -5489,7 +5550,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.7 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.8 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -5742,7 +5803,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.7");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.8");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";

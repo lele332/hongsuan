@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.7</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.8</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -110,13 +110,29 @@
   .field-error { border-color: var(--red) !important; background: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(255,59,48,.12) !important; }
   #saveHint { transition: opacity .5s; opacity: .30; font-size: 11px; color: var(--text3); }
   #saveHint.on { opacity: .85; color: #34c759; }
+  /* v0.11.8 一键采用的反馈机制：按钮禁用态 / 进行中转圈 / 结果更新闪烁 */
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:disabled:hover { opacity: .45; }
+  .btn:disabled:active { transform: none; }
+  #recMsg.busy::before {
+    content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px;
+    border: 1.5px solid var(--text3); border-top-color: transparent; border-radius: 50%;
+    animation: hongSpin .8s linear infinite; vertical-align: -1px;
+  }
+  @keyframes hongSpin { to { transform: rotate(360deg); } }
+  .flash { animation: hongFlash 700ms ease-out; border-radius: 4px; }
+  @keyframes hongFlash { 0% { background-color: rgba(0,122,255,.20); } 100% { background-color: transparent; } }
+  @media (prefers-reduced-motion: reduce) {
+    #recMsg.busy::before { animation: none; }
+    .flash { animation: none; }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.7</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.8</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -916,7 +932,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.7<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.8<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
