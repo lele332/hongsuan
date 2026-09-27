@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.6</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.7</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -116,7 +116,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.6</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.7</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -729,6 +729,17 @@
       系列重新计算时恢复矩法初估值；三参数（Q̄、C<sub>v</sub>、C<sub>s</sub>）均可按规范 6.2.5 目估适线调整。
     </div>
   </div>
+  <div class="row" style="margin-top:10px;align-items:flex-start">
+    <div style="flex:1">
+      <label style="font-size:11.5px;color:var(--text3)">一键采用参数（不用手调 C<sub>v</sub> / C<sub>s</sub>）：</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+        <button class="btn" id="btnRecommend" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="按 SL 44-2006 附录 A.1.2 离差平方和准则搜索最优 Cv，Cs/Cv 倍比约束在工程惯例区间 2~4，均值固定为矩法值">规范最优适线</button>
+        <button class="btn ghost" id="btnConvention3" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="按工程惯例 Cs=3Cv 约束，用离差平方和准则搜索最优 Cv（教材与 QW2.0 多数例题采用此惯例）">惯例 Cs=3Cv</button>
+        <button class="btn ghost" id="btnTextbook" style="margin-top:0;padding:4px 12px;font-size:12.5px;display:none" title="系列命中内置例题库时，直接采用教材人工目估适线的采用值">教材采用值</button>
+      </div>
+      <div id="recMsg" style="font-size:11.5px;color:var(--text3);margin-top:6px;line-height:1.6"></div>
+    </div>
+  </div>
   <div class="row" style="margin-top:12px">
     <div>
       <label>设计洪水频率</label>
@@ -905,7 +916,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.6<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.7<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
