@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.5</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.6</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -116,7 +116,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.5</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.6</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -155,7 +155,24 @@
       </div>
     </details>
     <div class="err" id="parseErr"></div>
-    <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。示例为算例 T1（n=10）。</div>
+    <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。<b>粘贴或修改后约 0.7 秒自动计算，无需点按钮</b>；结果看下方快速结果条。示例为算例 T1（n=10）。</div>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <input type="file" id="ocrFile" accept="image/*" style="font-size:12.5px">
+      <button class="btn ghost" id="ocrRun" style="padding:5px 14px;font-size:12.5px">识别图片中的表格</button>
+      <span style="font-size:11.5px;color:var(--text3)">也可 Ctrl+V 粘贴截图 · 全程离线，图片不出本机</span>
+    </div>
+    <canvas id="ocrCanvas" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"></canvas>
+    <span id="ocrStatus" style="font-size:11.5px;color:var(--text3)"></span>
+    <div id="ocrCols" style="margin-top:8px"></div>
+    <div id="ocrOutBox" style="display:none;margin-top:8px">
+      <label style="font-size:12.5px">识别结果（请核对后再填入；双栏表先取左列再取右列会自动接着追加）</label>
+      <textarea id="ocrOut" style="height:120px" placeholder="选中某一列后数值会出现在这里，可手工修改"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" id="ocrApply">核对无误，填入系列并计算</button>
+        <button class="btn ghost" id="ocrClear">清空重来</button>
+      </div>
+      <div class="hint">OCR 会把 3 认成 8、5 认成 6 之类，务必逐个核对；识别率取决于拍摄清晰度。</div>
+    </div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
       <input type="checkbox" id="hasExtra" style="width:16px;height:16px;accent-color:var(--blue)"> 含特大洪水（不连序系列）
     </label>
@@ -172,6 +189,18 @@
     </div>
     <button class="btn" id="btnCalc">计算并适线</button>
     <button class="btn ghost" id="btnT3">载入算例 T3 参数</button>
+
+    <div id="quickResult" style="display:none;margin-top:14px;padding:12px 16px;background:var(--bg);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px" id="qrTitle">矩法计算结果</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 26px;align-items:flex-end">
+        <div><div style="font-size:11.5px;color:var(--text3)">均值 Q̄（m³/s）</div><div style="font-size:21px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums" id="qrMean">—</div></div>
+        <div><div style="font-size:11.5px;color:var(--text3)">均方差 σ（m³/s）</div><div style="font-size:17px;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums" id="qrSigma">—</div></div>
+        <div><div style="font-size:11.5px;color:var(--text3)">变差系数 C<sub>v</sub></div><div style="font-size:17px;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums" id="qrCv">—</div></div>
+        <div><div style="font-size:11.5px;color:var(--text3)">偏态系数 C<sub>s</sub>（矩法，仅参考）</div><div style="font-size:17px;font-weight:500;color:var(--text3);font-variant-numeric:tabular-nums" id="qrCs">—</div></div>
+        <div><div style="font-size:11.5px;color:var(--blue)">设计流量 Q<sub>p</sub>（当前频率）</div><div style="font-size:21px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums" id="qrQ">—</div></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:10px;line-height:1.6">↓ 下方「P-Ⅲ 适线（海森机率格纸）」是经验点据与理论曲线；「适线调整」里改 C<sub>v</sub> 与 C<sub>s</sub>/C<sub>v</sub> 倍比可实时重算（教材例 3-1-1 采用 C<sub>v</sub>=0.49、倍比 3.0，即 C<sub>s</sub>=1.47）。</div>
+    </div>
 
     <details id="openBox" style="margin-top:12px">
       <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥孔最小净长度（规范第 7 章 · 桥孔设计）</summary>
@@ -650,7 +679,7 @@
 </div>
 
 <div class="card" id="chartCard">
-  <h2>海森机率格纸 · 适线</h2>
+  <h2>P-Ⅲ 适线（海森机率格纸）</h2>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
   <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums">悬停图表可读取任意位置频率与流量</div>
   <div class="legend">
@@ -876,7 +905,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.5<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.6<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>

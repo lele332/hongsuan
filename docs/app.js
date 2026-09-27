@@ -2622,6 +2622,10 @@
     $("ratioShow").textContent = (params.cs / params.cv).toFixed(1);
     const phi = phiPIII(freq, params.cs), kp = 1 + phi * params.cv, q = params.mean * kp;
     $("outQ").textContent = fmt(q, 0);
+    {
+      const qr = $("quickResult");
+      if (qr && qr.style.display === "block") $("qrQ").textContent = fmt(q, 0);
+    }
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
     logRenderOnce();
@@ -2740,6 +2744,7 @@
     svg.addEventListener("mouseleave", hide);
   }
   function calcFromSeries() {
+    window.clearTimeout(seriesAutoTimer);
     const errBox = $("parseErr");
     const series = parseSeries($("series").value);
     let xs = series.values;
@@ -2759,7 +2764,7 @@
         const nRaw = $("convN").value.trim();
         const conv = areaConvert({ qRef: 1, fRef, fSite, n: nRaw ? +nRaw : void 0 });
         notices.push(...conv.warnings);
-        notices.push(`\u5DF2\u6309\u9762\u79EF\u6BD4\u62DF\u8F6C\u6362\u5230\u6865\u4F4D\u65AD\u9762\uFF08\xD7${conv.qSite.toFixed(4)}\uFF0Cn=${conv.n}\uFF09`);
+        notices.push(`\u5DF2\u6309\u9762\u79EF\u6BD4\u62DF\u8F6C\u6362\u5230\u6865\u4F4D\u65AD\u9762\uFF08\xD7${conv.qSite.toFixed(4)}\uFF0Cn=${conv.n}\uFF09\u2014\u2014\u82E5\u8981\u4E0E\u6559\u6750/QW2.0 \u539F\u59CB\u7CFB\u5217\u5BF9\u7167\uFF0C\u8BF7\u5C55\u5F00\u300C\u7CFB\u5217\u9762\u79EF\u8F6C\u6362\u300D\u53D6\u6D88\u52FE\u9009`);
         xs = xs.map((v) => v * conv.qSite);
       } catch (e) {
         errBox.style.display = "block";
@@ -2817,6 +2822,19 @@
     $("stCv").textContent = st.cv.toFixed(3);
     $("stCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
     render();
+    showQuickResult(st);
+  }
+  function showQuickResult(st) {
+    const el = $("quickResult");
+    if (!el) return;
+    const stAny = st;
+    $("qrMean").textContent = fmt(st.mean, 1);
+    $("qrSigma").textContent = typeof stAny.sigma === "number" ? fmt(stAny.sigma, 1) : "\u2014";
+    $("qrCv").textContent = st.cv.toFixed(3);
+    $("qrCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
+    $("qrQ").textContent = ($("outQ").textContent || "\u2014").trim();
+    $("qrTitle").textContent = `\u77E9\u6CD5\u8BA1\u7B97\u7ED3\u679C\uFF08\u7CFB\u5217 n=${st.n}\uFF0C\u03A3=${fmt(st.mean * st.n, 0)}${"a" in st ? `\uFF0C\u542B\u7279\u5927\u6D2A\u6C34 a=${stAny.a}` : ""}\uFF09\u2014\u2014\u4F8B 3-1-1 \u6559\u6750\u7CFB\u5217\u4E3A n=32\u3001\u03A3=58,854\u3001Q\u0304=1,839\uFF0C\u5BF9\u4E0D\u4E0A\u8BF4\u660E\u6709\u6570\u8F93\u9519`;
+    el.style.display = "block";
   }
   function syncParamInputs() {
     $("inMean").value = state.params.mean.toFixed(1);
@@ -2827,6 +2845,14 @@
     if ($("ratioIn")) $("ratioIn").value = (state.params.cs / state.params.cv).toFixed(2);
   }
   $("btnCalc").onclick = calcFromSeries;
+  var seriesAutoTimer;
+  $("series").addEventListener("input", () => {
+    window.clearTimeout(seriesAutoTimer);
+    seriesAutoTimer = window.setTimeout(() => {
+      const vals = parseSeries($("series").value).values;
+      if (vals.length >= 3) calcFromSeries();
+    }, 700);
+  });
   $("cvSlider").oninput = (e) => {
     const cv = +e.target.value;
     const ratio = +$("ratioSlider").value;
@@ -4886,7 +4912,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.5",
+        appVersion: "0.11.6",
         data: multi.data,
         plans: multi.plans
       };
@@ -5249,7 +5275,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.5 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.6 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -5482,7 +5508,7 @@
       if (el && d.total[k] != null) el.value = d.total[k];
     }
     if (d.conv) {
-      $("convEnable").checked = Boolean(d.conv.enable);
+      $("convEnable").checked = false;
       if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
       if (d.conv.fSite != null) $("convFSite").value = d.conv.fSite;
       if (d.conv.n != null) $("convN").value = d.conv.n;
@@ -5502,7 +5528,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.5");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.6");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
@@ -5575,4 +5601,158 @@
   if (new URLSearchParams(location.search).get("autosave") === "1") {
     saveAll();
   }
+  var ocrImageDataUrl = "";
+  var ocrLastCol = -1;
+  function ocrApi() {
+    return window.hsApi;
+  }
+  function loadImgToCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = $("ocrCanvas");
+        const LONG = 1600;
+        const s = Math.min(1, LONG / Math.max(img.naturalWidth, img.naturalHeight));
+        cv.width = Math.max(1, Math.round(img.naturalWidth * s));
+        cv.height = Math.max(1, Math.round(img.naturalHeight * s));
+        const ctx = cv.getContext("2d");
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        cv.style.display = "block";
+        ocrImageDataUrl = cv.toDataURL("image/png");
+        resolve();
+      };
+      img.onerror = () => reject(new Error("\u56FE\u7247\u8BFB\u53D6\u5931\u8D25"));
+      img.src = src;
+    });
+  }
+  function numsOfCell(s) {
+    const t = s.replace(/,/g, " ");
+    if (/[A-Za-z\u4e00-\u9fff]/.test(t)) return [];
+    return t.match(/\d+(\.\d+)?/g) || [];
+  }
+  function pickSeriesNumbers(cells) {
+    const all = [];
+    for (const c of cells) all.push(...numsOfCell(c));
+    const ints = all.filter((v) => /^\d+$/.test(v) && Number(v) >= 10);
+    const hasFrac = all.some((v) => v.indexOf(".") >= 0);
+    if (ints.length > 0 && hasFrac && ints.length < all.length) {
+      return {
+        vals: ints,
+        note: `\u5DF2\u81EA\u52A8\u53BB\u6389 ${all.length - ints.length} \u4E2A\u5C0F\u6570\uFF08\u591A\u4E3A\u6A21\u6BD4\u7CFB\u6570 K_i\u3001(K_i\u22121)\xB2\uFF09\uFF0C\u9700\u8981\u8BF7\u624B\u5DE5\u8865\u56DE`
+      };
+    }
+    return { vals: all, note: "" };
+  }
+  function renderOcrCols(d) {
+    const rows = d.rows || [];
+    const ncol = d.ncol || 0;
+    const conf = d.conf || [];
+    const box = $("ocrCols");
+    let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:6px">\u8BC6\u522B\u5230 ${rows.length} \u884C \xD7 ${ncol} \u5217\uFF0C\u627E\u5230\u6D41\u91CF\u6240\u5728\u7684\u90A3\u4E00\u5217\u70B9\u300C\u53D6\u8FD9\u5217\u300D\uFF1A</div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow:auto;padding-right:4px">`;
+    for (let j = 0; j < ncol; j++) {
+      const cells = rows.map((r) => (r[j] || "").trim()).filter(Boolean);
+      if (!cells.length) continue;
+      const picked = pickSeriesNumbers(cells);
+      let lowConf = 0;
+      rows.forEach((r, i) => {
+        if ((r[j] || "") && conf[i] && conf[i][j] != null && conf[i][j] < 0.8) lowConf++;
+      });
+      const sample = cells.slice(0, 5).join(" \xB7 ").slice(0, 46);
+      html += `<div style="display:flex;gap:8px;align-items:center;padding:5px 10px;background:var(--bg);border-radius:8px;font-size:12px">
+      <span style="color:var(--text3);min-width:36px">\u7B2C${j + 1}\u5217</span>
+      <span style="flex:1;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sample}</span>
+      <span style="color:var(--text3)">${picked.vals.length} \u4E2A\u6570${lowConf ? ` \xB7 <span style="color:var(--red)">${lowConf} \u5904\u4E0D\u786E\u5B9A</span>` : ""}</span>
+      <button class="btn ghost" data-col="${j}" style="padding:3px 10px;font-size:12px">\u53D6\u8FD9\u5217</button>
+    </div>`;
+    }
+    html += `</div>`;
+    box.innerHTML = html;
+    const btns = box.querySelectorAll("button[data-col]");
+    btns.forEach((b) => {
+      b.onclick = () => {
+        const j = +b.getAttribute("data-col");
+        const cells = rows.map((r) => (r[j] || "").trim()).filter(Boolean);
+        const picked = pickSeriesNumbers(cells);
+        const out = $("ocrOut");
+        const cur = out.value.trim();
+        const appending = !!cur && j !== ocrLastCol;
+        const merged = !cur || j === ocrLastCol ? picked.vals : cur.split(/\s+/).concat(picked.vals);
+        out.value = merged.join("\n");
+        ocrLastCol = j;
+        $("ocrOutBox").style.display = "block";
+        $("ocrStatus").textContent = (appending ? `\u5DF2\u628A\u7B2C ${j + 1} \u5217\u8FFD\u52A0\u8FDB\u53BB\uFF08\u73B0\u5171 ${merged.length} \u4E2A\u6570\uFF09\u3002` : `\u5DF2\u53D6\u7B2C ${j + 1} \u5217\u5171 ${picked.vals.length} \u4E2A\u6570\uFF08\u518D\u70B9\u522B\u7684\u5217\u4F1A\u63A5\u7740\u8FFD\u52A0\uFF09\u3002`) + (picked.note ? picked.note + "\u3002" : "") + "\u52A1\u5FC5\u9010\u4E2A\u6838\u5BF9\u540E\u518D\u70B9\u300C\u586B\u5165\u7CFB\u5217\u5E76\u8BA1\u7B97\u300D\u3002";
+      };
+    });
+  }
+  function setupOcr() {
+    const file = $("ocrFile");
+    const status = $("ocrStatus");
+    const readFile = (f) => {
+      const r = new FileReader();
+      r.onload = () => {
+        loadImgToCanvas(String(r.result)).then(() => {
+          status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name || "\u526A\u8D34\u677F\u622A\u56FE"}\u300D\uFF0C\u70B9\u53F3\u8FB9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
+        }).catch((e) => {
+          status.textContent = String(e && e.message || e);
+        });
+      };
+      r.readAsDataURL(f);
+    };
+    file.onchange = () => {
+      const f = file.files && file.files[0];
+      if (f) readFile(f);
+    };
+    window.addEventListener("paste", (ev) => {
+      const dt = ev.clipboardData;
+      const items = dt && dt.items ? Array.from(dt.items) : [];
+      for (const it of items) {
+        if (it.type && String(it.type).indexOf("image/") === 0) {
+          const f = it.getAsFile();
+          if (f) readFile(f);
+          break;
+        }
+      }
+    });
+    $("ocrRun").onclick = async () => {
+      const api = ocrApi();
+      if (!api || !api.ocrTable) {
+        status.textContent = "\u56FE\u7247\u8BC6\u522B\u8981\u5728\u672C\u673A\u8DD1\u5F15\u64CE\uFF0C\u53EA\u6709\u684C\u9762\u7248\u652F\u6301\uFF08\u79BB\u7EBF\u3001\u4E0D\u8054\u7F51\uFF09\u3002\u8BF7\u6253\u5F00\u684C\u9762\u7684\u300C\u6CD3\u7B97\u300D\u3002";
+        return;
+      }
+      if (!ocrImageDataUrl) {
+        status.textContent = "\u5148\u9009\u4E00\u5F20\u622A\u56FE\uFF0C\u6216\u6309 Ctrl+V \u628A\u622A\u56FE\u7C98\u8FDB\u6765\u3002";
+        return;
+      }
+      try {
+        status.textContent = "\u6B63\u5728\u8BC6\u522B\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026";
+        const raw = await api.ocrTable(ocrImageDataUrl, { deskew: true });
+        const d = JSON.parse(raw);
+        if (!d.ok) {
+          status.textContent = "\u8BC6\u522B\u5931\u8D25\uFF1A" + d.error;
+          return;
+        }
+        renderOcrCols(d);
+        status.textContent = "\u8BC6\u522B\u5B8C\u6210\uFF1A\u770B\u4E0B\u9762\u5217\u51FA\u7684\u6BCF\u4E00\u5217\uFF0C\u70B9\u6D41\u91CF\u90A3\u4E00\u5217\u7684\u300C\u53D6\u8FD9\u5217\u300D\u3002";
+      } catch (e) {
+        status.textContent = "\u8BC6\u522B\u51FA\u9519\uFF1A" + (e instanceof Error ? e.message : String(e));
+      }
+    };
+    $("ocrApply").onclick = () => {
+      const v = $("ocrOut").value.trim();
+      if (!v) {
+        status.textContent = "\u8BC6\u522B\u7ED3\u679C\u4E3A\u7A7A\uFF0C\u5148\u300C\u53D6\u8FD9\u5217\u300D\u3002";
+        return;
+      }
+      $("series").value = v;
+      calcFromSeries();
+      status.textContent = "\u5DF2\u586B\u5165\u7CFB\u5217\u5E76\u5B8C\u6210\u8BA1\u7B97\uFF0C\u8BF7\u770B\u7ED3\u679C\u5E76\u6838\u5BF9\u6570\u503C\u3002";
+    };
+    $("ocrClear").onclick = () => {
+      $("ocrOut").value = "";
+      ocrLastCol = -1;
+      status.textContent = "\u5DF2\u6E05\u7A7A\u8BC6\u522B\u7ED3\u679C\uFF0C\u53EF\u91CD\u65B0\u53D6\u5217\u3002";
+    };
+  }
+  setupOcr();
 })();
