@@ -3173,6 +3173,10 @@
     syncParamInputs();
     render();
     flashUpdated();
+    if (phiPanelOpen()) {
+      $("phiCsIn").value = cs.toFixed(2);
+      renderPhiTable();
+    }
     return msg;
   }
   function flashUpdated() {
@@ -3259,6 +3263,59 @@
       `\u5DF2\u91C7\u7528${hit.title}\uFF08${hit.source}\uFF09\u7684\u6559\u6750\u91C7\u7528\u503C\uFF1ACv=${a.cv}\u3001Cs=${a.cs}\uFF08=3Cv\uFF09\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(qDesignOf(a.mean, a.cv, a.cs), 0)} m\xB3/s\u3002${hit.note}`
     ));
   };
+  var PHI_PS = [1e-4, 1e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97, 0.99, 0.999];
+  var PHI_PS_LABEL = ["0.01", "0.1", "0.5", "1", "2", "5", "10", "20", "25", "50", "75", "90", "95", "97", "99", "99.9"];
+  var PHI_CS = [];
+  for (let c = 0; c <= 6.0001; c += 0.05) PHI_CS.push(Number(c.toFixed(2)));
+  var phiTableCache = null;
+  function phiTableRows() {
+    if (!phiTableCache) phiTableCache = PHI_CS.map((cs) => PHI_PS.map((p) => phiPIII(p, cs)));
+    return phiTableCache;
+  }
+  function phiPanelOpen() {
+    const el = $("phiTablePanel");
+    return !!el && el.style.display !== "none";
+  }
+  function renderPhiTable() {
+    const rows = phiTableRows();
+    const csSel = Number($("phiCsIn").value);
+    const pSel = Number($("phiPSel").value);
+    let ci = 0, cd = Infinity, pi = 0, pd = Infinity;
+    PHI_CS.forEach((c, i) => {
+      const d = Math.abs(c - csSel);
+      if (d < cd) {
+        cd = d;
+        ci = i;
+      }
+    });
+    PHI_PS.forEach((p, j) => {
+      const d = Math.abs(p - pSel);
+      if (d < pd) {
+        pd = d;
+        pi = j;
+      }
+    });
+    const head = `<tr><th>C<sub>s</sub> \\ P</th>${PHI_PS_LABEL.map((lb, j) => `<th class="${j === pi ? "hl" : ""}">${lb}%</th>`).join("")}</tr>`;
+    const body = rows.map((r, i) => `<tr><th class="${i === ci ? "hl" : ""}">${PHI_CS[i].toFixed(2)}</th>` + r.map((v, j) => `<td class="${j === pi ? "hl" : ""}"${i === ci ? ` style="font-weight:600"` : ""}>${v.toFixed(3)}</td>`).join("") + `</tr>`).join("");
+    $("phiTableWrap").innerHTML = `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    const phi = phiPIII(pSel, csSel);
+    const kp = 1 + phi * state.params.cv;
+    $("phiLookup").textContent = `\u03A6 = ${phi.toFixed(3)} \uFF5C Kp = ${kp.toFixed(3)}\uFF08Cv=${state.params.cv.toFixed(3)}\uFF09\uFF5C Qp = ${fmt(state.params.mean * kp, 0)} m\xB3/s`;
+  }
+  $("btnPhiTable").onclick = () => {
+    const el = $("phiTablePanel");
+    if (phiPanelOpen()) {
+      el.style.display = "none";
+      return;
+    }
+    $("phiCsIn").value = state.params.cs.toFixed(2);
+    const ps = $("phiPSel");
+    if ([...ps.options].some((o) => o.value === String(state.freq))) ps.value = String(state.freq);
+    el.style.display = "";
+    renderPhiTable();
+  };
+  $("phiCsIn").oninput = () => renderPhiTable();
+  $("phiPSel").onchange = () => renderPhiTable();
   $("btnT3").onclick = () => {
     $("mParams").click();
     $("inMean").value = "5173.6";
@@ -5187,7 +5244,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.8",
+        appVersion: "0.11.9",
         data: multi.data,
         plans: multi.plans
       };
@@ -5550,7 +5607,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.8 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.9 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -5803,7 +5860,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.8");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.9");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
