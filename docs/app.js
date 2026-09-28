@@ -129,6 +129,10 @@
     if (!Number.isFinite(Cs)) throw new Error(`\u504F\u6001\u7CFB\u6570 Cs \u5FC5\u987B\u4E3A\u6709\u9650\u6570\uFF0C\u6536\u5230 ${Cs}`);
     if (!(pExceed > 0 && pExceed < 1)) throw new Error(`p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${pExceed}`);
     if (Math.abs(Cs) < 1e-8) return norminv(1 - pExceed);
+    if (Math.abs(Cs) < 0.01) {
+      const z = norminv(1 - pExceed);
+      return z + Cs / 6 * (z * z - 1) + Cs * Cs / 72 * (z * z * z - 3 * z);
+    }
     if (Cs > 0) {
       const a = 4 / (Cs * Cs);
       const g = gammaQuantile(1 - pExceed, a);
@@ -2319,6 +2323,174 @@
     return best;
   }
 
+  // src/core/samplingError.ts
+  function dPhiDCs(p, cs) {
+    if (Math.abs(cs) <= 0.3) {
+      const z = phiPIII(p, 0);
+      return (z * z - 1) / 6 + cs / 36 * (z * z * z - 3 * z);
+    }
+    const h = 1e-3 * Math.max(1, Math.abs(cs));
+    return (phiPIII(p, cs + h) - phiPIII(p, cs - h)) / (2 * h);
+  }
+  function bValue(p, cs) {
+    if (!(p > 0 && p < 1)) throw new Error(`\u9891\u7387 p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    if (!Number.isFinite(cs)) throw new Error(`Cs \u5FC5\u987B\u4E3A\u6709\u9650\u6570\uFF0C\u6536\u5230 ${cs}`);
+    const phi = phiPIII(p, cs);
+    const dphi = dPhiDCs(p, cs);
+    const c2 = cs * cs;
+    const b2 = 1 + phi * phi * (0.5 + 0.375 * c2) + dphi * dphi * (6 + 9 * c2 + 1.875 * c2 * c2) + phi * cs + 2 * phi * dphi * (1.5 * cs + 0.375 * cs * c2);
+    return Math.sqrt(Math.max(b2, 1e-12));
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = a + 1831565813 >>> 0;
+      let t = a;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function normSample(rnd) {
+    let u = rnd();
+    if (u < 1e-12) u = 1e-12;
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
+  }
+  function gammaSample(rnd, alpha) {
+    if (alpha < 1) return gammaSample(rnd, alpha + 1) * Math.pow(rnd(), 1 / alpha);
+    const d = alpha - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    for (let k = 0; k < 1e3; k++) {
+      let x = 0, v = 0;
+      do {
+        x = normSample(rnd);
+        v = 1 + c * x;
+      } while (v <= 0);
+      v = v * v * v;
+      const u = rnd();
+      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+      if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+    }
+    return d;
+  }
+  function gampdf(a, g) {
+    return Math.exp(-g + (a - 1) * Math.log(g) - gammaln(a));
+  }
+  function phiFast(pExceed, cs) {
+    if (Math.abs(cs) < 1e-8) return norminv(1 - pExceed);
+    if (cs < 0) return -phiFast(1 - pExceed, -cs);
+    if (Math.abs(cs) < 0.01) {
+      const z2 = norminv(1 - pExceed);
+      return z2 + cs / 6 * (z2 * z2 - 1) + cs * cs / 72 * (z2 * z2 * z2 - 3 * z2);
+    }
+    const a = 4 / (cs * cs);
+    const q = 1 - pExceed;
+    const z = norminv(q);
+    let g = a * Math.pow(1 - 1 / (9 * a) + z * Math.sqrt(1 / (9 * a)), 3);
+    if (!(g > 0)) g = a;
+    for (let i = 0; i < 60; i++) {
+      const f = gammaincLower(a, g) - q;
+      const d = gampdf(a, g);
+      if (!(d > 0)) break;
+      let step = f / d;
+      let gn = g - step;
+      let damp = 1;
+      while (!(gn > 0) && damp > 1e-6) {
+        damp *= 0.5;
+        gn = g - damp * step;
+      }
+      if (Math.abs(gn - g) < 1e-12 * Math.max(gn, 1)) {
+        g = gn;
+        break;
+      }
+      g = gn;
+    }
+    return cs / 2 * (g - a);
+  }
+  function bValueMC(p, cs, n, opts) {
+    const reps = Math.max(200, Math.round(opts?.reps ?? 2e3));
+    const seed = opts?.seed ?? 20260929;
+    if (!(n >= 2)) throw new Error("\u7CFB\u5217\u957F\u5EA6 n \u5FC5\u987B\u4E0D\u5C0F\u4E8E 2");
+    const rnd = mulberry32(seed);
+    const cv = 0.5, mean = 1;
+    const absCs = Math.abs(cs);
+    const alpha = absCs < 1e-8 ? 0 : 4 / (cs * cs);
+    const sign = cs >= 0 ? 1 : -1;
+    const xs = new Float64Array(n);
+    const xp = new Float64Array(reps);
+    const xp2 = new Float64Array(reps);
+    for (let r = 0; r < reps; r++) {
+      let sum = 0;
+      for (let i = 0; i < n; i++) {
+        let phiS;
+        if (alpha === 0) phiS = normSample(rnd);
+        else phiS = sign * (absCs / 2) * (gammaSample(rnd, alpha) - alpha);
+        const x = mean * (1 + cv * phiS);
+        xs[i] = x;
+        sum += x;
+      }
+      const m = sum / n;
+      let m2 = 0, m3 = 0;
+      for (let i = 0; i < n; i++) {
+        const d = xs[i] - m;
+        m2 += d * d;
+        m3 += d * d * d;
+      }
+      m2 /= n;
+      m3 /= n;
+      const sd = Math.sqrt(m2);
+      if (!(sd > 0)) {
+        xp[r] = m;
+        xp2[r] = m * m;
+        continue;
+      }
+      const cvh = sd / m;
+      const csh = m3 / (sd * sd * sd);
+      const v = m * (1 + cvh * phiFast(p, csh));
+      xp[r] = v;
+      xp2[r] = v * v;
+    }
+    let s1 = 0, s2 = 0;
+    for (let r = 0; r < reps; r++) {
+      s1 += xp[r];
+      s2 += xp2[r];
+    }
+    const mx = s1 / reps;
+    const varr = Math.max(s2 / reps - mx * mx, 0) * reps / (reps - 1);
+    const sdXp = Math.sqrt(varr);
+    const B = sdXp * Math.sqrt(n) / (mean * cv);
+    let s4 = 0;
+    for (let r = 0; r < reps; r++) s4 += (xp[r] - mx) ** 4;
+    const mu4 = s4 / reps;
+    const kurt = mu4 / Math.max(varr * varr, 1e-300);
+    const seSd = sdXp * Math.sqrt(Math.max(kurt - 1, 0) / (4 * reps));
+    return {
+      B,
+      reps,
+      BAnalytic: bValue(p, cs),
+      relSE: sdXp > 0 ? seSd / sdXp * 100 : 0
+    };
+  }
+  function designSamplingError(input) {
+    const { mean, cv, cs, p, n } = input;
+    const beta = input.beta ?? 0.7;
+    const method = input.method ?? "mc";
+    if (!(mean > 0)) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    if (!(cv > 0)) throw new Error("Cv \u5FC5\u987B\u4E3A\u6B63\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    if (!Number.isFinite(n) || n < 2) throw new Error("\u7CFB\u5217\u957F\u5EA6 n \u5FC5\u987B\u4E0D\u5C0F\u4E8E 2");
+    const phi = phiPIII(p, cs);
+    const kp = 1 + phi * cv;
+    const xp = mean * kp;
+    const mc = input.precomputed ?? (method === "mc" ? bValueMC(p, cs, n, { reps: input.reps }) : void 0);
+    const B = mc ? mc.B : bValue(p, cs);
+    const sigmaAbs = mean * cv * B / Math.sqrt(n);
+    const relPct = sigmaAbs / xp * 100;
+    const safetyDelta = beta * sigmaAbs;
+    const basis = method === "mc" ? `\u7EDF\u8BA1\u8BD5\u9A8C ${mc.reps} \u6B21\uFF08\u4E0E\u89C4\u8303\u56FE A.2 \u540C\u4E00\u8DEF\u6570\uFF0C\u77E9\u6CD5\u53E3\u5F84\uFF1BB \u7684\u8BD5\u9A8C\u7CBE\u5EA6 \xB1${mc.relSE.toFixed(1)}%\uFF09\uFF1B\u4E00\u9636\u6E10\u8FD1\u5BF9\u7167 B=${mc.BAnalytic.toFixed(2)}\uFF08n=${n} \u65F6\u6E10\u8FD1\u5F0F\u504F\u5927\u7EA6 ${((mc.BAnalytic / mc.B - 1) * 100).toFixed(0)}%\uFF0C\u56E0\u6837\u672C\u504F\u6001\u7CFB\u6570\u7684\u5B9E\u9645\u65B9\u5DEE\u8FDC\u5C0F\u4E8E\u6E10\u8FD1\u503C\uFF09` : `\u4E00\u9636\u89E3\u6790\u6E10\u8FD1\u5F0F\uFF08B \u7531\u77E9\u6CD5\u4F30\u8BA1\u7684\u89E3\u6790\u534F\u65B9\u5DEE\u63A8\u51FA\uFF0Cn\u2192\u221E \u624D\u4E25\u683C\u6210\u7ACB\uFF1B\u5C0F\u6837\u672C\u4E0B\u504F\u5B89\u5168\uFF09`;
+    const note = `\u03C3_xp = Q\u0304\xB7C_v\xB7B/\u221An = ${sigmaAbs.toFixed(0)}\uFF08B=${B.toFixed(3)}\uFF0Cn=${n}\uFF09\uFF1B\u76F8\u5BF9\u5747\u65B9\u8BEF \xB1${relPct.toFixed(1)}%\uFF1B\u5B89\u5168\u4FEE\u6B63\u503C \u0394=\u03B2\u03C3\uFF0C\u03B2=0.7 \u2192 +${safetyDelta.toFixed(0)}\u3002\u4F9D\u636E SL 44-2006 \u9644\u5F55 A.2\uFF1A${basis}\u3002`;
+    return { B, xp, kp, sigmaAbs, relPct, safetyDelta, xpSafe: xp + safetyDelta, note, method, mc };
+  }
+
   // src/core/exampleLib.ts
   var KNOWN_EXAMPLES = [
     {
@@ -2784,6 +2956,40 @@
     for (let v = t0; v <= hi + 1e-9; v += step) out.push(v);
     return out;
   }
+  var bMcCache = /* @__PURE__ */ new Map();
+  function samplingErrorCached(mean, cv, cs, p, n) {
+    const key = `${cs.toFixed(4)}|${p}|${n}`;
+    let mc = bMcCache.get(key);
+    if (!mc) {
+      const r = designSamplingError({ mean, cv, cs, p, n });
+      if (r.mc) {
+        bMcCache.set(key, r.mc);
+        if (bMcCache.size > 300) bMcCache.clear();
+      }
+      return r;
+    }
+    return designSamplingError({ mean, cv, cs, p, n, precomputed: mc });
+  }
+  function renderSamplingError() {
+    const el = $("outSigma");
+    const note = $("outErrNote");
+    const elB = $("outB");
+    if (!el || !note) return;
+    const n = state.stats && "n" in state.stats ? state.stats.n : 0;
+    try {
+      const r = samplingErrorCached(state.params.mean, state.params.cv, state.params.cs, state.freq, n);
+      el.textContent = fmt(r.sigmaAbs, 0);
+      if (elB) {
+        elB.textContent = r.B.toFixed(2);
+        elB.title = r.mc ? `B = f(Cs=${state.params.cs.toFixed(2)}, P=${(state.freq * 100).toFixed(2)}%, n=${n})\uFF0C\u7531 ${r.mc.reps} \u6B21\u7EDF\u8BA1\u8BD5\u9A8C\u5F97\u5230\uFF08\u4E0E\u89C4\u8303\u56FE A.2 \u8BFA\u6A21\u56FE\u540C\u4E00\u8DEF\u6570\uFF09\uFF1B\u4E00\u9636\u6E10\u8FD1\u5BF9\u7167 B=${r.mc.BAnalytic.toFixed(2)}` : `B = f(Cs=${state.params.cs.toFixed(2)}, P=${(state.freq * 100).toFixed(2)}%)\uFF0C\u4E00\u9636\u89E3\u6790\u6E10\u8FD1\u5F0F`;
+      }
+      note.textContent = `${r.note}\u3000\u76F8\u5BF9\u5747\u65B9\u8BEF \xB1${r.relPct.toFixed(1)}%\uFF0C\u52A0\u5B89\u5168\u4FEE\u6B63\u540E\u7684\u8BBE\u8BA1\u503C ${fmt(r.xpSafe, 0)} m\xB3/s`;
+    } catch {
+      el.textContent = "\u2014";
+      if (elB) elB.textContent = "\u2014";
+      note.textContent = "";
+    }
+  }
   function render() {
     const { params, freq } = state;
     $("cvShow").textContent = params.cv.toFixed(3);
@@ -2797,6 +3003,7 @@
     }
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
+    renderSamplingError();
     logRenderOnce();
     stateCompare.A = {
       label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
@@ -5244,7 +5451,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.9",
+        appVersion: "0.11.10",
         data: multi.data,
         plans: multi.plans
       };
@@ -5607,7 +5814,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.9 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.10 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -5860,7 +6067,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.9");
+      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.10");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";

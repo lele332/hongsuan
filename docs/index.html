@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.9</title>
+<title>泓算 · 桥涵设计流量推求 v0.11.10</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -110,7 +110,7 @@
   .field-error { border-color: var(--red) !important; background: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(255,59,48,.12) !important; }
   #saveHint { transition: opacity .5s; opacity: .30; font-size: 11px; color: var(--text3); }
   #saveHint.on { opacity: .85; color: #34c759; }
-  /* v0.11.9 一键采用的反馈机制：按钮禁用态 / 进行中转圈 / 结果更新闪烁 */
+  /* v0.11.10 一键采用的反馈机制：按钮禁用态 / 进行中转圈 / 结果更新闪烁 */
   .btn:disabled { opacity: .45; cursor: default; }
   .btn:disabled:hover { opacity: .45; }
   .btn:disabled:active { transform: none; }
@@ -139,7 +139,7 @@
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.9</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.10</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -820,9 +820,12 @@
         <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub></div><div class="v" id="outQ">—</div></div>
         <div class="metric"><div class="k">离均系数 Φ<sub>p</sub></div><div class="v" id="outPhi">—</div></div>
         <div class="metric"><div class="k">模比系数 K<sub>p</sub></div><div class="v" id="outKp">—</div></div>
+        <div class="metric"><div class="k">保证修正值系数 B</div><div class="v" id="outB">—</div></div>
+        <div class="metric"><div class="k">抽样均方误 σ<sub>xp</sub></div><div class="v" id="outSigma">—</div></div>
       </div>
     </div>
   </div>
+  <div id="outErrNote" style="font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.7"></div>
   <button class="btn" id="btnReport" style="margin-top:16px">导出 Word 计算书</button>
   <span style="font-size:12px;color:var(--text3);margin-left:10px">当前适线状态 + 适线图 + 频率成果表</span>
 </div>
@@ -981,7 +984,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.9<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.10<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
