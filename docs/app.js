@@ -7289,4 +7289,93 @@
     };
   }
   setupOcr();
+  function feedbackTextForButton(btn) {
+    const map = {
+      mSeries: "\u5DF2\u5207\u6362",
+      mParams: "\u5DF2\u5207\u6362",
+      mHist: "\u5DF2\u5207\u6362",
+      mNoData: "\u5DF2\u5207\u6362",
+      mMap: "\u5DF2\u5207\u6362",
+      mHydro: "\u5DF2\u5207\u6362",
+      mHelp: "\u5DF2\u6253\u5F00",
+      ocrRun: "\u5DF2\u8BC6\u522B",
+      ocrApply: "\u5DF2\u586B\u5165",
+      ocrClear: "\u5DF2\u6E05\u7A7A",
+      btnCalc: "\u5DF2\u8BA1\u7B97",
+      btnThreePoint: "\u5DF2\u9002\u7EBF",
+      btnAutoFit: "\u5DF2\u9002\u7EBF",
+      btnRecommend: "\u5DF2\u63A8\u8350",
+      btnPhiTable: "\u5DF2\u6253\u5F00",
+      btnT3: "\u5DF2\u8F7D\u5165",
+      btnBayes: "\u5DF2\u5BF9\u6BD4",
+      btnHist: "\u5DF2\u8BA1\u7B97",
+      opUseQ: "\u5DF2\u4F7F\u7528",
+      opGo: "\u5DF2\u8BA1\u7B97",
+      scCalcA: "\u5DF2\u8BA1\u7B97",
+      scUseQ: "\u5DF2\u4F7F\u7528",
+      scGo: "\u5DF2\u8BA1\u7B97",
+      lsUseV: "\u5DF2\u4F7F\u7528",
+      lsGo: "\u5DF2\u8BA1\u7B97",
+      abGo: "\u5DF2\u8BA1\u7B97",
+      tsGo: "\u5DF2\u6C47\u603B",
+      rockGo: "\u5DF2\u67E5\u5F97",
+      btnWsProfile: "\u5DF2\u8BA1\u7B97",
+      btnWsSolve: "\u5DF2\u53CD\u89E3",
+      btnSsmDemoSi: "\u5DF2\u8F7D\u5165",
+      btnSsmDemoHec: "\u5DF2\u8F7D\u5165",
+      btnSsmRun: "\u5DF2\u8BA1\u7B97",
+      btnSsmClear: "\u5DF2\u6E05\u7A7A",
+      lkGo: "\u5DF2\u586B\u5165",
+      cbPsi: "\u5DF2\u586B\u5165",
+      cbTau: "\u5DF2\u586B\u5165",
+      cbZ: "\u5DF2\u586B\u5165",
+      cbBeta: "\u5DF2\u586B\u5165",
+      cbGamma: "\u5DF2\u586B\u5165",
+      cbDelta: "\u5DF2\u586B\u5165",
+      cbZoneGo: "\u5DF2\u67E5\u5F97",
+      logExpandAll: "\u5DF2\u5C55\u5F00",
+      logCollapseAll: "\u5DF2\u6536\u8D77",
+      logExportMd: "\u5DF2\u5BFC\u51FA",
+      logExportJson: "\u5DF2\u5BFC\u51FA",
+      logClear: "\u5DF2\u6E05\u7A7A"
+    };
+    if (btn.dataset.feedback) return btn.dataset.feedback;
+    if (map[btn.id]) return map[btn.id];
+    const label = btn.textContent?.trim() || "";
+    if (/清空|清除|重置/.test(label)) return "\u5DF2\u6E05\u7A7A";
+    if (/填入|选用|填\d/.test(label)) return "\u5DF2\u586B\u5165";
+    if (/导出|下载|复制/.test(label)) return "\u5DF2\u5BFC\u51FA";
+    if (/计算|适线|推算|反解|汇总/.test(label)) return "\u5DF2\u8BA1\u7B97";
+    if (/识别|解析/.test(label)) return "\u5DF2\u8BC6\u522B";
+    if (/载入|加载/.test(label)) return "\u5DF2\u8F7D\u5165";
+    if (/打开|显示/.test(label)) return "\u5DF2\u6253\u5F00";
+    if (/收起|关闭|隐藏/.test(label)) return "\u5DF2\u6536\u8D77";
+    if (/展开/.test(label)) return "\u5DF2\u5C55\u5F00";
+    if (/保存/.test(label)) return "\u5DF2\u4FDD\u5B58";
+    return "\u5DF2\u5B8C\u6210";
+  }
+  function showButtonFeedback(btn) {
+    if (btn.hasAttribute("disabled") || btn.getAttribute("aria-disabled") === "true") return;
+    btn.querySelector(".btn-feedback")?.remove();
+    const tip = document.createElement("span");
+    tip.className = "btn-feedback";
+    const text = feedbackTextForButton(btn);
+    const width = btn.getBoundingClientRect().width;
+    if (width < 68) {
+      tip.textContent = text;
+      tip.style.fontSize = "10px";
+      tip.style.letterSpacing = "-0.2px";
+    } else {
+      tip.textContent = "\u2713 " + text;
+    }
+    btn.appendChild(tip);
+    requestAnimationFrame(() => tip.classList.add("show"));
+    setTimeout(() => tip.classList.add("hide"), 620);
+    setTimeout(() => tip.remove(), 950);
+  }
+  document.addEventListener("click", (ev) => {
+    const target = ev.target;
+    const btn = target?.closest?.("button");
+    if (btn) showButtonFeedback(btn);
+  }, true);
 })();

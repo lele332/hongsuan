@@ -114,6 +114,16 @@
   .btn:disabled { opacity: .45; cursor: default; }
   .btn:disabled:hover { opacity: .45; }
   .btn:disabled:active { transform: none; }
+  /* 统一按钮点击反馈：左侧滑入“已完成”，不使用 hover 触发 */
+  button { position: relative; overflow: hidden; border-radius: 10px; }
+  .btn-feedback {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(90deg, #34c759, #2fb355); color: #fff; font-weight: 600;
+    transform: translateX(-101%); transition: transform .28s cubic-bezier(.22,.61,.36,1), opacity .18s ease;
+    border-radius: inherit; pointer-events: none; white-space: nowrap; z-index: 5; will-change: transform;
+  }
+  .btn-feedback.show { transform: translateX(0); }
+  .btn-feedback.hide { transform: translateX(101%); opacity: 0; }
   #recMsg.busy::before {
     content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px;
     border: 1.5px solid var(--text3); border-top-color: transparent; border-radius: 50%;
