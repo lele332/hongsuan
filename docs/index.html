@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v0.11.10</title>
+<title>泓算 · 桥涵设计流量推求</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -133,13 +133,96 @@
     #recMsg.busy::before { animation: none; }
     .flash { animation: none; }
   }
+
+  /* 识别过程全屏遮罩动画 */
+  .loader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(245, 245, 247, .94);
+    backdrop-filter: blur(4px);
+    user-select: none;
+    touch-action: none;
+    cursor: progress;
+  }
+  .loader-overlay.show { display: flex; }
+  body.ocr-loading-active { overflow: hidden; }
+  body.ocr-loading-active main, body.ocr-loading-active header, body.ocr-loading-active footer { pointer-events: none; }
+  .loader {
+    position: relative;
+    width: 75px;
+    height: 100px;
+  }
+  .loader__bar {
+    position: absolute;
+    bottom: 0;
+    width: 10px;
+    height: 50%;
+    background: rgb(0, 0, 0);
+    transform-origin: center bottom;
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, .2);
+  }
+  .loader__bar:nth-child(1) { left: 0px; transform: scale(1, .2); animation: barUp1 4s infinite; }
+  .loader__bar:nth-child(2) { left: 15px; transform: scale(1, .4); animation: barUp2 4s infinite; }
+  .loader__bar:nth-child(3) { left: 30px; transform: scale(1, .6); animation: barUp3 4s infinite; }
+  .loader__bar:nth-child(4) { left: 45px; transform: scale(1, .8); animation: barUp4 4s infinite; }
+  .loader__bar:nth-child(5) { left: 60px; transform: scale(1, 1); animation: barUp5 4s infinite; }
+  .loader__ball {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background: rgb(44, 143, 255);
+    border-radius: 50%;
+    animation: ball624 4s infinite;
+  }
+  .loader-caption {
+    margin-top: 42px;
+    color: #6C7486;
+    font-size: 14px;
+    text-align: center;
+  }
+  @keyframes ball624 {
+    0% { transform: translate(0, 0); }
+    5% { transform: translate(8px, -14px); }
+    10% { transform: translate(15px, -10px); }
+    17% { transform: translate(23px, -24px); }
+    20% { transform: translate(30px, -20px); }
+    27% { transform: translate(38px, -34px); }
+    30% { transform: translate(45px, -30px); }
+    37% { transform: translate(53px, -44px); }
+    40% { transform: translate(60px, -40px); }
+    50% { transform: translate(60px, 0); }
+    57% { transform: translate(53px, -14px); }
+    60% { transform: translate(45px, -10px); }
+    67% { transform: translate(37px, -24px); }
+    70% { transform: translate(30px, -20px); }
+    77% { transform: translate(22px, -34px); }
+    80% { transform: translate(15px, -30px); }
+    87% { transform: translate(7px, -44px); }
+    90% { transform: translate(0, -40px); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes barUp1 { 0%,40% { transform: scale(1,.2); } 50%,90% { transform: scale(1,1); } 100% { transform: scale(1,.2); } }
+  @keyframes barUp2 { 0%,40% { transform: scale(1,.4); } 50%,90% { transform: scale(1,.8); } 100% { transform: scale(1,.4); } }
+  @keyframes barUp3 { 0%,100% { transform: scale(1,.6); } }
+  @keyframes barUp4 { 0%,40% { transform: scale(1,.8); } 50%,90% { transform: scale(1,.4); } 100% { transform: scale(1,.8); } }
+  @keyframes barUp5 { 0%,40% { transform: scale(1,1); } 50%,90% { transform: scale(1,.2); } 100% { transform: scale(1,1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .loader__bar, .loader__ball { animation: none; }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <h1>泓算 · 桥涵设计流量推求</h1>
-  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v0.11.10</p>
+  <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v1</p>
 </header>
 
 <div style="text-align:center"><div class="seg" id="segMode">
@@ -180,22 +263,32 @@
     <div class="err" id="parseErr"></div>
     <div class="hint">每行一个数值（或逗号分隔），按年份任意顺序——程序自动从大到小排序。<b>粘贴或修改后约 0.7 秒自动计算，无需点按钮</b>；结果看下方快速结果条。示例为算例 T1（n=10）。</div>
     <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
-      <input type="file" id="ocrFile" accept="image/*" style="font-size:12.5px">
-      <button class="btn ghost" id="ocrRun" style="padding:5px 14px;font-size:12.5px">识别图片中的表格</button>
-      <span style="font-size:11.5px;color:var(--text3)">也可 Ctrl+V 粘贴截图 · 全程离线，图片不出本机</span>
+      <input type="file" id="ocrFile" accept="image/*,.pdf,.doc,.docx,.docm,.rtf,.txt,.md,.log,.csv,.tsv,.xls,.xlsx,.xlsm,.et,.htm,.html,.mht" style="font-size:12.5px">
+      <button class="btn ghost" id="ocrRun" style="padding:5px 14px;font-size:12.5px">识别文档/图片中的表格</button>
+      <span style="font-size:11.5px;color:var(--text3)">支持 PDF / Word / Excel / CSV / TXT / 图片 · 全程离线</span>
     </div>
-    <canvas id="ocrCanvas" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"></canvas>
-    <span id="ocrStatus" style="font-size:11.5px;color:var(--text3)"></span>
-    <div id="ocrCols" style="margin-top:8px"></div>
-    <div id="ocrOutBox" style="display:none;margin-top:8px">
-      <label style="font-size:12.5px">识别结果（请核对后再填入；双栏表先取左列再取右列会自动接着追加）</label>
-      <textarea id="ocrOut" style="height:120px" placeholder="选中某一列后数值会出现在这里，可手工修改"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" id="ocrApply">核对无误，填入系列并计算</button>
-        <button class="btn ghost" id="ocrClear">清空重来</button>
+    <div id="ocrReview" style="display:none;margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg)">
+      <div style="display:grid;grid-template-columns:minmax(240px,1fr) minmax(290px,1.2fr);gap:12px;align-items:start">
+        <div>
+          <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">原始内容</div>
+          <canvas id="ocrCanvas" style="display:none;width:100%;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:#fff"></canvas>
+          <div id="ocrPageBar"></div>
+          <div id="ocrSourceTable"></div>
+        </div>
+        <div>
+          <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">年份 / 流量核对</div>
+          <div id="ocrPairSummary" style="font-size:12px;color:var(--text3);margin-bottom:8px"></div>
+          <div id="ocrPairTable" style="max-height:390px;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff"></div>
+          <div id="ocrContinuity" style="font-size:12px;margin-top:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn" id="ocrApply" style="padding:6px 14px;font-size:12.5px">核对无误，只填入流量</button>
+            <button class="btn ghost" id="ocrClear" style="padding:6px 14px;font-size:12.5px">清空重来</button>
+          </div>
+          <div class="hint" style="margin-top:6px">可直接修改识别错误的年份或流量；填入时会按年份排序并强制检查连续性。</div>
+        </div>
       </div>
-      <div class="hint">OCR 会把 3 认成 8、5 认成 6 之类，务必逐个核对；识别率取决于拍摄清晰度。</div>
     </div>
+    <span id="ocrStatus" style="display:block;margin-top:8px;font-size:11.5px;color:var(--text3)"></span>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
       <input type="checkbox" id="hasExtra" style="width:16px;height:16px;accent-color:var(--blue)"> 含特大洪水（不连序系列）
     </label>
@@ -222,7 +315,7 @@
         <div><div style="font-size:11.5px;color:var(--text3)">偏态系数 C<sub>s</sub>（矩法，仅参考）</div><div style="font-size:17px;font-weight:500;color:var(--text3);font-variant-numeric:tabular-nums" id="qrCs">—</div></div>
         <div><div style="font-size:11.5px;color:var(--blue)">设计流量 Q<sub>p</sub>（当前频率）</div><div style="font-size:21px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums" id="qrQ">—</div></div>
       </div>
-      <div style="font-size:11.5px;color:var(--text3);margin-top:10px;line-height:1.6">↓ 下方「P-Ⅲ 适线（海森机率格纸）」是经验点据与理论曲线；「适线调整」里改 C<sub>v</sub> 与 C<sub>s</sub>/C<sub>v</sub> 倍比可实时重算（教材例 3-1-1 采用 C<sub>v</sub>=0.49、倍比 3.0，即 C<sub>s</sub>=1.47）。</div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:10px;line-height:1.6">↓ 下方「P-Ⅲ 适线（海森机率格纸）」是经验点据与理论曲线；「适线调整」里可修改 C<sub>v</sub> 并重选 M=C<sub>s</sub>/C<sub>v</sub>，C<sub>s</sub>=M·C<sub>v</sub> 自动重算、曲线实时重绘（例 3-1-1 人工适线采用 C<sub>v</sub>=0.49、M=3.0、C<sub>s</sub>=1.47）。</div>
     </div>
 
     <details id="openBox" style="margin-top:12px">
@@ -706,7 +799,8 @@
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
   <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums">悬停图表可读取任意位置频率与流量</div>
   <div class="legend">
-    <span><i></i>理论频率曲线（P-Ⅲ）</span>
+    <span><i></i>理论频率曲线（P-Ⅲ，当前采用）</span>
+    <span><i style="background:#8e8e93;opacity:.85"></i>对照试线（灰色虚线）</span>
     <span><span class="dot"></span>经验点据 P<sub>m</sub>=m/(n+1)</span>
     <span><span class="dia"></span>特大洪水 M/(N+1)</span>
     <span><span class="ring"></span>设计频率点</span>
@@ -719,8 +813,11 @@
 </div>
 
 <div class="card" id="fitCard">
-  <h2>适线调整 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——拖滑块或直接键入数值，曲线实时重绘</span></h2>
-  <div class="row">
+  <h2>适线调整（M 值迭代） <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——M = C<sub>s</sub>/C<sub>v</sub>，可反复重选，不是固定倍比</span></h2>
+  <div class="hint" style="margin-top:0;line-height:1.7">
+    人工适线流程：先由矩法得到 Q̄、Cv 初值；选定 M 并令 C<sub>s</sub>=M·C<sub>v</sub>，查看理论频率曲线；若不满意，可直接修改 Cv、再重选 M，曲线立即重绘。通常记录并比较 2~3 组后采用最贴合经验点群的一组。
+  </div>
+  <div class="row" style="margin-top:10px">
     <div>
       <label>变差系数 C<sub>v</sub>：<span class="val" id="cvShow">0.30</span></label>
       <div style="display:flex;gap:10px;align-items:center">
@@ -729,11 +826,29 @@
       </div>
     </div>
     <div>
-      <label>C<sub>s</sub> / C<sub>v</sub> 倍比：<span class="val" id="ratioShow">2.0</span>（C<sub>s</sub> = <span class="val" id="csShow">0.60</span>）</label>
+      <label>M = C<sub>s</sub> / C<sub>v</sub>：<span class="val" id="ratioShow">2.00</span>（C<sub>s</sub> = M·C<sub>v</sub> = <span class="val" id="csShow">0.60</span>）</label>
       <div style="display:flex;gap:10px;align-items:center">
-        <input type="range" id="ratioSlider" min="1" max="8" step="0.5" value="2" style="flex:1">
-        <input type="number" id="ratioIn" value="2.0" min="1" max="8" step="0.1" title="直接键入 Cs/Cv 倍比" style="width:78px">
+        <input type="range" id="ratioSlider" min="1" max="8" step="0.1" value="2" style="flex:1">
+        <input type="number" id="ratioIn" value="2.0" min="1" max="8" step="0.1" title="直接键入 M=Cs/Cv" style="width:78px">
       </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">
+        <span style="font-size:11.5px;color:var(--text3)">M 快选：</span>
+        <button type="button" class="btn ghost mPickBtn" data-m="2" style="padding:2px 9px;font-size:11.5px">2.0</button>
+        <button type="button" class="btn ghost mPickBtn" data-m="2.5" style="padding:2px 9px;font-size:11.5px">2.5</button>
+        <button type="button" class="btn ghost mPickBtn" data-m="3" style="padding:2px 9px;font-size:11.5px">3.0</button>
+        <button type="button" class="btn ghost mPickBtn" data-m="3.5" style="padding:2px 9px;font-size:11.5px">3.5</button>
+        <button type="button" class="btn ghost mPickBtn" data-m="4" style="padding:2px 9px;font-size:11.5px">4.0</button>
+      </div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:12px;align-items:flex-start">
+    <div style="flex:1">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="btnRecordFitTrial" style="margin-top:0;padding:5px 14px;font-size:12.5px">记录本次试线</button>
+        <button class="btn ghost" id="btnClearFitTrials" style="margin-top:0;padding:4px 12px;font-size:12.5px">清空试线记录</button>
+        <span id="fitTrialMsg" style="font-size:11.5px;color:var(--text3);line-height:1.6"></span>
+      </div>
+      <div id="fitTrialTable" style="margin-top:8px"></div>
     </div>
   </div>
   <div class="row" style="margin-top:10px">
@@ -749,16 +864,14 @@
       <div id="fitMsg" style="font-size:11.5px;color:var(--text3)"></div>
     </div>
     <div style="display:flex;align-items:center;color:var(--text3);font-size:12px">
-      系列重新计算时恢复矩法初估值；三参数（Q̄、C<sub>v</sub>、C<sub>s</sub>）均可按规范 6.2.5 目估适线调整。
+      系列重新计算时恢复矩法初估值；C<sub>v</sub> 与 M 可交替调整，C<sub>s</sub>=M·C<sub>v</sub> 自动重算。自动优化只作参考，最终采用值由人工目估判断。
     </div>
   </div>
   <div class="row" style="margin-top:10px;align-items:flex-start">
     <div style="flex:1">
-      <label style="font-size:11.5px;color:var(--text3)">一键采用参数（不用手调 C<sub>v</sub> / C<sub>s</sub>）：</label>
+      <label style="font-size:11.5px;color:var(--text3)">辅助参考（自动搜索；人工适线仍以目估判断为准）：</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
         <button class="btn" id="btnRecommend" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="按 SL 44-2006 附录 A.1.2 离差平方和准则搜索最优 Cv，Cs/Cv 倍比约束在工程惯例区间 2~4，均值固定为矩法值">规范最优适线</button>
-        <button class="btn ghost" id="btnConvention3" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="按工程惯例 Cs=3Cv 约束，用离差平方和准则搜索最优 Cv（教材与 QW2.0 多数例题采用此惯例）">惯例 Cs=3Cv</button>
-        <button class="btn ghost" id="btnTextbook" style="margin-top:0;padding:4px 12px;font-size:12.5px;display:none" title="系列命中内置例题库时，直接采用教材人工目估适线的采用值">教材采用值</button>
       </div>
       <div id="recMsg" style="font-size:11.5px;color:var(--text3);margin-top:6px;line-height:1.6"></div>
     </div>
@@ -817,13 +930,25 @@
     </div>
     <div style="display:flex;align-items:flex-end">
       <div class="metrics" style="width:100%">
-        <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub></div><div class="v" id="outQ">—</div></div>
+        <div class="metric hl"><div class="k">设计流量 Q<sub>p</sub>（<span id="outQFreq">1%</span>）</div><div class="v" id="outQ">—</div></div>
         <div class="metric"><div class="k">离均系数 Φ<sub>p</sub></div><div class="v" id="outPhi">—</div></div>
         <div class="metric"><div class="k">模比系数 K<sub>p</sub></div><div class="v" id="outKp">—</div></div>
         <div class="metric"><div class="k">保证修正值系数 B</div><div class="v" id="outB">—</div></div>
         <div class="metric"><div class="k">抽样均方误 σ<sub>xp</sub></div><div class="v" id="outSigma">—</div></div>
       </div>
     </div>
+  </div>
+  <div style="margin-top:14px">
+    <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">不同频率设计流量 Q<sub>p</sub>（随当前 Q̄、C<sub>v</sub>、C<sub>s</sub> 自动联动）</div>
+    <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--text3)">计算算法：</span>
+      <button class="btn" id="modeExact" style="padding:3px 12px;font-size:12px">精确计算（推荐）</button>
+      <button class="btn" id="modeTextbook" style="padding:3px 12px;font-size:12px">教材查表（C<sub>s</sub> 圆整 0.1）</button>
+      <span style="font-size:11.5px;color:var(--text3)">两种算法只差 Cs 查表圆整，差异约 0.3%</span>
+    </div>
+    <div id="paramLinkage" style="margin-bottom:8px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);font-size:12.5px;line-height:1.7"></div>
+    <div id="freqQTable" style="overflow:auto;border:1px solid var(--border);border-radius:10px;background:#fff"></div>
+    <div class="hint" style="margin-top:6px"><b>用法：</b>点击表格任意一行（或改上方"设计洪水频率"），上方"设计流量 Q<sub>p</sub>"会自动随之更新；蓝色行是当前采用的频率。公式仅作核对用：Q<sub>p</sub>=(Φ<sub>p</sub>×C<sub>v</sub>+1)×Q̄，C<sub>s</sub>=M×C<sub>v</sub>。</div>
   </div>
   <div id="outErrNote" style="font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.7"></div>
   <button class="btn" id="btnReport" style="margin-top:16px">导出 Word 计算书</button>
@@ -842,7 +967,7 @@
         <div class="metric"><div class="k">GEV 的 Q₁%</div><div class="v" id="bqGEV">—</div></div>
         <div class="metric"><div class="k">Gumbel 的 Q₁%</div><div class="v" id="bqGu">—</div></div>
       </div>
-      <div class="hint">方法：各线型极大似然（Nelder-Mead）→ BIC → 后验权重 w ∝ exp(−BIC/2)（Bayes factor 大样本近似，Kass &amp; Raftery 1995）。已通过 scipy 独立交叉验证（三模型 logL 一致到 1e-4）。<br>按 JTG C30-2015 第 6.2.4 条，公路桥涵水文计算采用 P-Ⅲ 线型；比选结果作为多方法论证（规范 6.1.3）与教学参考。</div>
+      <div class="hint"><b>用法：</b>点"运行线型比选"即可，软件会给出三种线型的 Q<sub>1%</sub> 与推荐权重。规范规定采用 P-Ⅲ，此比选仅作参考。</div>
     </div>
   </div>
 </div>
@@ -870,8 +995,8 @@
   <div class="card">
     <h2>本步说明</h2>
     <p style="font-size:13px;color:var(--text2)">
-      ① 矩法初估 Q̄ 与 C<sub>v</sub>；② 因 C<sub>s</sub> 抽样误差大，按经验取 C<sub>v</sub> 的倍比假定；③ 目估调整使理论曲线通过经验点据群，重点照顾上部大流量点（规范 6.2.5）。<br><br>
-      Φ<sub>p</sub> 由 P-Ⅲ 分布数值计算（不完全 Γ 函数分位数），已通过 Cs=2 解析锚点（Φ(1%)=3.60517）与多个手算算例验收。
+      <b>操作步骤：</b>① 把年最大流量系列粘贴进输入框 → 点"矩法初估"；② 微调 C<sub>v</sub> 滑杆、修改 M 值（C<sub>s</sub>=M×C<sub>v</sub> 自动联动）；③ 看适线图，理论曲线与经验点据吻合（重点照顾大流量点）即可采用；④ 在下方选设计洪水频率，读 Q<sub>p</sub>；不满意就回到 ② 再调 2~3 次。<br><br>
+      <span style="color:var(--text3)">各数值均可手算核对，公式就标在对应结果旁边。</span>
     </p>
   </div>
 </div>
@@ -984,7 +1109,7 @@
   <div class="brand">泓算 HONGSUAN</div>
   <div class="sep"></div>
   计算依据《公路工程水文勘测设计规范》JTG C30-2015 ｜ Φ 值由 P-Ⅲ 分布数值计算，经 scipy 独立交叉验证<br>
-  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v0.11.10<br>
+  本工具供学习与课程设计参考，工程应用须经注册工程师复核 ｜ v1<br>
   <span id="saveHint">● 输入参数已自动记忆在本机（刷新/重开不丢失）</span><br>
   <button class="btn ghost" id="btnReset" style="margin-top:10px;font-size:12px;padding:5px 14px">清除记忆，恢复默认示例</button>
 </footer>
@@ -1031,7 +1156,28 @@
   </div>
 </div>
 
-<script src="libs/docx.umd.js"></script>
+
+<div id="ocrLoading" class="loader-overlay" aria-hidden="true">
+  <div class="loader">
+    <i class="loader__bar"></i>
+    <i class="loader__bar"></i>
+    <i class="loader__bar"></i>
+    <i class="loader__bar"></i>
+    <i class="loader__bar"></i>
+    <i class="loader__ball"></i>
+  </div>
+  <div id="ocrLoadingText" class="loader-caption">正在识别，请稍候…</div>
+</div>
+
+<script src="libs/jszip.min.js"></script>
+    <script src="libs/xlsx.full.min.js"></script>
+    <script src="libs/pdf.min.js"></script>
+    <script src="libs/docx.umd.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
+
+
+
+
+

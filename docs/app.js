@@ -1485,7 +1485,7 @@
       title: "\u4E00\u3001\u8BBE\u8BA1\u6D41\u91CF\u63A8\u6C42\uFF08\u7B2C 6 \u7AE0\uFF09",
       spec: "JTG C30\u20142015",
       items: [
-        { no: "6.2", title: "\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u6709\u5B9E\u6D4B\u7CFB\u5217\u65F6\uFF0C\u7528\u77E9\u6CD5\u521D\u4F30\u7EDF\u8BA1\u53C2\u6570\uFF0C\u518D\u6309\u9002\u7EBF\u6CD5\u8C03\u6574 Cv\u3001Cs\uFF08Cs \u5E38\u53D6 m\xB7Cv\uFF0Cm \u4E00\u822C 2~4\uFF09\uFF0C\u4F7F\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u62DF\u5408\u6700\u4F73\u3002", page: "P19" },
+        { no: "6.2", title: "\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u6709\u5B9E\u6D4B\u7CFB\u5217\u65F6\uFF0C\u7528\u77E9\u6CD5\u521D\u4F30 Q\u0304\u3001Cv\uFF1B\u518D\u8BD5\u9009 M=Cs/Cv\uFF08\u5E38\u5728 2~4 \u9644\u8FD1\u8D77\u6B65\uFF0C\u4F46\u4E0D\u662F\u56FA\u5B9A\u503C\uFF09\uFF0C\u4EE4 Cs=M\xB7Cv \u5E76\u7ED8\u5236\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u3002\u82E5\u4E0D\u543B\u5408\uFF0C\u53EF\u4FEE\u6539 Cv\u3001\u91CD\u9009 M\uFF0C\u901A\u5E38\u8FED\u4EE3 2~3 \u6B21\u540E\u91C7\u7528\u6700\u8D34\u5408\u7ECF\u9A8C\u70B9\u7FA4\u7684\u4E00\u7EC4\u3002", page: "P19" },
         { no: "6.2.5", title: "\u53C2\u6570\u521D\u4F30\u65B9\u6CD5", summary: "\u77E9\u6CD5\uFF08\u8F6F\u4EF6\u9ED8\u8BA4\uFF09\u4E0E\u4E09\u70B9\u6CD5\uFF08\u53D6 P=5%\u300150%\u300195% \u4E09\u70B9\uFF0C\u7531 S \u503C\u53CD\u89E3 Cs\uFF09\u5E76\u7528\uFF1B\u8F6F\u4EF6\u53E6\u63D0\u4F9B\u6700\u5C0F\u4E8C\u4E58\u81EA\u52A8\u5BFB\u4F18\u4F5C\u5BF9\u7167\u3002", page: "P19~20" },
         { no: "6.3", title: "\u5229\u7528\u5386\u53F2\u6D2A\u6C34\u4F4D\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u65E0\u5B9E\u6D4B\u7CFB\u5217\u4F46\u6709\u53EF\u9760\u6D2A\u75D5\u65F6\uFF0C\u7528\u66FC\u5B81\u516C\u5F0F\u7531\u6D2A\u6C34\u4F4D\u3001\u6BD4\u964D\u3001\u7CD9\u7387\u53CD\u63A8\u6D41\u91CF\uFF1B\u6709\u4E24\u6B21\u4EE5\u4E0A\u6D2A\u6C34\u65F6\u6309\u89C4\u8303\u7EFC\u5408\u63A8\u7B97\u3002", page: "P21" },
         { no: "6.3.1-4", title: "\u6C34\u9762\u7EBF\u8BD5\u7B97\uFF08\u8F6F\u4EF6\u65B0\u589E\uFF09", summary: "\u5047\u5B9A\u6D41\u91CF\u7531\u4E0B\u6E38\u6D2A\u75D5\u5411\u4E0A\u6E38\u63A8\u7B97\u6C34\u9762\u7EBF\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5\u5BF9\u7167\u8FED\u4EE3\uFF1B\u8F6F\u4EF6\u63D0\u4F9B\u76F4\u63A5\u6B65\u8FDB\u6CD5\u5256\u9762\u8BA1\u7B97\u4E0E\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\uFF0C\u4EE5\u53CA\u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\xB7\u5929\u7136\u6CB3\u9053\u4E09\u533A\uFF0C\u65B9\u6CD5\u5BF9\u9F50 HEC-RAS\uFF0C\u5B98\u65B9\u7B97\u4F8B\u56DE\u5F52\u9A8C\u8BC1 |\u0394WSE|\u22640.05 ft\uFF09\u3002", page: "P21~23" },
@@ -2491,69 +2491,6 @@
     return { B, xp, kp, sigmaAbs, relPct, safetyDelta, xpSafe: xp + safetyDelta, note, method, mc };
   }
 
-  // src/core/exampleLib.ts
-  var KNOWN_EXAMPLES = [
-    {
-      id: "ex311",
-      title: "\u4F8B 3-1-1 \xB7 \u5E74\u6700\u5927\u6D41\u91CF P-\u2162 \u9891\u7387\u9002\u7EBF",
-      source: "\u6865\u6DB5\u6C34\u6587\u6559\u6750\uFF08QW2.0 \u5BF9\u7167\u4F8B\u9898\uFF09",
-      series: [
-        767,
-        1781,
-        1284,
-        1507,
-        2e3,
-        2380,
-        2100,
-        2600,
-        2950,
-        3145,
-        2500,
-        1e3,
-        1100,
-        1360,
-        1480,
-        2250,
-        3408,
-        2088,
-        600,
-        1530,
-        2170,
-        1650,
-        840,
-        2854,
-        1300,
-        1850,
-        900,
-        3770,
-        1900,
-        1080,
-        1010,
-        1700
-      ],
-      adopted: { mean: 1839.2, cv: 0.49, cs: 1.47 },
-      note: "\u77E9\u6CD5\u521D\u4F30 Q\u0304=1,839\u3001Cv=0.439\u3001Cs=2Cv\uFF1B\u6559\u6750\u6309 Cs=3Cv \u60EF\u4F8B\u76EE\u4F30\u9002\u7EBF\uFF0C\u91C7\u7528 Cv=0.49\u3001Cs=1.47\uFF08=3Cv\uFF09\u2192 Q1%=4,824"
-    }
-  ];
-  function matchExample(series, tol = 0.015) {
-    if (!series || series.length < 5) return null;
-    const a = series.slice().sort((x, y) => x - y);
-    for (const ex of KNOWN_EXAMPLES) {
-      if (ex.series.length !== a.length) continue;
-      const b = ex.series.slice().sort((x, y) => x - y);
-      let ok = true;
-      for (let i = 0; i < a.length; i++) {
-        const scale = Math.max(1, Math.abs(b[i]));
-        if (Math.abs(a[i] - b[i]) / scale > tol) {
-          ok = false;
-          break;
-        }
-      }
-      if (ok) return ex;
-    }
-    return null;
-  }
-
   // src/core/migrate.ts
   var SCHEMA_V1 = "hongsuan-project@1";
   var SCHEMA_V2 = "hongsuan-project@2";
@@ -2920,6 +2857,10 @@
     const m = { "0.0033": "1/300", "0.01": "1/100", "0.02": "1/50", "0.04": "1/25" };
     return m[String(p)] || (p * 100).toFixed(2) + "%";
   }
+  function effCs(cs) {
+    const c = cs ?? state.params.cs;
+    return state.calcMode === "textbook" ? Math.round(c * 10) / 10 : c;
+  }
   function renderCompare() {
     const el = $("compareTable");
     const rows = Object.values(stateCompare);
@@ -2931,8 +2872,19 @@
     stats: null,
     params: { mean: 1065, cv: 0.3, cs: 0.6 },
     freq: 0.01,
+    calcMode: (function() {
+      try {
+        const v = localStorage.getItem("hongsuan_calc_mode");
+        return v === "textbook" ? "textbook" : "exact";
+      } catch {
+        return "exact";
+      }
+    })(),
     pts: []
   };
+  var fitTrials = [];
+  var fitTrialSeq = 0;
+  var comparisonFit = null;
   var $ = (id) => {
     const el = document.getElementById(id);
     if (!el) throw new Error(`\u754C\u9762\u5143\u7D20\u4E0D\u5B58\u5728\uFF1A${id}`);
@@ -2990,17 +2942,101 @@
       note.textContent = "";
     }
   }
+  var FREQ_Q_ROWS = [
+    { p: 33e-4, label: "0.33%\uFF081/300\uFF09" },
+    { p: 0.01, label: "1%\uFF081/100\uFF09" },
+    { p: 0.02, label: "2%\uFF081/50\uFF09" },
+    { p: 0.04, label: "4%\uFF081/25\uFF09" }
+  ];
+  function renderFreqQTable() {
+    const box = $("freqQTable");
+    if (!box) return;
+    const linkage = $("paramLinkage");
+    if (linkage) {
+      const m = state.params.cs / state.params.cv;
+      linkage.innerHTML = `<b>\u53C2\u6570\u8054\u52A8\uFF1A</b>C<sub>v</sub>=${state.params.cv.toFixed(3)}\u3000\u2192\u3000M=C<sub>s</sub>/C<sub>v</sub>=${m.toFixed(2)}\u3000\u2192\u3000C<sub>s</sub>=M\xD7C<sub>v</sub>=${state.params.cs.toFixed(2)}<br>\u4EE3\u5165\u516C\u5F0F\uFF1AQ<sub>p</sub>=(\u03A6<sub>p</sub>\xD7C<sub>v</sub>+1)\xD7Q\u0304\u3002\u4F8B\u5982\u5F53\u524D\u9891\u7387 ${freqLabelOf(state.freq)}\uFF1AQ<sub>p</sub>=((${phiPIII(state.freq, effCs()).toFixed(3)}\xD7${state.params.cv.toFixed(3)})+1)\xD7${fmt(state.params.mean, 1)}=${fmt(state.params.mean * (1 + phiPIII(state.freq, effCs()) * state.params.cv), 0)} m\xB3/s`;
+    }
+    const rows = FREQ_Q_ROWS.map((r) => {
+      const phi = phiPIII(r.p, effCs());
+      const kp = 1 + phi * state.params.cv;
+      const q = state.params.mean * kp;
+      const active = Math.abs(r.p - state.freq) < 1e-12;
+      const subst = `(${phi.toFixed(3)}\xD7${state.params.cv.toFixed(3)}+1)\xD7${fmt(state.params.mean, 1)}=${fmt(q, 0)}`;
+      return `<tr data-p="${r.p}"${active ? ' class="hl" style="background:rgba(0,122,255,.14);font-weight:600"' : ""}>
+      <td>${r.label}</td>
+      <td class="v">${phi.toFixed(3)}</td>
+      <td class="v">${kp.toFixed(3)}</td>
+      <td class="v">${fmt(q, 0)}</td>
+      <td style="font-size:11.5px;font-variant-numeric:tabular-nums">${subst}</td>
+      <td>${active ? "\u5F53\u524D" : "\u70B9\u51FB\u9009\u7528"}</td>
+    </tr>`;
+    }).join("");
+    box.innerHTML = `<table class="ltab" style="width:100%">
+    <thead><tr><th>\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387</th><th class="v">\u03A6<sub>p</sub></th><th class="v">K<sub>p</sub></th><th class="v">Q<sub>p</sub>\uFF08m\xB3/s\uFF09</th><th>\u4EE3\u5165\u516C\u5F0F</th><th>\u72B6\u6001</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+    {
+      const csExact = state.params.cs;
+      const csRounded = Math.round(csExact * 10) / 10;
+      let note = "";
+      if (state.calcMode === "textbook") {
+        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u{1F4D8} \u5F53\u524D\u4E3A<b>\u6559\u6750\u67E5\u8868\u6A21\u5F0F</b>\uFF1AC<sub>s</sub>=${csExact.toFixed(2)} \u5DF2\u6309\u6559\u6750\u89C4\u5219\u5706\u6574\u4E3A ${csRounded.toFixed(1)} \u540E\u67E5 \u03A6 \u8868\uFF0C\u7ED3\u679C\u4E0E\u6559\u6750\u7B97\u6CD5\u4E00\u81F4\u3002</div>`;
+      } else if (Math.abs(csExact - csRounded) > 1e-9) {
+        const phiR = phiPIII(state.freq, csRounded);
+        const qR = state.params.mean * (1 + phiR * state.params.cv);
+        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u2139 \u6559\u6750\u67E5 \u03A6 \u8868\u65F6\u901A\u5E38\u628A C<sub>s</sub> \u5706\u6574\u5230 0.1\uFF08\u5982\u4F8B 3-1-1 \u7684 C<sub>s</sub>=1.47 \u5706\u6574\u4E3A 1.5\uFF0CQ<sub>p</sub>\u2248${fmt(qR, 0)}\uFF09\uFF1B\u5F53\u524D\u4E3A<b>\u7CBE\u786E\u8BA1\u7B97\u6A21\u5F0F</b>\uFF0C\u65E0\u5706\u6574\u8BEF\u5DEE\uFF0C\u5DEE\u5F02\u7EA6 0.3% \u5C5E\u6B63\u5E38\u3002\u53EF\u70B9\u4E0A\u65B9"\u6559\u6750\u67E5\u8868"\u6309\u94AE\u5207\u6362\u3002</div>`;
+      }
+      if (note) box.innerHTML += note;
+    }
+    box.onclick = (ev) => {
+      const tr = ev.target.closest("tr[data-p]");
+      if (!tr) return;
+      const p = Number(tr.dataset.p);
+      if (!Number.isFinite(p) || p <= 0) return;
+      state.freq = p;
+      const sel = $("freqSel");
+      if ([...sel.options].some((o) => o.value === String(p))) sel.value = String(p);
+      render();
+    };
+  }
+  function applyCalcModeUi() {
+    const be = $("modeExact");
+    const bt = $("modeTextbook");
+    if (!be || !bt) return;
+    const on = "background:var(--blue);color:#fff;border-color:var(--blue)";
+    be.setAttribute("style", state.calcMode === "exact" ? on : "");
+    bt.setAttribute("style", state.calcMode === "textbook" ? on : "");
+  }
+  function setCalcMode(mode) {
+    if (state.calcMode === mode) return;
+    state.calcMode = mode;
+    try {
+      localStorage.setItem("hongsuan_calc_mode", mode);
+    } catch {
+    }
+    applyCalcModeUi();
+    render();
+  }
+  {
+    const be = $("modeExact");
+    const bt = $("modeTextbook");
+    if (be) be.onclick = () => setCalcMode("exact");
+    if (bt) bt.onclick = () => setCalcMode("textbook");
+    applyCalcModeUi();
+  }
   function render() {
     const { params, freq } = state;
     $("cvShow").textContent = params.cv.toFixed(3);
     $("csShow").textContent = params.cs.toFixed(2);
-    $("ratioShow").textContent = (params.cs / params.cv).toFixed(1);
-    const phi = phiPIII(freq, params.cs), kp = 1 + phi * params.cv, q = params.mean * kp;
+    $("ratioShow").textContent = (params.cs / params.cv).toFixed(2);
+    const phi = phiPIII(freq, effCs()), kp = 1 + phi * params.cv, q = params.mean * kp;
     $("outQ").textContent = fmt(q, 0);
+    $("outQFreq").textContent = freqLabelOf(freq);
     {
       const qr = $("quickResult");
       if (qr && qr.style.display === "block") $("qrQ").textContent = fmt(q, 0);
     }
+    renderFreqQTable();
     $("outPhi").textContent = phi.toFixed(3);
     $("outKp").textContent = kp.toFixed(3);
     renderSamplingError();
@@ -3022,15 +3058,21 @@
       const P = gammaincLower(0.5, t * t / 2);
       return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
     };
-    const curvePts = [];
-    const NSAMP = 241;
-    for (let i = 0; i < NSAMP; i++) {
-      const t = XMAX - i * (XMAX - XMIN) / (NSAMP - 1);
-      const p = 1 - normCdf(t);
-      curvePts.push({ x: sx(t), q: params.mean * (1 + phiPIII(p, params.cs) * params.cv) });
-    }
-    const dataMax = Math.max(...pts.map((pt) => pt.q), ...curvePts.map((pt) => pt.q));
-    const dataMin = Math.min(...pts.map((pt) => pt.q), ...curvePts.map((pt) => pt.q), 0);
+    const curveOf = (fit) => {
+      const out = [];
+      const NSAMP = 241;
+      for (let i = 0; i < NSAMP; i++) {
+        const t = XMAX - i * (XMAX - XMIN) / (NSAMP - 1);
+        const p = 1 - normCdf(t);
+        out.push({ x: sx(t), q: fit.mean * (1 + phiPIII(p, effCs(fit.cs)) * fit.cv) });
+      }
+      return out;
+    };
+    const curvePts = curveOf(params);
+    const comparisonPts = comparisonFit ? curveOf(comparisonFit) : [];
+    const allCurvePts = comparisonPts.length ? [...curvePts, ...comparisonPts] : curvePts;
+    const dataMax = Math.max(...pts.map((pt) => pt.q), ...allCurvePts.map((pt) => pt.q));
+    const dataMin = Math.min(...pts.map((pt) => pt.q), ...allCurvePts.map((pt) => pt.q), 0);
     const qLo = Math.max(0, dataMin - (dataMax - dataMin) * 0.08);
     const qHi = dataMax + (dataMax - dataMin) * 0.06;
     const sy2 = (q2) => PB - (q2 - qLo) / (qHi - qLo) * (PB - PT);
@@ -3050,6 +3092,15 @@
     s += `<text x="20" y="${(PT + PB) / 2}" font-size="12" fill="#1d1d1f" transform="rotate(-90 20 ${(PT + PB) / 2})" text-anchor="middle">\u6D41\u91CF Q\uFF08m\xB3/s\uFF09</text>`;
     const fx = pToX(freq);
     s += `<line x1="${fx}" y1="${PT}" x2="${fx}" y2="${PB}" stroke="#007AFF" stroke-width="1" stroke-dasharray="5 4" opacity="0.55"/>`;
+    if (comparisonFit) {
+      let cmpPath = "";
+      for (let i = 0; i < comparisonPts.length; i++) {
+        const c = comparisonPts[i];
+        if (c.q > qHi || c.q < qLo) continue;
+        cmpPath += (cmpPath ? "L" : "M") + c.x.toFixed(1) + " " + sy2(c.q).toFixed(1);
+      }
+      s += `<path d="${cmpPath}" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-dasharray="7 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+    }
     let path = "";
     for (let i = 0; i < curvePts.length; i++) {
       const c = curvePts[i];
@@ -3189,8 +3240,10 @@
     }
     state.stats = st;
     state.pts = pts;
-    state.exampleHit = matchExample(xs);
-    syncExampleButton();
+    fitTrials = [];
+    fitTrialSeq = 0;
+    comparisonFit = null;
+    renderFitTrials();
     $("cvSlider").value = Math.min(Math.max(st.cv, 0.05), 1.2);
     $("ratioSlider").value = 2;
     state.params = { mean: st.mean, cv: st.cv, cs: 2 * st.cv };
@@ -3278,6 +3331,7 @@
       if (mean > 0 && cv > 0 && Number.isFinite(cs)) {
         state.params = { mean, cv, cs };
         $("cvSlider").value = Math.min(Math.max(cv, 0.05), 1.2);
+        $("ratioSlider").value = Math.min(Math.max(cs / cv, 1), 8);
         render();
       }
     };
@@ -3362,15 +3416,134 @@
       alert("\u4F18\u5316\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
     }
   };
-  function qDesignOf(mean, cv, cs) {
-    return mean * (1 + phiPIII(state.freq, cs) * cv);
+  function renderFitTrials() {
+    const box = $("fitTrialTable");
+    const msg = $("fitTrialMsg");
+    if (!box) return;
+    box.innerHTML = "";
+    if (!fitTrials.length) {
+      const d = document.createElement("div");
+      d.style.cssText = "font-size:12px;color:var(--text3);line-height:1.7";
+      d.textContent = "\u5C1A\u65E0\u8BD5\u7EBF\u8BB0\u5F55\u3002\u5148\u9009\u4E00\u7EC4 Q\u0304\u3001Cv\u3001M\uFF0C\u70B9\u300C\u8BB0\u5F55\u672C\u6B21\u8BD5\u7EBF\u300D\uFF1B\u518D\u4FEE\u6539 Cv \u6216\u91CD\u9009 M\uFF0C\u8BB0\u5F55\u7B2C 2\u30013 \u7EC4\uFF0C\u8868\u683C\u4F1A\u5217\u51FA Qp \u4E0E SSE\uFF0C\u56FE\u4E2D\u7070\u8272\u865A\u7EBF\u4E3A\u5BF9\u7167\u7EC4\u3002";
+      box.appendChild(d);
+      if (msg) msg.textContent = "";
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const h of ["\u6B21\u5E8F", "Q\u0304", "Cv", "M", "Cs", "Qp", "SSE", "\u64CD\u4F5C"]) {
+      const th = document.createElement("th");
+      th.textContent = h;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    fitTrials.forEach((trial) => {
+      const p = trial.params;
+      const m = p.cs / p.cv;
+      const tr = document.createElement("tr");
+      const vals = [
+        `\u7B2C ${trial.id} \u6B21`,
+        fmt(p.mean, 1),
+        p.cv.toFixed(3),
+        m.toFixed(2),
+        p.cs.toFixed(2),
+        `${fmt(trial.q, 0)} @ ${freqLabelOf(trial.freq)}`,
+        fmt(trial.sse, 0)
+      ];
+      vals.forEach((v) => {
+        const td2 = document.createElement("td");
+        td2.textContent = v;
+        tr.appendChild(td2);
+      });
+      const td = document.createElement("td");
+      td.style.whiteSpace = "nowrap";
+      for (const [label, fn] of [
+        ["\u91C7\u7528", () => {
+          state.params = { ...p };
+          $("cvSlider").value = String(p.cv);
+          $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
+          syncParamInputs();
+          render();
+          flashUpdated();
+          if (msg) msg.textContent = `\u5DF2\u91C7\u7528\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF1ACv=${p.cv.toFixed(3)}\u3001M=${m.toFixed(2)}\u3001Cs=${p.cs.toFixed(2)}\u3002`;
+        }],
+        ["\u5BF9\u7167", () => {
+          comparisonFit = { ...p };
+          render();
+          renderFitTrials();
+          if (msg) msg.textContent = `\u5DF2\u628A\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\u8BBE\u4E3A\u56FE\u4E2D\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002`;
+        }],
+        ["\u5220\u9664", () => {
+          fitTrials = fitTrials.filter((x) => x.id !== trial.id);
+          if (comparisonFit && comparisonFit.cv === p.cv && comparisonFit.cs === p.cs && comparisonFit.mean === p.mean) comparisonFit = null;
+          renderFitTrials();
+          render();
+        }]
+      ]) {
+        const b = document.createElement("button");
+        b.className = "btn ghost";
+        b.style.cssText = "padding:2px 8px;font-size:11.5px;margin-right:4px";
+        b.textContent = label;
+        b.onclick = fn;
+        td.appendChild(b);
+      }
+      tr.appendChild(td);
+      table.appendChild(tr);
+    });
+    box.appendChild(table);
+    if (msg) {
+      const last = fitTrials[fitTrials.length - 1];
+      const m = last.params.cs / last.params.cv;
+      msg.textContent = `\u5DF2\u8BB0\u5F55 ${fitTrials.length} \u7EC4\u3002\u5F53\u524D\u5BF9\u7167\uFF1A${comparisonFit ? `Cv=${comparisonFit.cv.toFixed(3)}\u3001M=${(comparisonFit.cs / comparisonFit.cv).toFixed(2)}` : "\u672A\u6307\u5B9A"}\uFF1B\u7EE7\u7EED\u6539 Cv \u6216 M \u540E\u66F2\u7EBF\u4F1A\u7ACB\u5373\u91CD\u7ED8\u3002`;
+    }
   }
-  function syncExampleButton() {
-    const btn = $("btnTextbook");
-    if (!btn) return;
-    const hit = state.exampleHit;
-    btn.style.display = hit ? "" : "none";
-    if (hit) btn.textContent = `\u91C7\u7528${hit.title.split("\xB7")[0].trim()}\u503C`;
+  function recordFitTrial() {
+    if (state.pts.length < 3) {
+      alert("\u8BF7\u5148\u8BA1\u7B97\u6D41\u91CF\u7CFB\u5217\uFF1B\u81F3\u5C11 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E\u624D\u80FD\u8BB0\u5F55\u9002\u7EBF\u8BD5\u7B97\u3002");
+      return;
+    }
+    fitTrialSeq += 1;
+    const trial = {
+      id: fitTrialSeq,
+      params: { ...state.params },
+      freq: state.freq,
+      q: qDesignOf(state.params.mean, state.params.cv, state.params.cs),
+      sse: sseOfPoints(state.pts, state.params, phiPIII)
+    };
+    fitTrials.push(trial);
+    comparisonFit = { ...state.params };
+    renderFitTrials();
+    render();
+    const msg = $("fitTrialMsg");
+    if (msg) msg.textContent = `\u5DF2\u8BB0\u5F55\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF0C\u5E76\u8BBE\u4E3A\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002\u8BF7\u7EE7\u7EED\u8C03\u6574 Cv \u6216\u91CD\u9009 M\uFF0C\u518D\u8BB0\u5F55\u4E0B\u4E00\u7EC4\u3002`;
+  }
+  if ($("btnRecordFitTrial")) {
+    $("btnRecordFitTrial").onclick = recordFitTrial;
+    $("btnClearFitTrials").onclick = () => {
+      fitTrials = [];
+      fitTrialSeq = 0;
+      comparisonFit = null;
+      renderFitTrials();
+      render();
+    };
+    document.querySelectorAll(".mPickBtn").forEach((btn) => {
+      btn.onclick = () => {
+        const m = Number(btn.dataset.m);
+        if (!Number.isFinite(m) || m <= 0) return;
+        state.params = { ...state.params, cs: state.params.cv * m };
+        $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
+        syncParamInputs();
+        render();
+        const msg = $("fitTrialMsg");
+        if (msg) msg.textContent = `\u5DF2\u91CD\u9009 M=${m.toFixed(2)}\uFF0CCs=M\xD7Cv=${state.params.cs.toFixed(2)}\uFF0C\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u5DF2\u91CD\u7ED8\u3002`;
+      };
+    });
+    renderFitTrials();
+  }
+  function qDesignOf(mean, cv, cs) {
+    return mean * (1 + phiPIII(state.freq, effCs(cs)) * cv);
   }
   function applyFit(mean, cv, cs, msg) {
     const c = Math.min(1.2, Math.max(0.05, cv));
@@ -3397,7 +3570,7 @@
     }
   }
   var fitBusy = false;
-  var FIT_BTN_IDS = ["btnRecommend", "btnConvention3", "btnTextbook", "btnThreePoint", "btnAutoFit"];
+  var FIT_BTN_IDS = ["btnRecommend", "btnThreePoint", "btnAutoFit"];
   function setFitBusy(busy) {
     fitBusy = busy;
     for (const id of FIT_BTN_IDS) {
@@ -3435,12 +3608,6 @@
   function recommendMsg(tag, r) {
     const q = qDesignOf(state.params.mean, r.cv, r.cs);
     let s = `${tag}\uFF08${CRITERION_LABEL[r.criterion] ?? r.criterion}\uFF0C\u5747\u503C\u56FA\u5B9A\u4E3A\u77E9\u6CD5\u503C\uFF09\uFF1ACv=${r.cv.toFixed(3)}\u3001Cs=${r.cs.toFixed(2)}\uFF08\u500D\u6BD4 ${r.ratio}\uFF09\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(q, 0)} m\xB3/s`;
-    const hit = state.exampleHit;
-    if (hit) {
-      const qT = qDesignOf(hit.adopted.mean, hit.adopted.cv, hit.adopted.cs);
-      const diff = (q - qT) / qT * 100;
-      s += ` \uFF5C \u6559\u6750\u4EBA\u5DE5\u76EE\u4F30\u91C7\u7528 Cv=${hit.adopted.cv}\u3001Cs=${hit.adopted.cs}\uFF08Q=${fmt(qT, 0)}\uFF09\uFF0C\u76F8\u5DEE ${diff.toFixed(1)}% \u2014\u2014 \u76EE\u4F30\u9002\u7EBF\u542B\u4EBA\u5DE5\u5224\u8BFB\uFF0C\u975E\u552F\u4E00\u89E3\uFF1B\u8981\u5BF9\u9F50\u6559\u6750\u5C31\u70B9\u300C${`\u91C7\u7528${hit.title.split("\xB7")[0].trim()}\u503C`}\u300D`;
-    }
     return s;
   }
   var cvHintOf = () => state.stats && "cv" in state.stats ? state.stats.cv : void 0;
@@ -3449,26 +3616,6 @@
       const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", kRange: [2, 4], cvHint: cvHintOf() });
       return applyFit(r.mean, r.cv, r.cs, recommendMsg("\u89C4\u8303\u6700\u4F18\u9002\u7EBF", r));
     });
-  };
-  $("btnConvention3").onclick = () => {
-    runFit("\u6B63\u5728\u6309 Cs=3Cv \u60EF\u4F8B\u641C\u7D22\u6700\u4F18 Cv", () => {
-      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", fixedK: 3, cvHint: cvHintOf() });
-      return applyFit(r.mean, r.cv, r.cs, recommendMsg("\u60EF\u4F8B\u9002\u7EBF Cs=3Cv", r));
-    });
-  };
-  $("btnTextbook").onclick = () => {
-    const hit = state.exampleHit;
-    if (!hit) {
-      alert("\u5F53\u524D\u7CFB\u5217\u672A\u547D\u4E2D\u5185\u7F6E\u4F8B\u9898\u5E93\u3002");
-      return;
-    }
-    const a = hit.adopted;
-    runFit("\u6B63\u5728\u5957\u7528\u6559\u6750\u91C7\u7528\u503C", () => applyFit(
-      a.mean,
-      a.cv,
-      a.cs,
-      `\u5DF2\u91C7\u7528${hit.title}\uFF08${hit.source}\uFF09\u7684\u6559\u6750\u91C7\u7528\u503C\uFF1ACv=${a.cv}\u3001Cs=${a.cs}\uFF08=3Cv\uFF09\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(qDesignOf(a.mean, a.cv, a.cs), 0)} m\xB3/s\u3002${hit.note}`
-    ));
   };
   var PHI_PS = [1e-4, 1e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97, 0.99, 0.999];
   var PHI_PS_LABEL = ["0.01", "0.1", "0.5", "1", "2", "5", "10", "20", "25", "50", "75", "90", "95", "97", "99", "99.9"];
@@ -3998,7 +4145,7 @@
     scheduleSave();
   };
   $("btnHydroUseQp").onclick = () => {
-    const q = state.params.mean * (1 + phiPIII(state.freq, state.params.cs) * state.params.cv);
+    const q = state.params.mean * (1 + phiPIII(state.freq, effCs()) * state.params.cv);
     $("hydroQp").value = q.toFixed(0);
     scheduleSave();
   };
@@ -5451,7 +5598,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "0.11.10",
+        appVersion: "1.0.0",
         data: multi.data,
         plans: multi.plans
       };
@@ -5652,7 +5799,7 @@
     logTimer = setTimeout(() => {
       if (sig === lastSig) return;
       lastSig = sig;
-      const phi = phiPIII(state.freq, state.params.cs);
+      const phi = phiPIII(state.freq, effCs());
       const kp = 1 + phi * state.params.cv;
       const q = state.params.mean * kp;
       logCalc(
@@ -5742,7 +5889,7 @@
     const p = state.params, freq = state.freq;
     const pj = currentProject();
     const pjAny = pj.name || pj.bridgeSite || pj.engineer || pj.reviewer;
-    const phi = phiPIII(freq, p.cs), kp = 1 + phi * p.cv, q = p.mean * kp;
+    const phi = phiPIII(freq, effCs(p.cs)), kp = 1 + phi * p.cv, q = p.mean * kp;
     const st = state.stats ? {
       n: state.stats.n,
       mean: state.stats.mean,
@@ -5764,7 +5911,7 @@
     });
     const FREQS = [0.05, 0.1, 0.2, 0.5, 1, 2, 3.33, 5, 10, 20, 50, 90];
     const freqRows = FREQS.map((pp) => {
-      const ph = phiPIII(pp / 100, p.cs), k = 1 + ph * p.cv;
+      const ph = phiPIII(pp / 100, effCs(p.cs)), k = 1 + ph * p.cv;
       return [pp < 1 ? pp.toFixed(2) + " %" : pp.toFixed(2).replace(/\.?0+$/, "") + " %", ph.toFixed(3), k.toFixed(3), (p.mean * k).toFixed(1)];
     });
     const sorted = [...state.series].sort((a, b) => b - a);
@@ -5796,7 +5943,7 @@
             PB2("\u9002\u7EBF\u91C7\u7528 Q\u0304", p.mean.toFixed(1) + " m\xB3/s"),
             PB2("\u9002\u7EBF\u91C7\u7528 Cv", p.cv.toFixed(3)),
             PB2("\u9002\u7EBF\u91C7\u7528 Cs", p.cs.toFixed(2) + "\uFF08= " + (p.cs / p.cv).toFixed(1) + " Cv\uFF09"),
-            P("\u6309\u89C4\u8303 6.2.5\uFF0C\u7EDF\u8BA1\u53C2\u6570\u4EE5\u9002\u7EBF\u6CD5\u786E\u5B9A\uFF1ACs \u56E0\u62BD\u6837\u8BEF\u5DEE\u5927\u6309\u7ECF\u9A8C\u500D\u6BD4\u5047\u5B9A\u540E\u76EE\u4F30\u8C03\u6574\uFF0C\u4F7F\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u543B\u5408\u3002", { color: "6e6e73" }),
+            P("\u6309\u89C4\u8303 6.2.5\uFF0C\u7EDF\u8BA1\u53C2\u6570\u4EE5\u9002\u7EBF\u6CD5\u786E\u5B9A\uFF1A\u5148\u7531\u77E9\u6CD5\u521D\u4F30 Q\u0304\u3001Cv\uFF0C\u518D\u8BD5\u9009 M=Cs/Cv \u5E76\u4EE4 Cs=M\xB7Cv\uFF1B\u82E5\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u4E0D\u543B\u5408\uFF0C\u53EF\u4FEE\u6539 Cv\u3001\u91CD\u9009 M\uFF0C\u7ECF 2~3 \u6B21\u8BD5\u7B97\u540E\u91C7\u7528\u4EBA\u5DE5\u5224\u65AD\u6700\u6EE1\u610F\u7684\u4E00\u7EC4\u3002", { color: "6e6e73" }),
             H1("\u56DB\u3001\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97"),
             PB2("\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387", freqLabel),
             PB2("\u79BB\u5747\u7CFB\u6570 \u03A6p", phi.toFixed(4)),
@@ -5814,7 +5961,7 @@
             ] : [],
             new D.Paragraph({
               border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v0.11.10 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
             })
           ]
         }]
@@ -6067,7 +6214,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "0.11.10");
+      const file = buildProjectFile(currentProject(), collectInputs(), "1.0.0");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
@@ -6141,16 +6288,571 @@
     saveAll();
   }
   var ocrImageDataUrl = "";
-  var ocrLastCol = -1;
+  var ocrSelectedFile = null;
+  var ocrSourceRows = [];
+  var ocrSourceCells = [];
+  var ocrPageUrls = [];
+  var ocrActivePage = 0;
+  var ocrPairs = [];
+  var ocrSourceLabel = "";
   function ocrApi() {
     return window.hsApi;
   }
-  function loadImgToCanvas(src) {
+  function fileExt(name) {
+    const m = /\.([a-zA-Z0-9]+)$/.exec(name || "");
+    return m ? m[1].toLowerCase() : "";
+  }
+  function isImageLike(f) {
+    if (!f) return false;
+    if (f.type && String(f.type).indexOf("image/") === 0) return true;
+    return ["png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff"].indexOf(fileExt(f.name)) >= 0;
+  }
+  function cleanCell(v) {
+    if (v == null) return "";
+    if (v instanceof Date) return v.toLocaleDateString("zh-CN");
+    return String(v).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function ocrEscape(s) {
+    return cleanCell(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function normalizeRows(rows) {
+    return rows.map((r) => Array.isArray(r) ? r.map(cleanCell) : [cleanCell(r)]).filter((r) => r.some((c) => c));
+  }
+  function tableWidth(rows) {
+    return rows.reduce((m, r) => Math.max(m, r.length), 0);
+  }
+  function numericCellCount(rows) {
+    let n = 0;
+    for (const r of rows) {
+      for (const c of r) {
+        const t = c.replace(/,/g, "").replace(/[±＋＋]/g, "");
+        if (t && /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(t)) n++;
+      }
+    }
+    return n;
+  }
+  function tableScore(rows) {
+    const nr = numericCellCount(rows);
+    return nr * 3 + Math.min(rows.length, 200) * 0.3 + Math.min(tableWidth(rows), 20) * 1.5;
+  }
+  function bestTable(tables) {
+    let best = null;
+    let bestScore = -1;
+    for (const t of tables) {
+      const rows = normalizeRows(t.rows);
+      if (!rows.length) continue;
+      const score = tableScore(rows);
+      if (score > bestScore) {
+        bestScore = score;
+        best = { rows, source: t.source };
+      }
+    }
+    if (!best) throw new Error("\u672A\u5728\u6587\u6863\u4E2D\u627E\u5230\u53EF\u8BC6\u522B\u7684\u6570\u636E\u8868");
+    return best;
+  }
+  function splitTextRow(line) {
+    const t = cleanCell(line);
+    if (!t) return [];
+    if (t.indexOf("	") >= 0) return t.split(/\t+/).map(cleanCell);
+    if (/\s{2,}/.test(t)) return t.split(/\s{2,}/).map(cleanCell);
+    const numericTokens = t.match(/(?<!\d[.])[+-]?\d+(?:\.\d+)?/g) || [];
+    if (numericTokens.length >= 2 && !/[A-Za-z\u4e00-\u9fff]/.test(t)) return t.split(/\s+/).map(cleanCell);
+    return [t];
+  }
+  function textToTable(text, source) {
+    const lines = String(text || "").split(/\r\n|\r|\n/).map(splitTextRow).filter((r) => r.length);
+    return { rows: normalizeRows(lines), source };
+  }
+  function hasAncestorLocalName(el, name) {
+    let p = el.parentElement;
+    while (p) {
+      if (p.localName === name) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+  function xmlTablesToCandidates(root, source) {
+    const out = [];
+    const tables = Array.from(root.getElementsByTagNameNS("*", "tbl")).filter((t) => !hasAncestorLocalName(t, "tbl"));
+    for (const tb of tables) {
+      const rows = [];
+      const trs = Array.from(tb.children).filter((x) => x.localName === "tr");
+      for (const tr of trs) {
+        const cells = Array.from(tr.children).filter((x) => x.localName === "tc").map((td) => cleanCell(td.textContent));
+        if (cells.length) rows.push(cells);
+      }
+      if (rows.length) out.push({ rows, source });
+    }
+    return out;
+  }
+  function htmlTablesToCandidates(root, source) {
+    const out = [];
+    for (const tb of Array.from(root.querySelectorAll("table"))) {
+      const rows = [];
+      for (const tr of Array.from(tb.querySelectorAll("tr"))) {
+        const cells = Array.from(tr.children).map((td) => cleanCell(td.innerText || td.textContent));
+        if (cells.length) rows.push(cells);
+      }
+      if (rows.length) out.push({ rows, source });
+    }
+    return out;
+  }
+  async function parseDocx(f) {
+    const JSZip = window.JSZip;
+    if (!JSZip) throw new Error("Word \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
+    const zip = await JSZip.loadAsync(await f.arrayBuffer());
+    const entry = zip.file("word/document.xml");
+    if (!entry) throw new Error("\u8FD9\u4E0D\u662F\u6709\u6548\u7684 .docx \u6587\u4EF6\uFF1B\u65E7 .doc \u8BF7\u5148\u53E6\u5B58\u4E3A .docx \u6216 PDF");
+    const xml = await entry.async("string");
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    const tables = xmlTablesToCandidates(doc, "Word \u8868\u683C");
+    if (tables.length) return bestTable(tables);
+    const ps = Array.from(doc.getElementsByTagNameNS("*", "p")).filter((p) => !hasAncestorLocalName(p, "tbl")).map((p) => cleanCell(p.textContent)).filter(Boolean);
+    if (!ps.length) throw new Error("Word \u6587\u4EF6\u4E2D\u6CA1\u6709\u53EF\u8BC6\u522B\u7684\u6587\u672C\u6216\u8868\u683C");
+    return textToTable(ps.join("\n"), "Word \u6587\u672C");
+  }
+  async function parseWorkbook(f) {
+    const XLSX = window.XLSX;
+    if (!XLSX) throw new Error("Excel \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
+    const wb = XLSX.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+    const tables = [];
+    for (const name of wb.SheetNames || []) {
+      const ws = wb.Sheets[name];
+      if (!ws) continue;
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "", blankrows: false });
+      const rows = normalizeRows(raw);
+      if (rows.length) tables.push({ rows, source: `Excel \u5DE5\u4F5C\u8868\u300C${name}\u300D` });
+    }
+    return bestTable(tables);
+  }
+  function pdfItemsToRows(items) {
+    const objs = (items || []).map((it) => {
+      const tx = it.transform || [1, 0, 0, 1, 0, 0];
+      const h = Math.hypot(tx[2] || 0, tx[3] || 0) || Number(it.height) || 10;
+      return {
+        text: cleanCell(it.str),
+        x: Number(tx[4]) || 0,
+        y: Number(tx[5]) || 0,
+        w: Number(it.width) || 10,
+        h
+      };
+    }).filter((x) => x.text);
+    if (!objs.length) return [];
+    objs.sort((a, b) => b.y - a.y || a.x - b.x);
+    const hs = objs.map((x) => x.h).sort((a, b) => a - b);
+    const medH = hs[Math.floor(hs.length / 2)] || 10;
+    const tol = Math.max(1.8, medH * 0.65);
+    const lines = [];
+    for (const it of objs) {
+      const line = lines.find((l) => Math.abs(l.y - it.y) <= tol);
+      if (line) line.items.push(it);
+      else lines.push({ y: it.y, items: [it] });
+    }
+    const rows = [];
+    for (const line of lines) {
+      line.items.sort((a, b) => a.x - b.x);
+      const cells = [];
+      let cur = "";
+      let prev = null;
+      for (const it of line.items) {
+        if (prev) {
+          const gap = it.x - (prev.x + prev.w);
+          const threshold = Math.max(5.5, medH * 0.72);
+          if (gap > threshold) {
+            cells.push(cur);
+            cur = it.text;
+          } else {
+            cur += (cur && gap > medH * 0.22 ? " " : "") + it.text;
+          }
+        } else {
+          cur = it.text;
+        }
+        prev = it;
+      }
+      if (cur) cells.push(cur);
+      const expanded = [];
+      for (let c of cells) {
+        const numericOnly = !/[A-Za-z\u4e00-\u9fff]/.test(c);
+        const numericTokens = c.match(/[+-]?\d+(?:\.\d+)?/g) || [];
+        if (numericOnly && numericTokens.length >= 2) expanded.push(...c.split(/\s+/).map(cleanCell));
+        else expanded.push(c);
+      }
+      if (expanded.some(Boolean)) rows.push(normalizeRows([expanded])[0] || []);
+    }
+    return rows.filter((r) => r.some(Boolean));
+  }
+  async function pdfPageToDataUrl(pdf, pageNo) {
+    const page = await pdf.getPage(pageNo);
+    const base = page.getViewport({ scale: 1 });
+    const scale = Math.min(3, Math.max(1.6, 1800 / Math.max(base.width, base.height)));
+    const viewport = page.getViewport({ scale });
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(viewport.width);
+    cv.height = Math.round(viewport.height);
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return cv.toDataURL("image/jpeg", 0.94);
+  }
+  async function parsePdf(f, status) {
+    const pdfjs = window.pdfjsLib;
+    if (!pdfjs) throw new Error("PDF \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
+    pdfjs.GlobalWorkerOptions.workerSrc = "libs/pdf.worker.min.js";
+    const data = await f.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data }).promise;
+    const rows = [];
+    const pageCount = Math.min(Number(pdf.numPages) || 1, 80);
+    for (let i = 1; i <= pageCount; i++) {
+      status.textContent = `\u6B63\u5728\u89E3\u6790 PDF \u7B2C ${i}/${pageCount} \u9875\u2026`;
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent({ includeMarkedContent: false });
+      rows.push(...pdfItemsToRows(tc.items));
+    }
+    const pageUrls = [];
+    const previewPages = Math.min(pageCount, 10);
+    for (let i = 1; i <= previewPages; i++) {
+      status.textContent = `\u6B63\u5728\u751F\u6210 PDF \u539F\u59CB\u9884\u89C8 \u7B2C ${i}/${previewPages} \u9875\u2026`;
+      pageUrls.push(await pdfPageToDataUrl(pdf, i));
+    }
+    const nr = numericCellCount(normalizeRows(rows));
+    if (nr >= 5) {
+      return { rows: normalizeRows(rows), source: "PDF \u6587\u5B57\u5C42", pages: pageUrls };
+    }
+    const api = ocrApi();
+    if (!api || !api.ocrTable) throw new Error("\u8FD9\u662F\u626B\u63CF\u7248 PDF\uFF0C\u7F51\u9875\u7248\u65E0\u6CD5 OCR\uFF1B\u8BF7\u4F7F\u7528\u684C\u9762\u7248\u6CD3\u7B97");
+    const ocrRows = [];
+    const ocrCells = [];
+    for (let i = 1; i <= pageCount; i++) {
+      status.textContent = `\u626B\u63CF\u7248 PDF \u6B63\u5728\u672C\u673A\u8BC6\u522B\u7B2C ${i}/${pageCount} \u9875\uFF08\u9996\u6B21\u7EA6 10~30 \u79D2\uFF09\u2026`;
+      const dataUrl = pageUrls[i - 1] || await pdfPageToDataUrl(pdf, i);
+      const raw = await api.ocrTable(dataUrl, { deskew: true });
+      const d = JSON.parse(raw);
+      if (!d.ok) throw new Error(d.error || "PDF OCR \u5931\u8D25");
+      const pageRows = d.rows || [];
+      const rowOffset = ocrRows.length;
+      ocrRows.push(...pageRows);
+      for (const c of d.cells || []) {
+        ocrCells.push({ ...c, row: (c.row || 0) + rowOffset, page: i - 1 });
+      }
+      if (!pageUrls[i - 1]) pageUrls.push(dataUrl);
+    }
+    const table = ocrRows.map((r) => r.map(cleanCell));
+    if (!table.length) throw new Error("\u626B\u63CF\u7248 PDF \u4E2D\u672A\u8BC6\u522B\u5230\u8868\u683C");
+    return { rows: table, source: "PDF \u626B\u63CF\u9875 OCR", cells: ocrCells, pages: pageUrls };
+  }
+  async function parseHtmlText(text) {
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    const tables = htmlTablesToCandidates(doc, "HTML \u8868\u683C");
+    if (tables.length) return bestTable(tables);
+    return textToTable(doc.body.innerText || doc.body.textContent || "", "HTML \u6587\u672C");
+  }
+  async function parseRtf(f) {
+    const raw = await f.text();
+    const text = raw.replace(/\\par[d]?\b/g, "\n").replace(/\\line\b/g, "\n").replace(/\\tab\b/g, "	").replace(/\\u(-?\d+)\s?/g, (_m, d) => String.fromCharCode((Number(d) % 65536 + 65536) % 65536)).replace(/\\'([0-9a-f]{2})/gi, (_m, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\[a-zA-Z]+-?\d* ?/g, "").replace(/[{}]/g, "");
+    return textToTable(text, "RTF \u6587\u672C");
+  }
+  async function parseAnyDocument(f, status) {
+    const ext = fileExt(f.name);
+    if (ext === "pdf") return parsePdf(f, status);
+    if (ext === "docx" || ext === "docm") return parseDocx(f);
+    if (["xlsx", "xlsm", "xls", "csv", "tsv", "et"].indexOf(ext) >= 0) return parseWorkbook(f);
+    if (["htm", "html", "mht"].indexOf(ext) >= 0) return parseHtmlText(await f.text());
+    if (ext === "rtf") return parseRtf(f);
+    if (["txt", "md", "log", "tsv"].indexOf(ext) >= 0) return textToTable(await f.text(), "\u6587\u672C\u6587\u4EF6");
+    try {
+      const t = await parseHtmlText(await f.text());
+      if (t.rows.length && numericCellCount(t.rows) > 0) return t;
+    } catch {
+    }
+    throw new Error("\u6682\u4E0D\u80FD\u8BC6\u522B\u8BE5\u683C\u5F0F\uFF1B\u8BF7\u53E6\u5B58\u4E3A PDF\u3001DOCX\u3001XLSX/CSV/TXT \u540E\u518D\u8BD5");
+  }
+  function parseFlowValue(s) {
+    let t = cleanCell(s);
+    if (!t || /[A-Za-z\u4e00-\u9fff]/.test(t)) return null;
+    t = t.replace(/,/g, "").replace(/[°º]/g, "").replace(/\s+/g, "");
+    if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    const m = /^[+-]?(\d+(\.\d*)?|\.\d+)$/.exec(t);
+    if (!m) return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  function parseYearValue(s) {
+    let t = cleanCell(s);
+    if (!t || /[A-Za-z\u4e00-\u9fff]/.test(t)) return null;
+    t = t.replace(/[,，\s]/g, "").replace(/[°º]/g, "");
+    const m = /^(\d{4})$/.exec(t);
+    if (!m) return null;
+    const n = Number(m[1]);
+    return n >= 1800 && n <= 2100 ? n : null;
+  }
+  function buildColumnPairs(rows) {
+    const width = tableWidth(rows);
+    const candidates = [];
+    for (let y = 0; y < width; y++) {
+      for (let q = 0; q < width; q++) {
+        if (y === q) continue;
+        let count = 0;
+        let header = 0;
+        let adjacent = 0;
+        for (const r of rows) {
+          const yv = parseYearValue(r[y] || "");
+          const fv = parseFlowValue(r[q] || "");
+          if (yv != null && fv != null) count++;
+          if (/年份/.test(r[y] || "") && /流量/.test(r[q] || "")) header += 10;
+        }
+        if (count < 2) continue;
+        if (q === y + 1) adjacent += 2;
+        candidates.push({ yearCol: y, flowCol: q, count, score: count * 2 + header + adjacent });
+      }
+    }
+    candidates.sort((a, b) => b.score - a.score || b.count - a.count);
+    const bestScore = candidates.length ? candidates[0].score : 0;
+    const chosen = [];
+    for (const c of candidates) {
+      if (c.flowCol <= c.yearCol && c.header <= 0) continue;
+      if (c.score < bestScore * 0.6) continue;
+      if (chosen.some((x) => x.yearCol === c.yearCol || x.flowCol === c.flowCol)) continue;
+      chosen.push(c);
+      if (chosen.length >= 4) break;
+    }
+    return chosen;
+  }
+  function buildRowPairs(rows) {
+    const pairs = [];
+    for (let r = 0; r < rows.length; r++) {
+      for (let c = 0; c < rows[r].length; c++) {
+        const year = parseYearValue(rows[r][c] || "");
+        if (year == null) continue;
+        for (let q = c + 1; q < rows[r].length; q++) {
+          const flow = parseFlowValue(rows[r][q] || "");
+          if (flow == null) continue;
+          pairs.push({ row: r, yearCol: c, flowCol: q, yearText: rows[r][c], flowText: rows[r][q] });
+          break;
+        }
+      }
+    }
+    return pairs;
+  }
+  function buildOcrPairs(rows) {
+    const columnPairs = buildColumnPairs(rows);
+    const out = [];
+    if (columnPairs.length) {
+      for (let r = 0; r < rows.length; r++) {
+        for (const cp of columnPairs) {
+          const yearText = rows[r][cp.yearCol] || "";
+          const flowText = rows[r][cp.flowCol] || "";
+          const year = parseYearValue(yearText);
+          const flow = parseFlowValue(flowText);
+          if (year == null) continue;
+          out.push({
+            row: r,
+            yearCol: cp.yearCol,
+            flowCol: cp.flowCol,
+            yearText,
+            flowText,
+            year,
+            flow,
+            included: year != null && flow != null
+          });
+        }
+      }
+    } else {
+      for (const p of buildRowPairs(rows)) {
+        const year = parseYearValue(p.yearText);
+        const flow = parseFlowValue(p.flowText);
+        out.push({ ...p, year, flow, included: year != null && flow != null });
+      }
+    }
+    return out;
+  }
+  function updateOcrReview() {
+    const included = ocrPairs.filter((p) => p.included);
+    const valid = included.filter((p) => parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null);
+    const years = valid.map((p) => parseYearValue(p.yearText)).sort((a, b) => a - b);
+    const summary = $("ocrPairSummary");
+    const continuity = $("ocrContinuity");
+    if (!ocrPairs.length) {
+      summary.textContent = "\u672A\u80FD\u81EA\u52A8\u914D\u5BF9\u51FA\u300C\u5E74\u4EFD / \u6D41\u91CF\u300D\u3002\u8BF7\u67E5\u770B\u5DE6\u4FA7\u539F\u59CB\u5185\u5BB9\uFF1B\u6E05\u6670\u5EA6\u4E0D\u8DB3\u65F6\u53EF\u6539\u7528 Excel/CSV \u6216\u66F4\u6E05\u6670\u56FE\u7247\u3002";
+      continuity.textContent = "";
+      return;
+    }
+    summary.innerHTML = `\u81EA\u52A8\u8BC6\u522B <b>${ocrPairs.length}</b> \u7EC4\u6570\u636E\uFF0C\u5DF2\u52FE\u9009 <b>${valid.length}</b> \u7EC4\u3002\u7EFF\u8272\u4E3A\u5E74\u4EFD\uFF0C\u84DD\u8272\u4E3A\u6D41\u91CF\u3002`;
+    if (!years.length) {
+      continuity.innerHTML = `<span style="color:var(--red)">\u6CA1\u6709\u53EF\u7528\u4E8E\u8FDE\u7EED\u6027\u68C0\u67E5\u7684\u5B8C\u6574\u5E74\u4EFD/\u6D41\u91CF\u3002</span>`;
+      return;
+    }
+    const missing = [];
+    for (let y = years[0]; y <= years[years.length - 1]; y++) {
+      if (years.indexOf(y) < 0) missing.push(y);
+    }
+    const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+    const uniqueDup = Array.from(new Set(duplicates));
+    let html = `\u5E74\u4EFD\u8303\u56F4\uFF1A<b>${years[0]}\u2013${years[years.length - 1]}</b>\uFF0C\u5171 <b>${years.length}</b> \u5E74\u3002`;
+    if (!missing.length && !uniqueDup.length) {
+      html += ` <span style="color:var(--green)">\u5E74\u4EFD\u8FDE\u7EED\u3002</span>`;
+    } else {
+      if (uniqueDup.length) html += ` <span style="color:var(--red)">\u91CD\u590D\uFF1A${uniqueDup.join("\u3001")}</span>`;
+      if (missing.length) html += ` <span style="color:var(--red)">\u7F3A\u5C11\uFF1A${missing.join("\u3001")}</span>`;
+    }
+    continuity.innerHTML = html;
+  }
+  function renderOcrSource() {
+    const box = $("ocrSourceTable");
+    const rows = ocrSourceRows;
+    if (!rows.length) {
+      box.innerHTML = `<div style="color:var(--text3);font-size:12px">\u672A\u751F\u6210\u539F\u59CB\u5185\u5BB9\u8868\u3002</div>`;
+      return;
+    }
+    const width = Math.min(tableWidth(rows), 16);
+    let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:5px">\u8BC6\u522B\u539F\u6587\uFF08${ocrSourceLabel}\uFF09</div><div style="max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:11.5px"><tbody>`;
+    const shown = Math.min(rows.length, 200);
+    for (let r = 0; r < shown; r++) {
+      html += `<tr>`;
+      for (let c = 0; c < width; c++) {
+        const isYear = ocrPairs.some((p) => p.included && p.row === r && p.yearCol === c);
+        const isFlow = ocrPairs.some((p) => p.included && p.row === r && p.flowCol === c);
+        const bg = isYear ? "#dcfce7" : isFlow ? "#dbeafe" : "transparent";
+        html += `<td data-r="${r}" data-c="${c}" style="padding:4px 6px;border-bottom:1px solid var(--border);background:${bg};white-space:nowrap">${ocrEscape(rows[r][c] || "")}</td>`;
+      }
+      html += `</tr>`;
+    }
+    html += `</tbody></table></div>`;
+    if (rows.length > shown) html += `<div style="font-size:11px;color:var(--text3);margin-top:4px">\u4EC5\u663E\u793A\u524D ${shown} \u884C\uFF0C\u5B8C\u6574\u6570\u636E\u5DF2\u53C2\u4E0E\u914D\u5BF9\u3002</div>`;
+    box.innerHTML = html;
+  }
+  function renderOcrPairTable() {
+    const box = $("ocrPairTable");
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:36px">\u7528</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:82px">\u6765\u6E90</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:90px">\u5E74\u4EFD</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border)">\u6D41\u91CF (m\xB3/s)</th>
+  </tr></thead><tbody>`;
+    ocrPairs.forEach((p, i) => {
+      const ok = parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null;
+      html += `<tr data-i="${i}" style="background:${ok ? "transparent" : "rgba(239,68,68,0.06)"}">
+      <td style="padding:4px;text-align:center;border-bottom:1px solid var(--border)">
+        <input type="checkbox" data-kind="include" data-i="${i}" ${p.included ? "checked" : ""} style="width:auto">
+      </td>
+      <td style="padding:4px;color:var(--text3);border-bottom:1px solid var(--border)">\u7B2C${p.row + 1}\u884C</td>
+      <td style="padding:4px;border-bottom:1px solid var(--border)">
+        <input data-kind="year" data-i="${i}" value="${ocrEscape(p.yearText)}" style="width:100%;padding:4px 6px;font-size:12px">
+      </td>
+      <td style="padding:4px;border-bottom:1px solid var(--border)">
+        <input data-kind="flow" data-i="${i}" value="${ocrEscape(p.flowText)}" style="width:100%;padding:4px 6px;font-size:12px">
+      </td>
+    </tr>`;
+    });
+    html += `</tbody></table>`;
+    box.innerHTML = html;
+    box.querySelectorAll("input[data-i]").forEach((el) => {
+      const i = Number(el.getAttribute("data-i"));
+      const kind = el.getAttribute("data-kind");
+      const p = ocrPairs[i];
+      if (!p) return;
+      el.oninput = () => {
+        if (kind === "year") p.yearText = el.value;
+        if (kind === "flow") p.flowText = el.value;
+        if (kind === "include") p.included = !!el.checked;
+        updateOcrReview();
+      };
+      el.onchange = () => {
+        if (kind === "year" || kind === "flow") {
+          const tr = el.closest("tr");
+          const ok = parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null;
+          if (tr) tr.style.background = ok ? "transparent" : "rgba(239,68,68,0.06)";
+        }
+      };
+    });
+  }
+  function renderOcrPageBar() {
+    const bar = $("ocrPageBar");
+    if (ocrPageUrls.length <= 1) {
+      bar.innerHTML = "";
+      return;
+    }
+    let html = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">`;
+    for (let i = 0; i < ocrPageUrls.length; i++) {
+      html += `<button class="btn ghost" data-page="${i}" style="padding:2px 8px;font-size:11px;${i === ocrActivePage ? "font-weight:700" : ""}">\u7B2C${i + 1}\u9875</button>`;
+    }
+    html += `</div>`;
+    bar.innerHTML = html;
+    bar.querySelectorAll("button[data-page]").forEach((b) => {
+      b.onclick = async () => {
+        ocrActivePage = Number(b.getAttribute("data-page"));
+        await showOcrPage(ocrActivePage);
+        renderOcrPageBar();
+      };
+    });
+  }
+  function loadDataUrlToCanvas(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         const cv = $("ocrCanvas");
-        const LONG = 1600;
+        cv.width = img.naturalWidth;
+        cv.height = img.naturalHeight;
+        const ctx = cv.getContext("2d");
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0);
+        cv.style.display = "block";
+        resolve();
+      };
+      img.onerror = () => reject(new Error("\u539F\u59CB\u5185\u5BB9\u8BFB\u53D6\u5931\u8D25"));
+      img.src = src;
+    });
+  }
+  function drawOcrOverlay() {
+    const cv = $("ocrCanvas");
+    if (cv.style.display === "none" || !cv.width || !cv.height) return;
+    const ctx = cv.getContext("2d");
+    for (const p of ocrPairs) {
+      if (!p.included) continue;
+      for (const c of ocrSourceCells) {
+        if ((c.page ?? 0) !== ocrActivePage) continue;
+        if (c.row !== p.row || c.col !== p.yearCol && c.col !== p.flowCol) continue;
+        const box = c.box || [];
+        if (box.length < 4) continue;
+        const xs = box.map((x) => Number(x[0] || 0));
+        const ys = box.map((x) => Number(x[1] || 0));
+        const x0 = Math.min(...xs) - 3, y0 = Math.min(...ys) - 3;
+        const x1 = Math.max(...xs) + 3, y1 = Math.max(...ys) + 3;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = c.col === p.yearCol ? "#16a34a" : "#2563eb";
+        ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+      }
+    }
+  }
+  async function showOcrPage(page) {
+    if (!ocrPageUrls.length) {
+      $("ocrCanvas").style.display = "none";
+      return;
+    }
+    ocrActivePage = Math.max(0, Math.min(page, ocrPageUrls.length - 1));
+    await loadDataUrlToCanvas(ocrPageUrls[ocrActivePage]);
+    drawOcrOverlay();
+  }
+  function renderOcrReview(t) {
+    ocrSourceRows = t.rows || [];
+    ocrSourceCells = t.cells || [];
+    ocrPageUrls = t.pages || [];
+    ocrSourceLabel = t.source || "\u8BC6\u522B\u7ED3\u679C";
+    ocrActivePage = 0;
+    ocrPairs = buildOcrPairs(ocrSourceRows);
+    $("ocrReview").style.display = "block";
+    renderOcrSource();
+    renderOcrPairTable();
+    updateOcrReview();
+    renderOcrPageBar();
+    void showOcrPage(0);
+  }
+  function loadImageToCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = $("ocrCanvas");
+        const LONG = 1800;
         const s = Math.min(1, LONG / Math.max(img.naturalWidth, img.naturalHeight));
         cv.width = Math.max(1, Math.round(img.naturalWidth * s));
         cv.height = Math.max(1, Math.round(img.naturalHeight * s));
@@ -6164,79 +6866,55 @@
       img.src = src;
     });
   }
-  function numsOfCell(s) {
-    const t = s.replace(/,/g, " ");
-    if (/[A-Za-z\u4e00-\u9fff]/.test(t)) return [];
-    return t.match(/\d+(\.\d+)?/g) || [];
+  function showOcrLoading(text = "\u6B63\u5728\u8BC6\u522B\uFF0C\u8BF7\u7A0D\u5019\u2026") {
+    const overlay = $("ocrLoading");
+    const msg = $("ocrLoadingText");
+    if (msg) msg.textContent = text;
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.classList.add("ocr-loading-active");
+    const status = $("ocrStatus");
+    if (status) status.textContent = text;
   }
-  function pickSeriesNumbers(cells) {
-    const all = [];
-    for (const c of cells) all.push(...numsOfCell(c));
-    const ints = all.filter((v) => /^\d+$/.test(v) && Number(v) >= 10);
-    const hasFrac = all.some((v) => v.indexOf(".") >= 0);
-    if (ints.length > 0 && hasFrac && ints.length < all.length) {
-      return {
-        vals: ints,
-        note: `\u5DF2\u81EA\u52A8\u53BB\u6389 ${all.length - ints.length} \u4E2A\u5C0F\u6570\uFF08\u591A\u4E3A\u6A21\u6BD4\u7CFB\u6570 K_i\u3001(K_i\u22121)\xB2\uFF09\uFF0C\u9700\u8981\u8BF7\u624B\u5DE5\u8865\u56DE`
-      };
-    }
-    return { vals: all, note: "" };
-  }
-  function renderOcrCols(d) {
-    const rows = d.rows || [];
-    const ncol = d.ncol || 0;
-    const conf = d.conf || [];
-    const box = $("ocrCols");
-    let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:6px">\u8BC6\u522B\u5230 ${rows.length} \u884C \xD7 ${ncol} \u5217\uFF0C\u627E\u5230\u6D41\u91CF\u6240\u5728\u7684\u90A3\u4E00\u5217\u70B9\u300C\u53D6\u8FD9\u5217\u300D\uFF1A</div>`;
-    html += `<div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow:auto;padding-right:4px">`;
-    for (let j = 0; j < ncol; j++) {
-      const cells = rows.map((r) => (r[j] || "").trim()).filter(Boolean);
-      if (!cells.length) continue;
-      const picked = pickSeriesNumbers(cells);
-      let lowConf = 0;
-      rows.forEach((r, i) => {
-        if ((r[j] || "") && conf[i] && conf[i][j] != null && conf[i][j] < 0.8) lowConf++;
-      });
-      const sample = cells.slice(0, 5).join(" \xB7 ").slice(0, 46);
-      html += `<div style="display:flex;gap:8px;align-items:center;padding:5px 10px;background:var(--bg);border-radius:8px;font-size:12px">
-      <span style="color:var(--text3);min-width:36px">\u7B2C${j + 1}\u5217</span>
-      <span style="flex:1;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sample}</span>
-      <span style="color:var(--text3)">${picked.vals.length} \u4E2A\u6570${lowConf ? ` \xB7 <span style="color:var(--red)">${lowConf} \u5904\u4E0D\u786E\u5B9A</span>` : ""}</span>
-      <button class="btn ghost" data-col="${j}" style="padding:3px 10px;font-size:12px">\u53D6\u8FD9\u5217</button>
-    </div>`;
-    }
-    html += `</div>`;
-    box.innerHTML = html;
-    const btns = box.querySelectorAll("button[data-col]");
-    btns.forEach((b) => {
-      b.onclick = () => {
-        const j = +b.getAttribute("data-col");
-        const cells = rows.map((r) => (r[j] || "").trim()).filter(Boolean);
-        const picked = pickSeriesNumbers(cells);
-        const out = $("ocrOut");
-        const cur = out.value.trim();
-        const appending = !!cur && j !== ocrLastCol;
-        const merged = !cur || j === ocrLastCol ? picked.vals : cur.split(/\s+/).concat(picked.vals);
-        out.value = merged.join("\n");
-        ocrLastCol = j;
-        $("ocrOutBox").style.display = "block";
-        $("ocrStatus").textContent = (appending ? `\u5DF2\u628A\u7B2C ${j + 1} \u5217\u8FFD\u52A0\u8FDB\u53BB\uFF08\u73B0\u5171 ${merged.length} \u4E2A\u6570\uFF09\u3002` : `\u5DF2\u53D6\u7B2C ${j + 1} \u5217\u5171 ${picked.vals.length} \u4E2A\u6570\uFF08\u518D\u70B9\u522B\u7684\u5217\u4F1A\u63A5\u7740\u8FFD\u52A0\uFF09\u3002`) + (picked.note ? picked.note + "\u3002" : "") + "\u52A1\u5FC5\u9010\u4E2A\u6838\u5BF9\u540E\u518D\u70B9\u300C\u586B\u5165\u7CFB\u5217\u5E76\u8BA1\u7B97\u300D\u3002";
-      };
-    });
+  function hideOcrLoading() {
+    const overlay = $("ocrLoading");
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("ocr-loading-active");
   }
   function setupOcr() {
     const file = $("ocrFile");
     const status = $("ocrStatus");
     const readFile = (f) => {
-      const r = new FileReader();
-      r.onload = () => {
-        loadImgToCanvas(String(r.result)).then(() => {
-          status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name || "\u526A\u8D34\u677F\u622A\u56FE"}\u300D\uFF0C\u70B9\u53F3\u8FB9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
-        }).catch((e) => {
-          status.textContent = String(e && e.message || e);
-        });
-      };
-      r.readAsDataURL(f);
+      ocrSelectedFile = f;
+      ocrImageDataUrl = "";
+      ocrSourceRows = [];
+      ocrSourceCells = [];
+      ocrPageUrls = [];
+      ocrPairs = [];
+      ocrSourceLabel = "";
+      ocrActivePage = 0;
+      $("ocrReview").style.display = "none";
+      $("ocrSourceTable").innerHTML = "";
+      $("ocrPairTable").innerHTML = "";
+      $("ocrPageBar").innerHTML = "";
+      $("ocrContinuity").textContent = "";
+      if (isImageLike(f)) {
+        const r = new FileReader();
+        r.onload = () => {
+          loadImageToCanvas(String(r.result)).then(() => {
+            $("ocrReview").style.display = "block";
+            renderOcrPageBar();
+            status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name || "\u526A\u8D34\u677F\u622A\u56FE"}\u300D\uFF0C\u70B9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
+          }).catch((e) => {
+            status.textContent = String(e && e.message || e);
+          });
+        };
+        r.readAsDataURL(f);
+      } else {
+        $("ocrCanvas").style.display = "none";
+        status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name}\u300D\uFF0C\u70B9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
+      }
     };
     file.onchange = () => {
       const f = file.files && file.files[0];
@@ -6254,43 +6932,87 @@
       }
     });
     $("ocrRun").onclick = async () => {
-      const api = ocrApi();
-      if (!api || !api.ocrTable) {
-        status.textContent = "\u56FE\u7247\u8BC6\u522B\u8981\u5728\u672C\u673A\u8DD1\u5F15\u64CE\uFF0C\u53EA\u6709\u684C\u9762\u7248\u652F\u6301\uFF08\u79BB\u7EBF\u3001\u4E0D\u8054\u7F51\uFF09\u3002\u8BF7\u6253\u5F00\u684C\u9762\u7684\u300C\u6CD3\u7B97\u300D\u3002";
-        return;
-      }
-      if (!ocrImageDataUrl) {
-        status.textContent = "\u5148\u9009\u4E00\u5F20\u622A\u56FE\uFF0C\u6216\u6309 Ctrl+V \u628A\u622A\u56FE\u7C98\u8FDB\u6765\u3002";
-        return;
-      }
       try {
-        status.textContent = "\u6B63\u5728\u8BC6\u522B\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026";
-        const raw = await api.ocrTable(ocrImageDataUrl, { deskew: true });
-        const d = JSON.parse(raw);
-        if (!d.ok) {
-          status.textContent = "\u8BC6\u522B\u5931\u8D25\uFF1A" + d.error;
+        if (isImageLike(ocrSelectedFile)) {
+          const api = ocrApi();
+          if (!api || !api.ocrTable) {
+            status.textContent = "\u56FE\u7247\u8BC6\u522B\u8981\u5728\u672C\u673A\u8DD1\u5F15\u64CE\uFF0C\u53EA\u6709\u684C\u9762\u7248\u652F\u6301\uFF08\u79BB\u7EBF\u3001\u4E0D\u8054\u7F51\uFF09\u3002\u8BF7\u6253\u5F00\u684C\u9762\u7684\u300C\u6CD3\u7B97\u300D\u3002";
+            return;
+          }
+          if (!ocrImageDataUrl) {
+            status.textContent = "\u5148\u9009\u4E00\u5F20\u622A\u56FE\uFF0C\u6216\u6309 Ctrl+V \u628A\u622A\u56FE\u7C98\u8FDB\u6765\u3002";
+            return;
+          }
+          showOcrLoading("\u6B63\u5728\u8BC6\u522B\u56FE\u7247\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026");
+          const raw = await api.ocrTable(ocrImageDataUrl, { deskew: true });
+          const d = JSON.parse(raw);
+          if (!d.ok) {
+            status.textContent = "\u8BC6\u522B\u5931\u8D25\uFF1A" + d.error;
+            return;
+          }
+          renderOcrReview({
+            rows: d.rows || [],
+            source: "\u56FE\u7247 OCR",
+            cells: d.cells || [],
+            pages: [ocrImageDataUrl]
+          });
+          status.textContent = "\u8BC6\u522B\u5B8C\u6210\uFF1A\u8BF7\u5BF9\u7167\u5DE6\u4FA7\u539F\u56FE\u6838\u5BF9\u53F3\u4FA7\u5E74\u4EFD\u548C\u6D41\u91CF\uFF0C\u786E\u8BA4\u540E\u4E00\u952E\u586B\u5165\u6D41\u91CF\u3002";
           return;
         }
-        renderOcrCols(d);
-        status.textContent = "\u8BC6\u522B\u5B8C\u6210\uFF1A\u770B\u4E0B\u9762\u5217\u51FA\u7684\u6BCF\u4E00\u5217\uFF0C\u70B9\u6D41\u91CF\u90A3\u4E00\u5217\u7684\u300C\u53D6\u8FD9\u5217\u300D\u3002";
+        if (!ocrSelectedFile) {
+          status.textContent = "\u5148\u9009\u62E9 PDF\u3001Word\u3001Excel\u3001CSV/TXT \u6216\u56FE\u7247\u3002";
+          return;
+        }
+        showOcrLoading("\u6B63\u5728\u89E3\u6790\u6587\u6863\uFF0C\u8BF7\u7A0D\u5019\u2026");
+        const t = await parseAnyDocument(ocrSelectedFile, status);
+        renderOcrReview(t);
+        status.textContent = `\u8BC6\u522B\u5B8C\u6210\uFF08\u6765\u6E90\uFF1A${t.source}\uFF09\u3002\u8BF7\u6838\u5BF9\u5E74\u4EFD\u8FDE\u7EED\u6027\u548C\u6D41\u91CF\u6570\u503C\uFF0C\u786E\u8BA4\u540E\u4E00\u952E\u586B\u5165\u3002`;
       } catch (e) {
         status.textContent = "\u8BC6\u522B\u51FA\u9519\uFF1A" + (e instanceof Error ? e.message : String(e));
+      } finally {
+        hideOcrLoading();
       }
     };
     $("ocrApply").onclick = () => {
-      const v = $("ocrOut").value.trim();
-      if (!v) {
-        status.textContent = "\u8BC6\u522B\u7ED3\u679C\u4E3A\u7A7A\uFF0C\u5148\u300C\u53D6\u8FD9\u5217\u300D\u3002";
+      const chosen = ocrPairs.filter((p) => p.included).map((p) => ({ year: parseYearValue(p.yearText), flow: parseFlowValue(p.flowText), raw: p }));
+      const invalid = chosen.filter((p) => p.year == null || p.flow == null);
+      if (!chosen.length) {
+        status.textContent = "\u6CA1\u6709\u52FE\u9009\u53EF\u586B\u5165\u7684\u6570\u636E\uFF1B\u8BF7\u5148\u6838\u5BF9\u5E76\u52FE\u9009\u5E74\u4EFD/\u6D41\u91CF\u3002";
         return;
       }
-      $("series").value = v;
+      if (invalid.length) {
+        status.textContent = `\u8FD8\u6709 ${invalid.length} \u884C\u5E74\u4EFD\u6216\u6D41\u91CF\u4E0D\u662F\u6709\u6548\u6570\u5B57\uFF0C\u8BF7\u4FEE\u6B63\u540E\u518D\u586B\u5165\u3002`;
+        return;
+      }
+      const withYear = chosen;
+      withYear.sort((a, b) => a.year - b.year);
+      const years = withYear.map((p) => p.year);
+      const missing = [];
+      for (let y = years[0]; y <= years[years.length - 1]; y++) {
+        if (years.indexOf(y) < 0) missing.push(y);
+      }
+      const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+      if (missing.length || duplicates.length) {
+        const msg = [];
+        if (duplicates.length) msg.push("\u91CD\u590D\u5E74\u4EFD " + Array.from(new Set(duplicates)).join("\u3001"));
+        if (missing.length) msg.push("\u7F3A\u5C11\u5E74\u4EFD " + missing.join("\u3001"));
+        status.textContent = "\u4E3A\u4FDD\u8BC1\u5E74\u4EFD\u8FDE\u7EED\u6027\uFF0C\u672A\u586B\u5165\uFF1A" + msg.join("\uFF1B") + "\u3002\u8BF7\u5728\u6838\u5BF9\u8868\u4E2D\u4FEE\u6B63\u3002";
+        return;
+      }
+      $("series").value = withYear.map((p) => String(p.flow)).join("\n");
       calcFromSeries();
-      status.textContent = "\u5DF2\u586B\u5165\u7CFB\u5217\u5E76\u5B8C\u6210\u8BA1\u7B97\uFF0C\u8BF7\u770B\u7ED3\u679C\u5E76\u6838\u5BF9\u6570\u503C\u3002";
+      status.textContent = `\u5DF2\u586B\u5165 ${withYear.length} \u5E74\u6D41\u91CF\uFF08${years[0]}\u2013${years[years.length - 1]}\uFF0C\u8FDE\u7EED\uFF09\uFF0C\u5E76\u5B8C\u6210\u8BA1\u7B97\u3002\u8BF7\u590D\u6838\u8BA1\u7B97\u7ED3\u679C\u3002`;
     };
     $("ocrClear").onclick = () => {
-      $("ocrOut").value = "";
-      ocrLastCol = -1;
-      status.textContent = "\u5DF2\u6E05\u7A7A\u8BC6\u522B\u7ED3\u679C\uFF0C\u53EF\u91CD\u65B0\u53D6\u5217\u3002";
+      ocrPairs = [];
+      ocrSourceRows = [];
+      ocrSourceCells = [];
+      ocrPageUrls = [];
+      $("ocrReview").style.display = "none";
+      $("ocrSourceTable").innerHTML = "";
+      $("ocrPairTable").innerHTML = "";
+      $("ocrPageBar").innerHTML = "";
+      status.textContent = "\u5DF2\u6E05\u7A7A\u8BC6\u522B\u7ED3\u679C\u3002";
     };
   }
   setupOcr();
