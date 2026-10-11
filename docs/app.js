@@ -6298,6 +6298,282 @@
   function ocrApi() {
     return window.hsApi;
   }
+  var tessWorker = null;
+  var tessInitPromise = null;
+  function tessAbsUrl(rel) {
+    try {
+      return new URL(rel, location.href).href;
+    } catch {
+      return rel;
+    }
+  }
+  async function getTessWorker(onStatus) {
+    const T = window.Tesseract;
+    if (!T) throw new Error("\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\u672A\u52A0\u8F7D\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u91CD\u8BD5");
+    if (tessWorker) return tessWorker;
+    if (!tessInitPromise) {
+      tessInitPromise = (async () => {
+        onStatus?.("\u6B63\u5728\u542F\u52A8\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\uFF08\u9996\u6B21\u9700\u4E0B\u8F7D\u7EA6 5MB \u6A21\u578B\uFF09\u2026");
+        const worker = await T.createWorker("chi_sim", 1, {
+          workerPath: tessAbsUrl("libs/tesseract/worker.min.js"),
+          corePath: tessAbsUrl("libs/tesseract"),
+          langPath: tessAbsUrl("libs/tesseract/lang"),
+          logger: (m) => {
+            if (m && typeof m.progress === "number" && /loading|language/i.test(String(m.status))) {
+              onStatus?.(`\u52A0\u8F7D\u8BC6\u522B\u6A21\u578B ${Math.round(m.progress * 100)}%\u2026`);
+            }
+          }
+        });
+        tessWorker = worker;
+        return worker;
+      })().catch((e) => {
+        tessInitPromise = null;
+        throw e;
+      });
+    }
+    return tessInitPromise;
+  }
+  function tessFixNumeric(t) {
+    let out = String(t || "").trim();
+    out = out.replace(/[０-９，．]/g, (ch) => {
+      const map = { "\uFF10": "0", "\uFF11": "1", "\uFF12": "2", "\uFF13": "3", "\uFF14": "4", "\uFF15": "5", "\uFF16": "6", "\uFF17": "7", "\uFF18": "8", "\uFF19": "9", "\uFF0C": ",", "\uFF0E": "." };
+      return map[ch] || ch;
+    });
+    let prev = "";
+    while (prev !== out) {
+      prev = out;
+      out = out.replace(/(?<![\d.])(\d{1,3})[\s,](\d{3})(?![\d.])/g, "$1$2");
+    }
+    if (/^\d{1,3}\.\d{3}$/.test(out)) out = out.replace(".", "");
+    return out;
+  }
+  function tessClusterTable(words, scale = 1) {
+    const k = scale > 0 ? scale : 1;
+    const items = words.filter((w) => w.text && w.text.trim()).map((w) => ({
+      text: w.text.trim(),
+      score: Math.max(0, Math.min(1, (w.confidence || 0) / 100)),
+      cx: (w.bbox.x0 + w.bbox.x1) / 2 / k,
+      cy: (w.bbox.y0 + w.bbox.y1) / 2 / k,
+      w: (w.bbox.x1 - w.bbox.x0) / k,
+      h: (w.bbox.y1 - w.bbox.y0) / k
+    }));
+    if (!items.length) return null;
+    const hs = items.map((i) => i.h).sort((a, b) => a - b);
+    const hMed = hs[Math.floor(hs.length / 2)] || 16;
+    const yTol = Math.max(0.55 * hMed, 8);
+    const sorted = [...items].sort((a, b) => a.cy - b.cy);
+    const groups = [];
+    let cur = [];
+    let prevCy = -1e9;
+    for (const it of sorted) {
+      if (it.cy - prevCy <= yTol) cur.push(it);
+      else {
+        if (cur.length) groups.push(cur);
+        cur = [it];
+      }
+      prevCy = it.cy;
+    }
+    if (cur.length) groups.push(cur);
+    const rows = groups.map((g) => ({
+      cy: g.reduce((s, i) => s + i.cy, 0) / g.length,
+      items: g.sort((a, b) => a.cx - b.cx)
+    }));
+    rows.sort((a, b) => a.cy - b.cy);
+    const ws = items.map((i) => i.w).sort((a, b) => a - b);
+    const wMed = ws[Math.floor(ws.length / 2)] || 45;
+    const xGap = Math.max(0.6 * wMed, 20);
+    const centers = rows.flatMap((r) => r.items.map((i) => i.cx)).sort((a, b) => a - b);
+    const segs = [];
+    for (const c of centers) {
+      const last = segs[segs.length - 1];
+      if (last && c - last[last.length - 1] <= xGap) last.push(c);
+      else segs.push([c]);
+    }
+    const colTargets = segs.map((s) => s.reduce((x, y) => x + y, 0) / s.length);
+    const ncol = Math.max(1, colTargets.length);
+    const outRows = [];
+    const outConf = [];
+    const outCells = [];
+    rows.forEach((r, ri) => {
+      const row = new Array(ncol).fill("");
+      const conf = new Array(ncol).fill(1);
+      for (const it of r.items) {
+        let idx = 0, best = Infinity;
+        colTargets.forEach((ct, i) => {
+          const d = Math.abs(ct - it.cx);
+          if (d < best) {
+            best = d;
+            idx = i;
+          }
+        });
+        if (best > xGap * 2.5) continue;
+        const fixed = tessFixNumeric(it.text);
+        row[idx] = row[idx] ? row[idx] + " " + fixed : fixed;
+        conf[idx] = Math.min(conf[idx], it.score);
+        outCells.push({
+          row: ri,
+          col: idx,
+          box: [[it.cx - it.w / 2, it.cy - it.h / 2], [it.cx + it.w / 2, it.cy - it.h / 2], [it.cx + it.w / 2, it.cy + it.h / 2], [it.cx - it.w / 2, it.cy + it.h / 2]],
+          text: fixed,
+          score: Math.round(it.score * 1e3) / 1e3
+        });
+      }
+      outRows.push(row.map(tessFixNumeric));
+      outConf.push(conf.map((c) => Math.round(c * 1e3) / 1e3));
+    });
+    return { ok: true, ncol, rows: outRows, conf: outConf, cells: outCells, engine: "tesseract" };
+  }
+  function tessOtsuThreshold(gray) {
+    const hist = new Array(256).fill(0);
+    for (let i = 0; i < gray.length; i++) hist[gray[i]]++;
+    const total = gray.length;
+    let sum = 0;
+    for (let i = 0; i < 256; i++) sum += i * hist[i];
+    let sumB = 0, wB = 0, best = -1, threshold = 127;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t];
+      if (!wB) continue;
+      const wF = total - wB;
+      if (!wF) break;
+      sumB += t * hist[t];
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+      const between = wB * wF * (mB - mF) * (mB - mF);
+      if (between > best) {
+        best = between;
+        threshold = t;
+      }
+    }
+    return threshold;
+  }
+  function removeTableLines(canvas) {
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const { width, height } = canvas;
+    if (!width || !height) return;
+    const src = ctx.getImageData(0, 0, width, height);
+    const d = src.data;
+    const n = width * height;
+    const gray = new Uint8Array(n);
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      gray[i] = Math.max(0, Math.min(255, Math.round(0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2])));
+    }
+    const threshold = tessOtsuThreshold(gray);
+    const dark = new Uint8Array(n);
+    let darkCount = 0;
+    for (let i = 0; i < n; i++) {
+      if (gray[i] < threshold) {
+        dark[i] = 1;
+        darkCount++;
+      }
+    }
+    if (darkCount < n * 0.01 || darkCount > n * 0.72) return;
+    const line = new Uint8Array(n);
+    const hMin = Math.max(35, Math.round(width * 0.035));
+    for (let y = 0; y < height; y++) {
+      let start = -1;
+      for (let x = 0; x <= width; x++) {
+        const on = x < width && dark[y * width + x] === 1;
+        if (on && start < 0) start = x;
+        if (!on && start >= 0) {
+          if (x - start >= hMin) for (let i = start; i < x; i++) line[y * width + i] = 1;
+          start = -1;
+        }
+      }
+    }
+    const vMin = Math.max(35, Math.round(height * 0.035));
+    for (let x = 0; x < width; x++) {
+      let start = -1;
+      for (let y = 0; y <= height; y++) {
+        const on = y < height && dark[y * width + x] === 1;
+        if (on && start < 0) start = y;
+        if (!on && start >= 0) {
+          if (y - start >= vMin) for (let i = start; i < y; i++) line[i * width + x] = 1;
+          start = -1;
+        }
+      }
+    }
+    const out = new Uint8Array(n);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        if (!line[i]) continue;
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= height) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            const xx = x + dx;
+            if (xx < 0 || xx >= width) continue;
+            out[yy * width + xx] = 1;
+          }
+        }
+      }
+    }
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      const v = dark[i] && !out[i] ? 0 : 255;
+      d[p] = v;
+      d[p + 1] = v;
+      d[p + 2] = v;
+      d[p + 3] = 255;
+    }
+    ctx.putImageData(src, 0, 0);
+  }
+  async function dataUrlToCanvas(dataUrl) {
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("\u56FE\u7247\u52A0\u8F7D\u5931\u8D25\uFF0C\u8BF7\u6362 PNG/JPG \u8BD5\u8BD5"));
+      img.src = dataUrl;
+    });
+    const w0 = Math.max(1, img.naturalWidth || img.width || 1);
+    const h0 = Math.max(1, img.naturalHeight || img.height || 1);
+    const scale = w0 < 900 ? 2 : w0 < 1800 ? 1.5 : 1;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w0 * scale));
+    canvas.height = Math.max(1, Math.round(h0 * scale));
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = scale > 1;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    removeTableLines(canvas);
+    return { canvas, scale };
+  }
+  async function tessRecognizeWords(worker, canvas, psm) {
+    await worker.setParameters({ tessedit_pageseg_mode: psm });
+    const ret = await worker.recognize(canvas, {}, { text: true, blocks: true });
+    const words = [];
+    for (const block of ret?.data?.blocks || []) {
+      for (const para of block.paragraphs || []) {
+        for (const line of para.lines || []) {
+          for (const w of line.words || []) words.push(w);
+        }
+      }
+    }
+    return words;
+  }
+  function tessTableScore(t) {
+    if (!t) return -1;
+    const rows = t.rows || [];
+    const cells = rows.reduce((n, r) => n + r.filter((x) => String(x || "").trim()).length, 0);
+    const nums = rows.reduce((n, r) => n + r.filter((x) => /\d/.test(String(x || ""))).length, 0);
+    return rows.length * 2 + cells + nums * 1.5;
+  }
+  async function browserOcrTable(dataUrl, onStatus) {
+    const worker = await getTessWorker(onStatus);
+    onStatus?.("\u6D4F\u89C8\u5668\u672C\u5730\u8BC6\u522B\u4E2D\u2026\uFF08\u56FE\u7247\u4E0D\u79BB\u5F00\u4F60\u7684\u7535\u8111\uFF09");
+    const { canvas, scale } = await dataUrlToCanvas(dataUrl);
+    const words = await tessRecognizeWords(worker, canvas, "3");
+    let table = tessClusterTable(words, scale);
+    if (tessTableScore(table) < 12) {
+      onStatus?.("\u8BC6\u522B\u5185\u5BB9\u8F83\u5C11\uFF0C\u6B63\u5728\u6362\u6A21\u5F0F\u91CD\u8BD5\u2026");
+      const words2 = await tessRecognizeWords(worker, canvas, "4");
+      const table2 = tessClusterTable(words2, scale);
+      if (tessTableScore(table2) > tessTableScore(table)) table = table2;
+    }
+    if (!table) return JSON.stringify({ ok: false, error: "\u56FE\u4E2D\u6CA1\u6709\u8BC6\u522B\u5230\u6587\u5B57\uFF0C\u6362\u66F4\u6E05\u6670\u7684\u56FE\u7247\u8BD5\u8BD5" });
+    return JSON.stringify(table);
+  }
   function fileExt(name) {
     const m = /\.([a-zA-Z0-9]+)$/.exec(name || "");
     return m ? m[1].toLowerCase() : "";
@@ -6520,13 +6796,14 @@
       return { rows: normalizeRows(rows), source: "PDF \u6587\u5B57\u5C42", pages: pageUrls };
     }
     const api = ocrApi();
-    if (!api || !api.ocrTable) throw new Error("\u8FD9\u662F\u626B\u63CF\u7248 PDF\uFF0C\u7F51\u9875\u7248\u65E0\u6CD5 OCR\uFF1B\u8BF7\u4F7F\u7528\u684C\u9762\u7248\u6CD3\u7B97");
     const ocrRows = [];
     const ocrCells = [];
     for (let i = 1; i <= pageCount; i++) {
-      status.textContent = `\u626B\u63CF\u7248 PDF \u6B63\u5728\u672C\u673A\u8BC6\u522B\u7B2C ${i}/${pageCount} \u9875\uFF08\u9996\u6B21\u7EA6 10~30 \u79D2\uFF09\u2026`;
+      status.textContent = `\u626B\u63CF\u7248 PDF \u6B63\u5728${api ? "\u672C\u673A" : "\u6D4F\u89C8\u5668"}\u8BC6\u522B\u7B2C ${i}/${pageCount} \u9875\u2026`;
       const dataUrl = pageUrls[i - 1] || await pdfPageToDataUrl(pdf, i);
-      const raw = await api.ocrTable(dataUrl, { deskew: true });
+      const raw = api && api.ocrTable ? await api.ocrTable.call(api, dataUrl, { deskew: true }) : await browserOcrTable(dataUrl, (s) => {
+        status.textContent = `\u7B2C ${i}/${pageCount} \u9875 \xB7 ${s}`;
+      });
       const d = JSON.parse(raw);
       if (!d.ok) throw new Error(d.error || "PDF OCR \u5931\u8D25");
       const pageRows = d.rows || [];
@@ -6935,16 +7212,12 @@
       try {
         if (isImageLike(ocrSelectedFile)) {
           const api = ocrApi();
-          if (!api || !api.ocrTable) {
-            status.textContent = "\u56FE\u7247\u8BC6\u522B\u8981\u5728\u672C\u673A\u8DD1\u5F15\u64CE\uFF0C\u53EA\u6709\u684C\u9762\u7248\u652F\u6301\uFF08\u79BB\u7EBF\u3001\u4E0D\u8054\u7F51\uFF09\u3002\u8BF7\u6253\u5F00\u684C\u9762\u7684\u300C\u6CD3\u7B97\u300D\u3002";
-            return;
-          }
           if (!ocrImageDataUrl) {
             status.textContent = "\u5148\u9009\u4E00\u5F20\u622A\u56FE\uFF0C\u6216\u6309 Ctrl+V \u628A\u622A\u56FE\u7C98\u8FDB\u6765\u3002";
             return;
           }
-          showOcrLoading("\u6B63\u5728\u8BC6\u522B\u56FE\u7247\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026");
-          const raw = await api.ocrTable(ocrImageDataUrl, { deskew: true });
+          showOcrLoading(api ? "\u6B63\u5728\u8BC6\u522B\u56FE\u7247\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026" : "\u6B63\u5728\u51C6\u5907\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\uFF08\u9996\u6B21\u9700\u4E0B\u8F7D\u7EA6 5MB \u6A21\u578B\uFF09\u2026");
+          const raw = api && api.ocrTable ? await api.ocrTable.call(api, ocrImageDataUrl, { deskew: true }) : await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s));
           const d = JSON.parse(raw);
           if (!d.ok) {
             status.textContent = "\u8BC6\u522B\u5931\u8D25\uFF1A" + d.error;
