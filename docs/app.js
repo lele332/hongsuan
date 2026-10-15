@@ -240,6 +240,16 @@
     return sse;
   }
 
+  // 离差绝对值和（SAD）——绝对值准则：理论研究配合期望值公式时较平方和准则更优（实用水文统计 第6章）
+  function sadOfPoints(points, params, phiFn) {
+    let sad = 0;
+    for (const pt of points) {
+      const qTheory = params.mean * (1 + phiFn(pt.p, params.cs) * params.cv);
+      sad += Math.abs(pt.q - qTheory);
+    }
+    return sad;
+  }
+
   // src/core/parse.ts
   function parseSeries(text) {
     if (typeof text !== "string") throw new Error("\u7CFB\u5217\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
@@ -3366,6 +3376,7 @@
       render();
     }
     if (mode === "noData") calcMethodC();
+    if (mode === "noData") window.setTimeout(spMapEnsure, 80);
     if (mode === "help") renderHelp();
     if (mode === "map") renderMap();
   }
@@ -3381,39 +3392,77 @@
   $("btnThreePoint").onclick = () => {
     try {
       if (!state.series.length) {
-        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        alert("请先计算系列（流量系列模式）。");
         return;
       }
       const r = threePointFromSeries(state.series);
-      state.params = {
-        mean: r.mean,
-        cv: Math.min(1.2, Math.max(0.05, r.cv)),
-        cs: Math.max(0, r.cs)
-      };
+      const cvFixed = state.params.cv;
+      let m = r.cv > 0 ? r.cs / r.cv : 2;
+      m = Math.min(8, Math.max(1, m));
+      const cs = m * cvFixed;
+      state.params = { mean: r.mean, cv: cvFixed, cs };
+      $("ratioSlider").value = String(m);
       syncParamInputs();
       render();
-      $("fitMsg").textContent = `\u4E09\u70B9\u6CD5\u521D\u4F30\uFF085%/50%/95% \u97E6\u4F2F\u6392\u4F4D\uFF09\uFF1AQ\u0304=${fmt(r.mean, 1)}\uFF0CCv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}`;
+      $("fitMsg").textContent = `三点法初估（Cv 固定为矩法值 ${cvFixed.toFixed(3)}）：Q\u0304=${fmt(r.mean, 1)}，M=${m.toFixed(2)}，Cs=${cs.toFixed(2)}`;
     } catch (e) {
-      alert("\u4E09\u70B9\u6CD5\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+      alert("三点法失败：" + (e instanceof Error ? e.message : String(e)));
     }
   };
   $("btnAutoFit").onclick = () => {
     try {
       if (state.pts.length < 3) {
-        alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+        alert("请先计算系列（流量系列模式）。");
         return;
       }
-      const r = autoFit(state.pts, state.params);
-      state.params = {
-        mean: r.mean,
-        cv: Math.min(1.2, Math.max(0.05, r.cv)),
-        cs: Math.max(0, r.cs)
+      const cvFixed = state.params.cv;
+      const mean = state.params.mean;
+      const m0 = Math.max(0.1, state.params.cs / cvFixed);
+      const crit = (m, fn) => fn(state.pts, { mean, cv: cvFixed, cs: m * cvFixed }, phiPIII);
+      const sse0 = crit(m0, sseOfPoints), sad0 = crit(m0, sadOfPoints);
+      // 黄金分割精搜（一维凸优化，精度 1e-4）
+      const golden = (fn, lo, hi) => {
+        const gr = (Math.sqrt(5) - 1) / 2;
+        let a = lo, b = hi;
+        let c = b - gr * (b - a), d = a + gr * (b - a);
+        let fc = fn(c), fd = fn(d);
+        for (let it = 0; it < 80 && Math.abs(b - a) > 1e-4; it++) {
+          if (fc < fd) { b = d; d = c; fd = fc; c = b - gr * (b - a); fc = fn(c); }
+          else { a = c; c = d; fc = fd; d = a + gr * (b - a); fd = fn(d); }
+        }
+        return (a + b) / 2;
       };
+      // 第一阶段：粗网格定位极值邻域
+      let bSAD = null, bSSE = null;
+      for (let m = 1; m <= 8.0001; m += 0.05) {
+        const s = crit(m, sadOfPoints);
+        if (!bSAD || s < bSAD.s) bSAD = { m, s };
+        const e = crit(m, sseOfPoints);
+        if (!bSSE || e < bSSE.e) bSSE = { m, e };
+      }
+      // 第二阶段：黄金分割精搜
+      const mSAD = golden((m) => crit(m, sadOfPoints), Math.max(1, bSAD.m - 0.06), Math.min(8, bSAD.m + 0.06));
+      const mSSE = golden((m) => crit(m, sseOfPoints), Math.max(1, bSSE.m - 0.06), Math.min(8, bSSE.m + 0.06));
+      // 主判据：绝对值准则（理论研究较优）；SSE 结果并列报告供目估复核
+      const mBest = mSAD;
+      const sadBest = crit(mBest, sadOfPoints), sseBest = crit(mBest, sseOfPoints);
+      state.params = { mean, cv: cvFixed, cs: mBest * cvFixed };
+      $("ratioSlider").value = String(mBest);
       syncParamInputs();
       render();
-      $("fitMsg").textContent = `\u4F18\u5316\u9002\u7EBF\uFF08\u5747\u503C\u56FA\u5B9A\uFF09\uFF1ACv=${r.cv.toFixed(3)}\uFF0CCs=${r.cs.toFixed(2)}\uFF0CSSE ${fmt(r.sseInitial, 0)} \u2192 ${fmt(r.sse, 0)}`;
+      // 工程合理性校核
+      const hints = [];
+      if (mBest < 2) hints.push("优选 M<2：P-Ⅲ型 Cs≥2Cv 才保证下限非负，且工程上年洪峰 Cs/Cv 常用 2\uFF5E4，建议人工目估复核上部点据");
+      if (mBest > 4.5) hints.push("优选 M>4.5：超出常用倍比范围，请检查系列中是否有特大值需处理");
+      const topPts = [...state.pts].sort((a, b) => b.q - a.q).slice(0, 3);
+      const devs = topPts.map((pt) => {
+        const qt = mean * (1 + phiPIII(pt.p, mBest * cvFixed) * cvFixed);
+        return (pt.p * 100).toFixed(1) + "%:" + ((pt.q - qt) / qt * 100).toFixed(1) + "%";
+      }).join("、");
+      const dualNote = Math.abs(mSAD - mSSE) > 0.05 ? `\n双准则对照：SAD 最优 M=${mSAD.toFixed(3)}（已采用），SSE 最优 M=${mSSE.toFixed(3)}（大值点权重更高，可作目估参考）` : "";
+      $("fitMsg").textContent = `优化适线（Cv 固定=${cvFixed.toFixed(3)}，绝对值准则+黄金分割精搜）：M=${mBest.toFixed(3)}，Cs=${(mBest * cvFixed).toFixed(3)}\nSAD ${fmt(sad0, 0)} \u2192 ${fmt(sadBest, 0)}；SSE ${fmt(sse0, 0)} \u2192 ${fmt(sseBest, 0)}${dualNote}\n上部 3 点经验频率与相对偏差：${devs}${hints.length ? "\n⚠ " + hints.join("；") : ""}`;
     } catch (e) {
-      alert("\u4F18\u5316\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+      alert("优化适线失败：" + (e instanceof Error ? e.message : String(e)));
     }
   };
   function renderFitTrials() {
@@ -3424,7 +3473,7 @@
     if (!fitTrials.length) {
       const d = document.createElement("div");
       d.style.cssText = "font-size:12px;color:var(--text3);line-height:1.7";
-      d.textContent = "\u5C1A\u65E0\u8BD5\u7EBF\u8BB0\u5F55\u3002\u5148\u9009\u4E00\u7EC4 Q\u0304\u3001Cv\u3001M\uFF0C\u70B9\u300C\u8BB0\u5F55\u672C\u6B21\u8BD5\u7EBF\u300D\uFF1B\u518D\u4FEE\u6539 Cv \u6216\u91CD\u9009 M\uFF0C\u8BB0\u5F55\u7B2C 2\u30013 \u7EC4\uFF0C\u8868\u683C\u4F1A\u5217\u51FA Qp \u4E0E SSE\uFF0C\u56FE\u4E2D\u7070\u8272\u865A\u7EBF\u4E3A\u5BF9\u7167\u7EC4\u3002";
+      d.textContent = "尚无试线记录。Cv 已由矩法计算并固定，直接重选 M，点「记录本次试线」记录第 2、3 组，表格会列出 Qp 与 SSE，图中灰色虚线为对照组。";
       box.appendChild(d);
       if (msg) msg.textContent = "";
       return;
@@ -3496,7 +3545,7 @@
     if (msg) {
       const last = fitTrials[fitTrials.length - 1];
       const m = last.params.cs / last.params.cv;
-      msg.textContent = `\u5DF2\u8BB0\u5F55 ${fitTrials.length} \u7EC4\u3002\u5F53\u524D\u5BF9\u7167\uFF1A${comparisonFit ? `Cv=${comparisonFit.cv.toFixed(3)}\u3001M=${(comparisonFit.cs / comparisonFit.cv).toFixed(2)}` : "\u672A\u6307\u5B9A"}\uFF1B\u7EE7\u7EED\u6539 Cv \u6216 M \u540E\u66F2\u7EBF\u4F1A\u7ACB\u5373\u91CD\u7ED8\u3002`;
+      msg.textContent = `\u5DF2\u8BB0\u5F55 ${fitTrials.length} \u7EC4\u3002\u5F53\u524D\u5BF9\u7167\uFF1A${comparisonFit ? `Cv=${comparisonFit.cv.toFixed(3)}\u3001M=${(comparisonFit.cs / comparisonFit.cv).toFixed(2)}` : "\u672A\u6307\u5B9A"}\uFF1B重选 M 后曲线会立即重绘\u3002`;
     }
   }
   function recordFitTrial() {
@@ -3517,7 +3566,7 @@
     renderFitTrials();
     render();
     const msg = $("fitTrialMsg");
-    if (msg) msg.textContent = `\u5DF2\u8BB0\u5F55\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF0C\u5E76\u8BBE\u4E3A\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002\u8BF7\u7EE7\u7EED\u8C03\u6574 Cv \u6216\u91CD\u9009 M\uFF0C\u518D\u8BB0\u5F55\u4E0B\u4E00\u7EC4\u3002`;
+    if (msg) msg.textContent = `\u5DF2\u8BB0\u5F55\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF0C\u5E76\u8BBE\u4E3A\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002请重选 M，\u518D\u8BB0\u5F55\u4E0B\u4E00\u7EC4\u3002`;
   }
   if ($("btnRecordFitTrial")) {
     $("btnRecordFitTrial").onclick = recordFitTrial;
@@ -3528,9 +3577,9 @@
       renderFitTrials();
       render();
     };
-    document.querySelectorAll(".mPickBtn").forEach((btn) => {
-      btn.onclick = () => {
-        const m = Number(btn.dataset.m);
+    document.querySelectorAll(".mPickBtn").forEach((btn2) => {
+      btn2.onclick = () => {
+        const m = Number(btn2.dataset.m);
         if (!Number.isFinite(m) || m <= 0) return;
         state.params = { ...state.params, cs: state.params.cv * m };
         $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
@@ -3612,9 +3661,17 @@
   }
   var cvHintOf = () => state.stats && "cv" in state.stats ? state.stats.cv : void 0;
   $("btnRecommend").onclick = () => {
-    runFit("\u6B63\u5728\u6309\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219\u641C\u7D22\u6700\u4F18\u53C2\u6570", () => {
-      const r = recommendFit(state.pts, { mean: state.params.mean, criterion: "sse", kRange: [2, 4], cvHint: cvHintOf() });
-      return applyFit(r.mean, r.cv, r.cs, recommendMsg("\u89C4\u8303\u6700\u4F18\u9002\u7EBF", r));
+    runFit("\u6B63\u5728\u6309\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219\u641C\u7D22\u6700\u4F18 M", () => {
+      const cvFixed = state.params.cv;
+      const mean = state.params.mean;
+      let best = null;
+      for (let m = 2; m <= 4.0001; m += 0.02) {
+        const cs = m * cvFixed;
+        const sse = sseOfPoints(state.pts, { mean, cv: cvFixed, cs }, phiPIII);
+        if (!best || sse < best.sse) best = { m, cs, sse };
+      }
+      const q = qDesignOf(mean, cvFixed, best.cs);
+      return applyFit(mean, cvFixed, best.cs, `\u89C4\u8303\u6700\u4F18\u9002\u7EBF\uFF08SSE \u51C6\u5219\uFF0CCv \u56FA\u5B9A\uFF09\uFF1AM=${best.m.toFixed(2)}\u3001Cs=${best.cs.toFixed(2)}\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(q, 0)} m\xB3/s`);
     });
   };
   var PHI_PS = [1e-4, 1e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97, 0.99, 0.999];
@@ -3971,8 +4028,8 @@
     }
   }
   $("ssmResult").addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button.ssmTakeBtn");
-    if (btn) ssmTakeScour(+btn.dataset.idx);
+    const btn2 = ev.target.closest("button.ssmTakeBtn");
+    if (btn2) ssmTakeScour(+btn2.dataset.idx);
   });
   function calcSsm() {
     try {
@@ -4044,9 +4101,9 @@
     scheduleSave();
   };
   document.querySelectorAll("#nTable .fillBtn").forEach((item) => {
-    const btn = item;
-    btn.onclick = () => {
-      $(`hf${btn.dataset.r}${btn.dataset.k}`).value = btn.dataset.n;
+    const btn2 = item;
+    btn2.onclick = () => {
+      $(`hf${btn2.dataset.r}${btn2.dataset.k}`).value = btn2.dataset.n;
     };
   });
   function showMethodCError(which, msg, e) {
@@ -4122,11 +4179,11 @@
       showMethodCError("rd", e instanceof Error ? e.message : String(e), e).textContent = "\u2014";
     }
     document.querySelectorAll("#rdTables .fillBtn").forEach((item) => {
-      const btn = item;
-      if (btn.dataset.bound) return;
-      btn.dataset.bound = "1";
-      btn.onclick = () => {
-        const d = btn.dataset;
+      const btn2 = item;
+      if (btn2.dataset.bound) return;
+      btn2.dataset.bound = "1";
+      btn2.onclick = () => {
+        const d = btn2.dataset;
         if (d.psi) $("rdPhi").value = d.psi;
         if (d.h) $("rdH").value = d.h;
         if (d.z) $("rdZ").value = d.z;
@@ -4592,19 +4649,19 @@
     html += `</table><div style="font-size:11px;color:var(--text2);margin-top:4px">\u6765\u6E90\uFF1AJTG C30\u20142015 \u9644\u5F55 C\uFF08\u5B8C\u6574\u7248 P73~76\uFF09\u3002\u66F2\u7EBF\u578B\u58A9\u5F62\u7684\u7CBE\u786E\u503C\u8BF7\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF\u56FE\uFF1B\u70B9\u300C\u586B\u5165\u300D\u540E\u4ECD\u5E94\u6309\u58A9\u5F62\u590D\u6838\u3002</div>`;
     box.innerHTML = html;
     box.onclick = (ev) => {
-      const btn = ev.target.closest("button[data-kxi]");
-      if (!btn) return;
+      const btn2 = ev.target.closest("button[data-kxi]");
+      if (!btn2) return;
       const inp = $("lsKxi");
-      inp.value = btn.dataset.kxi ?? "";
+      inp.value = btn2.dataset.kxi ?? "";
       inp.dispatchEvent(new Event("input", { bubbles: true }));
-      const old = btn.textContent;
-      btn.textContent = "\u2713 \u5DF2\u586B\u5165";
+      const old = btn2.textContent;
+      btn2.textContent = "\u2713 \u5DF2\u586B\u5165";
       setTimeout(() => {
-        btn.textContent = old;
+        btn2.textContent = old;
       }, 1200);
       logCalc(
         "\u51B2\u5237 \xB7 \u9644\u5F55C\u58A9\u5F62\u901F\u67E5",
-        { \u53D6\u503C: btn.dataset.kxi ?? "" },
+        { \u53D6\u503C: btn2.dataset.kxi ?? "" },
         { K\u03BE: inp.value },
         "JTG C30\u20142015 \u9644\u5F55 C \u8868 C",
         {}
@@ -4791,6 +4848,7 @@
       downloadBlob(new Blob([svgMarkup()], { type: "image/svg+xml;charset=utf-8" }), "\u9891\u7387\u66F2\u7EBF.svg");
     };
     $("exPng").onclick = async () => {
+      const btn2 = $("exPng");
       try {
         const url = await svgToPngDataUrl();
         const a = document.createElement("a");
@@ -4798,8 +4856,10 @@
         a.download = "\u9891\u7387\u66F2\u7EBF.png";
         a.click();
         $("exMsg").textContent = "\u5DF2\u5BFC\u51FA PNG\uFF082 \u500D\u50CF\u7D20\u5BC6\u5EA6\uFF09";
+        showButtonFeedback(btn2, true, "\u5DF2\u5BFC\u51FA");
       } catch {
         $("exMsg").textContent = "PNG \u5BFC\u51FA\u5931\u8D25\uFF0C\u8BF7\u6539\u7528 SVG";
+        showButtonFeedback(btn2, false, "\u5BFC\u51FA\u5931\u8D25");
       }
     };
   }
@@ -4819,6 +4879,7 @@
   }
   if ($("pdGo")) {
     $("pdGo").onclick = async () => {
+      const btn2 = $("pdGo");
       const box = $("pdOut");
       const msg = $("pdMsg");
       try {
@@ -4861,17 +4922,21 @@
         msg.textContent = "";
       } catch (e) {
         msg.textContent = e instanceof Error ? e.message : String(e);
+        showButtonFeedback(btn2, false, "\u672A\u5B8C\u6210");
       }
     };
     $("pdMd").onclick = async () => {
+      const btn2 = $("pdMd");
       const msg = $("pdMsg");
       try {
         const [ta, tb] = await Promise.all([readFileText("pdA"), readFileText("pdB")]);
         const d = diffProjectFiles(parseProjectFile(JSON.parse(ta)), parseProjectFile(JSON.parse(tb)));
         downloadText(diffToMarkdown(d), "\u5DE5\u7A0B\u6587\u4EF6\u5BF9\u6BD4.md", "text/markdown;charset=utf-8");
         msg.textContent = "\u5DF2\u5BFC\u51FA\u5BF9\u6BD4\u6458\u8981";
+        showButtonFeedback(btn2, true, "\u5DF2\u5BFC\u51FA");
       } catch (e) {
         msg.textContent = e instanceof Error ? e.message : String(e);
+        showButtonFeedback(btn2, false, "\u672A\u5B8C\u6210");
       }
     };
   }
@@ -5598,7 +5663,7 @@
       }
       const payload = {
         schema: "hongsuan-multiproject@1",
-        appVersion: "1.0.0",
+        appVersion: "1.0.6",
         data: multi.data,
         plans: multi.plans
       };
@@ -6214,7 +6279,7 @@
   }
   $("btnExportProject").onclick = () => {
     try {
-      const file = buildProjectFile(currentProject(), collectInputs(), "1.0.0");
+      const file = buildProjectFile(currentProject(), collectInputs(), "1.0.6");
       const blob = new Blob([serializeProject(file)], { type: "application/json" });
       downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
       $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
@@ -6296,7 +6361,7 @@
   var ocrPairs = [];
   var ocrSourceLabel = "";
   function ocrApi() {
-    return window.hsApi;
+    return window.hsApi && window.hsApi.localOcrAvailable ? window.hsApi : null;
   }
   var tessWorker = null;
   var tessInitPromise = null;
@@ -6626,16 +6691,24 @@
     if (!best) throw new Error("\u672A\u5728\u6587\u6863\u4E2D\u627E\u5230\u53EF\u8BC6\u522B\u7684\u6570\u636E\u8868");
     return best;
   }
-  function splitTextRow(line) {
+    function splitTextRow(line) {
     const t = cleanCell(line);
     if (!t) return [];
-    if (t.indexOf("	") >= 0) return t.split(/\t+/).map(cleanCell);
+    if (t.indexOf("\t") >= 0) return t.split(/\t+/).map(cleanCell);
     if (/\s{2,}/.test(t)) return t.split(/\s{2,}/).map(cleanCell);
+    // 逗号分隔的文本行（含全角逗号），如 "2001,123.4"
+    if (t.indexOf(",") >= 0 || t.indexOf("\uFF0C") >= 0) {
+      const parts = t.split(/[,\uFF0C]/).map(cleanCell);
+      const numParts = parts.filter((x) => /\d/.test(x)).length;
+      if (parts.length >= 2 && numParts >= 2) return parts;
+    }
+    // "2001年 123.4" 这类以 4 位年份开头的中文行：按空白拆列（“年”字在取值时剔除）
+    if (/^[+-]?\d{4}(?=\s|\u5E74)/.test(t)) return t.split(/\s+/).map(cleanCell);
     const numericTokens = t.match(/(?<!\d[.])[+-]?\d+(?:\.\d+)?/g) || [];
     if (numericTokens.length >= 2 && !/[A-Za-z\u4e00-\u9fff]/.test(t)) return t.split(/\s+/).map(cleanCell);
     return [t];
   }
-  function textToTable(text, source) {
+function textToTable(text, source) {
     const lines = String(text || "").split(/\r\n|\r|\n/).map(splitTextRow).filter((r) => r.length);
     return { rows: normalizeRows(lines), source };
   }
@@ -6690,12 +6763,17 @@
   async function parseWorkbook(f) {
     const XLSX = window.XLSX;
     if (!XLSX) throw new Error("Excel \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
-    const wb = XLSX.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+        let wb;
+    try {
+      wb = XLSX.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+    } catch (e) {
+      throw new Error("\u65E0\u6CD5\u89E3\u6790\u8BE5\u8868\u683C\u6587\u4EF6\uFF1B\u8BF7\u7528 Excel/WPS \u53E6\u5B58\u4E3A .xlsx \u6216 .csv \u540E\u91CD\u8BD5");
+    }
     const tables = [];
     for (const name of wb.SheetNames || []) {
       const ws = wb.Sheets[name];
       if (!ws) continue;
-      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "", blankrows: false });
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "", blankrows: false });
       const rows = normalizeRows(raw);
       if (rows.length) tables.push({ rows, source: `Excel \u5DE5\u4F5C\u8868\u300C${name}\u300D` });
     }
@@ -6801,11 +6879,16 @@
     for (let i = 1; i <= pageCount; i++) {
       status.textContent = `\u626B\u63CF\u7248 PDF \u6B63\u5728${api ? "\u672C\u673A" : "\u6D4F\u89C8\u5668"}\u8BC6\u522B\u7B2C ${i}/${pageCount} \u9875\u2026`;
       const dataUrl = pageUrls[i - 1] || await pdfPageToDataUrl(pdf, i);
-      const raw = api && api.ocrTable ? await api.ocrTable.call(api, dataUrl, { deskew: true }) : await browserOcrTable(dataUrl, (s) => {
-        status.textContent = `\u7B2C ${i}/${pageCount} \u9875 \xB7 ${s}`;
-      });
-      const d = JSON.parse(raw);
-      if (!d.ok) throw new Error(d.error || "PDF OCR \u5931\u8D25");
+            let d = null;
+      if (api && api.ocrTable) {
+        d = JSON.parse(await api.ocrTable.call(api, dataUrl, { deskew: true }));
+      }
+      if (!d || !d.ok) {
+        d = JSON.parse(await browserOcrTable(dataUrl, (s) => {
+          status.textContent = `第 ${i}/${pageCount} 页 · ${s}`;
+        }));
+      }
+      if (!d.ok) throw new Error(d.error || "PDF OCR 失败");
       const pageRows = d.rows || [];
       const rowOffset = ocrRows.length;
       ocrRows.push(...pageRows);
@@ -6844,10 +6927,14 @@
     }
     throw new Error("\u6682\u4E0D\u80FD\u8BC6\u522B\u8BE5\u683C\u5F0F\uFF1B\u8BF7\u53E6\u5B58\u4E3A PDF\u3001DOCX\u3001XLSX/CSV/TXT \u540E\u518D\u8BD5");
   }
-  function parseFlowValue(s) {
+    function parseFlowValue(s) {
     let t = cleanCell(s);
+    if (!t) return null;
+    t = t.replace(/\uFFFD/g, "");
+    // 去掉常见流量单位：m³/s、m^3/s、m3/s、cms、立方米每秒 等
+    t = t.replace(/m[\u00B3^3]\s*\/\s*s(ec|ond)?s?\b/gi, "").replace(/cms\b/gi, "").replace(/\u7ACB\u65B9\u7C73\u6BCF\u79D2|\u7ACB\u65B9\u7C73\/\u79D2/g, "");
     if (!t || /[A-Za-z\u4e00-\u9fff]/.test(t)) return null;
-    t = t.replace(/,/g, "").replace(/[°º]/g, "").replace(/\s+/g, "");
+    t = t.replace(/,/g, "").replace(/[\u00B0\u00BA]/g, "").replace(/\s+/g, "");
     if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
     const m = /^[+-]?(\d+(\.\d*)?|\.\d+)$/.exec(t);
     if (!m) return null;
@@ -6856,14 +6943,22 @@
   }
   function parseYearValue(s) {
     let t = cleanCell(s);
-    if (!t || /[A-Za-z\u4e00-\u9fff]/.test(t)) return null;
-    t = t.replace(/[,，\s]/g, "").replace(/[°º]/g, "");
-    const m = /^(\d{4})$/.exec(t);
+    if (!t) return null;
+    t = t.replace(/\uFFFD/g, "");
+    t = t.replace(/[,\uFF0C\s]/g, "").replace(/[\u00B0\u00BA]/g, "");
+    if (/[A-Za-z]/.test(t)) return null;
+    t = t.replace(/\u5E74(\u5EA6|\u4EFD)?/g, "");
+    let m = /^(\d{4})[\/\-\u5E74]/.exec(t);
+    if (m) {
+      const n0 = Number(m[1]);
+      return n0 >= 1800 && n0 <= 2100 ? n0 : null;
+    }
+    m = /^(\d{4})$/.exec(t);
     if (!m) return null;
     const n = Number(m[1]);
     return n >= 1800 && n <= 2100 ? n : null;
   }
-  function buildColumnPairs(rows) {
+function buildColumnPairs(rows) {
     const width = tableWidth(rows);
     const candidates = [];
     for (let y = 0; y < width; y++) {
@@ -6913,40 +7008,61 @@
   }
   function buildOcrPairs(rows) {
     const columnPairs = buildColumnPairs(rows);
-    const out = [];
-    if (columnPairs.length) {
-      for (let r = 0; r < rows.length; r++) {
-        for (const cp of columnPairs) {
-          const yearText = rows[r][cp.yearCol] || "";
-          const flowText = rows[r][cp.flowCol] || "";
-          const year = parseYearValue(yearText);
-          const flow = parseFlowValue(flowText);
-          if (year == null) continue;
-          out.push({
-            row: r,
-            yearCol: cp.yearCol,
-            flowCol: cp.flowCol,
-            yearText,
-            flowText,
-            year,
-            flow,
-            included: year != null && flow != null
-          });
-        }
+        const out = [];
+            if (columnPairs.length) {
+                  for (let r = 0; r < rows.length; r++) {
+                          for (const cp of columnPairs) {
+                                    const yearText = rows[r][cp.yearCol] || "";
+                                              const flowText = rows[r][cp.flowCol] || "";
+                                                        const year = parseYearValue(yearText);
+                                                                  const flow = parseFlowValue(flowText);
+                                                                            if (year == null && flow == null) continue;
+                                                                                      out.push({ row: r, yearCol: cp.yearCol, flowCol: cp.flowCol, yearText, flowText, year, flow, included: year != null });
+                                                                                              }
+                                                                                                    }
+                                                                                                        } else {
+                                                                                                              for (const p of buildRowPairs(rows)) {
+                                                                                                                      const year = parseYearValue(p.yearText);
+                                                                                                                              const flow = parseFlowValue(p.flowText);
+                                                                                                                                      out.push({ ...p, year, flow, included: year != null });
+                                                                                                                                            }
+                                                                                                                                                }
+                                                                                                                                                
+    const knownYears = out.map((p) => p.year).filter((y) => y != null);
+        if (knownYears.length) {
+              const minYear = Math.min(...knownYears);
+                    const maxYear = Math.max(...knownYears);
+                          const existing = new Set(knownYears);
+                                for (let y = minYear; y <= maxYear; y++) {
+                                        if (!existing.has(y)) {
+                                                  out.push({ row: -1, yearCol: -1, flowCol: -1, yearText: String(y), flowText: "", year: y, flow: null, included: true });
+                                                          }
+                                                                }
+                                                                    }
+                                                                    
+    return out.sort((a, b) => (a.year ?? Number.MAX_SAFE_INTEGER) - (b.year ?? Number.MAX_SAFE_INTEGER) || (a.row ?? 0) - (b.row ?? 0));
       }
-    } else {
-      for (const p of buildRowPairs(rows)) {
-        const year = parseYearValue(p.yearText);
-        const flow = parseFlowValue(p.flowText);
-        out.push({ ...p, year, flow, included: year != null && flow != null });
-      }
+        function assessOcrResult(btn2) {
+    const included = ocrPairs.filter((p) => p.included);
+    const valid = included.filter((p) => parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null);
+    const years = valid.map((p) => parseYearValue(p.yearText));
+    const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+    const pending = included.filter((p) => parseYearValue(p.yearText) == null || parseFlowValue(p.flowText) == null);
+    if (!ocrPairs.length || !valid.length) {
+      return finishAction(btn2, "fail", "未识别到表格");
     }
-    return out;
+    if (duplicates.length) {
+      return finishAction(btn2, "warning", "年份重复");
+    }
+    if (pending.length) {
+      return finishAction(btn2, "warning", "部分识别");
+    }
+    return finishAction(btn2, "success", "已识别");
   }
   function updateOcrReview() {
     const included = ocrPairs.filter((p) => p.included);
     const valid = included.filter((p) => parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null);
-    const years = valid.map((p) => parseYearValue(p.yearText)).sort((a, b) => a - b);
+    const years = included.map((p) => parseYearValue(p.yearText)).filter((y) => y != null).sort((a, b) => a - b);
     const summary = $("ocrPairSummary");
     const continuity = $("ocrContinuity");
     if (!ocrPairs.length) {
@@ -6954,7 +7070,8 @@
       continuity.textContent = "";
       return;
     }
-    summary.innerHTML = `\u81EA\u52A8\u8BC6\u522B <b>${ocrPairs.length}</b> \u7EC4\u6570\u636E\uFF0C\u5DF2\u52FE\u9009 <b>${valid.length}</b> \u7EC4\u3002\u7EFF\u8272\u4E3A\u5E74\u4EFD\uFF0C\u84DD\u8272\u4E3A\u6D41\u91CF\u3002`;
+    const placeholders = ocrPairs.filter((p) => p.row < 0);
+    summary.innerHTML = `\u8BC6\u522B/\u6574\u7406\u51FA <b>${ocrPairs.length}</b> \u884C\uFF0C\u5DF2\u52FE\u9009 <b>${valid.length}</b> \u884C${placeholders.length ? `\uFF0C\u5176\u4E2D <b>${placeholders.length}</b> \u884C\u5F85\u586B\u6D41\u91CF` : ""}\u3002\u7EFF\u8272\u4E3A\u5E74\u4EFD\uFF0C\u84DD\u8272\u4E3A\u6D41\u91CF\u3002`;
     if (!years.length) {
       continuity.innerHTML = `<span style="color:var(--red)">\u6CA1\u6709\u53EF\u7528\u4E8E\u8FDE\u7EED\u6027\u68C0\u67E5\u7684\u5B8C\u6574\u5E74\u4EFD/\u6D41\u91CF\u3002</span>`;
       return;
@@ -6974,30 +7091,6 @@
     }
     continuity.innerHTML = html;
   }
-  function renderOcrSource() {
-    const box = $("ocrSourceTable");
-    const rows = ocrSourceRows;
-    if (!rows.length) {
-      box.innerHTML = `<div style="color:var(--text3);font-size:12px">\u672A\u751F\u6210\u539F\u59CB\u5185\u5BB9\u8868\u3002</div>`;
-      return;
-    }
-    const width = Math.min(tableWidth(rows), 16);
-    let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:5px">\u8BC6\u522B\u539F\u6587\uFF08${ocrSourceLabel}\uFF09</div><div style="max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:11.5px"><tbody>`;
-    const shown = Math.min(rows.length, 200);
-    for (let r = 0; r < shown; r++) {
-      html += `<tr>`;
-      for (let c = 0; c < width; c++) {
-        const isYear = ocrPairs.some((p) => p.included && p.row === r && p.yearCol === c);
-        const isFlow = ocrPairs.some((p) => p.included && p.row === r && p.flowCol === c);
-        const bg = isYear ? "#dcfce7" : isFlow ? "#dbeafe" : "transparent";
-        html += `<td data-r="${r}" data-c="${c}" style="padding:4px 6px;border-bottom:1px solid var(--border);background:${bg};white-space:nowrap">${ocrEscape(rows[r][c] || "")}</td>`;
-      }
-      html += `</tr>`;
-    }
-    html += `</tbody></table></div>`;
-    if (rows.length > shown) html += `<div style="font-size:11px;color:var(--text3);margin-top:4px">\u4EC5\u663E\u793A\u524D ${shown} \u884C\uFF0C\u5B8C\u6574\u6570\u636E\u5DF2\u53C2\u4E0E\u914D\u5BF9\u3002</div>`;
-    box.innerHTML = html;
-  }
   function renderOcrPairTable() {
     const box = $("ocrPairTable");
     let html = `<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
@@ -7012,7 +7105,7 @@
       <td style="padding:4px;text-align:center;border-bottom:1px solid var(--border)">
         <input type="checkbox" data-kind="include" data-i="${i}" ${p.included ? "checked" : ""} style="width:auto">
       </td>
-      <td style="padding:4px;color:var(--text3);border-bottom:1px solid var(--border)">\u7B2C${p.row + 1}\u884C</td>
+      <td style="padding:4px;color:var(--text3);border-bottom:1px solid var(--border)">${p.row < 0 ? "\u5F85\u586B" : `\u7B2C${p.row + 1}\u884C`}</td>
       <td style="padding:4px;border-bottom:1px solid var(--border)">
         <input data-kind="year" data-i="${i}" value="${ocrEscape(p.yearText)}" style="width:100%;padding:4px 6px;font-size:12px">
       </td>
@@ -7118,7 +7211,6 @@
     ocrActivePage = 0;
     ocrPairs = buildOcrPairs(ocrSourceRows);
     $("ocrReview").style.display = "block";
-    renderOcrSource();
     renderOcrPairTable();
     updateOcrReview();
     renderOcrPageBar();
@@ -7172,7 +7264,6 @@
       ocrSourceLabel = "";
       ocrActivePage = 0;
       $("ocrReview").style.display = "none";
-      $("ocrSourceTable").innerHTML = "";
       $("ocrPairTable").innerHTML = "";
       $("ocrPageBar").innerHTML = "";
       $("ocrContinuity").textContent = "";
@@ -7209,52 +7300,67 @@
       }
     });
     $("ocrRun").onclick = async () => {
+      const btn2 = $("ocrRun");
       try {
         if (isImageLike(ocrSelectedFile)) {
           const api = ocrApi();
           if (!ocrImageDataUrl) {
-            status.textContent = "\u5148\u9009\u4E00\u5F20\u622A\u56FE\uFF0C\u6216\u6309 Ctrl+V \u628A\u622A\u56FE\u7C98\u8FDB\u6765\u3002";
+            status.textContent = "未选择图片；请先选择截图，或按 Ctrl+V 粘贴截图。";
+            showButtonFeedback(btn2, false, "未选择文件");
             return;
           }
-          showOcrLoading(api ? "\u6B63\u5728\u8BC6\u522B\u56FE\u7247\uFF08\u9996\u6B21\u8981\u52A0\u8F7D\u6A21\u578B\uFF0C\u7EA6 10~30 \u79D2\uFF09\u2026" : "\u6B63\u5728\u51C6\u5907\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\uFF08\u9996\u6B21\u9700\u4E0B\u8F7D\u7EA6 5MB \u6A21\u578B\uFF09\u2026");
-          const raw = api && api.ocrTable ? await api.ocrTable.call(api, ocrImageDataUrl, { deskew: true }) : await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s));
-          const d = JSON.parse(raw);
+          showOcrLoading(api ? "正在识别图片（首次要加载模型，约 10~30 秒）…" : "正在准备浏览器识别引擎（首次需下载约 5MB 模型）…");
+          let d = null;
+          if (api && api.ocrTable) {
+            d = JSON.parse(await api.ocrTable.call(api, ocrImageDataUrl, { deskew: true }));
+          }
+          if (!d || !d.ok) {
+            d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
+          }
           if (!d.ok) {
-            status.textContent = "\u8BC6\u522B\u5931\u8D25\uFF1A" + d.error;
+            status.textContent = "识别失败：" + d.error;
+            showButtonFeedback(btn2, false, "识别失败");
             return;
           }
           renderOcrReview({
             rows: d.rows || [],
-            source: "\u56FE\u7247 OCR",
+            source: "图片 OCR",
             cells: d.cells || [],
             pages: [ocrImageDataUrl]
           });
-          status.textContent = "\u8BC6\u522B\u5B8C\u6210\uFF1A\u8BF7\u5BF9\u7167\u5DE6\u4FA7\u539F\u56FE\u6838\u5BF9\u53F3\u4FA7\u5E74\u4EFD\u548C\u6D41\u91CF\uFF0C\u786E\u8BA4\u540E\u4E00\u952E\u586B\u5165\u6D41\u91CF\u3002";
+          status.textContent = "识别完成：请核对右侧年份和流量；黄色表示仍有待填或重复年份。";
+          assessOcrResult(btn2);
           return;
         }
         if (!ocrSelectedFile) {
-          status.textContent = "\u5148\u9009\u62E9 PDF\u3001Word\u3001Excel\u3001CSV/TXT \u6216\u56FE\u7247\u3002";
+          status.textContent = "未选择文件；请先选择 PDF、Word、Excel、CSV/TXT 或图片。";
+          showButtonFeedback(btn2, false, "未选择文件");
           return;
         }
-        showOcrLoading("\u6B63\u5728\u89E3\u6790\u6587\u6863\uFF0C\u8BF7\u7A0D\u5019\u2026");
+        showOcrLoading("正在解析文档，请稍候…");
         const t = await parseAnyDocument(ocrSelectedFile, status);
         renderOcrReview(t);
-        status.textContent = `\u8BC6\u522B\u5B8C\u6210\uFF08\u6765\u6E90\uFF1A${t.source}\uFF09\u3002\u8BF7\u6838\u5BF9\u5E74\u4EFD\u8FDE\u7EED\u6027\u548C\u6D41\u91CF\u6570\u503C\uFF0C\u786E\u8BA4\u540E\u4E00\u952E\u586B\u5165\u3002`;
+        status.textContent = `识别完成（来源：${t.source}）。请核对右侧年份和流量；黄色表示仍有待填或重复年份。`;
+        assessOcrResult(btn2);
       } catch (e) {
-        status.textContent = "\u8BC6\u522B\u51FA\u9519\uFF1A" + (e instanceof Error ? e.message : String(e));
+        status.textContent = "识别出错：" + (e instanceof Error ? e.message : String(e));
+        showButtonFeedback(btn2, false, "识别失败");
       } finally {
         hideOcrLoading();
       }
     };
     $("ocrApply").onclick = () => {
+      const btn2 = $("ocrApply");
       const chosen = ocrPairs.filter((p) => p.included).map((p) => ({ year: parseYearValue(p.yearText), flow: parseFlowValue(p.flowText), raw: p }));
       const invalid = chosen.filter((p) => p.year == null || p.flow == null);
       if (!chosen.length) {
         status.textContent = "\u6CA1\u6709\u52FE\u9009\u53EF\u586B\u5165\u7684\u6570\u636E\uFF1B\u8BF7\u5148\u6838\u5BF9\u5E76\u52FE\u9009\u5E74\u4EFD/\u6D41\u91CF\u3002";
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
         return;
       }
       if (invalid.length) {
         status.textContent = `\u8FD8\u6709 ${invalid.length} \u884C\u5E74\u4EFD\u6216\u6D41\u91CF\u4E0D\u662F\u6709\u6548\u6570\u5B57\uFF0C\u8BF7\u4FEE\u6B63\u540E\u518D\u586B\u5165\u3002`;
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
         return;
       }
       const withYear = chosen;
@@ -7270,112 +7376,686 @@
         if (duplicates.length) msg.push("\u91CD\u590D\u5E74\u4EFD " + Array.from(new Set(duplicates)).join("\u3001"));
         if (missing.length) msg.push("\u7F3A\u5C11\u5E74\u4EFD " + missing.join("\u3001"));
         status.textContent = "\u4E3A\u4FDD\u8BC1\u5E74\u4EFD\u8FDE\u7EED\u6027\uFF0C\u672A\u586B\u5165\uFF1A" + msg.join("\uFF1B") + "\u3002\u8BF7\u5728\u6838\u5BF9\u8868\u4E2D\u4FEE\u6B63\u3002";
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
         return;
       }
       $("series").value = withYear.map((p) => String(p.flow)).join("\n");
       calcFromSeries();
       status.textContent = `\u5DF2\u586B\u5165 ${withYear.length} \u5E74\u6D41\u91CF\uFF08${years[0]}\u2013${years[years.length - 1]}\uFF0C\u8FDE\u7EED\uFF09\uFF0C\u5E76\u5B8C\u6210\u8BA1\u7B97\u3002\u8BF7\u590D\u6838\u8BA1\u7B97\u7ED3\u679C\u3002`;
+      showButtonFeedback(btn2, true, "\u5DF2\u586B\u5165");
     };
     $("ocrClear").onclick = () => {
+      const btn2 = $("ocrClear");
       ocrPairs = [];
       ocrSourceRows = [];
       ocrSourceCells = [];
       ocrPageUrls = [];
       $("ocrReview").style.display = "none";
-      $("ocrSourceTable").innerHTML = "";
       $("ocrPairTable").innerHTML = "";
       $("ocrPageBar").innerHTML = "";
       status.textContent = "\u5DF2\u6E05\u7A7A\u8BC6\u522B\u7ED3\u679C\u3002";
+      showButtonFeedback(btn2, true, "\u5DF2\u6E05\u7A7A");
     };
   }
   setupOcr();
-  function feedbackTextForButton(btn) {
+  function feedbackTextForButton(btn2) {
     const map = {
-      mSeries: "\u5DF2\u5207\u6362",
-      mParams: "\u5DF2\u5207\u6362",
-      mHist: "\u5DF2\u5207\u6362",
-      mNoData: "\u5DF2\u5207\u6362",
-      mMap: "\u5DF2\u5207\u6362",
-      mHydro: "\u5DF2\u5207\u6362",
-      mHelp: "\u5DF2\u6253\u5F00",
-      ocrRun: "\u5DF2\u8BC6\u522B",
-      ocrApply: "\u5DF2\u586B\u5165",
-      ocrClear: "\u5DF2\u6E05\u7A7A",
-      btnCalc: "\u5DF2\u8BA1\u7B97",
-      btnThreePoint: "\u5DF2\u9002\u7EBF",
-      btnAutoFit: "\u5DF2\u9002\u7EBF",
-      btnRecommend: "\u5DF2\u63A8\u8350",
-      btnPhiTable: "\u5DF2\u6253\u5F00",
-      btnT3: "\u5DF2\u8F7D\u5165",
-      btnBayes: "\u5DF2\u5BF9\u6BD4",
-      btnHist: "\u5DF2\u8BA1\u7B97",
-      opUseQ: "\u5DF2\u4F7F\u7528",
-      opGo: "\u5DF2\u8BA1\u7B97",
-      scCalcA: "\u5DF2\u8BA1\u7B97",
-      scUseQ: "\u5DF2\u4F7F\u7528",
-      scGo: "\u5DF2\u8BA1\u7B97",
-      lsUseV: "\u5DF2\u4F7F\u7528",
-      lsGo: "\u5DF2\u8BA1\u7B97",
-      abGo: "\u5DF2\u8BA1\u7B97",
-      tsGo: "\u5DF2\u6C47\u603B",
-      rockGo: "\u5DF2\u67E5\u5F97",
-      btnWsProfile: "\u5DF2\u8BA1\u7B97",
-      btnWsSolve: "\u5DF2\u53CD\u89E3",
-      btnSsmDemoSi: "\u5DF2\u8F7D\u5165",
-      btnSsmDemoHec: "\u5DF2\u8F7D\u5165",
-      btnSsmRun: "\u5DF2\u8BA1\u7B97",
-      btnSsmClear: "\u5DF2\u6E05\u7A7A",
-      lkGo: "\u5DF2\u586B\u5165",
-      cbPsi: "\u5DF2\u586B\u5165",
-      cbTau: "\u5DF2\u586B\u5165",
-      cbZ: "\u5DF2\u586B\u5165",
-      cbBeta: "\u5DF2\u586B\u5165",
-      cbGamma: "\u5DF2\u586B\u5165",
-      cbDelta: "\u5DF2\u586B\u5165",
-      cbZoneGo: "\u5DF2\u67E5\u5F97",
-      logExpandAll: "\u5DF2\u5C55\u5F00",
-      logCollapseAll: "\u5DF2\u6536\u8D77",
-      logExportMd: "\u5DF2\u5BFC\u51FA",
-      logExportJson: "\u5DF2\u5BFC\u51FA",
-      logClear: "\u5DF2\u6E05\u7A7A"
+      mSeries: "已切换", mParams: "已切换", mHist: "已切换", mNoData: "已切换", mMap: "已切换", mHydro: "已切换", mHelp: "已打开",
+      ocrRun: "已识别", ocrApply: "已填入", ocrClear: "已清空",
+      btnCalc: "已计算", btnThreePoint: "已适线", btnAutoFit: "已适线", btnRecommend: "已推荐", btnPhiTable: "已打开",
+      btnT3: "已载入", btnBayes: "已对比", btnHist: "已计算",
+      opUseQ: "已使用", opGo: "已计算",
+      scCalcA: "已计算", scUseQ: "已使用", scGo: "已计算",
+      lsUseV: "已使用", lsGo: "已计算",
+      abGo: "已计算", tsGo: "已汇总", rockGo: "已查得",
+      btnWsProfile: "已计算", btnWsSolve: "已反解",
+      btnSsmDemoSi: "已载入", btnSsmDemoHec: "已载入", btnSsmRun: "已计算", btnSsmClear: "已清空",
+      lkGo: "已填入", cbPsi: "已填入", cbTau: "已填入", cbZ: "已填入",
+      cbBeta: "已填入", cbGamma: "已填入", cbDelta: "已填入", cbZoneGo: "已查得",
+      logExpandAll: "已展开", logCollapseAll: "已收起", logExportMd: "已导出", logExportJson: "已导出", logClear: "已清空"
     };
-    if (btn.dataset.feedback) return btn.dataset.feedback;
-    if (map[btn.id]) return map[btn.id];
-    const label = btn.textContent?.trim() || "";
-    if (/清空|清除|重置/.test(label)) return "\u5DF2\u6E05\u7A7A";
-    if (/填入|选用|填\d/.test(label)) return "\u5DF2\u586B\u5165";
-    if (/导出|下载|复制/.test(label)) return "\u5DF2\u5BFC\u51FA";
-    if (/计算|适线|推算|反解|汇总/.test(label)) return "\u5DF2\u8BA1\u7B97";
-    if (/识别|解析/.test(label)) return "\u5DF2\u8BC6\u522B";
-    if (/载入|加载/.test(label)) return "\u5DF2\u8F7D\u5165";
-    if (/打开|显示/.test(label)) return "\u5DF2\u6253\u5F00";
-    if (/收起|关闭|隐藏/.test(label)) return "\u5DF2\u6536\u8D77";
-    if (/展开/.test(label)) return "\u5DF2\u5C55\u5F00";
-    if (/保存/.test(label)) return "\u5DF2\u4FDD\u5B58";
-    return "\u5DF2\u5B8C\u6210";
+    if (btn2.dataset.feedback) return btn2.dataset.feedback;
+    if (map[btn2.id]) return map[btn2.id];
+    const label = btn2.textContent?.trim() || "";
+    if (/清空|清除|重置/.test(label)) return "已清空";
+    if (/填入|选用|填\d/.test(label)) return "已填入";
+    if (/导出|下载|复制/.test(label)) return "已导出";
+    if (/计算|适线|推算|反解|汇总/.test(label)) return "已计算";
+    if (/识别|解析/.test(label)) return "已识别";
+    if (/载入|加载/.test(label)) return "已载入";
+    if (/打开|显示/.test(label)) return "已打开";
+    if (/收起|关闭|隐藏/.test(label)) return "已收起";
+    if (/展开/.test(label)) return "已展开";
+    if (/保存/.test(label)) return "已保存";
+    return "已完成";
   }
-  function showButtonFeedback(btn) {
-    if (btn.hasAttribute("disabled") || btn.getAttribute("aria-disabled") === "true") return;
-    btn.querySelector(".btn-feedback")?.remove();
+
+  var FEEDBACK_SNAPSHOT_IDS = [
+    "parseErr","opErr","scErr","lsErr","abErr","wsErr","ssmErr","mapErr","hydroErr",
+    "fitMsg","fitTrialMsg","recMsg","pjMsg","sysMsg","planMsg","pdMsg","exMsg",
+    "lkOut","ocrStatus","ocrContinuity","ocrPairSummary","qrMean","qrSigma","qrCv","qrCs","qrQ",
+    "outQ","opOut","scOut","fitOut","ssmOut","mapOut","hydroOut"
+  ];
+  var ACTION_PANEL_IDS = ["seriesBox","paramsBox","histBox","noDataBox","hydroBox","helpBox","mapBox"];
+  function snapshotActionState() {
+    const snap = {};
+    for (const id of FEEDBACK_SNAPSHOT_IDS) {
+      const el = document.getElementById(id);
+      snap["el:" + id] = el ? (el.textContent || "").trim() : "";
+    }
+    document.querySelectorAll("input, textarea, select").forEach((el, i) => {
+      snap["ctl:" + i] = (el.value || "") + "|" + (el.checked ? "1" : "0");
+    });
+    for (const id of ACTION_PANEL_IDS) {
+      const el = document.getElementById(id);
+      snap["panel:" + id] = el ? getComputedStyle(el).display : "";
+    }
+    return snap;
+  }
+  function classifyFeedbackText(t) {
+    if (!t || !t.trim()) return "none";
+    const s = t.trim();
+    if (/识别失败|识别出错|无法|不能|没有勾选|请先|先选|先选择|失败|出错|无效|必须|不得|错误|未填入|未选择|未识别到表格|未完成|至少需要|有误|不满足|为了保证|为保证|不是有效/.test(s)) return "fail";
+    if (/待填|部分识别|缺少|缺失|重复|请核对|请检查|注意/.test(s)) return "warning";
+    return "success";
+  }
+  function shortenFeedbackText(msg, level) {
+    const s = String(msg || "").trim();
+    if (!s) return level === "fail" ? "未完成" : level === "warning" ? "请核对" : "已完成";
+    if (/未选择文件|先选一张|先选择 PDF/.test(s)) return "未选择文件";
+    if (/未能?自动配对|未识别到表格|没有可用于连续性/.test(s)) return "未识别到表格";
+    if (/待填/.test(s)) return "部分识别";
+    if (/重复年份/.test(s)) return "年份重复";
+    if (/缺少|缺失/.test(s)) return "年份缺失";
+    if (/未填入|不是有效数字/.test(s)) return "未填入";
+    if (/识别失败|识别出错/.test(s)) return "识别失败";
+    if (/至少需要/.test(s)) return "数据不足";
+    if (/无效|不是有效/.test(s)) return "数据无效";
+    if (/失败|出错|错误/.test(s)) return "未完成";
+    if (/不能|无法/.test(s)) return "未完成";
+    return level === "fail" ? "未完成" : level === "warning" ? "请核对" : "已完成";
+  }
+  function assertActionResult(btn2) {
+    const visible = (id) => {
+      const el = document.getElementById(id);
+      return !!el && getComputedStyle(el).display !== "none";
+    };
+    const filled = (id, bad) => {
+      const el = document.getElementById(id);
+      return !!el && !["", "—", "-"].includes((el.textContent || "").trim()) && !(bad || []).some((x) => (el.textContent || "").includes(x));
+    };
+    switch (btn2.id) {
+      case "btnCalc":
+        if (visible("quickResult") && filled("qrMean")) return { level: "success", text: "已计算" };
+        return { level: "fail", text: "未计算" };
+      case "btnThreePoint":
+      case "btnAutoFit":
+        return filled("fitMsg") ? { level: "success", text: "已适线" } : { level: "fail", text: "未完成" };
+      case "btnRecommend":
+        return filled("recMsg") ? { level: "success", text: "已推荐" } : { level: "fail", text: "未完成" };
+      case "btnRecordFitTrial":
+        return filled("fitTrialMsg") ? { level: "success", text: "已记录" } : { level: "fail", text: "未完成" };
+      case "opGo":
+        return filled("opOut") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "scGo":
+        return filled("scOut") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnHist":
+        return visible("histResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnWsProfile":
+      case "btnWsSolve":
+        return visible("wsResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnSsmRun":
+        return visible("ssmResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnBayes":
+        return visible("bayesResult") ? { level: "success", text: "已对比" } : { level: "fail", text: "未完成" };
+      default:
+        return null;
+    }
+  }
+  function evaluateActionResult(btn2, before) {
+    const state = actionStates.get(btn2) || {};
+    const now = snapshotActionState();
+    let warning = null;
+    for (const key of Object.keys(now)) {
+      if (before[key] !== now[key] && /^el:/.test(key) && /Err|Status|Msg|Continuity|Summary/i.test(key)) {
+        const level = classifyFeedbackText(now[key]);
+        if (level === "fail") return { level, text: shortenFeedbackText(now[key], level) };
+        if (level === "warning" && !warning) warning = { level, text: shortenFeedbackText(now[key], level) };
+      }
+    }
+    if (window.__hongsuanActionError) return { level: "fail", text: "未完成" };
+    if (!state.ran) return { level: "fail", text: "未完成" };
+    const asserted = assertActionResult(btn2);
+    if (asserted) return asserted;
+    return warning || { level: "success", text: feedbackTextForButton(btn2) };
+  }
+  var actionStates = /* @__PURE__ */ new WeakMap();
+  function getActionState(btn2) {
+    let state = actionStates.get(btn2);
+    if (!state) {
+      state = { busy: false, explicit: false, ran: false, token: 0, level: "idle" };
+      actionStates.set(btn2, state);
+    }
+    return state;
+  }
+  function ensureFeedbackLiveRegion() {
+    let live = document.getElementById("__hsFeedbackLive");
+    if (!live) {
+      live = document.createElement("span");
+      live.id = "__hsFeedbackLive";
+      live.className = "sr-only";
+      live.setAttribute("role", "status");
+      live.setAttribute("aria-live", "polite");
+      document.body.appendChild(live);
+    }
+    return live;
+  }
+  function showActionFeedback(btn2, level, textOverride) {
+    if (!btn2) return;
+    const state = getActionState(btn2);
+    state.token += 1;
+    state.level = level;
+    state.busy = level === "pending";
+    state.explicit = level !== "pending";
+    const text = textOverride || feedbackTextForButton(btn2);
+    state.text = text;
+    btn2.querySelector(".btn-feedback")?.remove();
     const tip = document.createElement("span");
-    tip.className = "btn-feedback";
-    const text = feedbackTextForButton(btn);
-    const width = btn.getBoundingClientRect().width;
+    tip.className = "btn-feedback " + level;
+    tip.setAttribute("role", "status");
+    tip.textContent = text;
+    tip.title = text;
+    const width = btn2.getBoundingClientRect().width;
     if (width < 68) {
-      tip.textContent = text;
       tip.style.fontSize = "10px";
       tip.style.letterSpacing = "-0.2px";
-    } else {
-      tip.textContent = "\u2713 " + text;
     }
-    btn.appendChild(tip);
+    btn2.appendChild(tip);
+    if (level === "pending") {
+      btn2.dataset.feedbackBusy = "1";
+      btn2.setAttribute("aria-busy", "true");
+    } else {
+      delete btn2.dataset.feedbackBusy;
+      btn2.removeAttribute("aria-busy");
+    }
     requestAnimationFrame(() => tip.classList.add("show"));
-    setTimeout(() => tip.classList.add("hide"), 620);
-    setTimeout(() => tip.remove(), 950);
+    ensureFeedbackLiveRegion().textContent = (btn2.textContent || "").trim() + "：" + text;
+    if (level !== "pending") {
+      const delay = level === "warning" ? 1250 : 850;
+      const token = state.token;
+      setTimeout(() => { if (state.token === token) tip.classList.add("hide"); }, delay);
+      setTimeout(() => { if (state.token === token) tip.remove(); }, delay + 360);
+    }
+    return state.token;
   }
-  document.addEventListener("click", (ev) => {
-    const target = ev.target;
-    const btn = target?.closest?.("button");
-    if (btn) showButtonFeedback(btn);
-  }, true);
+  function beginAction(btn2, text) {
+    const state = getActionState(btn2);
+    state.busy = true;
+    state.explicit = false;
+    state.ran = false;
+    state.error = "";
+    return showActionFeedback(btn2, "pending", text || "处理中...");
+  }
+  function finishAction(btn2, level, text) {
+    const state = getActionState(btn2);
+    state.busy = false;
+    state.explicit = true;
+    state.ran = true;
+    state.level = level;
+    return showActionFeedback(btn2, level, text || feedbackTextForButton(btn2));
+  }
+  window.HongsuanFeedback = { begin: beginAction, finish: finishAction, show: showActionFeedback };
+  function showButtonFeedback(btn2, ok, textOverride) {
+    if (textOverride === "处理中...") return beginAction(btn2, textOverride);
+    return finishAction(btn2, ok === false ? "fail" : "success", textOverride);
+  }
+  window.__hongsuanOriginalAlert = window.alert.bind(window);
+  window.alert = function (message) {
+    window.__hongsuanActionError = "未完成";
+    return window.__hongsuanOriginalAlert(message);
+  };
+  function __wrapHongsuanButton(btn2) {
+    const original = btn2.onclick;
+    if (typeof original !== "function" || original.__hongsuanWrapped) return;
+    const wrapped = function (event) {
+      if (btn2.dataset.hsNoFeedback === "1") return original.call(this, event);
+      const state = getActionState(btn2);
+      if (state.busy) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      const before = snapshotActionState();
+      beginAction(btn2);
+      try {
+        const result = original.call(this, event);
+        state.ran = true;
+        if (result && typeof result.then === "function") {
+          Promise.resolve(result).then(() => {
+            if (!state.explicit) {
+              const r = evaluateActionResult(btn2, before);
+              finishAction(btn2, r.level, r.text);
+            }
+          }, (e) => {
+            finishAction(btn2, "fail", (e && e.message) || "执行失败");
+            console.error(e);
+          });
+          return result;
+        }
+        setTimeout(() => {
+          if (!state.explicit) {
+            const r = evaluateActionResult(btn2, before);
+            finishAction(btn2, r.level, r.text);
+          }
+        }, 220);
+        return result;
+      } catch (e) {
+        finishAction(btn2, "fail", (e && e.message) || "执行失败");
+        console.error(e);
+      }
+    };
+    wrapped.__hongsuanWrapped = true;
+    wrapped.__hongsuanOriginal = original;
+    btn2.onclick = wrapped;
+  }
+  const __actionClick = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "onclick");
+  if (__actionClick && __actionClick.set && !HTMLButtonElement.prototype.__hongsuanActionPatched) {
+    Object.defineProperty(HTMLButtonElement.prototype, "onclick", {
+      configurable: true,
+      enumerable: __actionClick.enumerable,
+      get() { return __actionClick.get.call(this); },
+      set(value) {
+        if (typeof value === "function" && !value.__hongsuanWrapped) {
+          const wrapped = function (event) {
+            const btn2 = this;
+            if (btn2.dataset.hsNoFeedback === "1") return value.call(this, event);
+            const state = getActionState(btn2);
+            if (state.busy) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            const before = snapshotActionState();
+            beginAction(btn2);
+            try {
+              const result = value.call(this, event);
+              state.ran = true;
+              if (result && typeof result.then === "function") {
+                Promise.resolve(result).then(() => {
+                  if (!state.explicit) {
+                    const r = evaluateActionResult(btn2, before);
+                    finishAction(btn2, r.level, r.text);
+                  }
+                }, (e) => {
+                  finishAction(btn2, "fail", (e && e.message) || "执行失败");
+                  console.error(e);
+                });
+                return result;
+              }
+              setTimeout(() => {
+                if (!state.explicit) {
+                  const r = evaluateActionResult(btn2, before);
+                  finishAction(btn2, r.level, r.text);
+                }
+              }, 220);
+              return result;
+            } catch (e) {
+              finishAction(btn2, "fail", (e && e.message) || "执行失败");
+              console.error(e);
+            }
+          };
+          wrapped.__hongsuanWrapped = true;
+          wrapped.__hongsuanOriginal = value;
+          __actionClick.set.call(this, wrapped);
+        } else {
+          __actionClick.set.call(this, value);
+        }
+      }
+    });
+    HTMLButtonElement.prototype.__hongsuanActionPatched = true;
+  }
+  document.querySelectorAll("button").forEach((btn2) => __wrapHongsuanButton(btn2));
+
+  // ---------- 暴雨雨力 Sp 等值线地图 ----------
+  var spMap = null;
+  var spAdminLayer = null;
+  var spCityLayer = null;
+  var spContourLayer = null;
+  var spCurrentAdmin = "";
+  var spCityCache = {};
+  var spDataset = "1";
+  var spLastPoint = null;
+  var spOverlayLayer = null;
+  var spMarker = null;
+  var spCityAdcode = "";
+  var spCountyLayer = null;
+  function spContoursData() {
+    if (spDataset === "grid") {
+      const g = window.HONGSUAN_ATLAS_H1P_60MIN;
+      return g && Array.isArray(g.features) ? g.features : [];
+    }
+    const d = window.HONGSUAN_SP_CONTOURS;
+    if (!d || !Array.isArray(d.features)) return [];
+    const p = Number(spDataset);
+    return d.features.filter((f) => !f.properties || !f.properties.p || Number(f.properties.p) === p);
+  }
+  function spOverlayAdd() {
+    if (spOverlayLayer) { try { spMap.removeLayer(spOverlayLayer); } catch (e3) {} spOverlayLayer = null; }
+    if (spDataset === "grid") return;
+    const ov = (window.HONGSUAN_SP_OVERLAYS || {})[spDataset];
+    if (ov && ov.url && ov.bounds) {
+      try {
+        spOverlayLayer = L.imageOverlay(ov.url, ov.bounds, { opacity: 0.9, interactive: false });
+        spOverlayLayer.addTo(spMap);
+        spOverlayLayer.bringToBack();
+      } catch (e3) { spOverlayLayer = null; }
+    }
+  }
+  function spSampleAt(lat, lng) {
+    const pts = [];
+    const pushPt = (sp, plng, plat) => pts.push({ sp, lng: plng, lat: plat });
+    for (const f of spContoursData()) {
+      const sp = f.properties ? Number(f.properties.sp) : NaN;
+      if (!Number.isFinite(sp)) continue;
+      let lines = [];
+      const g = f.geometry;
+      if (!g) continue;
+      if (g.type === "Point") { pushPt(sp, g.coordinates[0], g.coordinates[1]); continue; }
+      if (g.type === "LineString") lines = [g.coordinates];
+      else if (g.type === "MultiLineString" || g.type === "Polygon") lines = g.coordinates;
+      else if (g.type === "MultiPolygon") for (const poly of g.coordinates) lines = lines.concat(poly);
+      for (const line of lines) {
+        for (const pt of line) pushPt(sp, pt[0], pt[1]);
+        // 投影到相邻顶点连线，等值线顶点稀疏时也能取准最近距离
+        for (let i = 1; i < line.length; i++) {
+          const a = line[i - 1], b = line[i];
+          const ax = (a[0] - lng) * 111 * Math.cos(lat * Math.PI / 180), ay = a[1] - lat;
+          const bx = (b[0] - lng) * 111 * Math.cos(lat * Math.PI / 180), by = b[1] - lat;
+          const abx = bx - ax, aby = by - ay;
+          const len2 = abx * abx + aby * aby;
+          let t = len2 > 0 ? -(ax * abx + ay * aby) / len2 : 0;
+          t = Math.max(0, Math.min(1, t));
+          const mx = ax + t * abx, my = ay + t * aby;
+          pts.push({ sp, lng: 0, lat: 0, d: Math.hypot(mx, my), _raw: true });
+        }
+      }
+    }
+    if (!pts.length) return null;
+    for (const p of pts) {
+      if (!p._raw) p.d = Math.hypot((p.lng - lng) * 111 * Math.cos(lat * Math.PI / 180), (p.lat - lat) * 111);
+    }
+    pts.sort((a, b) => a.d - b.d);
+    const k = Math.min(8, pts.length);
+    let num = 0, den = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / Math.pow(Math.max(pts[i].d, 0.5), 2);
+      num += w * pts[i].sp;
+      den += w;
+    }
+    const nearList = pts.slice(0, 3).filter((p) => Number.isFinite(p.sp)).map((p) => ({ sp: p.sp, d: p.d }));
+    return { sp: num / den, nearestSp: pts[0].sp, distKm: pts[0].d, nearList };
+  }
+  function spUpdateInfo(lat, lng, adminName) {
+    const box = $("spInfoBox");
+    if (!box) return;
+    const admin = adminName ? "｜行政区：" + adminName : "";
+    const r = spSampleAt(lat, lng);
+    if (!r) {
+      box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "<br>等值线数据未载入，暂无法插值 Sp。";
+      return;
+    }
+    const near = (r.nearList || [{ sp: r.nearestSp, d: r.distKm }]).slice(0, 3)
+      .map((x) => "S\u209a=" + x.sp + "（" + x.d.toFixed(0) + " km）").join("、");
+    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>该点插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考，请对照底图原图等值线读数校核" : "");
+    const btn = $("spFillBtn");
+    if (btn) btn.onclick = () => {
+      $("rcSp").value = r.sp.toFixed(0);
+      calcMethodC();
+      box.innerHTML = box.innerHTML.replace("<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>", "<span style=\"color:#34c759\">✓ 已填入 Sp=" + r.sp.toFixed(0) + "</span>");
+    };
+  }
+  function spRefreshContours() {
+    if (!spMap) return;
+    if (spContourLayer) {
+      spMap.removeLayer(spContourLayer);
+      spContourLayer = null;
+    }
+    const feats = spContoursData();
+    const st = $("spMapStatus");
+    spOverlayAdd();
+    if (!feats.length) {
+      if (st) st.textContent = "等值线数据未载入";
+      return;
+    }
+    const dsName = spDataset === "grid" ? "图集格网（60min）" : (spDataset === "1" ? "1%" : "4%");
+    spContourLayer = L.geoJSON(
+      { type: "FeatureCollection", features: feats },
+      {
+        style: () => ({ color: "#1d6fd1", weight: 2, opacity: 0.9 }),
+        pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 2.5, color: "#1d6fd1", weight: 1, fillColor: "#4da3ff", fillOpacity: 0.9 }),
+        onEachFeature: (f, layer) => {
+          if (f.properties && f.properties.sp != null) layer.bindTooltip("S\u209a（" + dsName + "）= " + f.properties.sp + " mm/h", { sticky: true });
+        }
+      }
+    ).addTo(spMap);
+    if (st) st.textContent = "已载入 S\u209a（" + dsName + "）标注 " + feats.length + " 点 + 配准扫描底图";
+  }
+  function spClearAdminLayers() {
+    if (spCityLayer) { try { spMap.removeLayer(spCityLayer); } catch (e4) {} spCityLayer = null; }
+    if (spCountyLayer) { try { spMap.removeLayer(spCountyLayer); } catch (e4) {} spCountyLayer = null; }
+    spCityAdcode = "";
+    const bb = $("spBackBtn");
+    if (bb) bb.style.display = "none";
+  }
+  async function spLoadAdminGeo(adcode, name, level) {
+    try {
+      if (!spCityCache[adcode]) {
+        const res = await fetch("https://geo.datav.aliyun.com/areas_v3/bound/" + adcode + "_full.json");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        spCityCache[adcode] = await res.json();
+      }
+      if (level === "city") {
+        if (spCountyLayer) { try { spMap.removeLayer(spCountyLayer); } catch (e4) {} spCountyLayer = null; }
+        if (spCityLayer) spMap.removeLayer(spCityLayer);
+        spCityLayer = L.geoJSON(spCityCache[adcode], {
+          style: () => ({ color: "#c2571f", weight: 1.5, fillColor: "#f7e8df", fillOpacity: 0.08 }),
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip((f.properties && f.properties.name) || "", { sticky: true });
+            layer.on("click", () => {
+              spCurrentAdmin = (f.properties && f.properties.name) || name;
+              try { spMap.fitBounds(layer.getBounds(), { padding: [24, 24] }); } catch (e5) {}
+              if (f.properties && f.properties.adcode) {
+                spCityAdcode = String(f.properties.adcode);
+                spLoadAdminGeo(spCityAdcode, spCurrentAdmin, "county");
+              }
+            });
+          }
+        }).addTo(spMap);
+        const bb = $("spBackBtn");
+        if (bb) { bb.style.display = ""; bb.textContent = "⬅ 返回省级"; bb.onclick = () => {
+          spClearAdminLayers();
+          if (spMap) spMap.setView([35.5, 105], 4);
+          const st2 = $("spMapStatus");
+          if (st2) st2.textContent = "已返回全国视图，点击省域下钻";
+        }; }
+        const st = $("spMapStatus");
+        if (st) st.textContent = name + "：已显示市界 · 点击市域可继续下钻到区县";
+      } else {
+        if (spCountyLayer) spMap.removeLayer(spCountyLayer);
+        spCountyLayer = L.geoJSON(spCityCache[adcode], {
+          style: () => ({ color: "#a33", weight: 1.2, fillColor: "#ffe9ec", fillOpacity: 0.1 }),
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip((f.properties && f.properties.name) || "", { sticky: true });
+            layer.on("click", () => { spCurrentAdmin = (f.properties && f.properties.name) || name; });
+          }
+        }).addTo(spMap);
+        const st = $("spMapStatus");
+        if (st) st.textContent = name + "：已显示区县界 · 点击区县标记行政区";
+      }
+    } catch (e) {
+      const st = $("spMapStatus");
+      if (st) st.textContent = name + "：行政区划需联网加载（离线时仅显示上级边界）";
+    }
+  }
+  function spMapEnsure() {
+    if (spMap || !window.L) return;
+    spMap = L.map("spMap", { zoomSnap: 0.25, attributionControl: false }).setView([35.5, 105], 4);
+    spAdminLayer = L.geoJSON(window.HONGSUAN_CHINA_PROVINCES || { type: "FeatureCollection", features: [] }, {
+      style: () => ({ color: "#5b7a99", weight: 1, fillColor: "#dfe9f3", fillOpacity: 0.6 }),
+      onEachFeature: (f, layer) => {
+        const nm = f.properties && f.properties.name;
+        if (nm) layer.bindTooltip(nm, { sticky: true });
+        layer.on("click", () => {
+          spCurrentAdmin = nm || "";
+          try { spMap.fitBounds(layer.getBounds(), { padding: [24, 24] }); } catch (e2) {}
+          if (f.properties && f.properties.adcode) spLoadAdminGeo(String(f.properties.adcode), nm || "该省", "city");
+        });
+      }
+    }).addTo(spMap);
+    spRefreshContours();
+    spMap.on("click", (e) => {
+      const ll = e.latlng;
+      spLastPoint = { lat: ll.lat, lng: ll.lng };
+      if (!spMarker) {
+        spMarker = L.circleMarker(ll, { radius: 7, color: "#d32f2f", weight: 2, fillColor: "#ff5252", fillOpacity: 0.9 }).addTo(spMap);
+      } else {
+        spMarker.setLatLng(ll);
+      }
+      spUpdateInfo(ll.lat, ll.lng, spCurrentAdmin);
+    });
+    const sel = $("spProvSel");
+    if (sel) {
+      const feats = ((window.HONGSUAN_CHINA_PROVINCES || {}).features || []).filter((f) => f.properties && f.properties.name);
+      sel.innerHTML = "<option value=\"\">—选择省份—</option>" + feats.map((f) => "<option value=\"" + f.properties.adcode + "\">" + f.properties.name + "</option>").join("");
+      sel.onchange = () => {
+        const adcode = sel.value;
+        const f = feats.find((x) => String(x.properties.adcode) === String(adcode));
+        if (!f || !spMap) return;
+        spCurrentAdmin = f.properties.name;
+        const lyr = spAdminLayer.getLayers().find((l) => l.feature === f);
+        if (lyr) { try { spMap.fitBounds(lyr.getBounds(), { padding: [24, 24] }); } catch (e2) {} }
+        spLoadAdminGeo(String(adcode), f.properties.name, "city");
+      };
+    }
+    const bDs1 = $("spDs1"), bDs4 = $("spDs4");
+    const bGrid = $("spGridBtn");
+    if (bDs1) bDs1.onclick = () => spSetDataset("1");
+    if (bDs4) bDs4.onclick = () => spSetDataset("4");
+    if (bGrid) bGrid.onclick = () => spSetDataset("grid");
+    const bFs = $("spFsBtn");
+    if (bFs) bFs.onclick = () => {
+      const panel = $("spMapPanel");
+      if (!panel) return;
+      const on = panel.classList.toggle("sp-fullscreen");
+      bFs.textContent = on ? "✕ 退出全屏" : "⛶ 全屏";
+      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 60);
+      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 250);
+    };
+    const goBtn = $("spGoBtn");
+    if (goBtn) goBtn.onclick = () => {
+      const lat = parseFloat($("spLatInput").value), lng = parseFloat($("spLonInput").value);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 15 || lat > 54 || lng < 71 || lng > 136) return;
+      spMap.setView([lat, lng], Math.max(spMap.getZoom(), 7));
+      spLastPoint = { lat, lng };
+      if (!spMarker) {
+        spMarker = L.circleMarker([lat, lng], { radius: 7, color: "#d32f2f", weight: 2, fillColor: "#ff5252", fillOpacity: 0.9 }).addTo(spMap);
+      } else {
+        spMarker.setLatLng([lat, lng]);
+      }
+      spUpdateInfo(lat, lng, spCurrentAdmin);
+    };
+    spSetDataset("1");
+    const panel = $("spMapPanel");
+    if (panel) panel.addEventListener("toggle", () => {
+      if (panel.open) {
+        spMapEnsure();
+        window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 120);
+      }
+    });
+    window.__hsSpMap = spMap;
+    window.__hsSpReady = true;
+  }
+  function spSetDataset(p) {
+    spDataset = String(p);
+    spRefreshContours();
+    const b1 = $("spDs1"), b4 = $("spDs4"), bGrid = $("spGridBtn");
+    if (b1) b1.style.opacity = spDataset === "1" ? "1" : "0.45";
+    if (b4) b4.style.opacity = spDataset === "4" ? "1" : "0.45";
+    if (bGrid) bGrid.style.opacity = spDataset === "grid" ? "1" : "0.45";
+    const box = $("spInfoBox");
+    if (box) box.innerHTML = spDataset === "grid" ? "当前数据集：图集格网（60min）· 点击地图任意位置即可查该点 1% 点雨量，点「填入 S<sub>p</sub>」写入推理公式。" : "当前数据集：S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）· 点击地图任意位置即可查该点 S<sub>p</sub>，点「填入 S<sub>p</sub>」写入推理公式。";
+  }
+  function p3Interpolate(points, lat, lng) {
+    if (!Array.isArray(points) || !points.length) return null;
+    const norm = Math.cos(lat * Math.PI / 180);
+    const pts = points.map((p) => ({
+      x: Number(p[0]), y: Number(p[1]), v: Number(p[2]),
+      d: Math.hypot((Number(p[0]) - lng) * 111 * norm, (Number(p[1]) - lat) * 111)
+    })).filter((p) => [p.x,p.y,p.v].every(Number.isFinite)).sort((a,b) => a.d - b.d);
+    if (!pts.length) return null;
+    const k = Math.min(8, pts.length);
+    let num = 0, den = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / Math.pow(Math.max(pts[i].d, 0.5), 2);
+      num += w * pts[i].v; den += w;
+    }
+    return { value: num / den, nearest: pts[0].v, distKm: pts[0].d, used: k };
+  }
+  function p3Calculate() {
+    const lng = parseFloat($("p3Lon").value), lat = parseFloat($("p3Lat").value);
+    const freqPct = parseFloat($("p3Freq").value), nExp = parseFloat($("p3N").value);
+    const durKey = $("p3Dur").value;
+    const data = (window.HONGSUAN_ATLAS_P3_PARAMS || {}).durations || {};
+    const out = $("p3Out");
+    if (![lng,lat,freqPct].every(Number.isFinite)) throw new Error("请先输入有效的经纬度和频率");
+    if (lat < 15 || lat > 54 || lng < 71 || lng > 136) throw new Error("经纬度超出图集覆盖范围");
+    if (!(freqPct > 0 && freqPct < 100)) throw new Error("频率应在 0~100% 之间");
+    if (!data[durKey] || !Array.isArray(data[durKey].mean)) throw new Error("图集参数未载入");
+    const m = p3Interpolate(data[durKey].mean, lat, lng);
+    const cv = p3Interpolate(data[durKey].cv, lat, lng);
+    if (!m || !cv) throw new Error("该历时的均值或 Cv 格网未载入");
+    const cs = 3.5 * cv.value;
+    const phi = phiPIII(freqPct / 100, cs);
+    const h = m.value * (1 + cv.value * phi);
+    if (!(h > 0)) throw new Error("推算点雨量异常，请检查坐标附近格网");
+    const hours = Number(data[durKey].hours) || 1;
+    const sp = nExp === 1 ? h : h / Math.pow(hours, 1 - nExp);
+    const nearText = `均值最近 ${m.distKm.toFixed(0)} km · Cv 最近 ${cv.distKm.toFixed(0)} km`;
+    return { h, sp, mean: m.value, cv: cv.value, cs, phi, hours, nearText };
+  }
+  function p3ShowResult() {
+    const out = $("p3Out"), btn = $("p3FillSp");
+    try {
+      const r = p3Calculate();
+      out.innerHTML = `<b style="color:var(--blue)">H<sub>p</sub> = ${r.h.toFixed(1)} mm</b>　·　换算 S<sub>p</sub> ≈ <b>${r.sp.toFixed(1)} mm/h</b><br>均值 ${r.mean.toFixed(1)} mm · Cv ${r.cv.value.toFixed(2)} · Cs = 3.5Cv = ${r.cs.toFixed(2)} · Φ = ${r.phi.toFixed(2)}<br><span style="color:var(--text3)">${r.nearText}；60min 的 H 可直接视为 Sp，其他历时依赖 n 换算。</span>`;
+      if (btn) { btn.style.display = ""; btn.dataset.sp = r.sp.toFixed(1); }
+    } catch (e) {
+      out.innerHTML = `<span style="color:var(--red)">${e.message || e}</span>`;
+      if (btn) btn.style.display = "none";
+    }
+  }
+  window.__hsP3Calculate = p3Calculate;
+  window.__hsSpSample = spSampleAt;
+  window.__hsSpSetDataset = spSetDataset;
+  const p3CalcBtn = document.getElementById("p3Calc");
+  if (p3CalcBtn) p3CalcBtn.onclick = p3ShowResult;
+  const p3UseMapBtn = document.getElementById("p3UseMap");
+  if (p3UseMapBtn) p3UseMapBtn.onclick = () => {
+    if (!spLastPoint) { const o = document.getElementById("p3Out"); if (o) o.innerHTML = "请先在上方地图点击桥位位置。"; return; }
+    document.getElementById("p3Lon").value = spLastPoint.lng.toFixed(3);
+    document.getElementById("p3Lat").value = spLastPoint.lat.toFixed(3);
+    p3ShowResult();
+  };
+  const p3FillBtn = document.getElementById("p3FillSp");
+  if (p3FillBtn) p3FillBtn.onclick = () => {
+    const sp = Number(p3FillBtn.dataset.sp);
+    if (!Number.isFinite(sp)) return;
+    $("rcSp").value = sp.toFixed(1);
+    if (typeof calcMethodC === "function") calcMethodC();
+  };
+  window.__hsSpRefresh = spRefreshContours;
+  window.__hsSpUpdateInfo = spUpdateInfo;
 })();
+
+
+

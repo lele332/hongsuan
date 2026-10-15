@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.13</title>
 <style>
   :root {
     --blue: #007AFF;
@@ -124,6 +124,15 @@
   }
   .btn-feedback.show { transform: translateX(0); }
   .btn-feedback.hide { transform: translateX(101%); opacity: 0; }
+  .btn-feedback.fail { background: linear-gradient(90deg, #ff3b30, #d70015); }
+  .btn-feedback.warning { background: linear-gradient(90deg, #ff9f0a, #e68600); }
+  .btn-feedback.pending { background: linear-gradient(90deg, #8e8e93, #6d6d72); }
+  .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+  @media (prefers-reduced-motion: reduce) {
+    .btn-feedback { transition: opacity .12s ease; transform: none !important; }
+    .btn-feedback.show { opacity: 1; }
+    .btn-feedback.hide { opacity: 0; }
+  }
   #recMsg.busy::before {
     content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px;
     border: 1.5px solid var(--text3); border-top-color: transparent; border-radius: 50%;
@@ -227,6 +236,7 @@
     .loader__bar, .loader__ball { animation: none; }
   }
 </style>
+<style>details#spMapPanel.sp-fullscreen{position:fixed;inset:0;z-index:99999;background:var(--bg);padding:16px;overflow:auto;margin:0}details#spMapPanel.sp-fullscreen>div{max-width:100%}details#spMapPanel.sp-fullscreen .hint{display:none}details#spMapPanel.sp-fullscreen #spMap{height:calc(100vh - 240px)!important;min-height:420px}details#spMapPanel.sp-fullscreen #spInfoBox{max-height:120px;overflow:auto}</style>
 </head>
 <body>
 
@@ -247,8 +257,8 @@
 
 <div class="card" id="inputCard">
   <div id="seriesBox">
-    <h2>年最大流量系列（m³/s）</h2>
-    <textarea id="series">1200
+    <h2 style="display:none">年最大流量系列（m³/s）</h2>
+    <textarea id="series" style="display:none">1200
 850
 1500
 900
@@ -280,11 +290,10 @@
     <div id="ocrReview" style="display:none;margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg)">
       <div style="display:grid;grid-template-columns:minmax(240px,1fr) minmax(290px,1.2fr);gap:12px;align-items:start">
         <div>
-          <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">原始内容</div>
+          <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">图片 / 文档预览</div>
           <canvas id="ocrCanvas" style="display:none;width:100%;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:#fff"></canvas>
           <div id="ocrPageBar"></div>
-          <div id="ocrSourceTable"></div>
-        </div>
+                  </div>
         <div>
           <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">年份 / 流量核对</div>
           <div id="ocrPairSummary" style="font-size:12px;color:var(--text3);margin-bottom:8px"></div>
@@ -298,7 +307,7 @@
         </div>
       </div>
     </div>
-    <span id="ocrStatus" style="display:block;margin-top:8px;font-size:11.5px;color:var(--text3)"></span>
+    <span id="ocrStatus" role="status" aria-live="polite" style="display:block;margin-top:8px;font-size:11.5px;color:var(--text3)"></span>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:13.5px;color:var(--text)">
       <input type="checkbox" id="hasExtra" style="width:16px;height:16px;accent-color:var(--blue)"> 含特大洪水（不连序系列）
     </label>
@@ -676,6 +685,44 @@
             <span id="cbZoneOut" style="color:var(--text2);margin-left:6px"></span>
           </td></tr>
         </table>
+        <details id="spMapPanel" style="margin-top:12px">
+          <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">🗺️ 暴雨雨力 S<sub>p</sub>（1% / 4%）等值线地图 · 行政区定位查 S<sub>p</sub></summary>
+          <div class="hint" style="margin-top:10px">在同一张地图上叠加<b>全国暴雨雨力 S<sub>p</sub> 等值线</b>与<b>行政区划边界</b>：先点地图定位到你桥位所在的省/市（会显示行政区名称与经纬度），再点桥位附近位置，软件自动按最近等值线标注插值出该点的 S<sub>p</sub>，点「填入 S<sub>p</sub>」直接用于推理公式。地图已叠加<b>配准后的原图扫描底图</b>，可用上方按钮切换 S<sub>p</sub>（1%）/ S<sub>p</sub>（4%）两套数据（与设计频率对应，默认 1%）。</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px">
+            <span>快速定位省份：</span><select id="spProvSel" style="width:140px"></select>
+            <span style="color:var(--text2)">数据集：</span>
+            <button id="spDs1" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">S<sub>p</sub>（1%）</button>
+            <button id="spDs4" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">S<sub>p</sub>（4%）</button>
+            <button id="spGridBtn" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">图集格网（60min）</button>
+            <button id="spFsBtn" data-hs-no-feedback="1" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">⛶ 全屏</button>
+            <button id="spBackBtn" data-hs-no-feedback="1" style="display:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">⬅ 返回省级</button>
+            <span style="color:var(--text2)">经纬度定位：</span>
+            <input id="spLonInput" type="number" step="0.001" placeholder="经度" style="width:72px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:12px;background:var(--bg);color:var(--text)">
+            <input id="spLatInput" type="number" step="0.001" placeholder="纬度" style="width:72px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:12px;background:var(--bg);color:var(--text)">
+            <button id="spGoBtn" data-hs-no-feedback="1" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">定位</button>
+            <span id="spMapStatus" style="color:var(--text2)"></span>
+          </div>
+          <div id="spMap" style="height:calc(100vh - 260px);min-height:420px;margin-top:8px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#eef3f7"></div>
+          <div id="spInfoBox" style="margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);font-size:12.5px;line-height:1.8;color:var(--text2)">点击地图任意位置即可查该点的 S<sub>p</sub>（等值线数据载入后可用）。</div>
+        </details>
+        <details id="p3Panel" style="margin-top:12px">
+          <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">🧮 任意频率点雨量 / 雨力推算（均值 + Cv + P-Ⅲ）</summary>
+          <div class="hint" style="margin-top:10px">基于《中国暴雨统计参数图集》清洗后的均值、Cv 格网，按 <b>Cs = 3.5 × Cv</b> 推算任意频率点雨量。60 分钟历时可直接把 H<sub>60min</sub> 视为雨力 S<sub>p</sub>；其他历时可输入衰减指数 n 后换算 S<sub>p</sub>。</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px">
+            <span>经度</span><input id="p3Lon" type="number" step="0.001" style="width:82px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text)">
+            <span>纬度</span><input id="p3Lat" type="number" step="0.001" style="width:82px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text)">
+            <span>历时</span>
+            <select id="p3Dur" style="width:105px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text)">
+              <option value="60min">60 分钟</option><option value="24h">24 小时</option><option value="6h">6 小时</option><option value="3d">3 日</option><option value="10min">10 分钟</option>
+            </select>
+            <span>频率%</span><input id="p3Freq" type="number" value="1" step="any" min="0.01" max="99" style="width:66px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text)">
+            <span>n</span><input id="p3N" type="number" value="0.65" step="0.01" style="width:58px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text)">
+            <button class="fillBtn" id="p3UseMap">用地图坐标</button>
+            <button class="fillBtn" id="p3Calc">计算</button>
+            <button class="fillBtn" id="p3FillSp" style="display:none">填入 Sp</button>
+          </div>
+          <div id="p3Out" style="margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);font-size:12.5px;line-height:1.8;color:var(--text2)">输入经纬度后计算；也可先在上方地图点击桥位，再点「用地图坐标」。</div>
+        </details>
         <details id="rdTables" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13px;color:var(--blue)">查表辅助：ψ / h / z / β / γ / δ 取值（点行自动填入）</summary>
           <div class="hint" style="margin-top:10px">出处：《公路涵洞设计规范》JTG/T 3365-02-2020 附录 B（该规范已由交通运输部公告 2020 年第 88 号全文公开，本软件数据取自其官方公开 PDF）。<b>径流厚度 h 的完整表（表 B-9：暴雨分区 1~18 区 × 土壤类属 Ⅰ~Ⅵ 类 × 频率 1/2/4% × 汇流时间 30/45/60/80 min）已内置</b>，用上方查表工具直接取；下列 ψ / z / β / γ / δ 为公开算例锚点值，点行可一键填入。</div>
@@ -825,14 +872,14 @@
 <div class="card" id="fitCard">
   <h2>适线调整（M 值迭代） <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——M = C<sub>s</sub>/C<sub>v</sub>，可反复重选，不是固定倍比</span></h2>
   <div class="hint" style="margin-top:0;line-height:1.7">
-    人工适线流程：先由矩法得到 Q̄、Cv 初值；选定 M 并令 C<sub>s</sub>=M·C<sub>v</sub>，查看理论频率曲线；若不满意，可直接修改 Cv、再重选 M，曲线立即重绘。通常记录并比较 2~3 组后采用最贴合经验点群的一组。
+    人工适线流程：导入各年份流量后，软件按矩法算出 Q̄ 与 Cv（Ki、(Ki-1)²、(Ki-1)³ 见系列计算表），Cv 由数据唯一确定并已固定；适线时只调整 M（C<sub>s</sub>=M·C<sub>v</sub>），查看理论频率曲线与经验点据的贴合程度，通常比较 2~3 组后采用最贴合的一组。
   </div>
   <div class="row" style="margin-top:10px">
     <div>
-      <label>变差系数 C<sub>v</sub>：<span class="val" id="cvShow">0.30</span></label>
+      <label>变差系数 C<sub>v</sub>（矩法固定）：<span class="val" id="cvShow">0.30</span></label>
       <div style="display:flex;gap:10px;align-items:center">
-        <input type="range" id="cvSlider" min="0.05" max="1.2" step="0.005" value="0.30" style="flex:1">
-        <input type="number" id="cvIn" value="0.30" min="0.05" max="1.2" step="0.005" title="直接键入 Cv 精确值" style="width:78px">
+        <input type="range" id="cvSlider" min="0.05" max="1.2" step="0.005" value="0.30" style="flex:1" disabled>
+        <input type="number" id="cvIn" value="0.30" min="0.05" max="1.2" step="0.005" title="Cv 由矩法计算固定，不可修改" style="width:78px" disabled>
       </div>
     </div>
     <div>
@@ -868,8 +915,8 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;justify-content:flex-end">
       <div>
-        <button class="btn" id="btnThreePoint" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="规范 6.2.5 参数初估方法二：5%/50%/95% 三点解 Q̄、Cv、Cs">三点法初估</button>
-        <button class="btn ghost" id="btnAutoFit" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="以当前参数为初值，对经验点据最小化离差平方和（均值固定）">优化适线</button>
+        <button class="btn" id="btnThreePoint" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="以 5%/50%/95% 三点初估 Q̄ 与 M（Cv 固定为矩法值）">三点法初估</button>
+        <button class="btn ghost" id="btnAutoFit" style="margin-top:0;padding:4px 12px;font-size:12.5px" title="Cv 固定为矩法值，只优化 M 使经验点据离差平方和最小（均值固定）">优化适线</button>
       </div>
       <div id="fitMsg" style="font-size:11.5px;color:var(--text3)"></div>
     </div>
@@ -881,7 +928,7 @@
     <div style="flex:1">
       <label style="font-size:11.5px;color:var(--text3)">辅助参考（自动搜索；人工适线仍以目估判断为准）：</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
-        <button class="btn" id="btnRecommend" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="按 SL 44-2006 附录 A.1.2 离差平方和准则搜索最优 Cv，Cs/Cv 倍比约束在工程惯例区间 2~4，均值固定为矩法值">规范最优适线</button>
+        <button class="btn" id="btnRecommend" style="margin-top:0;padding:5px 14px;font-size:12.5px" title="Cv 固定为矩法值，按 SL 44-2006 附录 A.1.2 离差平方和准则在工程惯例区间 2~4 内搜索最优 M，均值固定">规范最优适线</button>
       </div>
       <div id="recMsg" style="font-size:11.5px;color:var(--text3);margin-top:6px;line-height:1.6"></div>
     </div>
@@ -953,7 +1000,7 @@
     <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center">
       <span style="font-size:12px;color:var(--text3)">计算算法：</span>
       <button class="btn" id="modeExact" style="padding:3px 12px;font-size:12px">精确计算（推荐）</button>
-      <button class="btn" id="modeTextbook" style="padding:3px 12px;font-size:12px">教材查表（C<sub>s</sub> 圆整 0.1）</button>
+      <button class="btn" id="modeTextbook" style="padding:3px 12px;font-size:12px">查表圆整（C<sub>s</sub> 圆整 0.1）</button>
       <span style="font-size:11.5px;color:var(--text3)">两种算法只差 Cs 查表圆整，差异约 0.3%</span>
     </div>
     <div id="paramLinkage" style="margin-bottom:8px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);font-size:12.5px;line-height:1.7"></div>
@@ -1184,9 +1231,17 @@
     <script src="libs/pdf.min.js"></script>
     <script src="libs/docx.umd.js"></script>
 <script src="libs/tesseract/tesseract.min.js"></script>
+<link rel="stylesheet" href="libs/leaflet/leaflet.css">
+<script src="libs/leaflet/leaflet.js"></script>
+<script src="libs/leaflet/china_provinces.js"></script>
+<script src="libs/leaflet/sp_contours.js"></script>
+<script src="libs/leaflet/atlas_h1p_60min.js"></script>
+<script src="libs/leaflet/atlas_p3_params.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
+
+
 
 
 
