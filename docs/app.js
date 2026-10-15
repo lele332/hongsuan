@@ -8112,6 +8112,29 @@ function buildColumnPairs(rows) {
   };
   window.__hsSpRefresh = spRefreshContours;
   window.__hsSpUpdateInfo = spUpdateInfo;
+  window.__hsReportData = function () {
+    try {
+      const p = state.params;
+      const cs = effCs(p.cs);
+      const FREQS = [0.05, 0.1, 0.2, 0.5, 1, 2, 3.33, 5, 10, 20, 50, 90];
+      const freqRows = FREQS.map((pp) => {
+        const ph = phiPIII(pp / 100, cs);
+        const k = 1 + ph * p.cv;
+        return [pp, ph, k, p.mean * k];
+      });
+      return {
+        project: typeof currentProject === "function" ? currentProject() : {},
+        params: { mean: p.mean, cv: p.cv, cs: p.cs, csEff: cs },
+        freq: state.freq,
+        stats: state.stats ? { n: state.stats.n, mean: state.stats.mean, cv: state.stats.cv, cs: "cs" in state.stats ? state.stats.cs : state.stats.csMoment } : { n: (state.series || []).length },
+        series: state.series || [],
+        hydro: state.hydro ? { designPeak: state.hydro.designPeak, typicalPeak: state.hydro.typicalPeak, kg: state.hydro.kg, points: state.hydro.points } : null,
+        logs: typeof calcLog !== "undefined" && calcLog && calcLog.recent ? calcLog.recent(0) : []
+      };
+    } catch (e) {
+      return null;
+    }
+  };
 })();
 
 

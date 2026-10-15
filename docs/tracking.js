@@ -3,7 +3,8 @@
   'use strict';
   var MAP = {
     ocrRun: 'ocr-run', demoScanBtn: 'ocr-demo', ocrApply: 'ocr-apply', ocrClear: 'ocr-clear',
-    btnCalc: 'freq-calc', btnReport: 'report', exSvg: 'export-svg', exPng: 'export-png',
+    btnCalc: 'freq-calc', btnReport: 'report',
+    fieReportBtn: 'fie-report', exSvg: 'export-svg', exPng: 'export-png',
     btnHist: 'hist', btnHydroSample: 'hydro-sample',
     mapLoad: 'map-load', mapGo: 'map-go', mapFill: 'map-fill',
     spGridBtn: 'sp-grid', spFsBtn: 'sp-fs', spGoBtn: 'sp-go', spBackBtn: 'sp-back',
