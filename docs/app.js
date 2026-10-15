@@ -8011,9 +8011,28 @@ function buildColumnPairs(rows) {
       if (!panel) return;
       const on = panel.classList.toggle("sp-fullscreen");
       bFs.textContent = on ? "✕ 退出全屏" : "⛶ 全屏";
-      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 60);
-      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 250);
+      window.setTimeout(spFsLayout, 60);
+      window.setTimeout(spFsLayout, 250);
     };
+    /* 全屏：地图高度 = 视口 - 工具栏实高（details 上 flex 不可靠，用 JS 精确计算，横竖屏自适应） */
+    const spFsLayout = () => {
+      const panel = $("spMapPanel");
+      if (!panel || !panel.classList.contains("sp-fullscreen")) return;
+      const row = panel.querySelector("div");
+      const th = row ? row.offsetHeight : 0;
+      panel.style.setProperty("--spFsH", Math.max(240, window.innerHeight - th - 32) + "px");
+      if (spMap) spMap.invalidateSize();
+    };
+    const spFsResize = () => {
+      const panel = $("spMapPanel");
+      if (panel && panel.classList.contains("sp-fullscreen") && spMap) spMap.invalidateSize();
+      spFsLayout();
+    };
+    window.addEventListener("resize", spFsResize);
+    window.addEventListener("orientationchange", () => {
+      window.setTimeout(spFsResize, 80);
+      window.setTimeout(spFsResize, 400);
+    });
     const goBtn = $("spGoBtn");
     if (goBtn) goBtn.onclick = () => {
       const lat = parseFloat($("spLatInput").value), lng = parseFloat($("spLonInput").value);
