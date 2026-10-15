@@ -237,6 +237,23 @@
   }
 </style>
 <style>details#spMapPanel.sp-fullscreen{position:fixed;inset:0;z-index:99999;background:var(--bg);padding:16px;overflow:auto;margin:0}details#spMapPanel.sp-fullscreen>div{max-width:100%}details#spMapPanel.sp-fullscreen .hint{display:none}details#spMapPanel.sp-fullscreen #spMap{height:calc(100vh - 240px)!important;min-height:420px}details#spMapPanel.sp-fullscreen #spInfoBox{max-height:120px;overflow:auto}</style>
+<style>
+/* ===== 移动端适配（网页版专用）===== */
+@media (max-width: 760px) {
+  html, body { overflow-x: hidden; }
+  body [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { max-width: 100%; }
+  table.ltab, table[style*="width:100%"], #phiTableWrap table {
+    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  table.ltab { white-space: nowrap; }
+  #ocrPairTable { max-height: 55vh !important; }
+  canvas, img { max-width: 100% !important; height: auto !important; }
+  #spMap { height: 55vh !important; min-height: 320px !important; }
+  details#spMapPanel.sp-fullscreen #spMap { height: calc(100vh - 300px) !important; }
+}
+</style>
 </head>
 <body>
 
