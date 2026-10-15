@@ -186,6 +186,12 @@
 
   window.__hsShareGenerate = generate; /* 测试钩子 */
 
+  function feedback(btn, text) {
+    if (!btn) return;
+    var old = btn.textContent;
+    btn.textContent = text;
+    window.setTimeout(function () { btn.textContent = old; }, 2400);
+  }
   async function onShare() {
     var btn = $("shareCardBtn");
     var dataUrl;
@@ -194,24 +200,29 @@
     } catch (e) {
       dataUrl = null;
     }
-    if (!dataUrl) return;
-    var blob = await (await fetch(dataUrl)).blob();
-    var file = new File([blob], stampName(), { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: "\u6CD3\u7B97 \xB7 \u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u7ED3\u679C" });
-        track("share-sheet");
-      } catch (e) {
-        if (e && e.name === "AbortError") return; /* 用户取消分享 */
-        download(dataUrl);
-      }
-    } else {
-      download(dataUrl);
+    if (!dataUrl) {
+      feedback(btn, "⚠️ 生成失败，请重试");
+      return;
     }
-    if (btn) {
-      var old = btn.textContent;
-      btn.textContent = "\u2705 \u5DF2\u751F\u6210";
-      window.setTimeout(function () { btn.textContent = old; }, 1800);
+    var shared = false;
+    try {
+      if (navigator.canShare && typeof navigator.share === "function") {
+        var blob = await (await fetch(dataUrl)).blob();
+        var file = new File([blob], stampName(), { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: "泓算 · 设计流量计算结果" });
+          shared = true;
+          track("share-sheet");
+          feedback(btn, "✅ 已调起分享");
+        }
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") { feedback(btn, "已取消分享"); return; }
+      /* 分享失败 → 走下载 */
+    }
+    if (!shared) {
+      download(dataUrl);
+      feedback(btn, "✅ 已保存到下载");
     }
   }
 
@@ -219,9 +230,10 @@
     var a = document.createElement("a");
     a.href = dataUrl;
     a.download = stampName();
+    a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
-    a.remove();
+    window.setTimeout(function () { a.remove(); }, 500);
     track("share-download");
   }
 

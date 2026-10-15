@@ -139,9 +139,10 @@
       id: "empirical", name: "\u7ECF\u9A8C\u70B9\u636E", type: "scatter", data: emp, z: 5,
       itemStyle: { borderColor: "#fff", borderWidth: 0 }
     });
+    var narrow = !!d.narrow;
     return {
       animation: false,
-      grid: { left: 78, right: 26, top: 36, bottom: 52 },
+      grid: { left: narrow ? 58 : 78, right: narrow ? 16 : 26, top: 36, bottom: 52 },
       tooltip: {
         trigger: "axis", confine: true, backgroundColor: "rgba(29,29,31,0.92)", borderWidth: 0,
         textStyle: { color: "#fff", fontSize: 12 },
@@ -152,9 +153,9 @@
         type: "value", min: d.xmin, max: d.xmax, inverse: true,
         axisLine: { show: true, lineStyle: { color: "rgba(0,0,0,0.25)" } },
         axisTick: { show: false }, splitLine: { show: false },
-        axisLabel: { customValues: tickZ, formatter: axisFormatter, color: "#6e6e73", fontSize: 11, margin: 10 },
-        name: "\u9891\u7387 P\uFF08%\uFF09\u2014 \u6D77\u68EE\u673A\u7387\u683C\u7EB8",
-        nameLocation: "middle", nameGap: 30, nameTextStyle: { color: "#1d1d1f", fontSize: 12 }
+        axisLabel: { customValues: tickZ, formatter: axisFormatter, color: "#6e6e73", fontSize: narrow ? 10 : 11, margin: 10, hideOverlap: true },
+        name: narrow ? "频率 P（%）" : "频率 P（%）— 海森机率格纸",
+        nameLocation: "middle", nameGap: 30, nameTextStyle: { color: "#1d1d1f", fontSize: narrow ? 11 : 12 }
       },
       yAxis: {
         type: "value", min: d.qLo, max: d.qHi,
@@ -169,10 +170,23 @@
     };
   }
 
+  /* 窄屏刻度裁剪：防止海森格纸标签重叠 */
+  var NARROW_TICKS = [0.1, 1, 5, 20, 50, 90, 99];
+  function adaptTicks(d) {
+    var w = 640;
+    try { w = box.clientWidth || 640; } catch (e) {}
+    d.narrow = w < 520;
+    if (d.narrow) {
+      d.xticks = (d.xticks || []).filter(function (pct) { return NARROW_TICKS.indexOf(pct) >= 0; });
+    }
+    return d;
+  }
+
   window.__hsEcharts = function (payload) {
-    lastData = payload;
+    lastData = adaptTicks(payload);
     var c = ensureChart();
     if (!c) return;
-    c.setOption(buildOption(payload), { notMerge: true });
+    c.setOption(buildOption(lastData), { notMerge: true });
+    try { c.resize(); } catch (e) {}
   };
 })();

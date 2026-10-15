@@ -267,8 +267,10 @@
     #dlBtn { width:100%; box-sizing:border-box; text-align:center; }
   }
 
+  .mobileHint{display:block !important}
   #echartBox{width:100%;height:440px}
   @media (max-width:640px){#echartBox{height:340px}}
+  @media (min-width:761px){.mobileHint{display:none !important}}
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#111113">
@@ -1069,6 +1071,7 @@
   <div id="outErrNote" style="font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.7"></div>
   <button class="btn" id="btnReport" style="margin-top:16px">导出 Word 计算书</button>
   <button class="btn ghost" id="fieReportBtn" style="margin-top:16px" title="按《洪水影响评价报告》标准目录自动生成：自动填写水文计算、壅水冲刷等计算成果，其余章节留待补充占位">📘 洪水影响评价报告</button>
+  <div class="mobileHint" style="display:none;font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.6">📱 手机端导出的 Word 文件保存在下载目录，需已安装 WPS / Office 才能打开；正式出报告建议用电脑端操作。</div>
   <span style="font-size:12px;color:var(--text3);margin-left:10px">当前适线状态 + 适线图 + 频率成果表</span>
 </div>
 
