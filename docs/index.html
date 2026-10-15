@@ -253,6 +253,20 @@
   #spMap { height: 55vh !important; min-height: 320px !important; }
   details#spMapPanel.sp-fullscreen #spMap { height: calc(100vh - 300px) !important; }
 }
+
+  /* 桌面版下载入口 */
+  #dlBar { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:#fff; border:1px solid var(--border); border-radius:12px;
+    padding:9px 12px; margin:0 auto 12px; max-width:860px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  #dlBar .dlTxt { flex:1; min-width:200px; font-size:12.5px; color:var(--text2); }
+  #dlBtn { display:inline-block; padding:7px 16px; border-radius:9px; text-decoration:none;
+    background:#1d1d1f; color:#fff; font-size:12.5px; white-space:nowrap; }
+  #dlBtn:hover { opacity:.88; }
+  @media (max-width:760px) {
+    #dlBar { flex-direction:column; text-align:center; padding:10px 12px; }
+    #dlBtn { width:100%; box-sizing:border-box; text-align:center; }
+  }
+
 </style>
   <!-- Umami analytics -->
   <script defer src="https://cloud.umami.is/script.js" data-website-id="a31f367d-eeb7-42ca-a81f-1ccfcb6fb84e"></script>
@@ -263,6 +277,13 @@
   <h1>泓算 · 桥涵设计流量推求</h1>
   <p>规范表格全内置 · 公式条号可溯源 · 计算过程全留痕 ｜ 依据 JTG C30—2015 ｜ v1</p>
 </header>
+
+<!-- 桌面版下载入口 -->
+<div id="dlBar">
+  <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.13</a>
+</div>
+
 
 <div style="text-align:center"><div class="seg" id="segMode">
   <button id="mSeries" class="on">流量系列适线</button>
@@ -1260,6 +1281,7 @@
 <script src="demo/demo_data.js"></script>
 <script src="app.js"></script>
 <script src="feedback.js"></script>
+<script src="tracking.js"></script>
 </body>
 </html>
 
