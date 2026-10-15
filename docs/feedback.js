@@ -7,6 +7,52 @@
 
   var overlay, modal;
 
+  var RATE_WINDOW_MS = 60 * 1000;      // 1 分钟内只允许提交一次
+  var DAY_WINDOW_MS = 24 * 60 * 60 * 1000;
+  var DAY_LIMIT = 5;
+  var MIN_TEXT_LEN = 5;
+  var MAX_TEXT_LEN = 2000;
+
+  function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || fallback); }
+    catch (e) { return fallback; }
+  }
+
+  function writeJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function simpleHash(text) {
+    var h = 5381;
+    for (var i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) >>> 0;
+    return h.toString(16);
+  }
+
+  function checkFeedbackLimit(text) {
+    var now = Date.now();
+    var last = Number(localStorage.getItem('hs_feedback_last') || 0);
+    if (now - last < RATE_WINDOW_MS) return '提交太频繁，请稍后再试';
+
+    var day = readJson('hs_feedback_day', { start: now, count: 0, hashes: [] });
+    if (now - Number(day.start || 0) >= DAY_WINDOW_MS) day = { start: now, count: 0, hashes: [] };
+    if (Number(day.count || 0) >= DAY_LIMIT) return '今日反馈已达上限，请明天再试';
+
+    var h = simpleHash(text);
+    if ((day.hashes || []).indexOf(h) !== -1) return '请勿重复提交相同内容';
+    return '';
+  }
+
+  function markFeedbackSent(text) {
+    var now = Date.now();
+    try { localStorage.setItem('hs_feedback_last', String(now)); } catch (e) {}
+    var day = readJson('hs_feedback_day', { start: now, count: 0, hashes: [] });
+    if (now - Number(day.start || 0) >= DAY_WINDOW_MS) day = { start: now, count: 0, hashes: [] };
+    day.count = Number(day.count || 0) + 1;
+    day.hashes = (day.hashes || []).slice(-19);
+    day.hashes.push(simpleHash(text));
+    writeJson('hs_feedback_day', day);
+  }
+
   function ensureUI() {
     if (document.getElementById('fbOverlay')) return;
     var css = document.createElement('style');
@@ -52,6 +98,7 @@
       '</div>' +
       '<textarea id="fbText" rows="4" placeholder="请描述你遇到的问题或想提的建议…（使用哪个功能、发生了什么）"></textarea>' +
       '<input id="fbContact" type="text" placeholder="联系方式（选填：微信 / QQ / 邮箱）" maxlength="60">' +
+      '<input id="fbHoney" type="text" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" placeholder="请勿填写此字段">' +
       '<div class="fb-actions">' +
       '<button type="button" id="fbCancel">取消</button>' +
       '<button type="button" id="fbSend">提交反馈</button>' +
@@ -87,8 +134,14 @@
   function submit() {
     var text = (document.getElementById('fbText').value || '').trim();
     var contact = (document.getElementById('fbContact').value || '').trim();
+    var honey = (document.getElementById('fbHoney').value || '').trim();
     var typeLabel = document.getElementById('fbTypeIdea').classList.contains('on') ? '功能建议' : '问题反馈';
     if (!text) { setStatus('请先填写反馈内容', 'err'); return; }
+    if (text.length < MIN_TEXT_LEN) { setStatus('反馈内容太短，请补充具体问题', 'err'); return; }
+    if (text.length > MAX_TEXT_LEN) { setStatus('反馈内容过长，请控制在 2000 字以内', 'err'); return; }
+    if (honey) { setStatus('已提交'); return; }
+    var limitError = checkFeedbackLimit(text);
+    if (limitError) { setStatus(limitError, 'err'); return; }
     if (!endpoint) { setStatus('反馈通道暂未配置，请稍后再试或到 GitHub 仓库提交 Issue', 'err'); return; }
     var btn = document.getElementById('fbSend');
     btn.disabled = true; setStatus('正在提交…');
@@ -102,7 +155,9 @@
         '反馈类型': typeLabel,
         '反馈内容': text,
         '联系方式': contact || '（未填写）',
-        '页面地址': location.href.slice(0, 200)
+        '页面地址': location.href.slice(0, 200),
+        '运行版本': (window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.release) || 'unknown',
+        '构建信息': JSON.stringify(window.__HS_BUILD_INFO || {}).slice(0, 300)
       })
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -111,6 +166,7 @@
         return d;
       });
     }).then(function () {
+      markFeedbackSent(text);
       try { if (window.umami && window.umami.track) window.umami.track('feedback-' + type); } catch (e) {}
       setStatus('✅ 提交成功，感谢你的反馈！', 'ok');
       document.getElementById('fbText').value = '';
