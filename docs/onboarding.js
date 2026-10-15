@@ -15,7 +15,20 @@
     if (window.driver && window.driver.js && typeof window.driver.js.driver === "function") { runTour(window.driver.js.driver); return; }
     return;
   }
+  function forceCleanup() {
+    try {
+      document.querySelectorAll(".driver-overlay, .driver-popover").forEach(function (el) { el.remove(); });
+      document.body.classList.remove("driver-active", "driver-fade", "driver-simple");
+    } catch (e) {}
+    markDone();
+  }
+  var activeDriver = null;
   function runTour(Driver) {
+    /* 单例守卫：已有引导在跑，先销毁，避免双遮罩卡死 */
+    if (document.body.classList.contains("driver-active") && activeDriver) {
+      try { activeDriver.destroy(); } catch (e) {}
+      forceCleanup();
+    }
     var steps = [
       {
         element: "#ocrRun",
@@ -62,10 +75,30 @@
       overlayOpacity: 0.55,
       stagePadding: 6,
       popoverClass: "driverjs-theme",
-      onDestroyed: function () { markDone(); track("tour-end"); },
+      onDestroyed: function () { markDone(); activeDriver = null; track("tour-end"); },
       steps: steps
     });
+    activeDriver = driver;
     driver.drive();
+    /* 看门狗：遮罩在但弹窗丢失/不可见 → 2 秒内强制清理，保证页面可点 */
+    var watchdog = window.setInterval(function () {
+      var active = false;
+      try { active = document.body.classList.contains("driver-active"); } catch (e) {}
+      if (!active) { window.clearInterval(watchdog); return; }
+      var pop = document.querySelector(".driver-popover");
+      var visible = false;
+      if (pop) {
+        var r = pop.getBoundingClientRect();
+        visible = r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+      }
+      if (!visible) {
+        try { driver.destroy(); } catch (e) {}
+        forceCleanup();
+        window.clearInterval(watchdog);
+      }
+    }, 2000);
+    window.setTimeout(function () { window.clearInterval(watchdog); }, 120000); /* 引导最长 2 分钟后不再看守 */
+
     track("tour-start");
   }
   function boot() {
