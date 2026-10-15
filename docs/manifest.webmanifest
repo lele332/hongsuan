@@ -1,0 +1,16 @@
+{
+  "name": "泓算 · 桥涵设计流量推求",
+  "short_name": "泓算",
+  "description": "桥涵设计流量计算演示版：P-Ⅲ 频率适线、推理公式、SP 等值线地图，数据仅保存在本机",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#111113",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

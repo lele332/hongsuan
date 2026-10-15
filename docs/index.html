@@ -270,6 +270,13 @@
   #echartBox{width:100%;height:440px}
   @media (max-width:640px){#echartBox{height:340px}}
 </style>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#111113">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="泓算">
   <link rel="stylesheet" href="libs/driver.min.css">
   <!-- Umami analytics -->
   <script defer src="https://cloud.umami.is/script.js" data-website-id="a31f367d-eeb7-42ca-a81f-1ccfcb6fb84e"></script>
@@ -914,6 +921,12 @@
   </div>
 </div>
 
+<div class="card" id="historyCard" style="display:none">
+  <h2>🕜 计算历史 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 仅保存在你的浏览器本机（IndexedDB），不上传任何数据，最多 20 条</span></h2>
+  <div id="historyList"></div>
+  <button class="btn ghost" id="historyClear" style="margin-top:10px;padding:4px 14px;font-size:12.5px">清空历史</button>
+</div>
+
 <div class="card" id="fitCard">
   <h2>适线调整（M 值迭代） <span style="font-weight:400;font-size:12.5px;color:var(--text3)">——M = C<sub>s</sub>/C<sub>v</sub>，可反复重选，不是固定倍比</span></h2>
   <div class="hint" style="margin-top:0;line-height:1.7">
@@ -1284,6 +1297,8 @@
 <script src="libs/leaflet/atlas_h1p_60min.js"></script>
 <script src="libs/leaflet/atlas_p3_params.js"></script>
 <script src="demo/demo_data.js"></script>
+<script src="libs/dexie.min.js"></script>
+<script src="history.js"></script>
 <script src="libs/echarts.min.js"></script>
 <script src="libs/driver.min.js"></script>
 <script src="chart_echarts.js"></script>
@@ -1292,6 +1307,7 @@
 <script src="tracking.js"></script>
 <script src="report_fie.js"></script>
 <script src="onboarding.js"></script>
+<script src="pwa.js"></script>
 </body>
 </html>
 

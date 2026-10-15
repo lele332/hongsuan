@@ -3269,6 +3269,7 @@
     $("stCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
     render();
     showQuickResult(st);
+    if (window.__hsHistorySave) { try { window.__hsHistorySave(); } catch (e) { } }
   }
   function showQuickResult(st) {
     const el = $("quickResult");
@@ -8117,6 +8118,32 @@ function buildColumnPairs(rows) {
   };
   window.__hsSpRefresh = spRefreshContours;
   window.__hsSpUpdateInfo = spUpdateInfo;
+  window.__hsDesignQ = function () {
+    try {
+      const p = state.params;
+      return p.mean * (1 + phiPIII(state.freq, effCs(p.cs)) * p.cv);
+    } catch (e) {
+      return null;
+    }
+  };
+  window.__hsRestoreParams = function (r) {
+    try {
+      if (!r || !(r.mean > 0)) return false;
+      state.params = { mean: r.mean, cv: r.cv, cs: r.cs };
+      $("cvSlider").value = Math.min(Math.max(r.cv, 0.05), 1.2);
+      $("ratioSlider").value = Math.min(Math.max(r.cs / r.cv, 1), 8);
+      syncParamInputs();
+      if (typeof r.freq === "number" && r.freq > 0 && r.freq < 1) {
+        state.freq = r.freq;
+        const sel = $("freqSel");
+        if (sel && [...sel.options].some((o) => o.value === String(r.freq))) sel.value = String(r.freq);
+      }
+      render();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
   window.__hsReportData = function () {
     try {
       const p = state.params;
