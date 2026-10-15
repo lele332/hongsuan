@@ -121,6 +121,8 @@
     }).finally(function () { btn.disabled = false; });
   }
 
+  ensureUI(); // 页面加载时立即注入样式，确保按钮一开始就是 position:fixed 悬浮
+
   var fab = document.createElement('button');
   fab.id = 'fbFab';
   fab.type = 'button';
