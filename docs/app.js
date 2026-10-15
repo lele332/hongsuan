@@ -3074,7 +3074,7 @@
       for (let i = 0; i < NSAMP; i++) {
         const t = XMAX - i * (XMAX - XMIN) / (NSAMP - 1);
         const p = 1 - normCdf(t);
-        out.push({ x: sx(t), q: fit.mean * (1 + phiPIII(p, effCs(fit.cs)) * fit.cv) });
+        out.push({ t, p, x: sx(t), q: fit.mean * (1 + phiPIII(p, effCs(fit.cs)) * fit.cv) });
       }
       return out;
     };
@@ -3134,6 +3134,11 @@
     chartQLo = qLo;
     chartQHi = qHi;
     bindChartHover();
+    if (window.__hsEcharts) {
+      try {
+        window.__hsEcharts({ pts, curvePts, comparisonPts, comparisonFit, params, freq, designQ: q, xmin: XMIN, xmax: XMAX, xticks: XTICKS, qLo, qHi });
+      } catch (e) { /* ECharts 增强失败时保留原 SVG */ }
+    }
   }
   var chartQLo = 0;
   var chartQHi = 1;

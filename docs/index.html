@@ -267,7 +267,10 @@
     #dlBtn { width:100%; box-sizing:border-box; text-align:center; }
   }
 
+  #echartBox{width:100%;height:440px}
+  @media (max-width:640px){#echartBox{height:340px}}
 </style>
+  <link rel="stylesheet" href="libs/driver.min.css">
   <!-- Umami analytics -->
   <script defer src="https://cloud.umami.is/script.js" data-website-id="a31f367d-eeb7-42ca-a81f-1ccfcb6fb84e"></script>
 </head>
@@ -893,8 +896,9 @@
 </div>
 
 <div class="card" id="chartCard">
-  <h2>P-Ⅲ 适线（海森机率格纸）</h2>
+  <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">P-Ⅲ 适线（海森机率格纸）<button class="btn ghost" id="tourReplay" style="margin-left:auto;padding:3px 12px;font-size:12px">🎯 新手引导</button></h2>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
+  <div id="echartBox"></div>
   <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums">悬停图表可读取任意位置频率与流量</div>
   <div class="legend">
     <span><i></i>理论频率曲线（P-Ⅲ，当前采用）</span>
@@ -1280,10 +1284,14 @@
 <script src="libs/leaflet/atlas_h1p_60min.js"></script>
 <script src="libs/leaflet/atlas_p3_params.js"></script>
 <script src="demo/demo_data.js"></script>
+<script src="libs/echarts.min.js"></script>
+<script src="libs/driver.min.js"></script>
+<script src="chart_echarts.js"></script>
 <script src="app.js"></script>
 <script src="feedback.js"></script>
 <script src="tracking.js"></script>
 <script src="report_fie.js"></script>
+<script src="onboarding.js"></script>
 </body>
 </html>
 
