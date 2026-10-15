@@ -47,10 +47,42 @@
     }
     if (!chart) {
       chart = window.echarts.init(box, null, { renderer: "canvas" });
-      window.addEventListener("resize", function () { chart.resize(); });
+      window.addEventListener("resize", function () { chart.resize(); selfCheck(); });
+      addResetButton();
       bindReadout();
     }
     return chart;
+  }
+
+  /* 画布尺寸自愈：canvas 与容器尺寸不一致时强制 resize（防个别机型初始化时布局未就绪） */
+  function selfCheck() {
+    if (!chart || !box) return;
+    var canvas = box.querySelector("canvas");
+    if (!canvas) return;
+    if (Math.abs(canvas.clientWidth - box.clientWidth) > 2 || Math.abs(canvas.clientHeight - box.clientHeight) > 2) {
+      try { chart.resize(); } catch (e) {}
+    }
+  }
+  /* 一键重置缩放/平移（手机双指误放大后可恢复） */
+  function addResetButton() {
+    var readout = document.getElementById("chartReadout");
+    if (!readout || document.getElementById("chartResetBtn")) return;
+    var btn = document.createElement("button");
+    btn.id = "chartResetBtn";
+    btn.className = "btn ghost";
+    btn.textContent = "\u21BB \u91CD\u7F6E\u89C6\u56FE";
+    btn.style.cssText = "margin-left:8px;padding:2px 10px;font-size:12px;vertical-align:middle";
+    btn.addEventListener("click", function () {
+      if (!chart) return;
+      try {
+        chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
+        chart.dispatchAction({ type: "dataZoom", start: 0, end: 100, yAxisIndex: 0 });
+      } catch (e) {}
+      try { chart.resize(); } catch (e) {}
+      var readout2 = document.getElementById("chartReadout");
+      if (readout2) readout2.textContent = "\u5DF2\u91CD\u7F6E\u4E3A\u5168\u5C40\u89C6\u56FE";
+    });
+    readout.parentElement.insertBefore(btn, readout.nextSibling);
   }
 
   function bindReadout() {
@@ -188,5 +220,8 @@
     if (!c) return;
     c.setOption(buildOption(lastData), { notMerge: true });
     try { c.resize(); } catch (e) {}
+    selfCheck();
+    /* 容器布局可能晚于首次渲染，延迟再自愈一次 */
+    window.setTimeout(selfCheck, 350);
   };
 })();
