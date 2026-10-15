@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   // 收件邮箱：首次提交后 FormSubmit 会发一封确认邮件到该邮箱，点击激活后正式生效
-  var FEEDBACK_TO = ''; // TODO: 填入作者邮箱后反馈通道即生效
+  var FEEDBACK_TO = '2014797056@qq.com';
   var endpoint = FEEDBACK_TO ? 'https://formsubmit.co/ajax/' + FEEDBACK_TO : '';
 
   var overlay, modal;
