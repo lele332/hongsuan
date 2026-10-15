@@ -77,5 +77,10 @@
       "installerIcon": "icon-matching.ico",
       "uninstallerIcon": "icon-matching.ico"
     }
+  },
+  "scripts": {
+    "release:check": "node scripts/release-check.cjs",
+    "release:notes": "node scripts/generate-notes.cjs",
+    "release:build": "node scripts/release.cjs"
   }
 }

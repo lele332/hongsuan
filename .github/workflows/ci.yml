@@ -28,10 +28,13 @@ jobs:
           node --check portable/preload.js
           node --check portable/libs/hs-libs-loader.js
           node --check portable/tests/core-golden.cjs
+          node --check portable/scripts/release-check.cjs
+          node --check portable/scripts/generate-notes.cjs
+          node --check portable/scripts/release.cjs
       - name: Data validity
         run: |
           node -e "JSON.parse(require('fs').readFileSync('portable/tests/golden-cases.json','utf8')); console.log('golden OK')"
-          node -e "JSON.parse(require('fs').readFileSync('portable/package.json','utf8')); console.log('pkg OK')"
+          node portable/scripts/release-check.cjs
 
   desktop-golden:
     runs-on: windows-latest
