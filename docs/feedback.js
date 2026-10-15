@@ -106,6 +106,11 @@
       })
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json().then(function (d) {
+        if (d && d.success === false) throw new Error(d.message || 'form error');
+        return d;
+      });
+    }).then(function () {
       try { if (window.umami && window.umami.track) window.umami.track('feedback-' + type); } catch (e) {}
       setStatus('✅ 提交成功，感谢你的反馈！', 'ok');
       document.getElementById('fbText').value = '';
