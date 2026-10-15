@@ -46,13 +46,8 @@
     var TODO = function (t) { return P("【待补充：" + t + "】", { color: "C62828" }); };
     var KV = function (k, v) { return new D.Paragraph({ children: [new D.TextRun({ text: k + "：", bold: true, size: 24, font: F }), new D.TextRun({ text: v, size: 24, font: F })], spacing: { after: 80 } }); };
     var mkTable = function (header, rows) {
-      return new D.Table({
-        width: { size: 100, type: D.WidthType.PERCENTAGE },
-        rows: [
-          new D.TableRow({ tableHeader: true, children: header.map(function (h) { return new D.TableCell({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: h, bold: true, size: 21, font: F })] })] }); }) }),
-          rows.map(function (r) { return new D.TableRow({ children: r.map(function (c) { return new D.TableCell({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: String(c), size: 21, font: F })] })] }); }) }); })
-        ]
-      });
+      var allRows = [new D.TableRow({ tableHeader: true, children: header.map(function (h) { return new D.TableCell({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: h, bold: true, size: 21, font: F })] })] }); }) })].concat(rows.map(function (r) { return new D.TableRow({ children: r.map(function (c) { return new D.TableCell({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: String(c), size: 21, font: F })] })] }); }) }); }));
+      return new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE }, rows: allRows });
     };
     var TBL_CAP = function (t) { return new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: t, bold: true, size: 21, font: F })], spacing: { before: 160, after: 80 } }); };
     var PAGEBREAK = function () { return new D.Paragraph({ children: [new D.PageBreak()] }); };
