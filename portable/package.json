@@ -1,0 +1,81 @@
+{
+  "name": "hongsuan",
+  "productName": "泓算",
+  "version": "1.0.14",
+  "description": "泓算 · 桥涵设计流量推求（依据 JTG C30-2015）",
+  "main": "main.js",
+  "author": "lele332",
+  "license": "MIT",
+  "dependencies": {
+    "electron-updater": "6.6.2"
+  },
+  "private": true,
+  "devDependencies": {
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.lele332.hongsuan",
+    "productName": "泓算",
+    "electronVersion": "44.7.2",
+    "electronDist": "../electron_dist/unpacked",
+    "asar": true,
+    "publish": {
+      "provider": "github",
+      "owner": "lele332",
+      "repo": "hongsuan"
+    },
+    "extraResources": [
+      {
+        "from": "python",
+        "to": "python"
+      },
+      {
+        "from": "icon-matching.ico",
+        "to": "icon-matching.ico"
+      }
+    ],
+    "asarUnpack": [
+      "tools/**/*"
+    ],
+    "compression": "maximum",
+    "directories": {
+      "output": "dist",
+      "buildResources": "."
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "app.js",
+      "icon.png",
+      "icon-matching.ico",
+      "libs/**/*",
+      "tools/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon-matching.ico",
+      "artifactName": "泓算安装包.exe"
+    },
+    "nsis": {
+      "perMachine": true,
+      "include": "installer.nsh",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "泓算",
+      "installerHeader": "build/installerHeader.bmp",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/installerSidebar.bmp",
+      "installerIcon": "icon-matching.ico",
+      "uninstallerIcon": "icon-matching.ico"
+    }
+  }
+}

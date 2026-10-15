@@ -1,0 +1,8056 @@
+(() => {
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+  // src/core/phi.ts
+  function gammaln(x) {
+    const g = 7;
+    const c = [
+      0.9999999999998099,
+      676.5203681218851,
+      -1259.1392167224028,
+      771.3234287776531,
+      -176.6150291621406,
+      12.507343278686905,
+      -0.13857109526572012,
+      9984369578019572e-21,
+      15056327351493116e-23
+    ];
+    if (x < 0.5) {
+      return Math.log(Math.PI / Math.sin(Math.PI * x)) - gammaln(1 - x);
+    }
+    const z = x - 1;
+    let a = c[0];
+    const t = z + g + 0.5;
+    for (let i = 1; i < g + 2; i++) a += c[i] / (z + i);
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(a);
+  }
+  function gammaincLower(a, x) {
+    if (x <= 0) return 0;
+    if (x < a + 1) {
+      let ap = a;
+      let sum = 1 / a;
+      let del = sum;
+      for (let n = 1; n < 1e3; n++) {
+        ap += 1;
+        del *= x / ap;
+        sum += del;
+        if (Math.abs(del) < Math.abs(sum) * 1e-16) break;
+      }
+      return sum * Math.exp(-x + a * Math.log(x) - gammaln(a));
+    }
+    const FPMIN = 1e-300;
+    let b = x + 1 - a;
+    let c = 1 / FPMIN;
+    let d = 1 / b;
+    let h = d;
+    for (let i = 1; i < 1e3; i++) {
+      const an = -i * (i - a);
+      b += 2;
+      d = an * d + b;
+      if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = b + an / c;
+      if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-16) break;
+    }
+    const q = Math.exp(-x + a * Math.log(x) - gammaln(a)) * h;
+    return 1 - q;
+  }
+  function gammaQuantile(p, a) {
+    if (!Number.isFinite(a) || a <= 0) throw new Error(`Gamma \u5206\u5E03\u5F62\u72B6\u53C2\u6570 a \u5FC5\u987B\u4E3A\u6B63\uFF0C\u6536\u5230 ${a}`);
+    if (!(p > 0 && p < 1)) throw new Error(`p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    let lo = 0;
+    let hi = Math.max(a + 1, 1);
+    while (gammaincLower(a, hi) < p) {
+      lo = hi;
+      hi *= 2;
+      if (hi > 1e12) throw new Error("gammaQuantile \u4E0A\u754C\u6269\u5F20\u8D85\u9650");
+    }
+    for (let i = 0; i < 200; i++) {
+      const mid = (lo + hi) / 2;
+      if (gammaincLower(a, mid) < p) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-13 * Math.max(hi, 1)) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function norminv(p) {
+    if (!(p > 0 && p < 1)) throw new Error(`p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    const a = [
+      -39.69683028665376,
+      220.9460984245205,
+      -275.9285104469687,
+      138.357751867269,
+      -30.66479806614716,
+      2.506628277459239
+    ];
+    const b = [
+      -54.47609879822406,
+      161.5858368580409,
+      -155.6989798598866,
+      66.80131188771972,
+      -13.28068155288572
+    ];
+    const c = [
+      -0.007784894002430293,
+      -0.3223964580411365,
+      -2.400758277161838,
+      -2.549732539343734,
+      4.374664141464968,
+      2.938163982698783
+    ];
+    const d = [
+      0.007784695709041462,
+      0.3224671290700398,
+      2.445134137142996,
+      3.754408661907416
+    ];
+    const pLow = 0.02425;
+    let q, r;
+    let x;
+    if (p < pLow) {
+      q = Math.sqrt(-2 * Math.log(p));
+      x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    } else if (p <= 1 - pLow) {
+      q = p - 0.5;
+      r = q * q;
+      x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+    } else {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    return x;
+  }
+  function phiPIII(pExceed, Cs) {
+    if (!Number.isFinite(Cs)) throw new Error(`\u504F\u6001\u7CFB\u6570 Cs \u5FC5\u987B\u4E3A\u6709\u9650\u6570\uFF0C\u6536\u5230 ${Cs}`);
+    if (!(pExceed > 0 && pExceed < 1)) throw new Error(`p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${pExceed}`);
+    if (Math.abs(Cs) < 1e-8) return norminv(1 - pExceed);
+    if (Math.abs(Cs) < 0.01) {
+      const z = norminv(1 - pExceed);
+      return z + Cs / 6 * (z * z - 1) + Cs * Cs / 72 * (z * z * z - 3 * z);
+    }
+    if (Cs > 0) {
+      const a = 4 / (Cs * Cs);
+      const g = gammaQuantile(1 - pExceed, a);
+      return Cs / 2 * (g - a);
+    }
+    return -phiPIII(1 - pExceed, -Cs);
+  }
+
+  // src/core/stats.ts
+  function seriesStats(xs) {
+    const n = xs.length;
+    if (n < 3) throw new Error("\u7CFB\u5217\u957F\u5EA6\u81F3\u5C11 3\uFF08\u77E9\u6CD5 Cs \u9700\u8981 n\u22653\uFF09");
+    if (!xs.every((v) => Number.isFinite(v) && v >= 0)) {
+      throw new Error("\u5B9E\u6D4B\u7CFB\u5217\u5FC5\u987B\u4E3A\u6709\u9650\u975E\u8D1F\u6570");
+    }
+    const mean = xs.reduce((s, v) => s + v, 0) / n;
+    if (!(mean > 0)) throw new Error("\u7CFB\u5217\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF0C\u65E0\u6CD5\u8BA1\u7B97\u7EDF\u8BA1\u53C2\u6570");
+    const d = xs.map((v) => v - mean);
+    const s2 = d.reduce((s, v) => s + v * v, 0) / (n - 1);
+    const sigma = Math.sqrt(s2);
+    if (sigma === 0) throw new Error("\u7CFB\u5217\u6052\u5B9A\uFF0C\u65E0\u6CD5\u8BA1\u7B97\u7EDF\u8BA1\u53C2\u6570");
+    const m3 = d.reduce((s, v) => s + v * v * v, 0);
+    const csMoment = n * m3 / ((n - 1) * (n - 2) * Math.pow(sigma, 3));
+    return { n, mean, sigma, cv: sigma / mean, csMoment, kis: xs.map((v) => v / mean) };
+  }
+  function discontinuousStats(input) {
+    const { historicalExtra, measuredDesc, l, N } = input;
+    const n = measuredDesc.length;
+    if (!Number.isInteger(N) || N < 3) {
+      throw new Error(`\u8003\u8BC1\u671F N \u5FC5\u987B\u4E3A\u4E0D\u5C0F\u4E8E 3 \u7684\u6574\u6570\uFF0C\u6536\u5230 ${N}`);
+    }
+    if (![...historicalExtra, ...measuredDesc].every((v) => Number.isFinite(v) && v >= 0)) {
+      throw new Error("\u7279\u5927\u6D2A\u6C34\u4E0E\u5B9E\u6D4B\u7CFB\u5217\u5FC5\u987B\u4E3A\u6709\u9650\u975E\u8D1F\u6570");
+    }
+    if (!Number.isInteger(l) || l < 0 || l > n) {
+      throw new Error(`l \u5FC5\u987B\u662F 0..${n} \u7684\u6574\u6570\uFF08\u5B9E\u6D4B\u7CFB\u5217\u957F\u5EA6 ${n}\uFF09\uFF0C\u6536\u5230 ${l}`);
+    }
+    const inSeries = measuredDesc.slice(0, l);
+    const all = [...historicalExtra, ...inSeries];
+    const a = all.length;
+    if (N <= a) throw new Error(`\u8003\u8BC1\u671F N(${N}) \u5FC5\u987B\u5927\u4E8E\u7279\u5927\u6D2A\u6C34\u603B\u9879\u6570 a(${a})`);
+    const nGen = n - l;
+    if (nGen === 0) throw new Error("\u5B9E\u6D4B\u7CFB\u5217\u4E0D\u80FD\u5168\u90E8\u4E3A\u7279\u5927\u6D2A\u6C34\uFF08n\u2212l = 0\uFF09");
+    const w = (N - a) / nGen;
+    const general = measuredDesc.slice(l);
+    const sumJ = all.reduce((s, v) => s + v, 0);
+    const sumI = general.reduce((s, v) => s + v, 0);
+    const mean = (sumJ + w * sumI) / N;
+    if (mean <= 0) throw new Error("\u5747\u503C\u975E\u6B63\uFF0C\u65E0\u6CD5\u8BA1\u7B97\u7EDF\u8BA1\u53C2\u6570");
+    const sJ2 = all.reduce((s, v) => s + (v - mean) ** 2, 0);
+    const sI2 = general.reduce((s, v) => s + (v - mean) ** 2, 0);
+    const sigma = Math.sqrt((sJ2 + w * sI2) / (N - 1));
+    if (sigma === 0) throw new Error("\u7CFB\u5217\u6052\u5B9A\uFF0C\u65E0\u6CD5\u8BA1\u7B97\u7EDF\u8BA1\u53C2\u6570");
+    const cv = sigma / mean;
+    const sJ3 = all.reduce((s, v) => s + (v - mean) ** 3, 0);
+    const sI3 = general.reduce((s, v) => s + (v - mean) ** 3, 0);
+    const cs = N * (sJ3 + w * sI3) / ((N - 1) * (N - 2) * mean ** 3 * cv ** 3);
+    return { a, n, l, N, mean, sigma, cv, cs };
+  }
+
+  // src/core/empirical.ts
+  function empiricalContinuous(n) {
+    const out = [];
+    for (let m = 1; m <= n; m++) out.push(100 * m / (n + 1));
+    return out;
+  }
+
+  // src/core/points.ts
+  function continuousPoints(series) {
+    const sorted = [...series].sort((a, b) => b - a);
+    const ps = empiricalContinuous(sorted.length);
+    return sorted.map((q, i) => ({ p: ps[i] / 100, q, kind: "meas" }));
+  }
+  function discontinuousPoints(input) {
+    const sorted = [...input.measuredDesc].sort((a2, b) => b - a2);
+    const stats = discontinuousStats({
+      historicalExtra: input.historicalExtra,
+      measuredDesc: sorted,
+      l: input.l,
+      N: input.N
+    });
+    const { n, l, N, a } = stats;
+    const all = [...input.historicalExtra, ...sorted.slice(0, l)].sort((x, y) => y - x);
+    const points = all.map((q, i) => ({
+      p: (i + 1) / (N + 1),
+      q,
+      kind: "hist"
+    }));
+    const pA = a / (N + 1);
+    for (let m = l + 1; m <= n; m++) {
+      points.push({
+        p: pA + (1 - pA) * (m - l) / (n - l + 1),
+        q: sorted[m - 1],
+        kind: "meas"
+      });
+    }
+    return { stats, points };
+  }
+  function sseOfPoints(points, params, phiFn) {
+    let sse = 0;
+    for (const pt of points) {
+      const qTheory = params.mean * (1 + phiFn(pt.p, params.cs) * params.cv);
+      sse += (pt.q - qTheory) ** 2;
+    }
+    return sse;
+  }
+
+  // 离差绝对值和（SAD）——绝对值准则：理论研究配合期望值公式时较平方和准则更优（实用水文统计 第6章）
+  function sadOfPoints(points, params, phiFn) {
+    let sad = 0;
+    for (const pt of points) {
+      const qTheory = params.mean * (1 + phiFn(pt.p, params.cs) * params.cv);
+      sad += Math.abs(pt.q - qTheory);
+    }
+    return sad;
+  }
+
+  // src/core/parse.ts
+  function parseSeries(text) {
+    if (typeof text !== "string") throw new Error("\u7CFB\u5217\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const tokens = text.split(/[\s,，;；]+/).filter(Boolean);
+    const values = [];
+    const ignored = [];
+    for (const tok of tokens) {
+      const v = Number(tok);
+      if (Number.isFinite(v) && v > 0) values.push(v);
+      else ignored.push(tok);
+    }
+    return { values, ignored };
+  }
+
+  // src/core/hTable.generated.ts
+  var H_TABLE_ZONES = {
+    1: {
+      soilI: [[30, 41, 45, 48], [45, 50, 56, 59], [60, 56, 62, 67], [80, 65, 73, 78]],
+      soilII: [[30, 32, 36, 39], [45, 38, 44, 48], [60, 42, 49, 53], [80, 47, 55, 61]],
+      soilIII: [[30, 27, 31, 35], [45, 32, 38, 42], [60, 36, 42, 48], [80, 41, 49, 55]],
+      soilIV: [[30, 20, 25, 28], [45, 26, 30, 33], [60, 28, 34, 39], [80, 32, 39, 46]],
+      soilV: [[30, 13, 18, 19], [45, 15, 20, 24], [60, 16, 23, 28], [80, 18, 25, 32]],
+      soilVI: [[30, 3, 7, 9], [45, 5, 9, 12], [60, 6, 11, 15], [80, 7, 13, 20]]
+    },
+    2: {
+      soilI: [[30, 48, 51, 57], [45, 58, 63, 68], [60, 64, 71, 77], [80, 70, 79, 86]],
+      soilII: [[30, 38, 43, 48], [45, 45, 51, 57], [60, 50, 57, 63], [80, 54, 62, 69]],
+      soilIII: [[30, 32, 37, 43], [45, 38, 45, 51], [60, 42, 50, 56], [80, 42, 55, 61]],
+      soilIV: [[30, 27, 30, 36], [45, 31, 38, 43], [60, 35, 42, 47], [80, 37, 45, 51]],
+      soilV: [[30, 18, 22, 28], [45, 21, 26, 32], [60, 21, 28, 34], [80, 20, 28, 35]]
+    },
+    3: {
+      soilI: [[30, 52, 56, 60], [45, 66, 70, 75], [60, 75, 81, 85], [80, 86, 93, 100]],
+      soilII: [[30, 43, 48, 52], [45, 54, 59, 63], [60, 62, 67, 72], [80, 70, 77, 84]],
+      soilIII: [[30, 37, 41, 46], [45, 48, 52, 57], [60, 56, 61, 64], [80, 64, 70, 75]],
+      soilIV: [[30, 32, 37, 41], [45, 41, 46, 50], [60, 47, 52, 57], [80, 54, 60, 67]],
+      soilV: [[30, 24, 28, 31], [45, 31, 34, 39], [60, 36, 39, 45], [80, 40, 44, 52]],
+      soilVI: [[30, 13, 15, 19], [45, 17, 20, 26], [60, 20, 24, 32], [80, 24, 30, 40]]
+    },
+    4: {
+      soilI: [[30, 52, 56, 60], [45, 64, 70, 78], [60, 73, 83, 94], [80, 84, 97, 109]],
+      soilII: [[30, 44, 48, 52], [45, 54, 62, 68], [60, 61, 72, 82], [80, 72, 82, 95]],
+      soilIII: [[30, 39, 43, 46], [45, 50, 55, 63], [60, 55, 64, 77], [80, 64, 75, 90]],
+      soilIV: [[30, 32, 35, 41], [45, 40, 45, 54], [60, 45, 53, 66], [80, 53, 64, 77]],
+      soilV: [[30, 20, 23, 31], [45, 25, 32, 40], [60, 31, 40, 49], [80, 37, 53, 60]],
+      soilVI: [[30, 12, 16, 21], [45, 14, 21, 28], [60, 16, 25, 33], [80, 18, 30, 41]]
+    },
+    5: {
+      soilI: [[30, 43, 48, 56], [45, 55, 60, 69], [60, 63, 69, 78], [80, 72, 78, 89]],
+      soilII: [[30, 35, 40, 48], [45, 44, 50, 59], [60, 52, 57, 68], [80, 60, 65, 77]],
+      soilIII: [[30, 30, 35, 43], [45, 39, 43, 52], [60, 45, 50, 60], [80, 52, 57, 68]],
+      soilIV: [[30, 24, 27, 35], [45, 31, 34, 44], [60, 36, 41, 51], [80, 42, 47, 59]],
+      soilV: [[30, 14, 17, 24], [45, 19, 23, 31], [60, 23, 27, 37], [80, 26, 32, 42]],
+      soilVI: [[30, 5, 7, 12], [45, 6, 9, 15], [60, 7, 12, 18], [80, 9, 15, 22]]
+    },
+    6: {
+      soilI: [[30, 48, 52, 57], [45, 57, 61, 69], [60, 64, 70, 78], [80, 71, 79, 86]],
+      soilII: [[30, 40, 44, 49], [45, 47, 51, 60], [60, 52, 59, 67], [80, 57, 65, 72]],
+      soilIII: [[30, 35, 39, 43], [45, 41, 46, 52], [60, 46, 51, 58], [80, 50, 56, 64]],
+      soilIV: [[30, 27, 31, 36], [45, 32, 36, 44], [60, 35, 40, 50], [80, 37, 44, 54]],
+      soilV: [[30, 16, 22, 27], [45, 19, 23, 30], [60, 20, 24, 33], [80, 21, 27, 35]],
+      soilVI: [[30, 2, 5, 11], [45, 3, 6, 11], [60, 4, 7, 12], [80, 5, 9, 14]]
+    },
+    7: {
+      soilI: [[30, 54, 60, 66], [45, 68, 75, 83], [60, 76, 86, 95], [80, 85, 96, 105]],
+      soilII: [[30, 46, 52, 59], [45, 57, 66, 74], [60, 64, 74, 84], [80, 71, 82, 94]],
+      soilIII: [[30, 41, 47, 53], [45, 51, 59, 66], [60, 57, 68, 76], [80, 63, 74, 84]],
+      soilIV: [[30, 34, 39, 46], [45, 41, 50, 58], [60, 45, 56, 65], [80, 51, 61, 72]],
+      soilV: [[30, 21, 29, 33], [45, 26, 35, 40], [60, 30, 41, 46], [80, 35, 46, 52]],
+      soilVI: [[30, 9, 17, 19], [45, 10, 19, 24], [60, 12, 20, 26], [80, 13, 23, 30]]
+    },
+    8: {
+      soilI: [[30, 59, 65, 70], [45, 77, 85, 92], [60, 90, 100, 110], [80, 105, 116, 131]],
+      soilII: [[30, 52, 58, 63], [45, 67, 76, 82], [60, 79, 89, 99], [80, 92, 103, 118]],
+      soilIII: [[30, 47, 53, 58], [45, 61, 69, 76], [60, 72, 82, 92], [80, 83, 95, 110]],
+      soilIV: [[30, 39, 45, 49], [45, 51, 59, 66], [60, 61, 70, 80], [80, 72, 82, 96]],
+      soilV: [[30, 27, 34, 39], [45, 36, 45, 53], [60, 45, 53, 65], [80, 56, 63, 79]],
+      soilVI: [[30, 18, 24, 30], [45, 25, 33, 42], [60, 31, 40, 51], [80, 38, 49, 63]]
+    },
+    9: {
+      soilI: [[30, 58, 63, 70], [45, 69, 74, 80], [60, 75, 80, 87], [80, 81, 86, 94]],
+      soilII: [[30, 50, 56, 63], [45, 59, 64, 71], [60, 62, 68, 77], [80, 67, 72, 82]],
+      soilIII: [[30, 46, 51, 57], [45, 53, 58, 64], [60, 56, 62, 69], [80, 59, 66, 73]],
+      soilIV: [[30, 38, 43, 48], [45, 42, 48, 55], [60, 45, 50, 56], [80, 47, 53, 59]],
+      soilV: [[30, 26, 30, 37], [45, 28, 32, 40], [60, 28, 33, 40], [80, 28, 34, 41]],
+      soilVI: [[30, 6, 10, 18], [45, 6, 10, 19], [60, 7, 11, 21], [80, 9, 15, 22]]
+    },
+    10: {
+      soilI: [[30, 43, 46, 52], [45, 54, 57, 64], [60, 60, 64, 72], [80, 67, 71, 79]],
+      soilII: [[30, 35, 38, 44], [45, 43, 46, 54], [60, 48, 51, 60], [80, 53, 57, 65]],
+      soilIII: [[30, 30, 34, 39], [45, 38, 41, 48], [60, 42, 46, 53], [80, 46, 50, 57]],
+      soilIV: [[30, 24, 27, 34], [45, 29, 32, 40], [60, 31, 35, 43], [80, 33, 38, 45]],
+      soilV: [[30, 13, 15, 21], [45, 16, 19, 25], [60, 16, 20, 26], [80, 16, 21, 27]]
+    },
+    11: {
+      soilI: [[30, 40, 43, 45], [45, 50, 56, 55], [60, 57, 61, 64], [80, 64, 68, 73]],
+      soilII: [[30, 31, 34, 38], [45, 39, 43, 48], [60, 45, 49, 55], [80, 50, 55, 62]],
+      soilIII: [[30, 27, 28, 32], [45, 34, 36, 40], [60, 38, 41, 45], [80, 42, 46, 51]],
+      soilIV: [[30, 16, 20, 25], [45, 24, 26, 31], [60, 28, 31, 35], [80, 30, 35, 41]],
+      soilV: [[30, 9, 12, 15], [45, 15, 15, 20], [60, 13, 17, 23], [80, 11, 19, 25]]
+    },
+    12: {
+      soilI: [[30, 48, 53, 59], [45, 58, 62, 71], [60, 65, 70, 78], [80, 72, 78, 84]],
+      soilII: [[30, 41, 45, 51], [45, 48, 52, 61], [60, 53, 58, 67], [80, 58, 64, 73]],
+      soilIII: [[30, 35, 41, 46], [45, 41, 48, 53], [60, 46, 53, 58], [80, 50, 57, 64]],
+      soilIV: [[30, 27, 33, 38], [45, 32, 38, 45], [60, 36, 41, 49], [80, 39, 44, 53]],
+      soilV: [[30, 15, 21, 26], [45, 19, 23, 30], [60, 20, 25, 32], [80, 21, 26, 35]],
+      soilVI: [[30, 2, 5, 10], [45, 2, 5, 10], [60, 3, 6, 11], [80, 4, 7, 12]]
+    },
+    13: {
+      soilI: [[30, 35, 40, 46], [45, 41, 47, 52], [60, 44, 50, 56], [80, 48, 54, 61]],
+      soilII: [[30, 26, 31, 37], [45, 29, 35, 41], [60, 30, 36, 42], [80, 32, 37, 44]],
+      soilIII: [[30, 21, 26, 31], [45, 24, 30, 35], [60, 24, 30, 36], [80, 24, 30, 37]],
+      soilIV: [[30, 14, 20, 25], [45, 15, 21, 26], [60, 15, 20, 26], [80, 14, 20, 27]]
+    },
+    14: {
+      soilI: [[30, 30, 34, 38], [45, 36, 41, 46], [60, 41, 46, 52], [80, 45, 50, 57]],
+      soilII: [[30, 21, 25, 30], [45, 25, 29, 35], [60, 27, 35, 38], [80, 27, 34, 39]],
+      soilIII: [[30, 16, 20, 24], [45, 19, 23, 29], [60, 20, 25, 31], [80, 20, 25, 32]],
+      soilIV: [[30, 3, 14, 17], [45, 6, 16, 21], [60, 8, 17, 22], [80, 9, 15, 22]]
+    },
+    15: {
+      soilI: [[30, 37, 39, 44], [45, 46, 49, 54], [60, 51, 57, 62], [80, 56, 63, 69]],
+      soilII: [[30, 29, 31, 36], [45, 35, 39, 43], [60, 37, 44, 48], [80, 39, 48, 52]],
+      soilIII: [[30, 23, 25, 30], [45, 29, 32, 36], [60, 31, 36, 41], [80, 33, 39, 44]],
+      soilIV: [[30, 17, 19, 23], [45, 20, 24, 29], [60, 22, 27, 33], [80, 22, 29, 35]],
+      soilV: [[30, 10, 13, 15], [45, 9, 16, 19]]
+    },
+    16: {
+      soilI: [[30, 36, 41, 45], [45, 45, 50, 56], [60, 51, 57, 64], [80, 56, 63, 71]],
+      soilII: [[30, 28, 32, 36], [45, 34, 38, 44], [60, 38, 43, 50], [80, 41, 47, 54]],
+      soilIII: [[30, 23, 27, 31], [45, 28, 33, 38], [60, 31, 37, 43], [80, 33, 40, 47]],
+      soilIV: [[30, 16, 21, 25], [45, 20, 26, 30], [60, 22, 28, 34], [80, 24, 31, 37]],
+      soilV: [[30, 9, 13, 18], [45, 10, 15, 21], [60, 3, 15, 21]]
+    },
+    17: {
+      soilI: [[30, 52, 58, 66], [45, 64, 70, 79], [60, 70, 78, 86], [80, 76, 85, 93]],
+      soilII: [[30, 44, 50, 58], [45, 52, 59, 67], [60, 56, 64, 72], [80, 61, 68, 76]],
+      soilIII: [[30, 39, 44, 52], [45, 45, 53, 61], [60, 50, 57, 66], [80, 53, 60, 69]],
+      soilIV: [[30, 32, 32, 45], [45, 37, 45, 53], [60, 39, 48, 56], [80, 42, 50, 59]],
+      soilV: [[30, 24, 29, 38], [45, 28, 34, 43], [60, 28, 35, 44], [80, 26, 32, 42]],
+      soilVI: [[30, 6, 12, 19], [45, 2, 9, 19], [60, 2, 6, 18], [80, 2, 5, 13]]
+    },
+    18: {
+      soilI: [[30, 46, 52, 57], [45, 57, 64, 69], [60, 66, 72, 78], [80, 75, 81, 87]],
+      soilII: [[30, 37, 43, 49], [45, 46, 53, 58], [60, 52, 58, 64], [80, 58, 64, 70]],
+      soilIII: [[30, 32, 37, 43], [45, 40, 46, 52], [60, 46, 52, 57], [80, 51, 57, 64]],
+      soilIV: [[30, 28, 33, 37], [45, 33, 39, 45], [60, 37, 43, 50], [80, 41, 47, 55]],
+      soilV: [[30, 20, 24, 28], [45, 22, 28, 33], [60, 23, 30, 36], [80, 25, 31, 39]],
+      soilVI: [[30, 7, 10, 16], [45, 8, 12, 18], [60, 8, 12, 20], [80, 6, 11, 21]]
+    }
+  };
+
+  // src/core/runoffTable.ts
+  var RUNOFF_TABLE_SCHEMA = "hongrunoff-h-table@2";
+  var FREQ_KEYS = ["p1", "p2", "p4"];
+  var FREQ_PCTS = {
+    p1: 1,
+    p2: 2,
+    p4: 4
+  };
+  function loadRunoffTable(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const t = json;
+    if (t.schema !== RUNOFF_TABLE_SCHEMA) {
+      throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${RUNOFF_TABLE_SCHEMA}\uFF0C\u6536\u5230 ${String(t.schema)}`);
+    }
+    if (typeof t.source !== "string" || !t.source) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 source \u51FA\u5904\u6807\u6CE8");
+    if (typeof t.zones !== "object" || t.zones === null) throw new Error("\u5F84\u6D41\u539A\u5EA6\u8868\u7F3A\u5C11 zones");
+    for (const [zone, soils] of Object.entries(t.zones)) {
+      const zn = Number(zone);
+      if (!Number.isInteger(zn) || zn < 1 || zn > 18) throw new Error(`\u66B4\u96E8\u5206\u533A\u53F7\u5FC5\u987B\u662F 1..18 \u7684\u6574\u6570\uFF0C\u6536\u5230 ${zone}`);
+      for (const [soil, rows] of Object.entries(soils)) {
+        if (!/^soil[I-V]{1,3}$/.test(soil)) throw new Error(`\u571F\u58E4\u7C7B\u522B\u952E\u5FC5\u987B\u662F soilI..soilVI \u5F62\u5F0F\uFF0C\u6536\u5230 ${soil}`);
+        if (!Array.isArray(rows) || rows.length < 2) {
+          throw new Error(`\u5206\u533A ${zone} ${soil} \u81F3\u5C11\u9700\u8981 2 \u884C\uFF08\u03C4 \u6863\uFF09\u624D\u80FD\u63D2\u503C`);
+        }
+        for (const r of rows) {
+          if (!Number.isFinite(r.tau) || r.tau <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\u6570\uFF08min\uFF09");
+          for (const k of FREQ_KEYS) {
+            if (!Number.isFinite(r.h?.[k]) || r.h[k] <= 0) {
+              throw new Error(`\u5206\u533A ${zone} ${soil} \u03C4=${r.tau} \u7684 ${k} \u5F84\u6D41\u539A\u5EA6\u5FC5\u987B\u4E3A\u6B63\u6570`);
+            }
+          }
+        }
+        const taus = rows.map((r) => r.tau);
+        if (new Set(taus).size !== taus.length) throw new Error(`\u5206\u533A ${zone} ${soil} \u5B58\u5728\u91CD\u590D \u03C4 \u6863`);
+      }
+    }
+    return t;
+  }
+  function lerp(a, b, w) {
+    return a + (b - a) * w;
+  }
+  function hAtFreq(row, pct) {
+    const pcts = FREQ_KEYS.map((k) => FREQ_PCTS[k]);
+    for (let i = 0; i < pcts.length; i++) {
+      if (Math.abs(pct - pcts[i]) < 1e-9) return row[FREQ_KEYS[i]];
+    }
+    let iLo = 0, iHi = 1;
+    if (pct >= pcts[pcts.length - 1]) {
+      iLo = pcts.length - 2;
+      iHi = pcts.length - 1;
+    } else {
+      for (let i = 0; i < pcts.length - 1; i++) {
+        if (pct > pcts[i] && pct < pcts[i + 1]) {
+          iLo = i;
+          iHi = i + 1;
+          break;
+        }
+      }
+    }
+    const w = Math.log(pct / pcts[iLo]) / Math.log(pcts[iHi] / pcts[iLo]);
+    return lerp(row[FREQ_KEYS[iLo]], row[FREQ_KEYS[iHi]], w);
+  }
+  function lookupRunoffH(table, zone, soil, freqPct, tauMin) {
+    const soilKey = "soil" + soil.toUpperCase().replace(/[^IV]/g, "");
+    const rows = table.zones[String(zone)]?.[soilKey];
+    if (!rows) throw new Error(`\u5F84\u6D41\u539A\u5EA6\u8868\u4E2D\u6CA1\u6709\u5206\u533A ${zone} / \u571F\u58E4 ${soil} \u7684\u6570\u636E`);
+    if (!Number.isFinite(freqPct) || freqPct <= 0 || freqPct >= 100) {
+      throw new Error(`\u8BBE\u8BA1\u9891\u7387\u5FC5\u987B\u5728 (0,100)% \u4E4B\u95F4\uFF0C\u6536\u5230 ${freqPct}`);
+    }
+    if (!Number.isFinite(tauMin) || tauMin <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4\u5FC5\u987B\u4E3A\u6B63\uFF08min\uFF09");
+    const sorted = [...rows].sort((a, b) => a.tau - b.tau);
+    if (tauMin < sorted[0].tau || tauMin > sorted[sorted.length - 1].tau) {
+      throw new Error(
+        `\u6C47\u6D41\u65F6\u95F4 ${tauMin} min \u8D85\u51FA\u8868\u8303\u56F4\uFF08${sorted[0].tau}~${sorted[sorted.length - 1].tau} min\uFF09\uFF0C\u8BF7\u76F4\u63A5\u67E5\u8868`
+      );
+    }
+    const exact = sorted.find((r) => Math.abs(r.tau - tauMin) < 1e-9);
+    if (exact) {
+      const h0 = hAtFreq(exact.h, freqPct);
+      const onFreqNode = FREQ_KEYS.some((k) => Math.abs(FREQ_PCTS[k] - freqPct) < 1e-9);
+      return { h: Math.round(h0 * 100) / 100, interpolated: !onFreqNode };
+    }
+    let rLo = sorted[0], rHi = sorted[sorted.length - 1];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (tauMin >= sorted[i].tau && tauMin <= sorted[i + 1].tau) {
+        rLo = sorted[i];
+        rHi = sorted[i + 1];
+        break;
+      }
+    }
+    const wTau = (tauMin - rLo.tau) / (rHi.tau - rLo.tau);
+    const h = lerp(hAtFreq(rLo.h, freqPct), hAtFreq(rHi.h, freqPct), wTau);
+    return { h: Math.round(h * 100) / 100, interpolated: true };
+  }
+  function buildFullTable() {
+    const zones = {};
+    for (const [zone, soils] of Object.entries(H_TABLE_ZONES)) {
+      const out = {};
+      for (const [soil, rows] of Object.entries(soils)) {
+        out[soil] = rows.map(([tau, p4, p2, p1]) => ({
+          tau,
+          h: { p1, p2, p4 }
+        }));
+      }
+      zones[zone] = out;
+    }
+    return loadRunoffTable({
+      schema: RUNOFF_TABLE_SCHEMA,
+      source: "JTG/T 3365-02-2020\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B\u9644\u5F55B \u8868B-9\uFF08\u4EA4\u901A\u8FD0\u8F93\u90E8\u516C\u544A2020\u5E74\u7B2C88\u53F7\uFF0C\u653F\u5E9C\u516C\u5F00\u5168\u6587PDF\uFF09",
+      zones
+    });
+  }
+  var RUNOFF_TABLE_FULL = buildFullTable();
+
+  // src/core/auxTables.generated.ts
+  var AUX_PSI_F_BANDS = ["F<10", "10<F<=20", "20<F<=30"];
+  var AUX_PSI_ROWS = [{ "terrain": "\u5E73\u5730", "slope": "1.2", "psi": ["0.05", "0.05", "0.05"] }, { "terrain": "\u5E73\u539F", "slope": "3\uFF0C4\uFF0C6", "psi": ["0.07", "0.06", "0.06"] }, { "terrain": "\u4E18\u9675", "slope": "10\uFF0C14\uFF0C20", "psi": ["0.09", "0.07", "0.06"] }, { "terrain": "\u5C71\u5730", "slope": "27\uFF0C35\uFF0C45", "psi": ["0.10", "0.09", "0.07"] }, { "terrain": "\u5C71\u5CAD", "slope": "60\uFF5E100", "psi": ["0.13", "0.11", "0.08"] }, { "terrain": "", "slope": "100\uFF5E200", "psi": ["0.14", "", ""] }, { "terrain": "", "slope": "200\uFF5E400", "psi": ["0.15", "", ""] }, { "terrain": "", "slope": "400\uFF5E800", "psi": ["0.16", "", ""] }, { "terrain": "", "slope": "800\uFF5E1200", "psi": ["0.17", "", ""] }];
+  var AUX_ZONES = { "1": { "east": "\u7531\u9EC4\u6CB3\u53E3\u8D77 \u81F3\u592A\u884C\u5C71\u4E1C \u9E93", "south": "\u9EC4\u6CB3", "west": "\u4E94\u53F0\u5C71\u3001\u592A\u884C \u5C71", "north": "\u71D5\u5C71\u5C71\u8109", "range": "\u4E3B\u8981\u662F\u592A\u884C\u5C71\u4E1C\u9762\u5C71\u533A\uFF0C \u5305\u62EC\uFF1A\u6CB3\u5317\u897F\u5317\u90E8\uFF0C\u6CB3\u5357 \u897F\u5317\u89D2\uFF0C\u5C71\u897F\u4E1C\u90E8\u4E00\u90E8 \u5206\u3002" }, "2": { "east": "\u9EC4\u6CB3", "south": "\u9EC4\u6CB3", "west": "\u592A\u884C\u5C71\u9E93", "north": "\u6D77\u6CB3", "range": "\u534E\u5317\u5E73\u539F\uFF0C\u5305\u62EC\uFF1A\u6CB3\u5317\u5927 \u90E8\u5206\u3001\u5C71\u4E1C\u9EC4\u6CB3\u4EE5\u5317\u3001\u6CB3 \u5357\u9EC4\u6CB3\u4EE5\u5317\u7684\u5317\u89D2\u4E00\u5C0F \u90E8\u5206\u3002" }, "3": { "east": "\u9EC4\u6D77", "south": "\u6C82\u6CB3", "west": "\u8FD0\u6CB3", "north": "\u9EC4\u6CB3\u3001\u6E24 \u6D77", "range": "\u5C71\u4E1C\u534A\u5C9B\uFF0C\u5305\u62EC\uFF1A\u5C71\u4E1C\u5927 \u90E8\u3001\u6C5F\u82CF\u5317\u90E8\u4E00\u5C0F\u90E8\u5206\uFF0C \u5C71\u4E1C\u897F\u5357\u89D2\u3002" }, "4": { "east": "\u9EC4\u6D77", "south": "\u5929\u76EE\u5C71\u3001 \u9EC4\u5C71\u3001\u5927 \u522B\u5C71\u3001\u5927 \u6D2A\u5C71\u3001\u8346 \u5C71", "west": "\u6B66\u5F53\u5C71\u3001\u5DEB\u5C71", "north": "\u6C82\u6CB3\u3001\u8FD0 \u6CB3\u3001\u9EC4\u6CB3\u3001 \u5D69\u6CB3", "range": "\u6DEE\u6CB3\u6D41\u57DF\u548C\u957F\u6C5F\u4E0B\u6E38\u5E73 \u539F\uFF0C\u5305\u62EC\uFF1A\u6C5F\u82CF\u5168\u90E8\uFF0C\u5B89 \u5FBD\u3001\u6CB3\u5357\u7684\u7EDD\u5927\u90E8\u5206\uFF0C\u6E56 \u5317\u5317\u90E8\u7684\u4E00\u5C0F\u90E8\u5206\u3001\u5C71\u4E1C \u897F\u5357\u89D2\u3002" }, "5": { "east": "\u6B66\u5937\u5C71", "south": "\u5927\u5EBE\u5CAD\u548C \u6CBF\u5E7F\u897F\u5317 \u90E8\u7701\u754C\u5C71 \u8109", "west": "\u6B66\u9675\u5C71\u8109", "north": "\u9EC4\u5C71\u3001\u5927 \u522B\u5C71\u3001\u5927 \u6D2A\u5C71\u3001\u8346 \u5C71", "range": "\u957F\u6C5F\u6D41\u57DF\u4E2D\u6E38\u5E73\u539F\uFF0C\u5305 \u62EC\uFF1A\u6E56\u5357\u5168\u90E8\uFF0C\u6C5F\u897F\u3001\u6E56 \u5317\u4E00\u90E8\u5206\uFF0C\u5B89\u5FBD\u897F\u5357\u89D2\uFF0C \u6D59\u6C5F\u3001\u5E7F\u897F\u4E00\u5C0F\u90E8\u5206\u3002" }, "6": { "east": "\u62EC\u82CD\u5C71\u3001\u6234\u4E91 \u5C71", "south": "\u7F57\u6D6E\u5C71\u3001 \u4E5D\u8FDE\u5C71", "west": "\u6B66\u5937\u5C71\u3001\u5927\u5EBE \u5CAD\u3001\u5317\u6C5F\u897F\u6C5F \u5206\u6C34\u5CAD", "north": "\u5929\u76EE\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u6D59\u6C5F\u3001 \u798F\u5EFA\u3001\u5E7F\u4E1C\u5927\u90E8\u5206\uFF0C\u6C5F\u897F \u4E1C\u5357\u89D2" }, "7": { "east": "\u4E1C\u6D77\u3001\u53F0\u6E7E\u6D77 \u5CE1", "south": "\u97E9\u6C5F\u3001\u4E5D \u9F99\u6C5F\u5206\u6C34 \u5CAD", "west": "\u62EC\u82CD\u5C71\u3001\u6234\u4E91 \u5C71", "north": "\u676D\u5DDE\u6E7E", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u6D59\u6C5F\u3001 \u798F\u5EFA\u4E00\u90E8\u5206" }, "8": { "east": "\u97E9\u6C5F\u3001\u4E5D\u9F99\u6C5F \u5206\u6C34\u5CAD", "south": "\u5357\u6D77", "west": "\u56FD\u754C", "north": "\u7F57\u6D6E\u5C71\u3001 \u4E5D\u8FDE\u5C71\u3001 \u4E91\u5F00\u5C71\u3001 \u5341\u4E07\u5927\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u5E7F\u4E1C \u7701\u5927\u90E8\u5206\uFF0C\u5E7F\u897F\u5357\u90E8\u4E00\u5C0F \u90E8\u5206" }, "9": { "east": "\u5317\u6C5F\u3001\u897F\u6C5F\u5206", "south": "\u4E91 \u5F00 \u5927", "west": "\u6CBF\u7ECF\u5EA6 106", "north": "\u6CBF\u7701\u754C\u5C71", "range": "\u4E1C\u5357\u4E18\u9675\u533A\uFF0C\u5305\u62EC\uFF1A\u5E7F\u897F" }, "10": { "east": "\u6B66\u9675\u5C71\u8109", "south": "\u82D7\u5CAD\u3001\u56FD \u754C", "west": "\u6CBF\u7ECF\u5EA6 107 \u5C71\u8109\uFF0C\u5927\u5A04 \u5C71\uFF0C\u6CBF\u7ECF\u5EA6\u2218 104 \u5C71\u8109", "north": "\u5927\u5DF4\u5C71", "range": "\u4E91\u8D35\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u8D35\u5DDE \u5168\u90E8\u3001\u9655\u897F\u3001\u6E56\u5317\u3001\u56DB\u5DDD\u3001 \u4E91\u5357\u7684\u4E00\u90E8\u5206\u548C\u5E7F\u897F\u5317 \u89D2" }, "11": { "east": "\u6CBF\u7ECF\u5EA6 104 \u5C71\u8109", "south": "\u56FD\u754C", "west": "\u6A2A\u65AD\u5C71 \u2218", "north": "\u7EAC\u5EA628", "range": "\u4E91\u8D35\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u4E91\u5357 \u5927\u90E8\u5206\uFF0C\u56DB\u5DDD\u4E00\u5C0F\u90E8\u5206" }, "12": { "east": "\u2218 \u6CBF\u7ECF\u5EA6 107 \u5C71\u8109 \u2218", "south": "\u5927\u5A04\u5C71", "west": "\u8336\u576A\u5C71\u3001\u909B\u83B1 \u5C71\u3001\u5939\u91D1\u5C71\u3001 \u5927\u76F8\u5CAD", "north": "\u2218 \u7C73\u4ED3\u5C71\u3001 \u6469\u5929\u5CAD", "range": "\u56DB\u5DDD\u76C6\u5730\u533A\uFF0C\u5305\u62EC\uFF1A\u56DB\u5DDD \u5927\u90E8\u5206" }, "13": { "east": "\u5927\u5174\u5B89\u5CAD\u3001\u592A \u884C\u5C71\u3001\u4E94\u53F0 \u5C71\u3001\u6B66\u5F53\u5C71\u3001 \u5DEB\u5C71", "south": "\u5927\u5DF4\u5C71", "west": "\u6D1B\u6CB3\u3001\u6CFE\u6CB3\u53D1 \u6E90\u5C71\u8109\u5206\u6C34 \u5CAD", "north": "\u957F\u57CE", "range": "\u9EC4\u571F\u9AD8\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u5C71\u897F \u5927\u90E8\u5206\uFF0C\u6CB3\u5317\u3001\u9655\u897F\u3001\u7518 \u8083\u7684\u4E00\u90E8\u5206" }, "14": { "east": "\u5927\u5174\u5B89\u5CAD", "south": "\u592A\u884C\u5C71\u3001 \u4E94\u53F0\u5C71", "west": "\u8D3A\u5170\u5C71\u3001\u516D\u76D8 \u6C34", "north": "\u9634\u5C71\u3001\u9521 \u6797\u6D69\u7279\u3001 \u56FD\u754C", "range": "\u5317\u90E8\u9AD8\u539F\u548C\u9EC4\u6CB3\u5CB8\u9AD8\u539F\uFF0C \u5305\u62EC\uFF1A\u5185\u8499\u53E4\u81EA\u6CBB\u533A\u7684\u5927 \u90E8\u5206\uFF0C\u6CB3\u5317\u3001\u5C71\u897F\u3001\u7518\u8083 \u7684\u4E00\u5C0F\u90E8\u5206" }, "15": { "east": "\u5C0F\u5174\u5B89\u5CAD", "south": "\u5927\u3001\u5C0F\u5174 \u5B89\u5CAD\u5357\u9E93", "west": "\u5927\u5174\u5B89\u5CAD", "north": "\u56FD\u754C", "range": "\u9ED1\u9F99\u6C5F\u548C\u5185\u8499\u7684\u4E00\u90E8\u5206" }, "16": { "east": "\u56FD\u754C", "south": "\u56FD\u754C\u3001\u9F99 \u6C5F\u5C71\u3001\u516C \u4E3B\u5CAD\u3001\u53CC \u5C71\u3001\u71D5\u5C71 \u5C71\u8109", "west": "\u5927\u5174\u5B89\u5CAD", "north": "\u56FD\u754C\u3001\u5C0F \u5174\u5B89\u5CAD\u5357 \u9E93", "range": "\u677E\u82B1\u6C5F\u5E73\u539F\uFF0C\u5305\u62EC\uFF1A\u9ED1\u9F99 \u6C5F\u3001\u5409\u6797\u3001\u8FBD\u5B81\u3001\u5185\u8499\u7684 \u4E00\u90E8\u5206" }, "17": { "east": "\u9F99\u6C5F\u5C71\u3001\u516C\u4E3B \u5CAD", "south": "\u5343\u5C71\u3001\u8FBD \u4E1C\u6E7E", "west": "\u5927\u5174\u5B89\u5CAD\u4E1C \u9E93", "north": "\u53CC\u5C71", "range": "\u8FBD\u6CB3\u5E73\u539F\u533A\uFF0C\u5305\u62EC\uFF1A\u8FBD\u5B81 \u7684\u5927\u90E8\u5206\uFF0C\u5409\u6797\u3001\u5185\u8499\u3001 \u6CB3\u5317\u7684\u4E00\u90E8\u5206" }, "18": { "east": "\u9E2D\u7EFF\u6C5F", "south": "\u897F\u671D\u9C9C\u6E7E", "west": "\u65C5\u5927\u3001\u672C\u6EAA\u7684 \u8FDE\u7EBF", "north": "\u9F99\u6C5F\u5C71\u3001 \u5343\u5C71", "range": "\u8FBD\u4E1C\u534A\u5C9B\u533A\uFF0C\u5305\u62EC\uFF1A\u8FBD\u5B81 \u7684\u4E00\u90E8\u5206" } };
+  var AUX_Z = [{ "feature": "\u9AD81m\u4EE5\u4E0B\u5BC6\u8349\uFF0C1.5m\u4EE5\u4E0B\u5E7C\u6797\uFF0C\u7A00\u704C\u6728\u4E1B\uFF0C\u6839\u6D45\u830E\u7EC6\u7684\u65F1\u7530 \u519C\u4F5C\u7269\uFF08\u5982\u9EA6\u7C7B\uFF09", "z": "5" }, { "feature": "\u9AD81m\u4EE5\u4E0A\u5BC6\u8349\uFF0C1.5m\u4EE5\u4E0A\u5E7C\u6797\uFF0C\u704C\u6728\u4E1B\uFF0C\u6839\u6DF1\u830E\u7C97\u7684\u65F1\u7530\u519C \u4F5C\u7269\uFF08\u5982\u9AD8\u7CB1\uFF09\uFF1B\u5C71\u5730\u6C34\u7A3B\u7530\uFF0C\u7ED3\u5408\u6CBB\u7406\uFF0C\u5761\u9762\u5DF2\u521D\u6B65\u63A7\u5236\u8005", "z": "10" }, { "feature": "\u987A\u5761\u5E26\u57C2\u7684\u68AF\u7530\uFF0C \u6BCF\u4E2A0.1\uFF5E0.2m3\uFF0C\uFF1E10\u4E07\u4E2A\uFF0Fkm2\u7684\u9C7C\u9CDE\u5751\uFF0C 0.3m3/m\u5DE6\u53F3\uFF0C\uFF1E5\u4E07\u4E2A\uFF0Fkm2\u7684\u6C34\u5E73\u6C9F \uFF08\u540E\u4E24\u9879\u5728\u9EC4\u571F\u9AD8\u539F\u6C34\u571F\u6D41\u5931\u4E25\u91CD\u5730\u533A\u4E0D\u8003\u8651\uFF09", "z": "10\uFF5E15" }, { "feature": "\u7A00\u6797\uFF0C\u6811\u51A0\u6240\u906E\u76D6\u7684\u9762\u79EF\u5360\u5168\u9762\u79EF\u7684\u767E\u5206\u6BD4\uFF08\u5373\u90C1\u95ED\u5EA6\uFF09\u4E3A40\uFF05 \u4EE5\u4E0B\uFF0C\u7ED3\u5408\u6CBB\u7406\uFF0C\u5761\u9762\u5DF2\u57FA\u672C\u63A7\u5236\u8005", "z": "15" }, { "feature": "\u5E73\u539F\u6C34\u7A3B\u7530", "z": "20" }, { "feature": "\u4E2D\u7B49\u7A20\u5EA6\u6797\uFF08\u90C1\u95ED\u5EA660\uFF05\u5DE6\u53F3\uFF09", "z": "25" }, { "feature": "\u6C34\u5E73\u5E26\u6897\u6216\u5012\u5761\u7684\u68AF\u7530", "z": "20\uFF5E30" }, { "feature": "\u5BC6\u6797\uFF08\u90C1\u95ED\u5EA680\uFF05\u4EE5\u4E0A\uFF09", "z": "35" }, { "feature": "\u963B\u585E\u5730\u3001\u9752\u82D4\u6CE5\u82D4\u5730\u3001\u6D2A\u6C34\u65F6\u671F\u957F\u6709\u519C\u4F5C\u7269\u7684\u8015\u5730", "z": "20\uFF5E40" }];
+  var AUX_BETA = { "distancesKm": ["1", "2", "3", "4", "5", "6", "7", "10"], "plainHilly": ["1", "0.95", "0.90", "0.85", "0.80", "0.75", "0.70", "0.60"], "mountain": ["1", "1", "1", "0.95", "0.90", "0.85", "0.80", "0.70"] };
+  var AUX_GAMMA = { "monsoon": { "25": { "30": "1.0" }, "35": { "30": "0.9", "45": "1.0" }, "50": { "30": "0.8", "45": "0.9", "60": "1.0" }, "100": { "30": "0.8", "45": "0.9", "60": "0.9", "80": "1.0" } }, "northwest": { "5": { "30": "0.9", "45": "1.0" }, "10": { "30": "0.8", "45": "0.9", "60": "0.9", "80": "1.0" }, "20": { "30": "0.7", "45": "0.8", "60": "0.8", "80": "0.9", "100": "0.9", "150": "1.0" }, "35": { "30": "0.6", "45": "0.7", "60": "0.7", "80": "0.8", "100": "0.8", "150": "0.9", "200": "1.0" } } };
+  var AUX_DELTA = { "lakeRatePct": ["5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "60", "70", "80", "90", "100"], "delta": ["0.99", "0.97", "0.96", "0.94", "0.93", "0.91", "0.90", "0.88", "0.87", "0.85", "0.82", "0.79", "0.76", "0.73", "0.70"] };
+
+  // src/core/auxTable.ts
+  function num(s) {
+    if (s == null) return null;
+    const m = /^\d+(?:\.\d+)?$/.exec(s.trim());
+    return m ? Number(s) : null;
+  }
+  function lookupPsi(terrain, fKm2) {
+    if (!Number.isFinite(fKm2) || fKm2 <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const rows = AUX_PSI_ROWS.filter((r) => r.terrain === terrain);
+    if (!rows.length) {
+      throw new Error(`\u5730\u8C8C\u7CFB\u6570\u8868\u4E2D\u6CA1\u6709\u5730\u5F62\u300C${terrain}\u300D\uFF0C\u53EF\u9009\uFF1A${[...new Set(AUX_PSI_ROWS.map((r) => r.terrain))].join("/")}`);
+    }
+    const bandIdx = fKm2 < 10 ? 0 : fKm2 <= 20 ? 1 : fKm2 <= 30 ? 2 : -1;
+    if (bandIdx < 0) throw new Error("\u6C47\u6C34\u9762\u79EF 30 km\xB2 \u4EE5\u4E0A\u4E0D\u9002\u7528\u8868 B-5\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF09");
+    const row = rows[0];
+    const v = num(row.psi[bandIdx]);
+    if (v == null) throw new Error(`\u8BE5\u5730\u5F62\u5728 ${AUX_PSI_F_BANDS[bandIdx]} \u6863\u65E0\u8868\u503C`);
+    return {
+      value: v,
+      exact: true,
+      note: `${terrain}\uFF08\u4E3B\u6CB3\u6C9F\u5761\u5EA6 ${row.slope}\u2030\uFF09\uFF0C${AUX_PSI_F_BANDS[bandIdx]} km\xB2 \u2192 \u03C8=${v}` + (rows.length > 1 ? `\uFF1B\u8BE5\u5730\u5F62\u5171 ${rows.length} \u6863\u5761\u5EA6\u53EF\u9009` : "")
+    };
+  }
+  function lookupTau(fKm2) {
+    if (!Number.isFinite(fKm2) || fKm2 <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const bands = [[10, 30], [20, 45], [30, 80]];
+    for (const [fMax, tau] of bands) {
+      if (fKm2 <= fMax) return { value: tau, exact: true, note: `F=${fKm2} km\xB2 \u2192 \u03C4=${tau} min\uFF08\u8868B-8\uFF09` };
+    }
+    throw new Error("\u6C47\u6C34\u9762\u79EF\u8D85\u8FC7 30 km\xB2\uFF0C\u8868 B-8 \u4E0D\u9002\u7528\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF09");
+  }
+  function lookupZone(zone) {
+    const z = AUX_ZONES[String(zone)];
+    if (!z) throw new Error(`\u66B4\u96E8\u5206\u533A\u8868\u4EC5\u6709 1~18 \u533A\uFF0C\u6536\u5230 ${zone}`);
+    return z;
+  }
+  function allZones() {
+    return AUX_ZONES;
+  }
+  function listZ() {
+    return AUX_Z.map((r) => ({ feature: r.feature, z: r.z }));
+  }
+  function lookupBeta(distanceKm, mountainous) {
+    if (!Number.isFinite(distanceKm) || distanceKm <= 0) throw new Error("\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08km\uFF09");
+    const dists = AUX_BETA.distancesKm.map(Number);
+    const series = mountainous ? AUX_BETA.mountain : AUX_BETA.plainHilly;
+    let idx = 0;
+    for (let i = 0; i < dists.length; i++) if (distanceKm >= dists[i]) idx = i;
+    const v = num(series[idx]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    const exact = Math.abs(distanceKm - dists[idx]) < 1e-9;
+    return {
+      value: v,
+      exact,
+      note: `${mountainous ? "\u5C71\u5730\u53CA\u5C71\u5CAD" : "\u5E73\u539F\u53CA\u4E18\u9675"}\uFF1A\u6C47\u6C34\u9762\u79EF\u91CD\u5FC3\u8DDD\u6DB5\u4F4D ${distanceKm} km \u2192 \u03B2=${v}` + (exact ? "" : `\uFF08\u6309\u4E0D\u5927\u4E8E\u5B9E\u9645\u8DDD\u79BB\u7684 ${dists[idx]} km \u6863\u53D6\u503C\uFF09`)
+    };
+  }
+  function lookupGamma(tauMin, widthKm, northwest) {
+    if (!Number.isFinite(tauMin) || tauMin <= 0) throw new Error("\u6C47\u6D41\u65F6\u95F4\u5FC5\u987B\u4E3A\u6B63\uFF08min\uFF09");
+    if (!Number.isFinite(widthKm) || widthKm <= 0) throw new Error("\u6C47\u6C34\u533A\u957F\u5EA6\u6216\u5BBD\u5EA6\u5FC5\u987B\u4E3A\u6B63\uFF08km\uFF09");
+    const group = northwest ? AUX_GAMMA.northwest : AUX_GAMMA.monsoon;
+    const widths = Object.keys(group).map(Number).sort((a, b) => a - b);
+    let wSel = widths[0];
+    for (const w of widths) if (widthKm >= w) wSel = w;
+    const col = group[String(wSel)] ?? {};
+    const taus = Object.keys(col).map(Number).sort((a, b) => a - b);
+    if (!taus.length) throw new Error("\u8BE5\u5BBD\u5EA6\u6863\u65E0\u8868\u503C");
+    let tSel = taus[taus.length - 1];
+    for (const t of taus) if (t >= tauMin) {
+      tSel = t;
+      break;
+    }
+    const v = num(col[String(tSel)]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    return {
+      value: v,
+      exact: Math.abs(tauMin - tSel) < 1e-9 && Math.abs(widthKm - wSel) < 1e-9,
+      note: `${northwest ? "\u897F\u5317\u548C\u5185\u8499" : "\u5B63\u5019\u98CE\u6C14\u5019"}\u5730\u533A\uFF1A\u5BBD\u5EA6 ${widthKm} km\u3001\u03C4=${tauMin} min \u2192 \u53D6 ${wSel} km / ${tSel} min \u6863 \u03B3=${v}`
+    };
+  }
+  function lookupDelta(lakeRatePct) {
+    if (!Number.isFinite(lakeRatePct) || lakeRatePct < 0) throw new Error("\u6E56\u6CCA\u7387 f \u5FC5\u987B\u4E3A\u975E\u8D1F\u767E\u5206\u6570");
+    const fs = AUX_DELTA.lakeRatePct.map(Number);
+    if (lakeRatePct < fs[0]) {
+      return { value: 1, exact: true, note: `\u6E56\u6CCA\u7387 ${lakeRatePct}% < ${fs[0]}%\uFF0C\u89C4\u8303\u672A\u5217\u8868\uFF0C\u6309\u4E0D\u6298\u51CF\u53D6 \u03B4=1` };
+    }
+    let idx = fs.length - 1;
+    for (let i = 0; i < fs.length; i++) if (lakeRatePct <= fs[i]) {
+      idx = i;
+      break;
+    }
+    const v = num(AUX_DELTA.delta[idx]);
+    if (v == null) throw new Error("\u6298\u51CF\u7CFB\u6570\u8868\u503C\u7F3A\u5931");
+    const exact = Math.abs(lakeRatePct - fs[idx]) < 1e-9;
+    return {
+      value: v,
+      exact,
+      note: `\u6E56\u6CCA\u7387 ${lakeRatePct}% \u2192 \u53D6 ${fs[idx]}% \u6863 \u03B4=${v}` + (exact ? "" : "\uFF08\u5411\u504F\u5B89\u5168\u65B9\u5411\u53D6\u6863\uFF09")
+    };
+  }
+
+  // src/core/calcLog.ts
+  var LOG_MAX = 200;
+  var CalcLog = class {
+    constructor() {
+      __publicField(this, "entries", []);
+    }
+    add(e) {
+      if (!e.module || !e.module.trim()) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u6A21\u5757\u540D");
+      if (!e.results || Object.keys(e.results).length === 0) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u7ED3\u679C");
+      if (!e.basis || !e.basis.trim()) throw new Error("\u8BA1\u7B97\u65E5\u5FD7\u7F3A\u5C11\u89C4\u8303\u4F9D\u636E");
+      const entry = {
+        t: e.t ?? (/* @__PURE__ */ new Date()).toISOString(),
+        module: e.module,
+        inputs: e.inputs ?? {},
+        params: e.params,
+        results: e.results,
+        basis: e.basis
+      };
+      this.entries.push(entry);
+      if (this.entries.length > LOG_MAX) this.entries.splice(0, this.entries.length - LOG_MAX);
+      return entry;
+    }
+    list() {
+      return this.entries;
+    }
+    size() {
+      return this.entries.length;
+    }
+    clear() {
+      this.entries = [];
+    }
+    // 最近 n 条（倒序：新的在前）
+    recent(n) {
+      return this.entries.slice(-n).reverse();
+    }
+    toJSON(indent = 2) {
+      return JSON.stringify({ schema: "hongsuan-calc-log@1", entries: this.entries }, null, indent);
+    }
+    toMarkdown(title = "\u8BA1\u7B97\u65E5\u5FD7") {
+      const lines = [
+        `# ${title}`,
+        "",
+        `> \u751F\u6210\u65F6\u95F4\uFF1A${(/* @__PURE__ */ new Date()).toLocaleString("zh-CN")} \uFF5C \u5171 ${this.entries.length} \u6761`,
+        "",
+        "| \u65F6\u95F4 | \u6A21\u5757 | \u4E3B\u8981\u8F93\u5165 | \u91C7\u7528/\u4E2D\u95F4\u503C | \u7ED3\u679C | \u89C4\u8303\u4F9D\u636E |",
+        "| --- | --- | --- | --- | --- | --- |"
+      ];
+      const fmt2 = (o) => !o ? "\u2014" : Object.entries(o).map(([k, v]) => `${k}=${v}`).join("\uFF1B");
+      for (const e of this.entries) {
+        const time = new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false });
+        lines.push(`| ${time} | ${e.module} | ${fmt2(e.inputs)} | ${fmt2(e.params)} | ${fmt2(e.results)} | ${e.basis} |`);
+      }
+      return lines.join("\n");
+    }
+  };
+  var calcLog = new CalcLog();
+
+  // src/core/errors.ts
+  var HsError = class extends Error {
+    constructor(d) {
+      super(d.message);
+      __publicField(this, "code");
+      __publicField(this, "field");
+      __publicField(this, "value");
+      __publicField(this, "suggestion");
+      __publicField(this, "normRef");
+      this.name = "HsError";
+      this.code = d.code;
+      this.field = d.field;
+      this.value = d.value;
+      this.suggestion = d.suggestion;
+      this.normRef = d.normRef;
+    }
+    toJSON() {
+      const d = { code: this.code, message: this.message };
+      if (this.field !== void 0) d.field = this.field;
+      if (this.value !== void 0) d.value = this.value;
+      if (this.suggestion !== void 0) d.suggestion = this.suggestion;
+      if (this.normRef !== void 0) d.normRef = this.normRef;
+      return d;
+    }
+  };
+
+  // src/core/ssmProfile.ts
+  var KN = { SI: 1, EN: 1.486 };
+  var GRAV = { SI: 9.8, EN: 32.2 };
+  function zAt(pts, x) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (pts[i].x <= x && x <= pts[i + 1].x) {
+        const dx = pts[i + 1].x - pts[i].x;
+        const t = dx !== 0 ? (x - pts[i].x) / dx : 0;
+        return pts[i].z + t * (pts[i + 1].z - pts[i].z);
+      }
+    }
+    return pts[pts.length - 1].z;
+  }
+  function segIntegrate(pts, lo, hi, wse) {
+    const seg = [];
+    for (const p of pts) if (lo - 1e-9 <= p.x && p.x <= hi + 1e-9) seg.push(p);
+    if (seg.length === 0 || seg[0].x > lo + 1e-9) seg.unshift({ x: lo, z: zAt(pts, lo) });
+    if (seg[seg.length - 1].x < hi - 1e-9) seg.push({ x: hi, z: zAt(pts, hi) });
+    let A = 0, P = 0, T = 0;
+    for (let i = 0; i < seg.length - 1; i++) {
+      const s1 = seg[i].x, z1 = seg[i].z, s2 = seg[i + 1].x, z2 = seg[i + 1].z;
+      if (s2 === s1) continue;
+      const d1 = wse - z1, d2 = wse - z2;
+      if (d1 <= 0 && d2 <= 0) continue;
+      if (d1 > 0 && d2 > 0) {
+        A += 0.5 * (d1 + d2) * (s2 - s1);
+        P += Math.hypot(s2 - s1, z2 - z1);
+        T += s2 - s1;
+      } else if (d1 > 0) {
+        const sf = s1 + (s2 - s1) * d1 / (d1 - d2);
+        A += 0.5 * d1 * (sf - s1);
+        P += Math.hypot(sf - s1, wse - z1);
+        T += sf - s1;
+      } else {
+        const sf = s1 + (s2 - s1) * -d1 / (d2 - d1);
+        A += 0.5 * d2 * (s2 - sf);
+        P += Math.hypot(s2 - sf, d2);
+        T += s2 - sf;
+      }
+    }
+    return { A, P, T };
+  }
+  function validateSection(sec) {
+    const fail = (msg, suggestion) => {
+      throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.section.${sec.id}`, message: `\u65AD\u9762 ${sec.id}\uFF1A${msg}`, suggestion: suggestion ?? "\u8BF7\u68C0\u67E5\u65AD\u9762\u6570\u636E" });
+    };
+    if (!Array.isArray(sec.pts) || sec.pts.length < 2) fail("\u6D4B\u70B9\u81F3\u5C11\u9700\u8981 2 \u4E2A");
+    for (const p of sec.pts) if (!Number.isFinite(p.x) || !Number.isFinite(p.z)) fail("\u6D4B\u70B9\u6869\u53F7/\u9AD8\u7A0B\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    for (let i = 1; i < sec.pts.length; i++) if (sec.pts[i].x <= sec.pts[i - 1].x) fail("\u6D4B\u70B9\u6869\u53F7\u5FC5\u987B\u4E25\u683C\u5347\u5E8F", "\u6309\u6869\u53F7\u4ECE\u5C0F\u5230\u5927\u9010\u884C\u8F93\u5165");
+    const x0 = sec.pts[0].x, xE = sec.pts[sec.pts.length - 1].x;
+    if (!(sec.bankL > x0 - 1e-9 && sec.bankL < sec.bankR && sec.bankR < xE + 1e-9)) fail(`\u6EE9\u69FD\u5206\u754C\u6869\u53F7\u9700\u6EE1\u8DB3 ${x0} < bankL < bankR < ${xE}`);
+    for (const [k, v] of [["nLob", sec.nLob], ["nCh", sec.nCh], ["nRob", sec.nRob]])
+      if (!(v > 0) || !Number.isFinite(v)) fail(`\u7CD9\u7387 ${k} \u5FC5\u987B\u4E3A\u6B63\u6570`);
+    for (const [k, v] of [["lenLob", sec.lenLob], ["lenCh", sec.lenCh], ["lenRob", sec.lenRob], ["cExpan", sec.cExpan], ["cContr", sec.cContr]])
+      if (!Number.isFinite(v) || v < 0) fail(`${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6709\u9650\u6570`);
+    if (sec.bridge !== void 0) {
+      const b = sec.bridge;
+      if (!Number.isFinite(b.width) || b.width <= 0) fail("\u6865\u6881 width\uFF08\u6CBF\u6C34\u6D41\u957F\u5EA6\uFF09\u5FC5\u987B\u4E3A\u6B63\u6570");
+      for (const [k, v] of [["cContr", b.cContr], ["cExpan", b.cExpan]])
+        if (!Number.isFinite(v) || v < 0) fail(`\u6865\u6881 ${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6709\u9650\u6570`);
+      if (b.deckZ !== void 0 && !Number.isFinite(b.deckZ)) fail("\u6865\u6881 deckZ\uFF08\u6865\u9762\u5E95\u9AD8\u7A0B\uFF09\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
+  }
+  function sectionProps(sec, wse, units) {
+    validateSection(sec);
+    const kn = KN[units];
+    const x0 = sec.pts[0].x, xE = sec.pts[sec.pts.length - 1].x;
+    const ranges = [
+      { zone: "lob", lo: x0, hi: sec.bankL, n: sec.nLob, len: sec.lenLob },
+      { zone: "ch", lo: sec.bankL, hi: sec.bankR, n: sec.nCh, len: sec.lenCh },
+      { zone: "rob", lo: sec.bankR, hi: xE, n: sec.nRob, len: sec.lenRob }
+    ];
+    const zones = [];
+    for (const r of ranges) {
+      let lo = r.lo, hi = r.hi;
+      for (const im of sec.ineff ?? []) {
+        if (wse < im.z) {
+          if (im.side === "L") lo = Math.max(lo, im.x);
+          else hi = Math.min(hi, im.x);
+        }
+      }
+      const g = hi > lo ? segIntegrate(sec.pts, lo, hi, wse) : { A: 0, P: 0, T: 0 };
+      const K2 = g.A > 1e-9 && g.P > 0 ? kn / r.n * g.A * Math.pow(g.A / g.P, 2 / 3) : 0;
+      zones.push({ zone: r.zone, A: g.A, K: K2, P: g.P, T: g.T });
+    }
+    const A = zones.reduce((s, z) => s + z.A, 0);
+    const K = zones.reduce((s, z) => s + z.K, 0);
+    const P = zones.reduce((s, z) => s + z.P, 0);
+    const T = zones.reduce((s, z) => s + z.T, 0);
+    let alpha = 1;
+    if (K > 0 && A > 0) {
+      const num2 = zones.reduce((s, z) => z.A > 0 ? s + z.K ** 3 / z.A ** 2 : s, 0);
+      alpha = num2 * A * A / K ** 3;
+    }
+    return { A, K, P, T, alpha, zones: [zones[0], zones[1], zones[2]] };
+  }
+  function normalDepthWSE(sec, S0, Q, units) {
+    if (!(S0 > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.boundary.S0", message: "\u8FB9\u754C\u6CB3\u5E95\u6BD4\u964D\u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6B63\u5E38\u6C34\u6DF1\u8FB9\u754C\u9700\u8981\u4E0B\u6E38\u6CB3\u6BB5\u6BD4\u964D S0 > 0" });
+    if (!(Q > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.Q", message: "\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63" });
+    const zmin = Math.min(...sec.pts.map((p) => p.z));
+    const f = (w) => sectionProps(sec, w, units).K * Math.sqrt(S0) - Q;
+    let lo = zmin, hi = zmin + 5;
+    let guard = 0;
+    while (f(hi) < 0 && guard++ < 60) {
+      lo = hi;
+      hi = zmin + (hi - zmin) * 2;
+    }
+    if (f(hi) < 0) throw new HsError({ code: "E_CONVERGE", field: "ssm.boundary", message: `\u65AD\u9762 ${sec.id} \u6B63\u5E38\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650\uFF08K\xB7\u221AS0 \u8FBE\u4E0D\u5230 Q=${Q}\uFF09`, suggestion: "\u68C0\u67E5\u6D41\u91CF\u4E0E\u7CD9\u7387\u662F\u5426\u5408\u7406\uFF08\u7CD9\u7387\u8FC7\u5927\u6216\u6D41\u91CF\u8FC7\u5927\u90FD\u4F1A\u63A8\u9AD8\u6B63\u5E38\u6C34\u6DF1\uFF09" });
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) < 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function stepUpstream(secD, secU, wseD, Q, units, wseGuess) {
+    const g = GRAV[units];
+    const pd = sectionProps(secD, wseD, units);
+    if (!(pd.A > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.wse.${secD.id}`, message: `\u4E0B\u6E38\u65AD\u9762 ${secD.id} \u5728\u6C34\u4F4D ${wseD} \u4E0B\u4E0D\u8FC7\u6C34`, suggestion: "\u63D0\u9AD8\u4E0B\u6E38\u8D77\u59CB\u6C34\u4F4D\uFF08\u6216\u6539\u7528\u6B63\u5E38\u6C34\u6DF1\u8FB9\u754C\uFF09" });
+    const vd = Q / pd.A, hvd = pd.alpha * vd * vd / (2 * g);
+    const zminU = Math.min(...secU.pts.map((p) => p.z));
+    const Ls = [secU.lenLob, secU.lenCh, secU.lenRob];
+    const evaluate = (wseU) => {
+      const pu = sectionProps(secU, wseU, units);
+      if (!(pu.A > 0)) return { r: wseU - (zminU + 0.01) - 1, info: null };
+      const vu = Q / pu.A, hvu = pu.alpha * vu * vu / (2 * g);
+      let wsum = 0, lsum = 0;
+      for (let i = 0; i < 3; i++) {
+        const w = (pd.zones[i].K + pu.zones[i].K) / 2;
+        wsum += w;
+        lsum += w * Ls[i];
+      }
+      const br = secU.bridge;
+      const Lbar = br ? br.width : wsum > 0 ? lsum / wsum : secU.lenCh;
+      const sf = (2 * Q / (pd.K + pu.K)) ** 2;
+      const isExpan = hvu > hvd;
+      const c = br ? isExpan ? br.cExpan : br.cContr : isExpan ? secU.cExpan : secU.cContr;
+      const hL = Lbar * sf + c * Math.abs(hvu - hvd);
+      return { r: wseU - (wseD + hvd - hvu + hL), info: { props: pu, v: vu, hv: hvu, sf, Lbar, hL, c, cKind: isExpan ? "expansion" : "contraction" } };
+    };
+    let wse = wseGuess ?? wseD + 0.5;
+    let info = null;
+    let iters = 0, ok = false;
+    for (; iters < 200; iters++) {
+      const { r, info: inf } = evaluate(wse);
+      info = inf;
+      if (Math.abs(r) < 1e-6) {
+        ok = true;
+        break;
+      }
+      const r2 = evaluate(wse + 0.01).r;
+      const slope = Math.abs(r2 - r) > 1e-12 ? (r2 - r) / 0.01 : 1;
+      let next = wse - r / slope;
+      if (!(zminU - 1 < next && next < zminU + 80)) next = (wse + next) / 2;
+      if (Math.abs(next - wse) < 1e-8) {
+        wse = next;
+        break;
+      }
+      wse = next;
+    }
+    if (!ok) {
+      const { r } = evaluate(wse);
+      ok = Math.abs(r) < 0.01;
+    }
+    if (!ok) {
+      wse = wseD + 0.01;
+      for (let i = 0; i < 500; i++) {
+        iters++;
+        const { r, info: inf } = evaluate(wse);
+        info = inf;
+        if (Math.abs(r) < 1e-6) {
+          ok = true;
+          break;
+        }
+        const next = wse - r;
+        if (!(zminU - 1 < next && next < zminU + 80)) break;
+        if (Math.abs(next - wse) < 1e-9) {
+          wse = next;
+          ok = true;
+          break;
+        }
+        wse = next;
+      }
+    }
+    const fin = evaluate(wse);
+    if (fin.info === null || Math.abs(fin.r) > 0.01) {
+      throw new HsError({
+        code: "E_CONVERGE",
+        field: `ssm.step.${secU.id}`,
+        message: `\u65AD\u9762 ${secU.id} \u80FD\u91CF\u65B9\u7A0B\u8FED\u4EE3\u4E0D\u6536\u655B\uFF08\u6B8B\u5DEE ${fin.r.toFixed(4)}\uFF09`,
+        suggestion: "\u591A\u4E3A\u6025\u6D41\u6216\u6C34\u4F4D\u63A5\u8FD1\u4E34\u754C\uFF1A\u68C0\u67E5\u65AD\u9762\u7CD9\u7387/\u6CB3\u957F/\u6D41\u91CF\u662F\u5426\u5408\u7406\uFF1B\u6025\u6D41\u63A7\u5236\u65AD\u9762\u5E94\u5728\u4E0A\u6E38"
+      });
+    }
+    return { wse, ...fin.info, v: fin.info.v, iters, residual: fin.r };
+  }
+  function ssmProfileRun(sections, opts) {
+    if (sections.length < 1) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.sections", message: "\u81F3\u5C11\u9700\u8981 1 \u4E2A\u65AD\u9762", suggestion: "\u5728\u65AD\u9762\u8868\u4E2D\u6DFB\u52A0\u65AD\u9762" });
+    if (!(opts.Q > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "ssm.Q", message: "\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63" });
+    const g = GRAV[opts.units];
+    const notes = [];
+    const bd = opts.boundary.kind === "normalDepth" ? normalDepthWSE(sections[0], opts.boundary.S0, opts.Q, opts.units) : opts.boundary.wse;
+    const results = [];
+    let maxFr = 0, x = 0;
+    for (let i = 0; i < sections.length; i++) {
+      const sec = sections[i];
+      const isBoundary = i === 0;
+      const st = isBoundary ? { wse: bd, props: sectionProps(sec, bd, opts.units), sf: NaN, hL: NaN, Lbar: NaN, c: void 0, cKind: void 0 } : stepUpstream(sections[i - 1], sec, results[i - 1].wse, opts.Q, opts.units);
+      if (!(st.props.A > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: `ssm.wse.${sec.id}`, message: `\u65AD\u9762 ${sec.id} \u5728\u63A8\u7B97\u6C34\u4F4D\u4E0B\u4E0D\u8FC7\u6C34`, suggestion: "\u68C0\u67E5\u65AD\u9762\u6570\u636E\u6216\u4E0B\u6E38\u8D77\u59CB\u6C34\u4F4D" });
+      const v = opts.Q / st.props.A;
+      const fr = Math.sqrt(v * v * st.props.T / (g * st.props.A));
+      maxFr = Math.max(maxFr, fr);
+      if (sec.bridge?.deckZ !== void 0 && st.wse >= sec.bridge.deckZ && i > 0) {
+        notes.push(`\u65AD\u9762 ${sec.id}\uFF1A\u63A8\u7B97\u6C34\u4F4D ${st.wse.toFixed(2)} \u2265 \u6865\u9762\u5E95\u9AD8\u7A0B ${sec.bridge.deckZ}\uFF0C\u6865\u5B54\u6DF9\u6CA1\uFF08\u5830\u6D41/\u538B\u529B\u6D41\uFF09\uFF0C\u5DF2\u8D85\u51FA\u80FD\u91CF\u6CD5\u9002\u7528\u8303\u56F4\uFF0C\u6210\u679C\u9700\u6309\u5830\u6D41\u516C\u5F0F\u4EBA\u5DE5\u590D\u6838`);
+      }
+      results.push({
+        id: sec.id,
+        x,
+        wse: st.wse,
+        bed: Math.min(...sec.pts.map((p) => p.z)),
+        A: st.props.A,
+        K: st.props.K,
+        T: st.props.T,
+        alpha: st.props.alpha,
+        v,
+        fr,
+        hv: st.props.alpha * v * v / (2 * g),
+        sf: st.sf,
+        hL: st.hL,
+        Lbar: st.Lbar,
+        c: st.c,
+        cKind: st.cKind
+      });
+      if (i > 0) x += sections[i].lenCh;
+    }
+    if (maxFr >= 1) notes.push(`\u65AD\u9762\u6700\u5927 Fr=${maxFr.toFixed(3)} \u2265 1\uFF08\u6025\u6D41\uFF09\uFF1A\u6807\u51C6\u6B65\u957F\u6CD5\u5047\u8BBE\u7F13\u6D41\uFF0C\u6210\u679C\u9700\u4EBA\u5DE5\u590D\u6838`);
+    notes.push(opts.boundary.kind === "normalDepth" ? `\u4E0B\u6E38\u8FB9\u754C\uFF1A\u6B63\u5E38\u6C34\u6DF1\uFF08S0=${opts.boundary.S0}\uFF09\u2192 WSE=${bd.toFixed(3)}` : `\u4E0B\u6E38\u8FB9\u754C\uFF1A\u7ED9\u5B9A\u6C34\u4F4D ${bd}`);
+    return { boundaryWse: bd, sections: results, maxFr, notes };
+  }
+  function parseSsmSections(text) {
+    const sections = [];
+    const num2 = (s, what) => {
+      const v = Number(s);
+      if (!Number.isFinite(v)) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u300C${what}\u300D\u4E0D\u662F\u6709\u6548\u6570\u5B57`, value: s });
+      return v;
+    };
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      if (line.startsWith("[")) {
+        const m = line.match(/^\[([^\]]+)\]\s*(.*)$/);
+        if (!m) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u65AD\u9762\u5934\u683C\u5F0F\u9519\u8BEF\uFF1A${line}`, suggestion: "\u5F62\u5982 [CS1] L=500,400,500 C=0.3,0.1 n=0.05,0.032,0.05 bank=1100,1500" });
+        const rest = m[2];
+        const get = (key) => rest.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`))?.[1].split(",");
+        const L = get("L"), C = get("C"), n = get("n"), bank = get("bank");
+        const ineffStr = rest.match(/(?:^|\s)ineff=([^\s]+)/)?.[1];
+        const bridgeStr = rest.match(/(?:^|\s)bridge=([^\s]+)/)?.[1];
+        if (!n || !bank) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.text", message: `\u65AD\u9762 ${m[1]} \u5934\u7F3A n= \u6216 bank=`, suggestion: "n=\u5DE6\u6EE9,\u6CB3\u69FD,\u53F3\u6EE9\u7CD9\u7387\uFF1Bbank=\u6EE9\u69FD\u5206\u754C\u6869\u53F7" });
+        const ineff = ineffStr ? ineffStr.split(";").map((seg) => {
+          const p = seg.split(",");
+          if (p.length < 3 || p[2] !== "L" && p[2] !== "R") throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `ineff \u683C\u5F0F\u9519\u8BEF\uFF1A${seg}`, suggestion: "\u5F62\u5982 ineff=\u6869\u53F7,\u9AD8\u7A0B,L;\u6869\u53F7,\u9AD8\u7A0B,R" });
+          return { x: num2(p[0], "ineff \u6869\u53F7"), z: num2(p[1], "ineff \u9AD8\u7A0B"), side: p[2] };
+        }) : void 0;
+        const bridge = bridgeStr ? (() => {
+          const p = bridgeStr.split(",");
+          if (p.length < 3 || p.length > 4) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `bridge \u683C\u5F0F\u9519\u8BEF\uFF1A${bridgeStr}`, suggestion: "\u5F62\u5982 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570[,\u6865\u9762\u5E95\u9AD8\u7A0B]" });
+          const b = {
+            width: num2(p[0], "bridge \u6865\u5BBD"),
+            cContr: num2(p[1], "bridge \u6536\u7F29\u7CFB\u6570"),
+            cExpan: num2(p[2], "bridge \u6269\u5F20\u7CFB\u6570")
+          };
+          if (p[3] !== void 0) b.deckZ = num2(p[3], "bridge \u6865\u9762\u5E95\u9AD8\u7A0B");
+          return b;
+        })() : void 0;
+        sections.push({
+          id: m[1].trim(),
+          pts: [],
+          nLob: num2(n[0], "n \u5DE6\u6EE9\u7CD9\u7387"),
+          nCh: num2(n[1], "n \u6CB3\u69FD\u7CD9\u7387"),
+          nRob: num2(n[2], "n \u53F3\u6EE9\u7CD9\u7387"),
+          bankL: num2(bank[0], "bank \u5DE6\u754C"),
+          bankR: num2(bank[1], "bank \u53F3\u754C"),
+          lenLob: num2(L?.[0] ?? "0", "L \u5DE6\u6EE9\u6CB3\u957F"),
+          lenCh: num2(L?.[1] ?? "0", "L \u6CB3\u69FD\u6CB3\u957F"),
+          lenRob: num2(L?.[2] ?? "0", "L \u53F3\u6EE9\u6CB3\u957F"),
+          cExpan: num2(C?.[0] ?? "0.3", "C \u6269\u5F20"),
+          cContr: num2(C?.[1] ?? "0.1", "C \u6536\u7F29"),
+          ineff,
+          bridge
+        });
+        continue;
+      }
+      if (sections.length === 0) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u9996\u884C\u5FC5\u987B\u662F\u65AD\u9762\u5934\uFF08[id] \u2026\uFF09\uFF1A${line}`, suggestion: "\u5F62\u5982 [CS1] L=500,400,500 C=0.3,0.1 n=0.05,0.032,0.05 bank=1100,1500" });
+      const parts = line.split(/[,\s，]+/).filter(Boolean);
+      if (parts.length < 2) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u6D4B\u70B9\u884C\u9700\u8981\u300C\u6869\u53F7,\u9AD8\u7A0B\u300D\u4E24\u4E2A\u6570\uFF1A${line}`, suggestion: "\u4E00\u884C\u53EF\u5199\u591A\u4E2A\u6D4B\u70B9\uFF08\u6570\u5B57\u6210\u5BF9\uFF09\uFF0C\u5982 0,10 100,5 200,10" });
+      if (parts.length % 2 !== 0) throw new HsError({ code: "E_INPUT_TYPE", field: "ssm.text", message: `\u6D4B\u70B9\u884C\u6570\u5B57\u5FC5\u987B\u6210\u5BF9\uFF08\u6869\u53F7,\u9AD8\u7A0B\uFF09\uFF1A${line}`, suggestion: "\u68C0\u67E5\u662F\u5426\u6709\u6F0F\u5199\u7684\u6869\u53F7\u6216\u9AD8\u7A0B" });
+      const pts = sections[sections.length - 1].pts;
+      for (let i = 0; i < parts.length; i += 2)
+        pts.push({ x: num2(parts[i], "\u6D4B\u70B9\u6869\u53F7"), z: num2(parts[i + 1], "\u6D4B\u70B9\u9AD8\u7A0B") });
+    }
+    if (sections.length === 0) throw new HsError({ code: "E_INPUT_MISSING", field: "ssm.text", message: "\u672A\u89E3\u6790\u5230\u4EFB\u4F55\u65AD\u9762", suggestion: "\u6BCF\u6BB5\u4EE5 [\u65AD\u9762id] \u5934\u5F00\u59CB\uFF0C\u968F\u540E\u6BCF\u884C\u4E00\u4E2A\u300C\u6869\u53F7,\u9AD8\u7A0B\u300D\u6D4B\u70B9" });
+    for (const s of sections) validateSection(s);
+    return sections;
+  }
+
+  // src/web/ssmDemo.ts
+  var SSM_DEMO_HECRAS = "[10.00] L=0,0,0 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,16.59\n100,12.59\n200,8.59\n500,8.34\n900,7.59\n1100,6.59\n1215,3.09\n1250,2.49\n1300,0.64\n1350,2.44\n1385,2.69\n1500,6.59\n1680,7.59\n2040,8.34\n2310,8.59\n2400,12.59\n2490,16.59\n\n[10.17] L=800,900,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,18.39\n100,14.39\n200,10.39\n500,10.14\n900,9.39\n1100,8.39\n1215,4.89\n1250,4.29\n1300,2.44\n1350,4.24\n1385,4.49\n1500,8.39\n1680,9.39\n2040,10.14\n2310,10.39\n2400,14.39\n2490,18.39\n\n[10.23] L=400,300,400 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500 ineff=400,14,L;2100,14,R\n0,19\n100,15\n200,11\n500,10.75\n900,10\n1100,9\n1215,5.5\n1250,4.9\n1300,3.05\n1350,4.85\n1385,5.1\n1500,9\n1680,10\n2040,10.75\n2310,11\n2400,15\n2490,19\n\n[10.35] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=875,21.98,L;1500,21.98,R\n0,20.28\n100,16.28\n200,12.28\n500,12.03\n900,11.28\n1100,10.28\n1215,6.78\n1250,6.18\n1300,4.33\n1350,6.13\n1385,6.38\n1500,10.28\n1515.4,10.36\n1700,11.28\n2100,12.03\n2400,12.28\n2500,16.28\n2600,20.28\n\n[10.37] L=70,70,70 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1515.4 ineff=865.4,22.12,L;1515.4,22.12,R bridge=50,1.33,1.33,18\n0,20.42\n100,16.42\n200,12.42\n500,12.17\n900,11.42\n1100,10.42\n1215,6.92\n1250,6.32\n1300,4.47\n1350,6.27\n1385,6.52\n1500,10.42\n1515.4,10.55\n1700,12.12\n2100,12.17\n2400,12.42\n2500,16.42\n2600,20.42\n\n[10.48] L=940,640,940 C=0.8,0.5 n=0.04,0.03,0.04 bank=1100,1500\n0,21.7\n100,17.7\n200,13.7\n500,13.45\n900,12.7\n1100,11.7\n1215,8.2\n1250,7.6\n1300,5.75\n1350,7.55\n1385,7.8\n1500,11.7\n1700,12.7\n2100,13.45\n2400,13.7\n2500,17.7\n2600,21.7\n\n[10.55] L=500,380,500 C=0.5,0.3 n=0.04,0.03,0.04 bank=1100,1500\n0,22.46\n100,18.46\n200,14.46\n500,14.21\n900,13.46\n1100,12.46\n1215,8.96\n1250,8.36\n1300,6.51\n1350,8.31\n1385,8.56\n1500,12.46\n1700,13.46\n2100,14.21\n2400,14.46\n2500,18.46\n2600,22.46\n\n[10.71] L=900,800,900 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,24.06\n100,20.06\n200,16.06\n500,15.81\n900,15.06\n1100,14.06\n1215,10.56\n1250,9.96\n1300,8.11\n1350,9.91\n1385,10.16\n1500,14.06\n1700,15.06\n2100,15.81\n2400,16.06\n2500,20.06\n2600,24.06\n\n[10.90] L=1200,1000,1200 C=0.3,0.1 n=0.04,0.03,0.04 bank=1100,1500\n0,26.06\n100,22.06\n200,18.06\n500,17.81\n900,17.06\n1100,16.06\n1215,12.56\n1250,11.96\n1300,10.11\n1350,11.91\n1385,12.16\n1500,16.06\n1700,17.06\n2100,17.81\n2400,18.06\n2500,22.06\n2600,26.06";
+  var SSM_DEMO_SI = "[CS0 \u4E0B\u6E38] L=0,0,0 C=0.3,0.1 n=0.045,0.028,0.05 bank=1100,1500\n0,16.59\n100,12.59\n400,8.6\n1100,7.2\n1500,6.9\n2300,8.9\n2490,16.59\n\n[CS1] L=520,500,520 C=0.3,0.1 n=0.045,0.028,0.05 bank=1150,1550\n0,17.8\n150,13.4\n1150,7.6\n1550,7.3\n2560,9.5\n2700,17.6\n\n[CS2] L=480,460,480 C=0.3,0.1 n=0.045,0.028,0.05 bank=1120,1520\n0,19.1\n200,14.7\n1120,8.1\n1520,7.9\n2810,10.2\n2950,18.9";
+
+  // src/core/plans.ts
+  var MULTI_SCHEMA = "hongsuan-multiproject@1";
+  function set(obj, path, value) {
+    const keys = path.split(".");
+    let cur = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (typeof cur[k] !== "object" || cur[k] === null) cur[k] = {};
+      cur = cur[k];
+    }
+    cur[keys[keys.length - 1]] = value;
+  }
+  function flatten(obj, prefix = "", out = {}) {
+    if (obj === null || obj === void 0) {
+      out[prefix] = obj;
+      return out;
+    }
+    if (Array.isArray(obj)) {
+      obj.forEach((v, i) => flatten(v, `${prefix}[${i}]`, out));
+      return out;
+    }
+    if (typeof obj === "object") {
+      for (const [k, v] of Object.entries(obj)) {
+        flatten(v, prefix ? `${prefix}.${k}` : k, out);
+      }
+      return out;
+    }
+    out[prefix] = obj;
+    return out;
+  }
+  function createPlan(name, base, current, note) {
+    if (!name.trim()) throw new Error("\u65B9\u6848\u540D\u4E0D\u80FD\u4E3A\u7A7A");
+    const fb = flatten(base), fc = flatten(current);
+    const deltas = {};
+    for (const [k, v] of Object.entries(fc)) {
+      if (fb[k] !== v) deltas[k] = v;
+    }
+    return {
+      id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: name.trim(),
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      note,
+      deltas
+    };
+  }
+  function applyPlan(base, plan) {
+    const out = JSON.parse(JSON.stringify(base));
+    for (const [path, v] of Object.entries(plan.deltas)) set(out, path, v);
+    return out;
+  }
+  function diffPlans(base, a, b) {
+    const sa = flatten(applyPlan(base, a));
+    const sb = flatten(applyPlan(base, b));
+    const keys = /* @__PURE__ */ new Set([...Object.keys(sa), ...Object.keys(sb)]);
+    const rows = [];
+    for (const k of [...keys].sort()) {
+      if (sa[k] !== sb[k]) rows.push({ path: k, a: sa[k], b: sb[k] });
+    }
+    return rows;
+  }
+  function parseMultiProject(raw) {
+    if (typeof raw !== "object" || raw === null) throw new Error("\u591A\u65B9\u6848\u5DE5\u7A0B\u6587\u4EF6\u5185\u5BB9\u975E\u6CD5");
+    const o = raw;
+    if (o.schema !== MULTI_SCHEMA) {
+      throw new Error(`\u4E0D\u652F\u6301\u7684\u5DE5\u7A0B\u683C\u5F0F\uFF1A${String(o.schema)}\uFF08\u5E94\u4E3A ${MULTI_SCHEMA}\uFF09`);
+    }
+    if (typeof o.data !== "object" || o.data === null) throw new Error("\u7F3A\u5C11\u5171\u4EAB\u6570\u636E data");
+    if (!Array.isArray(o.plans)) throw new Error("plans \u5FC5\u987B\u4E3A\u6570\u7EC4");
+    return o;
+  }
+
+  // src/core/bridgeOpening.ts
+  var REACH_TABLE = {
+    stable: {
+      label: "\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF09",
+      Kq: 0.84,
+      n3: 0.9,
+      applies: "\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u6CB3\u6BB5"
+    },
+    substable: {
+      label: "\u6B21\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF09",
+      Kq: 0.95,
+      n3: 0.87,
+      applies: "\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5"
+    },
+    unstable: {
+      label: "\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u6EE9\u3001\u69FD\u53EF\u5206\uFF09",
+      Kq: 0.69,
+      n3: 1.59,
+      applies: "\u6EE9\u3001\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5"
+    }
+  };
+  function minBridgeOpening(input) {
+    const { Qp, Qc, Bc, reach } = input;
+    const warnings = [];
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    const coef = REACH_TABLE[reach];
+    if (!coef) throw new Error(`\u6CB3\u6BB5\u7C7B\u578B\u5FC5\u987B\u662F stable / substable / unstable\uFF0C\u6536\u5230 ${String(reach)}`);
+    const ratio = Qp / Qc;
+    const Qt = Qp - Qc;
+    if (Qt < 0) {
+      warnings.push("\u6CB3\u6EE9\u6D41\u91CF Qp\u2212Qc \u4E3A\u8D1F\uFF1A\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u91CF\u4E0E\u6CB3\u69FD\u6D41\u91CF\uFF08\u901A\u5E38 Qp \u5E94\u5927\u4E8E Qc\uFF09");
+    }
+    if (ratio > 3) {
+      warnings.push(`Qp/Qc=${ratio.toFixed(2)} \u504F\u5927\uFF0C\u6865\u5B54\u5C06\u663E\u8457\u538B\u7F29\u6CB3\u6EE9\uFF0C\u5E94\u590D\u6838\u6CB3\u6BB5\u5206\u7C7B\u4E0E\u51B2\u5237\u5F71\u54CD`);
+    }
+    if (reach === "unstable" && ratio > 2) {
+      warnings.push("\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u5BF9\u6D41\u91CF\u6BD4\u654F\u611F\uFF08n3=1.59\uFF09\uFF0C\u5EFA\u8BAE\u7ED3\u5408\u6CB3\u5E8A\u6F14\u53D8\u5206\u6790\u7EFC\u5408\u786E\u5B9A\u6865\u957F");
+    }
+    const Lj = coef.Kq * Math.pow(ratio, coef.n3) * Bc;
+    return {
+      Lj: Math.round(Lj * 100) / 100,
+      Kq: coef.Kq,
+      n3: coef.n3,
+      Qt: Math.round(Qt * 100) / 100,
+      ratio: Math.round(ratio * 1e4) / 1e4,
+      warnings
+    };
+  }
+  function wideOpening(p) {
+    const { Qp, Qc, Bc } = p;
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u76F4\u63A5\u5F15\u7528\u9002\u7EBF\u7ED3\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQc", value: Qc, message: "\u6CB3\u69FD\u6D41\u91CF Qc \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u69FD\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opBc", value: Bc, message: "\u6CB3\u69FD\u5BBD\u5EA6 Bc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u53D6\u8BBE\u8BA1\u6C34\u4F4D\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    const Qt = p.Qt !== void 0 ? p.Qt : Qp - Qc;
+    if (!(Qt > 0)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", message: "\u5BBD\u6EE9\u6CB3\u6BB5\u8981\u6C42\u6CB3\u6EE9\u6D41\u91CF Qt \u4E3A\u6B63\uFF08Qt = Qp \u2212 Qc\uFF09", suggestion: "\u5BBD\u6EE9\u6CB3\u6BB5\u6CB3\u6EE9\u5E94\u901A\u8FC7\u660E\u663E\u6D41\u91CF\uFF0C\u8BF7\u6838\u5BF9 Qp \u4E0E Qc", normRef: "JTG C30\u20142015 7.2.1-3" });
+    const qc = Qc / Bc;
+    const beta = 1.19 * Math.pow(Qc / Qt, 0.1);
+    const Lj = Qp / (beta * qc);
+    return { Lj, beta, qc, Qt };
+  }
+  function indistinguishableOpening(p) {
+    const { Qp, Q2pct, Qmean, d50 } = p;
+    if (!Number.isFinite(Qp) || Qp <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.opQp", value: Qp, message: "\u8BBE\u8BA1\u6D41\u91CF Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u5F15\u7528\u4E0A\u6E38\u6210\u679C", normRef: "JTG C30\u20142015 \u7B2C7.2.1\u6761" });
+    if (!Number.isFinite(Q2pct) || Q2pct <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indQ2", value: Q2pct, message: "\u9891\u7387 2% \u7684\u6D2A\u6C34\u6D41\u91CF Q2% \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u6309\u9002\u7EBF\u7ED3\u679C\u53D6 P=2% \u7684\u6D41\u91CF\uFF0850 \u5E74\u4E00\u9047\uFF09", normRef: "JTG C30\u20142015 7.2.1-5" });
+    if (!Number.isFinite(Qmean) || Qmean <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indQm", value: Qmean, message: "\u5E74\u6700\u5927\u6D41\u91CF\u5E73\u5747\u503C Q\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u6D41\u91CF\u7CFB\u5217\u77E9\u6CD5\u5747\u503C\u53D6\u5F97\uFF08\u9002\u7EBF\u91C7\u7528\u7684 Q\u0304\uFF09", normRef: "JTG C30\u20142015 7.2.1-6" });
+    if (!Number.isFinite(d50) || d50 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.open.indD50", value: d50, message: "\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6CE8\u610F\u5355\u4F4D\u662F\u7C73\uFF08\u5982 10mm \u5E94\u586B 0.010\uFF09", normRef: "JTG C30\u20142015 7.2.1-6" });
+    const B0 = 16.07 * Math.pow(Qmean, 0.24) / Math.pow(d50, 0.3);
+    const Cp = Math.pow(Qp / Q2pct, 0.33);
+    const Lj = Cp * B0;
+    return { Lj, B0, Cp };
+  }
+
+  // src/core/clayScour.ts
+  function clayGeneralScour(p) {
+    const { A, Q, mu, B, hmax, havg, IL, part } = p;
+    if (!(A >= 1 && A <= 1.2)) {
+      throw new HsError({
+        code: "E_INPUT_RANGE",
+        field: "state.cscour.cA",
+        value: A,
+        message: `\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A=${A} \u5E94\u5728 1.0~1.2`,
+        suggestion: "\u4E00\u822C\u53D6 1.0~1.2\uFF0C\u53D8\u8FC1\u3001\u6E38\u8361\u3001\u5BBD\u6D45\u6CB3\u6BB5\u4E0D\u8D85\u8FC7 1.8\uFF08\u6309\u89C4\u8303 8.3.1\uFF09",
+        normRef: "JTG C30\u20142015 8.3.2"
+      });
+    }
+    if (!(IL >= 0.16 && IL <= 1.19)) {
+      throw new HsError({
+        code: "E_INPUT_RANGE",
+        field: "state.cscour.cIL",
+        value: IL,
+        message: `\u6DB2\u6027\u6307\u6570 I_L=${IL} \u8D85\u51FA\u9002\u7528\u8303\u56F4 0.16~1.19`,
+        suggestion: "\u7531\u51B2\u5237\u5751\u8303\u56F4\u5185\u9ECF\u6027\u571F\u7684\u6DB2\u9650\u3001\u5851\u9650\u4E0E\u5929\u7136\u542B\u6C34\u91CF\u8BA1\u7B97\uFF08I_L = (w\u2212wP)/(wL\u2212wP)\uFF09",
+        normRef: "JTG C30\u20142015 8.3.2"
+      });
+    }
+    if (!Number.isFinite(Q) || Q <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cQ", value: Q, message: "\u901A\u8FC7\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u6CB3\u69FD\u7528 Q\u2082\u3001\u6CB3\u6EE9\u7528 Q\u2081\uFF08\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", suggestion: "\u6309\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84\u67E5\u8868 8.3.1-1", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
+    if (!Number.isFinite(B) || B <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cB", value: B, message: "\u8FC7\u6C34\u51C0\u5BBD\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6CB3\u69FD\u7528 Bcj\u3001\u6CB3\u6EE9\u7528 Btj\uFF08\u6865\u5B54\u8FC7\u6C34\u51C0\u5BBD\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(hmax) || hmax <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cHmax", value: hmax, message: "\u6700\u5927\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    if (!Number.isFinite(havg) || havg <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.cscour.cHavg", value: havg, message: "\u5E73\u5747\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.2" });
+    const exp = part === "channel" ? 5 / 8 : 6 / 7;
+    const numerator = A * (Q / (mu * B)) * Math.pow(hmax / havg, 5 / 3) / (0.33 * (1 / IL));
+    const hp = Math.pow(numerator, exp);
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      depth: Math.round((hp - hmax) * 1e3) / 1e3,
+      exponent: part === "channel" ? "5/8\uFF08\u6CB3\u69FD\uFF09" : "6/7\uFF08\u6CB3\u6EE9\uFF09"
+    };
+  }
+
+  // src/core/abutmentScour.ts
+  var VH1_BANDS = [
+    [0.05, 0.25, 0.35, 0.32],
+    // 细沙
+    [0.25, 0.5, 0.32, 0.4],
+    // 中沙
+    [0.5, 2, 0.4, 0.6],
+    // 粗沙
+    [2, 5, 0.6, 0.9],
+    // 圆砾小
+    [5, 10, 0.9, 1.2],
+    // 圆砾中
+    [10, 20, 1.2, 1.5],
+    // 圆砾大
+    [20, 40, 1.5, 2],
+    // 卵石小
+    [40, 60, 2, 2.3],
+    // 卵石中
+    [60, 200, 2.3, 3.6],
+    // 卵石大
+    [200, 400, 3.6, 4.7],
+    // 漂石小
+    [400, 800, 4.7, 6]
+    // 漂石中
+  ];
+  function vH1Of(d50) {
+    if (!Number.isFinite(d50) || d50 <= 0) {
+      throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpD50", value: d50, message: "\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84\u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", normRef: "JTG C30\u20142015 \u88688.3.1-3" });
+    }
+    if (d50 > 800) return { vH1: 6, band: `\u6F02\u77F3\u5927\uFF08d\u0304>${d50}mm > 800\uFF09\uFF1AvH1 > 6.00\uFF0C\u6309 6.00 \u4FDD\u5B88\u53D6` };
+    for (const [lo, hi, vlo, vhi] of VH1_BANDS) {
+      if (d50 >= lo && d50 <= hi) {
+        const t = hi > lo ? (Math.log(d50) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) : 0;
+        const vH1 = vlo + (vhi - vlo) * t;
+        const name = bandName(lo, hi);
+        return { vH1, band: `${name}\uFF08d\u0304=${d50}mm \u2208 [${lo}, ${hi}]\uFF09` };
+      }
+    }
+    return { vH1: 0.35, band: `d\u0304=${d50}mm \u5C0F\u4E8E\u8868\u5217\u6700\u5C0F\u6863 0.05\uFF0C\u6309\u7EC6\u6C99\u4E0B\u9650 0.35 \u4FDD\u5B88\u53D6\uFF08\u5EFA\u8BAE\u4EBA\u5DE5\u590D\u6838\uFF09` };
+  }
+  function bandName(lo, hi) {
+    const m = {
+      "0.05-0.25": "\u7EC6\u6C99",
+      "0.25-0.5": "\u4E2D\u6C99",
+      "0.5-2": "\u7C97\u6C99",
+      "2-5": "\u5706\u783E\uFF08\u5C0F\uFF09",
+      "5-10": "\u5706\u783E\uFF08\u4E2D\uFF09",
+      "10-20": "\u5706\u783E\uFF08\u5927\uFF09",
+      "20-40": "\u5375\u77F3\uFF08\u5C0F\uFF09",
+      "40-60": "\u5375\u77F3\uFF08\u4E2D\uFF09",
+      "60-200": "\u5375\u77F3\uFF08\u5927\uFF09",
+      "200-400": "\u6F02\u77F3\uFF08\u5C0F\uFF09",
+      "400-800": "\u6F02\u77F3\uFF08\u4E2D\uFF09"
+    };
+    return m[`${lo}-${hi}`] ?? "\u975E\u9ECF\u6027\u571F";
+  }
+  function floodplainScour(p) {
+    const { A, Qt, mu, Btj, htm, htq, d50 } = p;
+    if (!Number.isFinite(A) || A <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpA", value: A, message: "\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A \u5FC5\u987B\u4E3A\u6B63", normRef: "JTG C30\u20142015 8.3.1" });
+    if (!Number.isFinite(Qt) || Qt <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpQt", value: Qt, message: "\u6CB3\u6EE9\u6D41\u91CF Qt \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u7531\u65AD\u9762\u6D41\u91CF\u5206\u914D\u6C42\u5F97\u6CB3\u6EE9\u90E8\u5206\u6D41\u91CF", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
+    if (!Number.isFinite(Btj) || Btj <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpBtj", value: Btj, message: "\u6CB3\u6EE9\u6865\u5B54\u51C0\u957F Btj \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(htm) || htm <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpHtm", value: htm, message: "\u6CB3\u6EE9\u6700\u5927\u6C34\u6DF1 htm \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    if (!Number.isFinite(htq) || htq <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.fp.fpHtq", value: htq, message: "\u6CB3\u6EE9\u5E73\u5747\u6C34\u6DF1 htq \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.3.1-5" });
+    const { vH1, band } = vH1Of(d50);
+    const hp = Math.pow(A * (Qt / (mu * Btj)) * Math.pow(htm / htq, 5 / 3) / vH1, 5 / 6);
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      depth: Math.round((hp - htm) * 1e3) / 1e3,
+      vH1,
+      band
+    };
+  }
+  function abutmentScour1(p) {
+    const { v, h, Az, CA, alpha } = p;
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abV", value: v, message: "\u5929\u7136\u6CB3\u9053\u5E73\u5747\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(h) || h <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abH", value: h, message: "\u5929\u7136\u6CB3\u9053\u5E73\u5747\u6C34\u6DF1 h \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(Az) || Az <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abAz", value: Az, message: "\u6865\u53F0\u3001\u8DEF\u5824\u963B\u6C34\u9762\u79EF Az \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB2\uFF09", normRef: "JTG C30\u20142015 8.4.3-1" });
+    if (!Number.isFinite(CA) || CA <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abCA", value: CA, message: "\u6865\u53F0\u5F62\u72B6\u7CFB\u6570 CA \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u6865\u53F0\u5F62\u5F0F\u53D6\u7528\uFF08\u5982 U \u578B 0.95\uFF09", normRef: "JTG C30\u20142015 8.4.3" });
+    if (!(alpha > 0 && alpha <= 90)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab.abAlpha", value: alpha, message: "\u6865\u53F0\u4E0E\u6C34\u6D41\u4EA4\u89D2 \u03B1 \u5E94\u5728 (0\xB0, 90\xB0]", normRef: "JTG C30\u20142015 8.4.3" });
+    const Fr = v * v / (9.81 * h);
+    const Calpha = Math.pow(alpha / 90, 0.15);
+    const hs = 1.95 * Math.pow(Fr, 0.2) * Math.pow(Az, 0.5) * CA * Calpha;
+    return { hs: Math.round(hs * 1e3) / 1e3, Fr: Math.round(Fr * 1e3) / 1e3, Calpha };
+  }
+  function abutmentScour2(p) {
+    const { Kxi, alpha, hp, l, d0, v, v0s } = p;
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abKxi", value: Kxi, message: "\u53F0\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u8868 8.4.3 \u4F9D\u53F0\u5F62\u53D6\u7528\uFF08\u672C\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF09", normRef: "JTG C30\u20142015 \u88688.4.3" });
+    if (!(alpha > 0 && alpha <= 90)) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abAlpha", value: alpha, message: "\u4EA4\u89D2 \u03B1 \u5E94\u5728 (0\xB0, 90\xB0]", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(hp) || hp <= 0) throw new HsError({ code: "E_DEPENDENCY", field: "state.ab2.abHp", value: hp, message: "\u9700\u8981\u6865\u53F0\u5904\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp", suggestion: "\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(l) || l <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abL", value: l, message: "\u5782\u76F4\u4E8E\u6C34\u6D41\u6D41\u5411\u7684\u6865\u53F0\u957F\u5EA6 l \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(d0) || d0 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abD0", value: d0, message: "\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d0 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV", value: v, message: "\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (!Number.isFinite(v0s) || v0s < 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV0s", value: v0s, message: "\u8D77\u51B2\u6D41\u901F v'0 \u5E94 \u2265 0\uFF08m/s\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    if (v <= v0s) throw new HsError({ code: "E_INPUT_RANGE", field: "state.ab2.abV", value: v, message: `\u884C\u8FD1\u6D41\u901F v=${v} \u672A\u8D85\u8FC7\u8D77\u51B2\u6D41\u901F v'0=${v0s}\uFF0C\u4E0D\u4EA7\u751F\u6865\u53F0\u5C40\u90E8\u51B2\u5237`, suggestion: "\u7ED3\u679C\u53EF\u53D6 hb = 0\uFF08\u4E0D\u51B2\u5237\uFF09", normRef: "JTG C30\u20142015 8.4.3-2" });
+    const kalpha = Math.pow(alpha / 90, 0.2);
+    const ratio = hp / d0;
+    const dexp = ratio <= 500 ? -0.15 : -0.1;
+    const hb = 1.17 * Kxi * kalpha * hp * Math.pow(l / hp, 0.6) * Math.pow(d0 / hp, dexp) * Math.pow((v - v0s) ** 2 / (9.81 * hp), 0.15);
+    return {
+      hb: Math.round(hb * 1e3) / 1e3,
+      kalpha,
+      exponentNote: `hp/d0 = ${ratio.toFixed(1)} ${ratio <= 500 ? "\u2264 500\uFF0C\u6307\u6570 \u22120.15" : "> 500\uFF0C\u6307\u6570 \u22120.10"}`
+    };
+  }
+
+  // src/core/burialTable.ts
+  var DEPTH_STOPS = [3, 5, 10, 15, 20];
+  var DELTA_MAJOR = [1.5, 2, 2.5, 3, 3.5];
+  var DELTA_GRAND = [2, 2.5, 3, 3.5, 4];
+  function burialDelta(totalScour2, cls) {
+    if (!Number.isFinite(totalScour2)) {
+      throw new HsError({ code: "E_INPUT_FINITE", field: "state.ts.tsTotal", value: totalScour2, message: "\u603B\u51B2\u5237\u6DF1\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C\uFF08m\uFF09", normRef: "JTG C30\u20142015 \u88688.6.2" });
+    }
+    if (totalScour2 < 0) {
+      throw new HsError({ code: "E_INPUT_RANGE", field: "state.ts.tsTotal", value: totalScour2, message: "\u603B\u51B2\u5237\u6DF1\u5EA6\u4E0D\u80FD\u4E3A\u8D1F\uFF08m\uFF09", normRef: "JTG C30\u20142015 \u88688.6.2" });
+    }
+    const table = cls === "grand" ? DELTA_GRAND : DELTA_MAJOR;
+    const label = cls === "grand" ? "\u7279\u5927\u6865" : "\u5927\u6865\u3001\u4E2D\u6865\u3001\u5C0F\u6865";
+    if (totalScour2 <= DEPTH_STOPS[0]) {
+      return { delta: table[0], band: `\u603B\u51B2\u5237 ${totalScour2.toFixed(2)} m \u2264 3 m\uFF0C\u6309\u9996\u6863`, interpolated: false };
+    }
+    if (totalScour2 >= DEPTH_STOPS[DEPTH_STOPS.length - 1]) {
+      return {
+        delta: table[table.length - 1],
+        band: `\u603B\u51B2\u5237 ${totalScour2.toFixed(2)} m \u2265 20 m\uFF08\u8D85\u51FA\u8868\u5217\u6700\u5927\u6863\uFF0C\u6309\u672B\u6863\uFF1B\u8D44\u6599\u65E0\u628A\u63E1\u65F6\u53EF\u9002\u5F53\u52A0\u5927\uFF09`,
+        interpolated: false
+      };
+    }
+    for (let i = 0; i < DEPTH_STOPS.length - 1; i++) {
+      const lo = DEPTH_STOPS[i], hi = DEPTH_STOPS[i + 1];
+      if (totalScour2 >= lo && totalScour2 <= hi) {
+        const t = (totalScour2 - lo) / (hi - lo);
+        const delta = table[i] + (table[i + 1] - table[i]) * t;
+        return {
+          delta: Math.round(delta * 100) / 100,
+          band: `${label}\uFF0C${lo}~${hi} m \u6863\u95F4\u63D2\u503C`,
+          interpolated: true
+        };
+      }
+    }
+    throw new HsError({ code: "E_INTERNAL", message: "\u88688.6.2 \u63D2\u503C\u5206\u652F\u672A\u8986\u76D6" });
+  }
+
+  // src/core/catchment.ts
+  function polygonAreaPx(pts) {
+    if (!Array.isArray(pts) || pts.length < 3) return 0;
+    let s = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) {
+        throw new Error("\u5750\u6807\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+      }
+      s += a.x * b.y - b.x * a.y;
+    }
+    return Math.abs(s) / 2;
+  }
+  function polylineLengthPx(pts) {
+    if (!Array.isArray(pts) || pts.length < 2) return 0;
+    let d = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const dx = pts[i + 1].x - pts[i].x, dy = pts[i + 1].y - pts[i].y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw new Error("\u5750\u6807\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+      d += Math.hypot(dx, dy);
+    }
+    return d;
+  }
+  function lonLatToWorldPx(p, z) {
+    if (!Number.isFinite(p.lon) || !Number.isFinite(p.lat)) throw new Error("\u7ECF\u7EAC\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+    if (!Number.isFinite(z) || z < 1 || z > 18) throw new Error("\u7F29\u653E\u7EA7\u522B z \u5E94\u5728 1~18");
+    const n = Math.pow(2, z) * 256;
+    const lat = Math.max(-85.05112878, Math.min(85.05112878, p.lat));
+    const x = (p.lon + 180) / 360 * n;
+    const s = Math.sin(lat * Math.PI / 180);
+    const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n;
+    return { x, y };
+  }
+  function worldPxToLonLat(x, y, z) {
+    if (![x, y, z].every(Number.isFinite)) throw new Error("\u50CF\u7D20\u5750\u6807\u4E0E\u7F29\u653E\u7EA7\u522B\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C");
+    const n = Math.pow(2, z) * 256;
+    const lon = x / n * 360 - 180;
+    const e = Math.exp((0.5 - y / n) * 4 * Math.PI);
+    const lat = Math.asin((e - 1) / (e + 1)) * 180 / Math.PI;
+    return { lon, lat };
+  }
+  function haversineKm(a, b) {
+    const R = 6371.0088;
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLon = (b.lon - a.lon) * Math.PI / 180;
+    const la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function polylineLengthKm(pts) {
+    if (!Array.isArray(pts) || pts.length < 2) return 0;
+    let d = 0;
+    for (let i = 0; i < pts.length - 1; i++) d += haversineKm(pts[i], pts[i + 1]);
+    return d;
+  }
+  function geoPolygonAreaKm2(pts) {
+    if (!Array.isArray(pts) || pts.length < 3) return 0;
+    const lat0 = pts.reduce((s2, p) => s2 + p.lat, 0) / pts.length;
+    const kx = 111.32 * Math.cos(lat0 * Math.PI / 180);
+    const ky = 110.57;
+    const xy = pts.map((p) => ({ x: p.lon * kx, y: p.lat * ky }));
+    let s = 0;
+    for (let i = 0; i < xy.length; i++) {
+      const a = xy[i], b = xy[(i + 1) % xy.length];
+      s += a.x * b.y - b.x * a.y;
+    }
+    return Math.abs(s) / 2;
+  }
+  function measureFromLonLat(input) {
+    const { poly, river, hTop, hBottom } = input;
+    const warnings = [];
+    if (!Array.isArray(poly) || poly.length < 3) throw new Error("\u6C47\u6C34\u533A\u81F3\u5C11\u9700\u8981 3 \u4E2A\u9876\u70B9\uFF08\u7ECF\u7EAC\u5EA6\uFF09");
+    const F = geoPolygonAreaKm2(poly);
+    let L = null;
+    if (river && river.length >= 2) {
+      const l = polylineLengthKm(river);
+      L = l > 0 ? l : null;
+      if (L === null) warnings.push("\u4E3B\u6CB3\u6C9F\u957F\u5EA6\u91CF\u7B97\u4E3A 0\uFF0C\u8BF7\u68C0\u67E5\u70B9\u4F4D\u662F\u5426\u91CD\u590D");
+    }
+    let I = null, Ipermille = null;
+    if (L !== null && Number.isFinite(hTop) && Number.isFinite(hBottom)) {
+      const dh = hTop - hBottom;
+      if (dh < 0) warnings.push("\u4E0A\u6E38\u9AD8\u7A0B\u4F4E\u4E8E\u51FA\u53E3\u9AD8\u7A0B\uFF0C\u6BD4\u964D\u4E3A\u8D1F\uFF0C\u8BF7\u6838\u5BF9\u9AD8\u7A0B\u70B9\u6B21\u5E8F");
+      I = dh / (L * 1e3);
+      Ipermille = I * 1e3;
+    }
+    if (F > 30) warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519");
+    if (!(F > 0)) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u9876\u70B9\u987A\u5E8F\u4E0E\u662F\u5426\u95ED\u5408");
+    return {
+      F: Math.round(F * 1e4) / 1e4,
+      L: L === null ? null : Math.round(L * 1e4) / 1e4,
+      I: I === null ? null : Math.round(I * 1e8) / 1e8,
+      Ipermille: Ipermille === null ? null : Math.round(Ipermille * 1e4) / 1e4,
+      warnings
+    };
+  }
+  function measureCatchment(input) {
+    const { poly, river, scale, hTop, hBottom } = input;
+    const warnings = [];
+    if (!scale || !Number.isFinite(scale.pixelDistance) || scale.pixelDistance <= 0) {
+      throw new Error("\u6BD4\u4F8B\u5C3A\u6807\u5B9A\u65E0\u6548\uFF1A\u56FE\u4E0A\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08\u50CF\u7D20\uFF09");
+    }
+    if (!Number.isFinite(scale.realDistanceM) || scale.realDistanceM <= 0) {
+      throw new Error("\u6BD4\u4F8B\u5C3A\u6807\u5B9A\u65E0\u6548\uFF1A\u5BF9\u5E94\u7684\u5B9E\u9645\u8DDD\u79BB\u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    }
+    if (!Array.isArray(poly) || poly.length < 3) {
+      throw new Error("\u6C47\u6C34\u533A\u81F3\u5C11\u9700\u8981 3 \u4E2A\u9876\u70B9\u624D\u80FD\u6784\u6210\u591A\u8FB9\u5F62");
+    }
+    const mpp = scale.realDistanceM / scale.pixelDistance;
+    const areaPx = polygonAreaPx(poly);
+    const areaM2 = areaPx * mpp * mpp;
+    const F = areaM2 / 1e6;
+    let L = null;
+    if (river && river.length >= 2) {
+      L = polylineLengthPx(river) * mpp / 1e3;
+      if (!(L > 0)) {
+        L = null;
+        warnings.push("\u4E3B\u6CB3\u6C9F\u957F\u5EA6\u91CF\u7B97\u4E3A 0\uFF0C\u8BF7\u68C0\u67E5\u662F\u5426\u91CD\u590D\u70B9\u6216\u70B9\u8DDD\u8FC7\u5C0F");
+      }
+    }
+    let I = null, Ipermille = null;
+    if (L !== null && Number.isFinite(hTop) && Number.isFinite(hBottom)) {
+      const dh = hTop - hBottom;
+      if (dh < 0) warnings.push("\u4E0A\u6E38\u9AD8\u7A0B\u4F4E\u4E8E\u51FA\u53E3\u9AD8\u7A0B\uFF0C\u6BD4\u964D\u4E3A\u8D1F\uFF0C\u8BF7\u6838\u5BF9\u9AD8\u7A0B\u70B9\u6B21\u5E8F");
+      I = dh / (L * 1e3);
+      Ipermille = I * 1e3;
+    }
+    if (F > 30) {
+      warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519\uFF0C\u8BF7\u6539\u7528\u5176\u4ED6\u65B9\u6CD5");
+    }
+    if (F <= 0) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u662F\u5426\u95ED\u5408\u3001\u6BD4\u4F8B\u5C3A\u662F\u5426\u6B63\u786E");
+    return {
+      F: Math.round(F * 1e4) / 1e4,
+      L: L === null ? null : Math.round(L * 1e4) / 1e4,
+      I: I === null ? null : Math.round(I * 1e8) / 1e8,
+      Ipermille: Ipermille === null ? null : Math.round(Ipermille * 1e4) / 1e4,
+      metersPerPixel: Math.round(mpp * 1e6) / 1e6,
+      areaPx: Math.round(areaPx * 100) / 100,
+      warnings
+    };
+  }
+
+  // src/core/helpContent.ts
+  var HELP_SECTIONS = [
+    {
+      id: "flow",
+      title: "\u4E00\u3001\u8BBE\u8BA1\u6D41\u91CF\u63A8\u6C42\uFF08\u7B2C 6 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "6.2", title: "\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u6709\u5B9E\u6D4B\u7CFB\u5217\u65F6\uFF0C\u7528\u77E9\u6CD5\u521D\u4F30 Q\u0304\u3001Cv\uFF1B\u518D\u8BD5\u9009 M=Cs/Cv\uFF08\u5E38\u5728 2~4 \u9644\u8FD1\u8D77\u6B65\uFF0C\u4F46\u4E0D\u662F\u56FA\u5B9A\u503C\uFF09\uFF0C\u4EE4 Cs=M\xB7Cv \u5E76\u7ED8\u5236\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u3002\u82E5\u4E0D\u543B\u5408\uFF0C\u53EF\u4FEE\u6539 Cv\u3001\u91CD\u9009 M\uFF0C\u901A\u5E38\u8FED\u4EE3 2~3 \u6B21\u540E\u91C7\u7528\u6700\u8D34\u5408\u7ECF\u9A8C\u70B9\u7FA4\u7684\u4E00\u7EC4\u3002", page: "P19" },
+        { no: "6.2.5", title: "\u53C2\u6570\u521D\u4F30\u65B9\u6CD5", summary: "\u77E9\u6CD5\uFF08\u8F6F\u4EF6\u9ED8\u8BA4\uFF09\u4E0E\u4E09\u70B9\u6CD5\uFF08\u53D6 P=5%\u300150%\u300195% \u4E09\u70B9\uFF0C\u7531 S \u503C\u53CD\u89E3 Cs\uFF09\u5E76\u7528\uFF1B\u8F6F\u4EF6\u53E6\u63D0\u4F9B\u6700\u5C0F\u4E8C\u4E58\u81EA\u52A8\u5BFB\u4F18\u4F5C\u5BF9\u7167\u3002", page: "P19~20" },
+        { no: "6.3", title: "\u5229\u7528\u5386\u53F2\u6D2A\u6C34\u4F4D\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF", summary: "\u65E0\u5B9E\u6D4B\u7CFB\u5217\u4F46\u6709\u53EF\u9760\u6D2A\u75D5\u65F6\uFF0C\u7528\u66FC\u5B81\u516C\u5F0F\u7531\u6D2A\u6C34\u4F4D\u3001\u6BD4\u964D\u3001\u7CD9\u7387\u53CD\u63A8\u6D41\u91CF\uFF1B\u6709\u4E24\u6B21\u4EE5\u4E0A\u6D2A\u6C34\u65F6\u6309\u89C4\u8303\u7EFC\u5408\u63A8\u7B97\u3002", page: "P21" },
+        { no: "6.3.1-4", title: "\u6C34\u9762\u7EBF\u8BD5\u7B97\uFF08\u8F6F\u4EF6\u65B0\u589E\uFF09", summary: "\u5047\u5B9A\u6D41\u91CF\u7531\u4E0B\u6E38\u6D2A\u75D5\u5411\u4E0A\u6E38\u63A8\u7B97\u6C34\u9762\u7EBF\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5\u5BF9\u7167\u8FED\u4EE3\uFF1B\u8F6F\u4EF6\u63D0\u4F9B\u76F4\u63A5\u6B65\u8FDB\u6CD5\u5256\u9762\u8BA1\u7B97\u4E0E\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\uFF0C\u4EE5\u53CA\u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\xB7\u5929\u7136\u6CB3\u9053\u4E09\u533A\uFF0C\u65B9\u6CD5\u5BF9\u9F50 HEC-RAS\uFF0C\u5B98\u65B9\u7B97\u4F8B\u56DE\u5F52\u9A8C\u8BC1 |\u0394WSE|\u22640.05 ft\uFF09\u3002", page: "P21~23" },
+        { no: "6.4", title: "\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u7684\u5176\u4ED6\u65B9\u6CD5", summary: "\u65E0\u8D44\u6599\u5730\u533A\u91C7\u7528\u5730\u533A\u7ECF\u9A8C\u516C\u5F0F\u3001\u66B4\u96E8\u63A8\u7406\u6CD5\u3001\u5F84\u6D41\u5F62\u6210\u6CD5\u7B49\uFF08\u8BE6\u89C1\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B\u7B2C 6 \u7AE0\uFF09\u3002", page: "P23" },
+        { no: "6.6", title: "\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", summary: "\u8F6F\u4EF6\u5B9E\u73B0\u540C\u500D\u6BD4\u653E\u5927\u6CD5 kg=Qp/Q\u5178\u578B\u5CF0\uFF1B\u540C\u9891\u7387\u653E\u5927\u6CD5\u6D89\u53CA\u65F6\u6BB5\u6D2A\u91CF\u5212\u5206\u89C4\u5219\uFF0C\u89C4\u8303\u539F\u6587\u5F85\u6838\uFF0C\u672C\u7248\u672A\u63D0\u4F9B\u3002", page: "P24" }
+      ]
+    },
+    {
+      id: "opening",
+      title: "\u4E8C\u3001\u6865\u5B54\u8BBE\u8BA1\uFF08\u7B2C 7 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "7.2.1-1", title: "\u6CB3\u69FD\u5BBD\u5EA6\u516C\u5F0F\uFF08\u8F6F\u4EF6\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Kq\xB7(Qp/Qc)^n\u2083\xB7Bc\uFF0C\u9002\u7528\u4E8E\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\u3001\u5206\u6C4A\u3001\u5F2F\u66F2\u6CB3\u6BB5\u53CA\u6EE9\u69FD\u53EF\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\u3002", page: "P25" },
+        { no: "\u8868 7.2.1", title: "Kq\u3001n\u2083 \u53D6\u503C", summary: "\u7A33\u5B9A\uFF08\u5F00\u9614\u3001\u987A\u76F4\u5FAE\u5F2F\uFF090.84 / 0.90\uFF1B\u6B21\u7A33\u5B9A\uFF08\u5206\u6C4A\u3001\u5F2F\u66F2\uFF090.95 / 0.87\uFF1B\u4E0D\u7A33\u5B9A\uFF08\u6EE9\u69FD\u53EF\u5206\uFF090.69 / 1.59\u3002", page: "P26" },
+        { no: "7.2.1-2", title: "\u5BBD\u6EE9\u6CB3\u6BB5\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Qp/(\u03B2\xB7qc)\uFF0C\u03B2 = 1.19\xB7(Qc/Qt)^0.10\uFF1B\u6CB3\u69FD\u5355\u5BBD\u6D41\u91CF qc \u6309\u7A33\u5B9A/\u6B21\u7A33\u5B9A\u6CB3\u6BB5\u5206\u522B\u8BA1\u7B97\u3002", page: "P26" },
+        { no: "7.2.1-4~6", title: "\u6EE9\u69FD\u96BE\u5206\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "Lj = Cp\xB7B\u2080\uFF0CB\u2080 = 16.07\xB7Q\u0304^0.24/d\u0304^0.30\uFF08\u57FA\u672C\u6CB3\u69FD\u5BBD\u5EA6\uFF09\uFF0CCp = (Qp/Q\u2082%)^0.33 \u9891\u7387\u6362\u7B97\u7CFB\u6570\u3002", page: "P26" },
+        { no: "7.2.2", title: "\u6865\u957F\u7EFC\u5408\u8BBA\u8BC1", summary: "\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u6700\u7EC8\u6865\u957F\u5E94\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u5F15\u9053\u7EB5\u5761\u4E0E\u53F0\u540E\u586B\u571F\u9AD8\u5EA6\u6280\u672F\u7ECF\u6D4E\u6BD4\u8F83\u786E\u5B9A\u3002", page: "P26" }
+      ]
+    },
+    {
+      id: "scour",
+      title: "\u4E09\u3001\u58A9\u53F0\u51B2\u5237\u4E0E\u57CB\u6DF1\uFF08\u7B2C 8 \u7AE0\uFF09",
+      spec: "JTG C30\u20142015",
+      items: [
+        { no: "8.3.1-4", title: "64-1 \u4FEE\u6B63\u5F0F\uFF08\u4E00\u822C\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hp = [A\xB7(Q2/(\u03BC\xB7Bcj))\xB7(hmc/hcq)^(5/3) / (E\xB7d\u0304^(1/6))]^(3/5)\uFF1B\u975E\u9ECF\u6027\u571F\u6CB3\u69FD\u90E8\u5206\u3002", page: "P30" },
+        { no: "\u8868 8.3.1-2", title: "\u542B\u6C99\u91CF\u7CFB\u6570 E\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6C5B\u671F\u542B\u6C99\u91CF \u03C1<1.0\u21920.46\uFF1B1~10\u21920.66\uFF1B>10\u21920.86\uFF08kg/m\xB3\uFF09\u3002", page: "P31" },
+        { no: "8.3.3-2", title: "\u884C\u8FD1\u6D41\u901F\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "\u91C7\u7528 64-1 \u65F6 v = E\xB7d\u0304^(1/6)\xB7hp^(2/3)\uFF0C\u53EF\u7531 64-1 \u516C\u5F0F\u63A8\u5BFC\u81EA\u6D3D\uFF08\u8F6F\u4EF6\u5DF2\u505A\u95ED\u5408\u6821\u9A8C\uFF09\u3002", page: "P32" },
+        { no: "8.4.1", title: "65-2 \u5F0F\uFF08\u5C40\u90E8\u51B2\u5237\uFF0C\u5DF2\u5B9E\u73B0\uFF09", summary: "hb = K\u03BE\xB7K\u03B72\xB7B1^0.6\xB7hp^0.15\xB7[(v\u2212v0\u2032)/v0]^n2\uFF1Bv\u2264v0\u2032 \u65F6\u4E0D\u51B2\u5237\u3002K\u03BE \u5DF2\u5185\u7F6E\u9644\u5F55 C \u5168 12 \u79CD\u58A9\u5F62\u901F\u67E5\uFF08\u754C\u9762\u70B9\u503C\u586B\u5165\uFF09\u3002", page: "P33" },
+        { no: "8.6.1~8.6.2", title: "\u57FA\u5E95\u6700\u5C0F\u57CB\u7F6E\u6DF1\u5EA6\uFF08\u8868 8.6.2 \u5DF2\u5185\u7F6E\uFF09", summary: "\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u3001\u4E00\u822C\u3001\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF1B\u975E\u5CA9\u77F3\u6CB3\u5E8A\u6309\u8868 8.6.2 \u52A0\u57CB\u6DF1\u5B89\u5168\u503C \u0394\uFF08\u5927\u4E2D\u6865 1.5~3.5\u3001\u7279\u5927\u6865 2.0~4.0\uFF0C\u6863\u95F4\u7EBF\u6027\u63D2\u503C\uFF09\u3002", page: "P35~36" },
+        { no: "\u9644\u5F55 C", title: "\u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u5168 12 \u79CD\u58A9\u5F62\uFF1A\u5355\u5706\u67F1 1.00\u3001\u53CC\u5706\u67F1\u5E26\u8054\u7CFB\u6881 \u03B1 \u6863\u8868\u3001\u5C16\u7AEF\u5F62 \u03B8 \u6863\u8868\uFF08\u53EF\u63D2\u503C\uFF09\u3001\u6869\u7FA4 K\u03BE=K\u03BE\u2081K\u03BE\u2098\u3001\u5927\u76F4\u5F84\u56F4\u5830 k_cd \u516C\u5F0F\u7B49\uFF1B\u66F2\u7EBF\u578B\uFF08\u5706\u7AEF\u5F62/\u6C89\u4E95\u7EC4\u5408\uFF09\u7ED9\u67E5\u56FE\u63D0\u793A\u3002", page: "P73~76" },
+        { no: "\u9644\u5F55 D", title: "\u5CA9\u77F3\u5730\u57FA\u6865\u58A9\u51B2\u5237\u53CA\u57FA\u5E95\u57CB\u6DF1\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u2160\u6781\u8F6F\u5CA9/\u2161\u2081\u8F6F\u5CA9/\u2161\u2082\u8F83\u8F6F\u5CA9/\u2162\u786C\u8D28\u5CA9 \xD7 \u6C34\u6DF1\u4E09\u6863\uFF08<2 / 2~10 / >10 m\uFF09\u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6\uFF0C\u542B\u6CE8 7 \u6761\uFF1B\u754C\u9762\u300C\u5CA9\u77F3\u6CB3\u5E8A\u57FA\u5E95\u57CB\u6DF1\u300D\u53EF\u67E5\u3002", page: "P77~78" },
+        { no: "8.4.3", title: "\u6865\u53F0\u51B2\u5237\uFF08\u5DF2\u5B9E\u73B0\uFF09", summary: "8.4.3-1 \u963B\u6C34\u9762\u79EF\u6CD5\u4E0E 8.4.3-2 \u6C34\u6DF1\u6CD5\u4E24\u5F0F\u5747\u5B9E\u73B0\uFF1B\u53F0\u5F62\u7CFB\u6570 K\u03BE\u3001\u5F62\u72B6\u7CFB\u6570 C_A \u6309\u8868 8.4.3 \u624B\u586B\u3002", page: "P33" }
+      ]
+    },
+    {
+      id: "culvert",
+      title: "\u56DB\u3001\u65E0\u8D44\u6599\u5730\u533A\u4E0E\u6DB5\u6D1E\u6C34\u6587\uFF08\u6DB5\u6D1E\u89C4\u8303\uFF09",
+      spec: "JTG/T 3365-02\u20142020",
+      items: [
+        { no: "6.3", title: "\u5F84\u6D41\u5F62\u6210\u6CD5\uFF08\u65B9\u6CD5 C \u4E4B\u4E00\uFF09", summary: "Qp = \u03C8\xB7(h\u2212z)^1.5\xB7F^0.8\xB7\u03B2\xB7\u03B3\xB7\u03B4\uFF1B\u9002\u7528\u6C47\u6C34\u9762\u79EF\u4E0D\u5927\u4E8E 30 km\xB2 \u7684\u5C0F\u6D41\u57DF\u3002", page: "P37" },
+        { no: "\u8868 B-9", title: "\u5F84\u6D41\u539A\u5EA6 h\uFF08\u5DF2\u5185\u7F6E\u5168\u8868\uFF09", summary: "18 \u66B4\u96E8\u5206\u533A \xD7 \u571F\u7684\u7C7B\u5C5E \u2160~\u2165 \xD7 \u9891\u7387 1%/2%/4% \xD7 \u6C47\u6D41\u65F6\u95F4 30/45/60/80 min\uFF0C\u5171 108 \u884C\uFF0C\u652F\u6301 \u03C4 \u7EBF\u6027\u4E0E\u9891\u7387\u5BF9\u6570\u63D2\u503C\u3002", page: "P104~107" },
+        { no: "\u8868 B-5 / B-8", title: "\u03C8 \u4E0E\u6C47\u6D41\u65F6\u95F4 \u03C4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u03C8 \u6309\u5730\u5F62\u4E0E\u4E3B\u6CB3\u6C9F\u5761\u5EA6\u3001\u6C47\u6C34\u9762\u79EF\u6863\u53D6\uFF1B\u03C4 \u6309 F \u5206\u6863\uFF1AF\u226410\u219230\u300110<F\u226420\u219245\u300120<F\u226430\u219280 min\u3002", page: "P100 / P104" },
+        { no: "\u8868 B-10~B-13", title: "z\u3001\u03B2\u3001\u03B3\u3001\u03B4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6EDE\u7559\u539A\u5EA6 z \u6309\u5730\u9762\u7279\u5F81\uFF1B\u03B2 \u6309\u91CD\u5FC3\u8DDD\u6DB5\u4F4D\u8DDD\u79BB\u4E0E\u5730\u5F62\uFF1B\u03B3 \u6309\u6C47\u6D41\u65F6\u95F4\u4E0E\u6C47\u6C34\u533A\u5C3A\u5BF8\u53CA\u6C14\u5019\u533A\uFF1B\u03B4 \u6309\u6E56\u6CCA\u7387\u3002", page: "P108~109" },
+        { no: "\u8868 B-6 / B-14", title: "\u66B4\u96E8\u5206\u533A\u4E0E Cv \u5E73\u5747\u503C\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "18 \u4E2A\u66B4\u96E8\u5206\u533A\u7684\u754C\u7EBF\u4E0E\u8986\u76D6\u8303\u56F4\u53EF\u5173\u952E\u8BCD\u68C0\u7D22\uFF08\u7701\u4EFD/\u5C71\u5DDD\uFF09\uFF1B\u5C0F\u6D41\u57DF Cv \u5E73\u5747\u503C\u6309\u571F\u7684\u5438\u6C34\u7C7B\u5C5E\u53D6\u3002", page: "P100~101 / P109" }
+      ]
+    }
+  ];
+  var HELP_SOURCES = [
+    {
+      name: "JTG C30\u20142015\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300B",
+      detail: "\u4EA4\u901A\u8FD0\u8F93\u90E8\u653F\u5E9C\u4FE1\u606F\u516C\u5F00\u7F51\u5168\u6587 PDF\uFF08126 \u9875\uFF0C\u626B\u63CF\u7248\uFF09\u3002\u7B2C 6/7/8 \u7AE0\u6761\u6587\u4E0E\u7CFB\u6570\u8868\u7ECF\u6E32\u67D3 OCR \u5B9A\u4F4D\u540E\u6838\u5BF9\u3002",
+      url: "https://xxgk.mot.gov.cn/2020/jigou/glj/202006/P020240607596475014848.pdf"
+    },
+    {
+      name: "JTG C30\u20142015 \u5B8C\u6574\u7248\uFF08\u542B\u9644\u5F55 A~E\uFF09",
+      detail: "\u9644\u5F55 C \u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF0812 \u79CD\u58A9\u5F62\uFF0CP73~76\uFF09\u4E0E\u9644\u5F55 D \u5CA9\u77F3\u5730\u57FA\u6865\u58A9\u51B2\u5237\u53CA\u57FA\u5E95\u57CB\u6DF1\uFF08P77~78\uFF09\u7531\u5B8C\u6574\u7248 PDF \u6E32\u67D3\u8BFB\u56FE\u63D0\u53D6\uFF0C\u7F16\u53F7 11/12 \u516C\u5F0F\u7ECF\u7B2C\u4E09\u65B9\u89C4\u8303\u5E93\u6587\u672C\u4EA4\u53C9\u9A8C\u8BC1\u3002"
+    },
+    {
+      name: "JTG/T 3365-02\u20142020\u300A\u516C\u8DEF\u6DB5\u6D1E\u8BBE\u8BA1\u89C4\u8303\u300B",
+      detail: "\u4EA4\u901A\u8FD0\u8F93\u90E8\u516C\u544A 2020 \u5E74\u7B2C 88 \u53F7\u9644\u4EF6\uFF08\u4E2D\u56FD\u653F\u5E9C\u7F51\u516C\u5F00\u5168\u6587 PDF\uFF0C118 \u9875\u6587\u5B57\u7248\uFF09\u3002\u9644\u5F55 B \u5168\u90E8\u6C34\u6587\u67E5\u8868\u7531\u6B64\u63D0\u53D6\u3002",
+      url: "https://www.gov.cn/zhengce/zhengceku/2020-11/20/content_5562849.htm"
+    },
+    {
+      name: "\u63D0\u53D6\u4E0E\u6821\u9A8C\u811A\u672C",
+      detail: "extract_appendix_b.py\uFF08\u8868 B-9\uFF09\xB7 extract_aux_tables.py\uFF08B-5/B-6/B-8/B-10~B-14\uFF09\xB7 ocr_spec_pages.py\uFF08\u626B\u63CF\u7248\u7AE0\u8282 OCR\uFF09\xB7 gen_*_ts.py\uFF08\u751F\u6210\u5185\u7F6E\u6570\u636E\u6A21\u5757\uFF09\u3002"
+    },
+    {
+      name: "\u5916\u90E8\u7B97\u4F8B\u4E92\u8BC1",
+      detail: "\u516C\u5F0F\u7ED3\u6784\u4E0E\u7CFB\u6570\u7ECF\u516C\u5F00\u5DE5\u7A0B\u7B97\u4F8B\u4E0E\u671F\u520A\u8BBA\u6587\u6240\u5F15\u89C4\u8303\u516C\u5F0F\u4EA4\u53C9\u9A8C\u8BC1\uFF08\u6865\u5B54 154.16 m / 23.52 m \u4E24\u4F8B\uFF1B\u51B2\u5237\u51B2\u6B62\u6D41\u901F\u95ED\u5408\u6821\u9A8C\uFF09\u3002"
+    }
+  ];
+  var HELP_FAQ = [
+    { q: "\u63D0\u793A\u300C\u5F84\u6D41\u539A\u5EA6\u8868\u4E2D\u6CA1\u6709\u5206\u533A X / \u571F\u58E4 Y\u300D\uFF1F", a: "\u8BE5\u5206\u533A\u8BE5\u571F\u7C7B\u5728\u89C4\u8303\u539F\u8868\u4E2D\u4E3A\u300C-\u300D\uFF08\u65E0\u8868\u503C\uFF09\uFF0C\u8F6F\u4EF6\u6309\u7F3A\u503C\u5254\u9664\uFF0C\u4E0D\u7ED9\u4F30\u7B97\u6570\u2014\u2014\u8BF7\u6539\u7528\u76F8\u90BB\u571F\u7C7B\u6216\u67E5\u89C4\u8303\u539F\u8868\u786E\u8BA4\u3002" },
+    { q: "\u67E5\u51FA\u7684 h \u540E\u9762\u6807\u6CE8\u300C\u5916\u63A8\u300D\u662F\u4EC0\u4E48\u610F\u601D\uFF1F", a: "\u8868\u5217\u9891\u7387\u53EA\u6709 1%/2%/4%\uFF08\u91CD\u73B0\u671F 100/50/25 \u5E74\uFF09\u3002\u4F60\u8F93\u5165\u7684\u9891\u7387\u5728\u8868\u5916\u65F6\uFF0C\u8F6F\u4EF6\u6309\u5BF9\u6570\u9891\u7387\u8F74\u5916\u63A8\u7ED9\u51FA\u53C2\u8003\u503C\uFF0C\u5E76\u660E\u786E\u6807\u6CE8\uFF0C\u4E0D\u80FD\u5F53\u8868\u503C\u7528\u3002" },
+    { q: "\u6865\u5B54\u957F\u5EA6\u7B97\u51FA\u6765\u5C31\u662F\u6700\u7EC8\u6865\u957F\u5417\uFF1F", a: "\u4E0D\u662F\u3002\u89C4\u8303 7.2.2 \u660E\u786E\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u8FD8\u9700\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u7EB5\u5761\u7EFC\u5408\u8BBA\u8BC1\u3002" },
+    { q: "\u51B2\u5237\u8BA1\u7B97\u91CC K\u03BE \u600E\u4E48\u53D6\uFF1F", a: "\u6309\u89C4\u8303\u9644\u5F55 C \u4F9D\u58A9\u5F62\uFF08\u5706\u7AEF\u5F62\u3001\u5C16\u7AEF\u5F62\u3001\u77E9\u5F62\u7B49\uFF09\u67E5\u8868\u3002\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF0C\u9ED8\u8BA4 1.0 \u5E76\u63D0\u793A\u590D\u6838\u3002" },
+    { q: "\u4E3A\u4EC0\u4E48\u67D0\u4E9B\u7CFB\u6570\u8868\u6CA1\u5185\u7F6E\uFF1F", a: "\u51E1\u662F\u626B\u63CF\u7248\u4E2D\u516C\u5F0F\u672C\u4F53\u4E3A\u56FE\u7247\u3001\u6216\u8868\u683C\u6863\u4F4D\u8FB9\u754C OCR \u4E0D\u5B8C\u6574\u7684\uFF0C\u4E00\u5F8B\u4E0D\u5185\u7F6E\u53EF\u7591\u6570\u636E\uFF0C\u754C\u9762\u4F1A\u7EA2\u5B57\u8BF4\u660E\u5F85\u5F55\u3002" }
+  ];
+  var HELP_VALIDATION = [
+    "\u6559\u6750\u300A\u6865\u6DB5\u6C34\u6587\u300B\u7B2C\u4E94\u7248\u4F8B 3-1-1 \u5BF9\u6807\u300A\u6865\u4F4D\u8BBE\u8BA1\u8BA1\u7B97\u7CFB\u7EDF\u300BQW2.0\uFF1AQ\u2081% 4824 / 4840\uFF0CQ\u2082% 4301 / 4311\uFF0CQ\u2080.\u2083\u2083% 5647 / 5666\uFF0C\u504F\u5DEE\u5747 \u22640.35%",
+    "\u6C34\u6587\u7B97\u4F8B T1~T4 \u4E0E\u516C\u5F00\u8D44\u6599\u4EA4\u53C9\u6838\u5BF9\uFF0C\u5E76\u7EA0\u6B63\u4E24\u5904\u516C\u5F00\u8D44\u6599\u52D8\u8BEF\uFF08\u03A3d\xB2\u3001\u03A6 \u6821\u6838\u503C\uFF09",
+    "\u5355\u5143\u6D4B\u8BD5\u8986\u76D6\u7EDF\u8BA1\u3001\u9002\u7EBF\u3001\u4E09\u70B9\u6CD5\u3001\u81EA\u52A8\u5BFB\u4F18\u3001\u8D1D\u53F6\u65AF\u3001\u65B9\u6CD5 B/C\u3001\u6C34\u9762\u7EBF\u3001\u8FC7\u7A0B\u7EBF\u3001\u67E5\u8868\u3001\u6865\u5B54\u3001\u51B2\u5237\u3001\u65E5\u5FD7",
+    "\u4E09\u7AEF E2E\uFF1A\u7F51\u9875\u7248\u3001Electron \u684C\u9762\u7248\u3001\u79BB\u7EBF\u5355\u6587\u4EF6\u7248\u5168\u6D41\u7A0B\u9A8C\u8BC1"
+  ];
+
+  // src/core/projectDiff.ts
+  function flatten2(obj, prefix = "", out = {}, maxArray = 40) {
+    if (obj === null || obj === void 0) {
+      out[prefix] = String(obj);
+      return out;
+    }
+    if (Array.isArray(obj)) {
+      const n = Math.min(obj.length, maxArray);
+      for (let i = 0; i < n; i++) flatten2(obj[i], `${prefix}[${i}]`, out, maxArray);
+      if (obj.length > maxArray) out[`${prefix}.length`] = String(obj.length);
+      return out;
+    }
+    if (typeof obj === "object") {
+      for (const [k, v] of Object.entries(obj)) {
+        flatten2(v, prefix ? `${prefix}.${k}` : k, out, maxArray);
+      }
+      return out;
+    }
+    out[prefix] = String(obj);
+    return out;
+  }
+  var IGNORE = [/^savedAt$/, /^schema$/, /^appVersion$/];
+  function diffProjectFiles(a, b) {
+    const fa = flatten2(a);
+    const fb = flatten2(b);
+    const keys = /* @__PURE__ */ new Set([...Object.keys(fa), ...Object.keys(fb)]);
+    const rows = [];
+    const added = [];
+    const removed = [];
+    for (const k of [...keys].sort()) {
+      if (IGNORE.some((re) => re.test(k))) continue;
+      const va = fa[k], vb = fb[k];
+      if (va === void 0) {
+        added.push(k);
+        continue;
+      }
+      if (vb === void 0) {
+        removed.push(k);
+        continue;
+      }
+      if (va === vb) continue;
+      const na = Number(va), nb = Number(vb);
+      const numeric = va.trim() !== "" && vb.trim() !== "" && Number.isFinite(na) && Number.isFinite(nb);
+      rows.push({
+        path: k,
+        a: va,
+        b: vb,
+        delta: numeric ? (nb - na >= 0 ? "+" : "") + String(Math.round((nb - na) * 1e6) / 1e6) : void 0
+      });
+    }
+    const label = (o) => {
+      const r = flatten2(o);
+      const name = r["project.name"] ?? "";
+      const t = o?.savedAt;
+      return `${name}${t ? `\uFF08${String(t).slice(0, 10)}\uFF09` : ""}`;
+    };
+    return { rows, added, removed, aLabel: label(a), bLabel: label(b) };
+  }
+  function diffToMarkdown(d) {
+    const lines = [
+      "# \u5DE5\u7A0B\u6587\u4EF6\u7248\u672C\u5BF9\u6BD4",
+      "",
+      `> \u65E7\u7248\uFF1A${d.aLabel || "\u2014"} \uFF5C \u65B0\u7248\uFF1A${d.bLabel || "\u2014"}`,
+      "",
+      `\u53D8\u5316\u9879 ${d.rows.length} \u4E2A\uFF1B\u65B0\u589E\u5B57\u6BB5 ${d.added.length} \u4E2A\uFF1B\u5220\u9664\u5B57\u6BB5 ${d.removed.length} \u4E2A`,
+      "",
+      "| \u5B57\u6BB5 | \u65E7\u503C | \u65B0\u503C | \u53D8\u5316 |",
+      "| --- | --- | --- | --- |"
+    ];
+    for (const r of d.rows) {
+      lines.push(`| ${r.path} | ${r.a} | ${r.b} | ${r.delta ?? "\u2014"} |`);
+    }
+    if (d.added.length) lines.push("", "\u65B0\u589E\uFF1A" + d.added.join("\u3001"));
+    if (d.removed.length) lines.push("\u5220\u9664\uFF1A" + d.removed.join("\u3001"));
+    return lines.join("\n");
+  }
+
+  // src/core/generalScour.ts
+  function concentrationFactorA(Bd, Hz) {
+    if (!Number.isFinite(Bd) || Bd <= 0) throw new Error("\u9020\u5E8A\u6D41\u91CF\u4E0B\u7684\u6CB3\u69FD\u5BBD\u5EA6 Bd \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(Hz) || Hz <= 0) throw new Error("\u9020\u5E8A\u6D41\u91CF\u4E0B\u7684\u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1 Hz \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    const raw = Math.pow(Math.sqrt(Bd) / Hz, 0.15);
+    const capped = raw > 1.8;
+    return { A: capped ? 1.8 : Math.round(raw * 1e3) / 1e3, capped };
+  }
+  function sandCoefE(rhoKgM3) {
+    if (!Number.isFinite(rhoKgM3) || rhoKgM3 < 0) throw new Error("\u542B\u6C99\u91CF\u5FC5\u987B\u4E3A\u975E\u8D1F\uFF08kg/m\xB3\uFF09");
+    if (rhoKgM3 < 1) return { E: 0.46, band: "\u03C1<1.0" };
+    if (rhoKgM3 <= 10) return { E: 0.66, band: "1\u2264\u03C1\u226410" };
+    return { E: 0.86, band: "\u03C1>10" };
+  }
+  function generalScour641(input) {
+    const { Q2, mu, Bcj, hmc, hcq, E, d50, A } = input;
+    const warnings = [];
+    if (!Number.isFinite(Q2) || Q2 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scQ2", value: Q2, message: "\u8BBE\u8BA1\u6D41\u91CF Q2 \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09", suggestion: "\u70B9\u300C\u7528\u5F53\u524D\u8BBE\u8BA1\u6D41\u91CF\u300D\u5F15\u7528\u4E0A\u6E38\u6210\u679C", normRef: "JTG C30\u20142015 \u7B2C8.3.1\u6761" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scMu", value: mu, message: "\u4FA7\u5411\u538B\u7F29\u7CFB\u6570 \u03BC \u5E94\u5728 (0,1]", suggestion: "\u6309\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84\u67E5\u8868 8.3.1-1", normRef: "JTG C30\u20142015 \u88688.3.1-1" });
+    if (!Number.isFinite(Bcj) || Bcj <= 0) throw new Error("\u6865\u5B54\u8FC7\u6C34\u51C0\u5BBD Bcj \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(hmc) || hmc <= 0) throw new Error("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1 hmc \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(hcq) || hcq <= 0) throw new Error("\u6865\u4E0B\u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1 hcq \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(E) || E <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scRho", value: E, message: "\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u6C5B\u671F\u542B\u6C99\u91CF\u53D6 0.46 / 0.66 / 0.86\uFF08\u8868 8.3.1-2\uFF09", normRef: "JTG C30\u20142015 \u88688.3.1-2" });
+    if (!Number.isFinite(d50) || d50 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scD50", value: d50, message: "\u6CB3\u69FD\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09", suggestion: "\u7531\u5E8A\u6C99\u9897\u7C92\u5206\u6790\u6C42\u5F97\u5E73\u5747\u7C92\u5F84", normRef: "JTG C30\u20142015 \u7B2C8.3.1\u6761" });
+    if (!Number.isFinite(A) || A <= 0) throw new Error("\u5355\u5BBD\u6D41\u91CF\u96C6\u4E2D\u7CFB\u6570 A \u5FC5\u987B\u4E3A\u6B63");
+    if (hmc < hcq) warnings.push("\u6CB3\u69FD\u6700\u5927\u6C34\u6DF1\u5C0F\u4E8E\u5E73\u5747\u6C34\u6DF1\uFF0C\u8BF7\u6838\u5BF9\u65AD\u9762\u6570\u636E\uFF08\u901A\u5E38 hmc \u2265 hcq\uFF09");
+    if (A > 1.8) warnings.push("A>1.8 \u65F6\u89C4\u8303\u5141\u8BB8\u91C7\u7528 1.8\uFF08\u5C71\u524D\u53D8\u8FC1\u3001\u6E38\u8361\u3001\u5BBD\u6EE9\u6CB3\u6BB5\uFF09");
+    if (mu < 0.85) warnings.push("\u03BC<0.85 \u5DF2\u4F4E\u4E8E\u88688.3.1-1 \u5E38\u89C1\u8303\u56F4\uFF0C\u8BF7\u6838\u5BF9\u8BBE\u8BA1\u6D41\u901F\u4E0E\u5355\u5B54\u51C0\u8DE8\u5F84");
+    const q = Q2 / (mu * Bcj);
+    const ratio = hmc / hcq;
+    const inner = A * q * Math.pow(ratio, 5 / 3) / (E * Math.pow(d50, 1 / 6));
+    const hp = Math.pow(inner, 3 / 5);
+    const hy = hp - hmc;
+    const vz = A * q * Math.pow(ratio, 5 / 3) / Math.pow(hp, 5 / 3);
+    const vzTheory = E * Math.pow(d50, 1 / 6);
+    if (hy < 0) warnings.push("\u8BA1\u7B97\u51B2\u5237\u6DF1\u5EA6\u4E3A\u8D1F\uFF1Ahp \u5C0F\u4E8E\u51B2\u5237\u524D\u6C34\u6DF1\uFF0C\u8BF7\u6838\u5BF9\u65AD\u9762\u4E0E\u6D41\u91CF\u6570\u636E");
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      hy: Math.round(hy * 1e3) / 1e3,
+      q: Math.round(q * 1e3) / 1e3,
+      vz: Math.round(vz * 1e3) / 1e3,
+      vzTheory: Math.round(vzTheory * 1e3) / 1e3,
+      warnings
+    };
+  }
+
+  // src/core/localScour.ts
+  function incipientVelocity(d50) {
+    return 0.28 * Math.pow(d50 + 0.7, 0.5);
+  }
+  function startScourVelocity(d50) {
+    return 0.12 * Math.pow(d50 + 0.5, 0.55);
+  }
+  function grainFactor(d50) {
+    return 23e-4 * Math.pow(d50, 2.2) + 0.375 * Math.pow(d50, 0.24);
+  }
+  function scourExponent(v, v0, d50) {
+    return Math.pow(v0 / v, 0.23 + 0.19 * Math.log10(d50));
+  }
+  function approachVelocity641(E, d50, hp) {
+    if (!Number.isFinite(E) || E <= 0) throw new Error("\u542B\u6C99\u91CF\u7CFB\u6570 E \u5FC5\u987B\u4E3A\u6B63");
+    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    return E * Math.pow(d50, 1 / 6) * Math.pow(hp, 2 / 3);
+  }
+  function localScour652(input) {
+    const { v, d50, B1, hp, Kxi } = input;
+    const warnings = [];
+    if (!Number.isFinite(v) || v <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsV", value: v, message: "\u884C\u8FD1\u6D41\u901F v \u5FC5\u987B\u4E3A\u6B63\uFF08m/s\uFF09", suggestion: "\u70B9\u300C\u7528\u4E00\u822C\u51B2\u5237\u7ED3\u679C\u63A8\u7B97 v\u300D\u81EA\u52A8\u7B97\u51FA\uFF088.3.3-2\uFF09", normRef: "JTG C30\u20142015 \u7B2C8.3.3\u6761" });
+    if (!Number.isFinite(d50) || d50 <= 0) throw new Error("\u6CB3\u5E8A\u6CE5\u6C99\u5E73\u5747\u7C92\u5F84 d\u0304 \u5FC5\u987B\u4E3A\u6B63\uFF08mm\uFF09");
+    if (!Number.isFinite(B1) || B1 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsB1", value: B1, message: "\u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6 B1 \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09", suggestion: "\u6309\u9644\u5F55 C \u58A9\u5BBD\u8BA1\u7B97\u53D6\u7528", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
+    if (!Number.isFinite(hp) || hp <= 0) throw new Error("\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1 hp \u5FC5\u987B\u4E3A\u6B63\uFF08m\uFF09");
+    if (!Number.isFinite(Kxi) || Kxi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.local.lsKxi", value: Kxi, message: "\u58A9\u5F62\u7CFB\u6570 K\u03BE \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u70B9\u5F00\u754C\u9762\u300C\u58A9\u5F62\u901F\u67E5\uFF08\u9644\u5F55C\uFF09\u300D\u6309\u58A9\u5F62\u53D6\u503C", normRef: "JTG C30\u20142015 \u9644\u5F55C" });
+    const v0 = incipientVelocity(d50);
+    const v0p = startScourVelocity(d50);
+    const Keta2 = grainFactor(d50);
+    const n2 = scourExponent(v, v0, d50);
+    const base = Kxi * Keta2 * Math.pow(B1, 0.6) * Math.pow(hp, 0.15);
+    let hb;
+    let branch;
+    if (v <= v0p) {
+      hb = 0;
+      branch = "no-scour";
+      warnings.push("\u884C\u8FD1\u6D41\u901F\u5C0F\u4E8E\u59CB\u51B2\u6D41\u901F v0\u2032\uFF0C\u6865\u58A9\u5C40\u90E8\u51B2\u5237\u53D6 0");
+    } else if (v <= v0) {
+      hb = base * ((v - v0p) / v0);
+      branch = "v<=v0";
+    } else {
+      hb = base * Math.pow((v - v0p) / v0, n2);
+      branch = "v>v0";
+    }
+    if (Kxi === 1) {
+      warnings.push("K\u03BE \u53D6\u7528 1.0\uFF1A\u8BF7\u6309\u9644\u5F55C\u6309\u58A9\u5F62\u590D\u6838\uFF08\u5706\u7AEF\u5F62/\u5C16\u7AEF\u5F62/\u77E9\u5F62\u7B49\u53D6\u503C\u4E0D\u540C\uFF09");
+    }
+    if (d50 > 200) {
+      warnings.push("d\u0304>200 mm\uFF08\u5375\u77F3/\u6F02\u77F3\uFF09\u65F6 65-2 \u5F0F\u9002\u7528\u6027\u9700\u590D\u6838");
+    }
+    return {
+      hb: Math.round(hb * 1e3) / 1e3,
+      v0: Math.round(v0 * 1e3) / 1e3,
+      v0p: Math.round(v0p * 1e3) / 1e3,
+      n2: Math.round(n2 * 1e3) / 1e3,
+      Keta2: Math.round(Keta2 * 1e4) / 1e4,
+      branch,
+      warnings
+    };
+  }
+  function totalScour(input) {
+    const { natural, general, local } = input;
+    for (const [k, v] of Object.entries({ natural, general, local })) {
+      if (!Number.isFinite(v) || v < 0) throw new Error(`${k} \u5FC5\u987B\u4E3A\u975E\u8D1F\u6570\uFF08m\uFF09`);
+    }
+    const notes = [
+      "\u89C4\u8303 8.6.1\uFF1A\u57FA\u5E95\u57CB\u6DF1\u5E94\u53D6\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u3001\u4E00\u822C\u51B2\u5237\u548C\u5C40\u90E8\u51B2\u5237\u7684\u4E0D\u5229\u7EC4\u5408\uFF0C\u5E76\u7B26\u5408 JTG D63",
+      "\u89C4\u8303 8.6.2\uFF1A\u975E\u5CA9\u77F3\u6CB3\u5E8A\u58A9\u53F0\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF0C\u5B89\u5168\u503C \u0394 \u5DF2\u5185\u7F6E\uFF08burialDelta \u6309\u8868 8.6.2 \u6863\u95F4\u63D2\u503C\uFF09\uFF1B\u5CA9\u77F3\u6CB3\u5E8A\u6539\u7528\u9644\u5F55 D \u8868 D\uFF08\u754C\u9762\u300C\u5CA9\u77F3\u6CB3\u5E8A\u57FA\u5E95\u57CB\u6DF1\u300D\u53EF\u67E5\uFF09"
+    ];
+    if (natural === 0) notes.push("\u81EA\u7136\u6F14\u53D8\u51B2\u5237\u6309 0 \u8BA1\u5165\uFF1A\u82E5\u6709\u6CB3\u9053\u6F14\u53D8\u8D44\u6599\u5E94\u8865\u5145");
+    return { total: Math.round((natural + general + local) * 1e3) / 1e3, notes };
+  }
+
+  // src/core/pierShape.ts
+  var PIER_TABLE_C = [
+    {
+      no: 1,
+      name: "\u5355\u5706\u67F1\uFF08\u5706\u5F62\u58A9\uFF09",
+      kind: "exact",
+      kxi: "K\u03BE = 1.00",
+      b1: "B\u2081 = d\uFF08d \u4E3A\u58A9\u5F84\uFF09"
+    },
+    {
+      no: 2,
+      name: "\u53CC\u5706\u67F1\uFF08\u5E76\u8054\u58A9\uFF09",
+      kind: "exact",
+      kxi: "\u4E0D\u5E26\u8054\u7CFB\u6881 K\u03BE = 1.00\uFF1B\u5E26\u8054\u7CFB\u6881\u6309 \u03B1 \u6863\u8868\uFF1A0\xB0\u21921.00\u300115\xB0\u21921.05\u300130\xB0\u21921.10\u300145\xB0\u21921.15",
+      b1: "B\u2081 = d",
+      note: "\u03B1 \u4E3A\u6865\u8F74\u6CD5\u7EBF\u4E0E\u6C34\u6D41\u65B9\u5411\u6240\u5939\u9510\u89D2\uFF1B\u6863\u95F4\u53EF\u5185\u63D2"
+    },
+    {
+      no: 3,
+      name: "\u5706\u7AEF\u5F62\u58A9",
+      kind: "curve",
+      kxi: "\u968F\u659C\u4EA4\u89D2 \u03B1 \u53D8\u5316\u7684\u66F2\u7EBF\uFF1A\u03B1=0\xB0 \u7EA6\u4F4E\u81F3 0.9 \u9644\u8FD1\uFF0C\u968F \u03B1 \u589E\u5927\u5347\u81F3\u7EA6 1.1\uFF08\u8BFB\u56FE\u91CF\u7EA7\uFF09\uFF0C\u7CBE\u786E\u503C\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF",
+      b1: "B\u2081 = (L\u2212b)\xB7sin\u03B1 + b\uFF08\u03B1=0 \u65F6\u6B63\u4EA4\u7528 B\u2081=b\uFF09",
+      note: "L \u4E3A\u58A9\u957F\u3001b \u4E3A\u58A9\u5BBD"
+    },
+    {
+      no: 4,
+      name: "\u5C16\u7AEF\u5F62\u58A9",
+      kind: "exact",
+      kxi: "\u4E0E\u6C34\u6D41\u6B63\u4EA4\u65F6\u6309\u8FCE\u6C34\u89D2 \u03B8 \u6863\u8868\uFF1A45\xB0\u21920.70\u300160\xB0\u21920.84\u300175\xB0\u21920.90\u300190\xB0\u21920.95\u3001120\xB0\u21921.10\uFF1B\u03B8=90\xB0 \u659C\u4EA4\u65F6\u53E6\u6709 K\u03BE-\u03B1 \u66F2\u7EBF\uFF08\u7EA6 0.9~1.1\uFF0C\u67E5\u56FE\uFF09",
+      b1: "B\u2081 = (L\u2212b)\xB7sin\u03B1 + b\uFF08\u4E3A\u7B80\u5316\u65F6\u6309\u5706\u7AEF\u58A9\u8BA1\u7B97\uFF09",
+      note: "\u03B8 \u4E3A\u5C16\u7AEF\u8FCE\u6C34\u89D2\uFF1B\u6B63\u4EA4\u6863\u95F4\u53EF\u5185\u63D2"
+    },
+    {
+      no: 5,
+      name: "\u6C89\u4E95\u57FA\u7840",
+      kind: "curve",
+      kxi: "K\u03BE-\u03B1 \u66F2\u7EBF\uFF08\u03B1=0\xB0~80\xB0\uFF0C\u91CF\u7EA7\u7EA6 1.0~1.3\uFF0C\u8BFB\u56FE\u7EA6 1.2 \u4E0A\u4E0B\uFF09\uFF0C\u7CBE\u786E\u503C\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0CB\u2081\u2032=L\u2081sin\u03B1+b\u2081cos\u03B1\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1",
+      note: "h \u4E3A\u603B\u6C34\u6DF1\uFF0Ch\u2081/h\u2082 \u4E3A\u58A9\u8EAB/\u6C89\u4E95\u5404\u81EA\u6C34\u6DF1"
+    },
+    {
+      no: 6,
+      name: "\u6C89\u4E95 + \u5706\u7AEF\u5F62\u58A9\u8EAB\uFF08\u7EC4\u5408\uFF09",
+      kind: "curve",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2082\uFF1AK\u03BE\u2081 \u6309 h\u2082/h \u67E5\u66F2\u7EBF\uFF080.98~1.2\uFF09\uFF0CK\u03BE\u2082 \u6309 \u03B1 \u67E5\u5706\u7AEF/\u77E9\u5F62\u53CC\u66F2\u7EBF\uFF08\u7EA6 0.9~1.2\uFF09\uFF1B\u4E24\u7EBF\u76F8\u5DEE\u8F83\u5927\u65F6\u6309 h\u2081\u3001h\u2082 \u6BD4\u4F8B\u5B9A\u70B9\u53D6\u503C",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0C\u5706\u7AEF B\u2081\u2032=(L\u2081\u2212b\u2081)sin\u03B1+b\u2081\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1"
+    },
+    {
+      no: 7,
+      name: "\u6C89\u4E95 + \u5C16\u7AEF\u5F62\u58A9\u8EAB\uFF08\u7EC4\u5408\uFF09",
+      kind: "curve",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2082\uFF1A\u6B63\u4EA4\u65F6 K\u03BE\u2081 \u6309 h\u2082/h \u66F2\u7EBF\u65CF\uFF08\u03B8=60\xB0/90\xB0/120\xB0 \u4E09\u6761\uFF0C\u7EA6 0.8~1.2\uFF09\uFF1B\u03B8=90\xB0 \u659C\u4EA4\u65F6 K\u03BE\u2082 \u6309 \u03B1 \u67E5\u5C16\u7AEF/\u77E9\u5F62\u53CC\u66F2\u7EBF\uFF1B\u5176\u4ED6\u89D2\u5EA6\u53EF\u8865\u63D2\u53D6\u503C",
+      b1: "\u6B63\u4EA4 B\u2081 = (b\u2081h\u2081+b\u2082h\u2082)/h\uFF1B\u659C\u4EA4 B\u2081\u2032 = (B\u2081\u2032h\u2081+B\u2082\u2032h\u2082)/h\uFF0CB\u2081\u2032=(L\u2081\u2212b\u2081)sin\u03B1+b\u2081\uFF0CB\u2082\u2032=L\u2082sin\u03B1+b\u2082cos\u03B1"
+    },
+    {
+      no: 8,
+      name: "\u6269\u5927\u57FA\u7840",
+      kind: "note",
+      kxi: "\u91C7\u7528\u4E0E\u6C34\u6D41\u6B63\u4EA4\u65F6\u7684\u58A9\u5F62\u7CFB\u6570\uFF08\u6309\u4E0A\u90E8\u58A9\u8EAB\u5F62\u72B6\u53D6\u7F16\u53F7 1/3/4 \u7684\u503C\uFF09",
+      b1: "\u6B63\u4EA4 B\u2081 = b\uFF1B\u659C\u4EA4 B\u2081\u2032 = (L\u2212b)\xB7sin\u03B1 + b"
+    },
+    {
+      no: 9,
+      name: "\u6869\u7FA4\uFF08\u7FA4\u6869\u57FA\u7840\uFF09",
+      kind: "formula",
+      kxi: "K\u03BE = K\u03BE\u2081\xB7K\u03BE\u2098\uFF1BK\u03BE\u2098 = 1 + 5\xB7[(m\u22121)\u03C6/B\u2098]\u2074\uFF08m \u4E3A\u6869\u7684\u6392\u6570\uFF0C\u03C6 \u4E3A\u6869\u5F84\uFF0CB\u2098 \u4E3A\u6869\u7FA4\u5782\u76F4\u6C34\u6D41\u65B9\u5411\u5206\u5E03\u5BBD\u5EA6\uFF09\uFF1B\u5355\u6869\u67F1\u4F53\u7CFB\u6570\u6309\u7F16\u53F7 (1)(2)(3)(5) \u786E\u5B9A\uFF0C\u591A\u4E3A\u5706\u67F1\u65F6 K\u03BE\u2081=1.0",
+      b1: "B\u2081 = \u03C6"
+    },
+    {
+      no: 10,
+      name: "\u6869\u627F\u53F0\u6865\u58A9",
+      kind: "note",
+      kxi: "\u627F\u53F0\u5E95\u9762\u4F4E\u4E8E\u4E00\u822C\u51B2\u5237\u7EBF\u65F6\u6309\u4E0A\u90E8\u5B9E\u4F53\u8BA1\u7B97\uFF1B\u627F\u53F0\u5E95\u9762\u9AD8\u4E8E\u6C34\u9762\u6309\u6392\u67B6\u5F0F\u8BA1\u7B97\u3002\u627F\u53F0\u5E95\u9762\u76F8\u5BF9\u9AD8\u5EA6 0\u2264h\u2082/h\u2083\u22641.0 \u65F6\u7528\u89C4\u8303\u4E13\u7528\u516C\u5F0F\uFF08\u542B\u6DF9\u6CA1\u6869\u67F1\u6298\u51CF\u7CFB\u6570 K\u2083\u03C6 \u66F2\u7EBF\u65CF\uFF0C\u6309\u627F\u53F0\u539A\u5EA6/\u6C34\u6DF1 0.1/0.2/0.3 \u5206\u6863\uFF09\uFF0C\u8BE6\u89C1\u89C4\u8303\u9644\u5F55 C \u7F16\u53F7 10",
+      b1: "\u6309\u7F16\u53F7 (9) \u4E0E\u627F\u53F0\u51E0\u4F55\u7EC4\u5408\u786E\u5B9A",
+      note: "\u4E13\u7528\u516C\u5F0F\u4F9D\u8D56 65-1 \u5F0F\u53C2\u6570\uFF08K\u03BE\u2081\u3001v\u2080\u3001v\u2080\u2032\u3001n\u2081 \u7B49\uFF09\uFF0C\u5EFA\u8BAE\u67E5\u89C4\u8303\u539F\u56FE\u9010\u9879\u4EE3\u5165"
+    },
+    {
+      no: 11,
+      name: "\u5927\u76F4\u5F84\u56F4\u5830\u7FA4\u6869",
+      kind: "formula",
+      kxi: "h_b = k_cd\xB7h_by\uFF1Bk_cd = 0.2 + 0.4\xB7(c/h)^0.3\xB7[1 + (z/h_by)^0.6]\uFF0Ch_by \u4E3A\u6309\u7F16\u53F7 (1) \u58A9\u5F62\u7B97\u5F97\u7684\u5C40\u90E8\u51B2\u5237\u6DF1\u5EA6",
+      b1: "B\u2081 = d",
+      note: "\u9002\u7528\u8303\u56F4\uFF1A0.2\u2264c/h\u22641.0\uFF0C0.2\u2264z/h_by\u22641.0"
+    },
+    {
+      no: 12,
+      name: "\u5DE5\u5B57\u627F\u53F0\u5927\u76F4\u5F84\u57FA\u6869\u7EC4\u5408\u58A9",
+      kind: "formula",
+      kxi: "h_b = k_\u03B1\xB7k_xh\xB7h_by\uFF1Bk_\u03B1 = \u22120.57\u03B1\xB2 + 0.57\u03B1 + 1\uFF08\u03B1 \u4EE5\u5F27\u5EA6\u8BA1\uFF0C0~0.785\uFF09\uFF1Bk_xh = 1.22h_x2(1+h\u2080/h) + 1.18(\u03C6/B\u2081)^0.6\xB7(h_d/h)\uFF0Ch_by \u6309\u7F16\u53F7 (1) \u58A9\u5F62\u8BA1\u7B97",
+      b1: "B\u2081",
+      note: "\u9002\u7528\u8303\u56F4\uFF1AD=2\u03C6\uFF0C0.2<h\u2082/h<0.5\uFF0C0<h_d/h<1.0\uFF0C\u03B1=0~0.785"
+    }
+  ];
+  function pierKxi2(alphaDeg) {
+    const stops = [0, 15, 30, 45];
+    const vals = [1, 1.05, 1.1, 1.15];
+    return interpStops(alphaDeg, stops, vals);
+  }
+  function pierKxi4(thetaDeg) {
+    const stops = [45, 60, 75, 90, 120];
+    const vals = [0.7, 0.84, 0.9, 0.95, 1.1];
+    return interpStops(thetaDeg, stops, vals);
+  }
+  function interpStops(x, stops, vals) {
+    if (!Number.isFinite(x)) throw new Error("\u89D2\u5EA6\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u503C\uFF08\u5EA6\uFF09");
+    if (x <= stops[0]) return vals[0];
+    if (x >= stops[stops.length - 1]) return vals[vals.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (x >= stops[i] && x <= stops[i + 1]) {
+        const t = (x - stops[i]) / (stops[i + 1] - stops[i]);
+        return Math.round((vals[i] + (vals[i + 1] - vals[i]) * t) * 1e3) / 1e3;
+      }
+    }
+    throw new Error("\u63D2\u503C\u5206\u652F\u672A\u8986\u76D6");
+  }
+  var ROCK_TABLE_D = [
+    {
+      cls: "\u2160",
+      group: "\u6781\u8F6F\u5CA9",
+      strength: "<5",
+      ucMin: 0,
+      ucMax: 5,
+      bridges: 2,
+      maxScour: "0.65~3.0",
+      hlt2: "3~4",
+      h2to10: "4~5",
+      hgt10: "5~7",
+      feature: "\u6210\u5206\u4EE5\u957F\u77F3\u4E3A\u4E3B\uFF0C\u77F3\u82F1\u51DD\u7070\u788E\u5C51\u3001\u4E91\u6BCD\u6B21\u4E4B\uFF1B\u4EE5\u9ECF\u571F\u53CA\u94C1\u8D28\u80F6\u7ED3\uFF0C\u80F6\u7ED3\u4E0D\u826F\uFF0C\u7528\u624B\u53EF\u634F\u6210\u6563\u7802\uFF1B\u6DCB\u6EE4\u73B0\u8C61\u660E\u663E\uFF0C\u4F46\u7ED3\u6784\u5747\u5300\uFF0C\u8282\u7406\u3001\u88C2\u9699\u4E0D\u53D1\u80B2\u3002\u5176\u4ED6\u5CA9\u77F3\u5982\u98CE\u5316\u4E25\u91CD\uFF0C\u8282\u7406\u3001\u88C2\u9699\u53D1\u80B2\uFF0C\u5F3A\u5EA6\u5C0F\u4E8E 5MPa\uFF0C\u7528\u9550\u3001\u9539\u6613\u6316\u52A8\u8005"
+    },
+    {
+      cls: "\u2161\u2081",
+      group: "\u8F6F\u5CA9\uFF08\u8F6F\u8D28\u5CA9\uFF09",
+      strength: "5~15",
+      ucMin: 5,
+      ucMax: 15,
+      bridges: 10,
+      maxScour: "0.4~2.0",
+      hlt2: "2~3",
+      h2to10: "3~4",
+      hgt10: "4~5",
+      feature: "\u6210\u5206\u4EE5\u9ECF\u571F\u4E3A\u4E3B\uFF0C\u65B9\u89E3\u77F3\u3001\u4E91\u6BCD\u3001\u77F3\u82F1\u6B21\u4E4B\uFF1B\u80F6\u7ED3\u6210\u5206\u4EE5\u6CE5\u8D28\u4E3A\u4E3B\uFF0C\u9499\u8D28\u6B21\u4E4B\uFF1B\u5E72\u88C2\u73B0\u8C61\u4E25\u91CD\uFF0C\u6613\u98CE\u5316\uFF0C\u5904\u4E8E\u6C34\u4E0B\u65F6\u6574\u4F53\u6027\u5C1A\u597D\uFF1B\u4E0D\u6613\u900F\u6C34\uFF0C\u66B4\u9732\u540E\u6613\u5E72\u88C2\u6210\u788E\u5757\u3002\u5176\u4ED6\u5982\u98CE\u5316\u8F83\u4E25\u91CD\uFF0C\u8282\u7406\u8F83\u53D1\u80B2\uFF0C\u4F46\u9047\u6C34\u5D29\u89E3\u6210\u571F\u72B6\u7684\u5CA9\u5757"
+    },
+    {
+      cls: "\u2161\u2082",
+      group: "\u8F6F\u5CA9\uFF08\u8F83\u8F6F\u5CA9\uFF09",
+      strength: "15~30",
+      ucMin: 15,
+      ucMax: 30,
+      bridges: 9,
+      maxScour: "0.4~1.25",
+      hlt2: "1~2",
+      h2to10: "2~3",
+      hgt10: "3~4",
+      feature: "\u7802\u5CA9\u6210\u5206\u540C\u4E0A\uFF0C\u5939\u7802\u9897\u7C92\uFF1B\u7802\u5CA9\u4EE5\u77F3\u82F1\u4E3A\u4E3B\uFF0C\u957F\u77F3\u3001\u4E91\u6BCD\u6B21\u4E4B\uFF0C\u4EE5\u78F7\u3001\u9499\u8D28\u7B49\u80F6\u7ED3\u3002\u9875\u5CA9\u4EE5\u7845\u8D28\u4E0E\u6CE5\u8D28\u7B49\u80F6\u7ED3\u3002\u80F6\u7ED3\u7269\u4EE5\u6CE5\u8D28\u3001\u9499\u8D28\u4E3A\u4E3B\uFF0C\u7802\u8D28\u6B21\u4E4B\uFF0C\u5C42\u7406\u3001\u8282\u7406\u8F83\u660E\u663E\u3002\u7802\u9875\u5CA9\u5728\u6C34\u9646\u4EA4\u66FF\u5904\u6613\u4E8E\u5E72\u88C2\u3001\u5D29\u89E3"
+    },
+    {
+      cls: "\u2162",
+      group: "\u786C\u8D28\u5CA9\uFF08\u8F83\u786C\u5CA9\u3001\u575A\u786C\u5CA9\uFF09",
+      strength: ">30",
+      ucMin: 30,
+      ucMax: null,
+      bridges: 9,
+      maxScour: "0.4~0.7",
+      hlt2: "0.2~1.0",
+      h2to10: "0.2~2.0",
+      hgt10: "0.5~3.0",
+      feature: "\u677F\u5CA9\u3001\u9499\u8D28\u7802\u5CA9\u3001\u5CA9\u6D46\u5CA9\uFF08\u82B1\u5C97\u5CA9\u3001\u77F3\u7070\u5CA9\u7B49\uFF09\u3001\u77F3\u82F1\u7802\u5CA9\u3001\u6D41\u7EB9\u5CA9\u3001\u82B1\u5C97\u5CA9\u7C7B\u7B49\u3002\u5CA9\u77F3\u575A\u786C\uFF0C\u5F3A\u5EA6\u867D\u5927\u4E8E 30MPa\uFF0C\u4F46\u8282\u7406\u3001\u88C2\u9699\u3001\u5C42\u7406\u975E\u5E38\u53D1\u80B2\uFF0C\u5E94\u8003\u8651\u51B2\u5237\u3002\u5982\u5CA9\u4F53\u5B8C\u6574\u8282\u7406\u3001\u88C2\u9699\u5C11\u91CF\uFF0C\u98CE\u5316\u5F88\u5FAE\u5F31\uFF0C\u53EF\u4E0D\u8BA1\u51B2\u5237\uFF0C\u4F46\u57FA\u5E95\u4E5F\u5B9C\u57CB\u5165\u5CA9\u9762 0.2~0.5m"
+    }
+  ];
+  function rockBurial(cls, band) {
+    const norm = cls.trim().replace(/\s/g, "");
+    const row = ROCK_TABLE_D.find((r) => {
+      const alias = r.cls.replace(/Ⅰ/g, "I").replace(/Ⅱ/g, "II").replace(/Ⅲ/g, "III").replace(/₁/g, "1").replace(/₂/g, "2");
+      return r.cls === norm || alias === norm.toUpperCase();
+    });
+    if (!row) {
+      throw new Error(`\u5CA9\u77F3\u7C7B\u522B ${cls} \u4E0D\u5728\u9644\u5F55 D \u8868\u5217\uFF08\u5E94\u4E3A \u2160 / \u2161\u2081 / \u2161\u2082 / \u2162\uFF09`);
+    }
+    const map = {
+      lt2: { label: "h < 2 m", range: row.hlt2 },
+      "2to10": { label: "h = 2~10 m", range: row.h2to10 },
+      gt10: { label: "h > 10 m", range: row.hgt10 }
+    };
+    return { row, bandLabel: map[band].label, range: map[band].range };
+  }
+
+  // src/core/threePoint.ts
+  function threePointFit(pts) {
+    if (pts.length !== 3) throw new Error("\u4E09\u70B9\u9002\u7EBF\u6CD5\u9700\u8981\u6070\u597D 3 \u4E2A\u70B9");
+    const [p1, p2, p3] = pts.map((t) => t.p);
+    const [x1, x2, x3] = pts.map((t) => t.x);
+    for (const p of [p1, p2, p3]) {
+      if (!(p > 0 && p < 1)) throw new Error(`\u9891\u7387\u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    }
+    if (!(p1 < p2 && p2 < p3)) throw new Error("\u4E09\u70B9\u9891\u7387\u5FC5\u987B\u9012\u589E\uFF08\u5982 5%\u300150%\u300195% \u8D85\u8FC7\u6982\u7387\u5199\u6CD5\u5373 0.05/0.5/0.95\uFF09");
+    if (!(Number.isFinite(x1) && Number.isFinite(x2) && Number.isFinite(x3))) {
+      throw new Error("\u4E09\u70B9\u6D41\u91CF\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
+    if (x1 <= x3) throw new Error("\u8981\u6C42 x1 > x3\uFF08\u9891\u7387\u8D8A\u5C0F\u6D41\u91CF\u8D8A\u5927\uFF09\uFF0C\u7CFB\u5217\u53EF\u80FD\u6052\u5B9A\u6216\u987A\u5E8F\u9519\u8BEF");
+    const sOf = (cs2) => {
+      const f12 = phiPIII(p1, cs2), f22 = phiPIII(p2, cs2), f32 = phiPIII(p3, cs2);
+      return (f12 + f32 - 2 * f22) / (f12 - f32);
+    };
+    const S = (x1 + x3 - 2 * x2) / (x1 - x3);
+    let cs;
+    if (S <= 0) {
+      cs = 0;
+    } else {
+      let lo = 0, hi = 1;
+      let guard = 0;
+      while (sOf(hi) < S && guard++ < 100) {
+        lo = hi;
+        hi *= 2;
+      }
+      if (guard >= 100) throw new Error("\u4E09\u70B9\u6CD5\u6C42 Cs \u4E0A\u754C\u6269\u5F20\u8D85\u9650\uFF0C\u6570\u636E\u53EF\u80FD\u4E0D\u9002\u7528");
+      for (let i = 0; i < 100; i++) {
+        const mid = (lo + hi) / 2;
+        if (sOf(mid) < S) lo = mid;
+        else hi = mid;
+        if (hi - lo < 1e-10) break;
+      }
+      cs = (lo + hi) / 2;
+    }
+    const f1 = phiPIII(p1, cs), f2 = phiPIII(p2, cs), f3 = phiPIII(p3, cs);
+    const sigma = (x1 - x3) / (f1 - f3);
+    if (!(sigma > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA \u03C3 \u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    const mean = x2 - sigma * f2;
+    if (!(mean > 0)) throw new Error("\u4E09\u70B9\u6CD5\u89E3\u51FA\u5747\u503C\u975E\u6B63\uFF0C\u6570\u636E\u77DB\u76FE");
+    return { mean, cv: sigma / mean, cs, S, sigma, freqs: [p1, p2, p3] };
+  }
+  function empiricalQuantiles(series, freqs) {
+    if (series.length < 3) throw new Error("\u4E09\u70B9\u6CD5\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6570\u636E");
+    const sorted = [...series].sort((a, b) => b - a);
+    const n = sorted.length;
+    return freqs.map((p) => {
+      const rank = p * (n + 1);
+      if (rank < 1) return sorted[0];
+      if (rank >= n) return sorted[n - 1];
+      const mLo = Math.floor(rank);
+      const w = rank - mLo;
+      return sorted[mLo - 1] + w * (sorted[mLo] - sorted[mLo - 1]);
+    });
+  }
+  function threePointFromSeries(series, freqs = [0.05, 0.5, 0.95]) {
+    const xs = empiricalQuantiles(series, freqs);
+    return threePointFit([
+      { p: freqs[0], x: xs[0] },
+      { p: freqs[1], x: xs[1] },
+      { p: freqs[2], x: xs[2] }
+    ]);
+  }
+
+  // src/core/bayes.ts
+  function nelderMead(f, x0, opts = {}) {
+    const n = x0.length;
+    const maxIter = opts.maxIter ?? 2e3;
+    const tol = opts.tol ?? 1e-9;
+    const step = opts.step ?? x0.map((v, i) => Math.abs(v) < 1 ? 0.15 : 0.05 * Math.abs(v));
+    const pts = [];
+    pts.push({ x: [...x0], fx: f(x0) });
+    for (let i = 0; i < n; i++) {
+      const xi = [...x0];
+      xi[i] += xi[i] === 0 ? 0.15 : step[i];
+      pts.push({ x: xi, fx: f(xi) });
+    }
+    let iter = 0;
+    for (; iter < maxIter; iter++) {
+      pts.sort((a, b) => a.fx - b.fx);
+      if (Math.abs(pts[n].fx - pts[0].fx) < tol * (Math.abs(pts[0].fx) + 1e-30)) break;
+      const xbar = new Array(n).fill(0);
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) xbar[i] += pts[j].x[i];
+      for (let i = 0; i < n; i++) xbar[i] /= n;
+      const worst = pts[n];
+      const xr = xbar.map((v, i) => v + (v - worst.x[i]));
+      const fr = f(xr);
+      if (fr < pts[0].fx) {
+        const xe = xbar.map((v, i) => v + 2 * (v - worst.x[i]));
+        const fe = f(xe);
+        if (fe < fr) pts[n] = { x: xe, fx: fe };
+        else pts[n] = { x: xr, fx: fr };
+      } else if (fr < pts[n - 1].fx) {
+        pts[n] = { x: xr, fx: fr };
+      } else {
+        const xc = xbar.map((v, i) => v + 0.5 * (worst.x[i] - v));
+        const fc = f(xc);
+        if (fc < pts[n].fx) {
+          pts[n] = { x: xc, fx: fc };
+        } else {
+          for (let i = 1; i <= n; i++) {
+            pts[i].x = pts[i].x.map((v, j) => pts[0].x[j] + 0.5 * (v - pts[0].x[j]));
+            pts[i].fx = f(pts[i].x);
+          }
+        }
+      }
+    }
+    pts.sort((a, b) => a.fx - b.fx);
+    return { x: pts[0].x, fx: pts[0].fx, iterations: iter, converged: iter < maxIter };
+  }
+  var BAD = -1e100;
+  function logL_P3(theta, xs) {
+    const a0 = theta[0], beta = Math.exp(theta[1]), alpha = Math.exp(theta[2]);
+    let s = 0;
+    for (const x of xs) {
+      if (x <= a0) return BAD;
+      s += (alpha - 1) * Math.log(x - a0) - beta * (x - a0);
+    }
+    return xs.length * (alpha * Math.log(beta) - gammaln(alpha)) + s;
+  }
+  function logL_GEV(theta, xs) {
+    const mu = theta[0], sigma = Math.exp(theta[1]), xi = theta[2];
+    let s = -xs.length * Math.log(sigma);
+    if (Math.abs(xi) < 1e-8) {
+      for (const x of xs) {
+        const z = (x - mu) / sigma;
+        s += -z - Math.exp(-z);
+      }
+      return s;
+    }
+    for (const x of xs) {
+      const u = 1 + xi * (x - mu) / sigma;
+      if (u <= 0) return BAD;
+      const lnT = -Math.log(u) / xi;
+      s += (1 + xi) * lnT - Math.exp(lnT);
+    }
+    return s;
+  }
+  function logL_Gumbel(theta, xs) {
+    const mu = theta[0], sigma = Math.exp(theta[1]);
+    let s = -xs.length * Math.log(sigma);
+    for (const x of xs) {
+      const z = (x - mu) / sigma;
+      s += -z - Math.exp(-z);
+    }
+    return s;
+  }
+  function fitOne(name, k, logL, starts, xs, pretty) {
+    let best = null;
+    for (const st of starts) {
+      const r = nelderMead((t) => -logL(t, xs), st);
+      if (!best || r.fx < best.fx) best = r;
+    }
+    const logL_val = -best.fx;
+    const n = xs.length;
+    return {
+      name,
+      k,
+      logL: logL_val,
+      aic: 2 * k - 2 * logL_val,
+      bic: k * Math.log(n) - 2 * logL_val,
+      params: best.x,
+      paramsPretty: pretty(best.x)
+    };
+  }
+  function qFromP3(t, p, gammaQ) {
+    const a0 = t[0], beta = Math.exp(t[1]), alpha = Math.exp(t[2]);
+    return a0 + gammaQ(1 - p, alpha) / beta;
+  }
+  function qFromGEV(t, p) {
+    const mu = t[0], sigma = Math.exp(t[1]), xi = t[2];
+    const T = -Math.log(1 - p);
+    if (Math.abs(xi) < 1e-8) return mu - sigma * Math.log(T);
+    return mu + sigma / xi * (Math.pow(T, -xi) - 1);
+  }
+  function qFromGumbel(t, p) {
+    const mu = t[0], sigma = Math.exp(t[1]);
+    return mu - sigma * Math.log(-Math.log(1 - p));
+  }
+  function compareLineages(xs) {
+    const n = xs.length;
+    if (n < 5) throw new Error("\u7EBF\u578B\u6BD4\u9009\u81F3\u5C11\u9700\u8981 5 \u4E2A\u6570\u636E\u70B9");
+    const sorted = [...xs].sort((a, b) => a - b);
+    const mean = xs.reduce((s, v) => s + v, 0) / n;
+    const sd = Math.sqrt(xs.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1));
+    const min = sorted[0], max = sorted[n - 1];
+    const span = Math.max(max - min, 1e-9);
+    const csM = (() => {
+      const m3 = xs.reduce((s, v) => s + (v - mean) ** 3, 0) / n;
+      return m3 / sd ** 3;
+    })();
+    const a0est = Math.min(mean - 2 * sd, min - 0.1 * span);
+    const alphaEst = Math.min(Math.max(4 / Math.max(csM * csM, 0.04), 1.5), 5e3);
+    const betaEst = alphaEst / Math.max(mean - a0est, 1e-9);
+    const p3Starts = [
+      [a0est, Math.log(betaEst), Math.log(alphaEst)],
+      [min - 0.5 * span, Math.log(1 / sd), Math.log(4)]
+    ];
+    const gevStarts = [
+      [mean - 0.3 * sd, Math.log(0.7 * sd), 0.1],
+      [mean - 0.3 * sd, Math.log(0.7 * sd), -0.1]
+    ];
+    const guStarts = [[mean - 0.45 * sd, Math.log(0.78 * sd)]];
+    const fits = [
+      fitOne("P3", 3, logL_P3, p3Starts, xs, (t) => ({ a0: t[0], beta: Math.exp(t[1]), alpha: Math.exp(t[2]) })),
+      fitOne("GEV", 3, logL_GEV, gevStarts, xs, (t) => ({ mu: t[0], sigma: Math.exp(t[1]), xi: t[2] })),
+      fitOne("Gumbel", 2, logL_Gumbel, guStarts, xs, (t) => ({ mu: t[0], sigma: Math.exp(t[1]) }))
+    ];
+    const minBic = Math.min(...fits.map((f) => f.bic));
+    const exps = fits.map((f) => Math.exp(-(f.bic - minBic) / 2));
+    const sumExp = exps.reduce((s, v) => s + v, 0);
+    const weights = {};
+    fits.forEach((f, i) => weights[f.name] = exps[i] / sumExp);
+    const q1p = {};
+    for (const f of fits) {
+      if (f.name === "P3") q1p.P3 = qFromP3(f.params, 0.01, gammaQuantile);
+      else if (f.name === "GEV") q1p.GEV = qFromGEV(f.params, 0.01);
+      else q1p.Gumbel = qFromGumbel(f.params, 0.01);
+    }
+    const best = fits.reduce((a, b) => weights[a.name] >= weights[b.name] ? a : b).name;
+    return { fits, weights, best, q1p };
+  }
+
+  // src/core/autoFit.ts
+  function autoFit(points, initial, phiFn = phiPIII) {
+    if (points.length < 3) throw new Error("\u4F18\u5316\u9002\u7EBF\u81F3\u5C11\u9700\u8981 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E");
+    const { mean } = initial;
+    if (!(mean > 0)) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF08\u4F18\u5316\u9002\u7EBF\u56FA\u5B9A\u77E9\u6CD5\u5747\u503C\uFF09");
+    const sseInitial = sseOfPoints(points, initial, phiFn);
+    const objective2 = (theta) => {
+      const cv2 = theta[0], cs2 = theta[1];
+      let penalty = 0;
+      if (cv2 <= 0.01) penalty += (0.01 - cv2) ** 2 * 1e12;
+      if (cs2 < 0) penalty += cs2 * cs2 * 1e12;
+      if (penalty > 0) return penalty + sseInitial;
+      return sseOfPoints(points, { mean, cv: cv2, cs: cs2 }, phiFn);
+    };
+    const starts = [
+      [initial.cv, initial.cs],
+      [Math.max(initial.cv * 0.8, 0.05), Math.max(initial.cs * 1.5, 0.1)],
+      [Math.min(initial.cv * 1.2, 1.5), Math.max(initial.cs * 0.5, 0.05)]
+    ];
+    let best = null;
+    for (const st of starts) {
+      const r = nelderMead(objective2, st, { maxIter: 800, tol: 1e-10 });
+      if (!best || r.fx < best.fx) best = r;
+    }
+    const cv = best.x[0], cs = best.x[1];
+    const sse = sseOfPoints(points, { mean, cv, cs }, phiFn);
+    return {
+      mean,
+      cv,
+      cs,
+      sse,
+      sseInitial,
+      improved: sse <= sseInitial + 1e-9,
+      iterations: best.iterations
+    };
+  }
+
+  // src/core/recommendFit.ts
+  var CRITERION_LABEL = {
+    sse: "\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219",
+    abs: "\u79BB\u5DEE\u7EDD\u5BF9\u503C\u548C\u51C6\u5219",
+    rel: "\u76F8\u5BF9\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219"
+  };
+  function objective(points, mean, cv, cs, criterion) {
+    let t = 0;
+    for (const pt of points) {
+      const qth = mean * (1 + phiPIII(pt.p, cs) * cv);
+      const d = qth - pt.q;
+      if (criterion === "sse") t += d * d;
+      else if (criterion === "abs") t += Math.abs(d);
+      else {
+        if (!(pt.q > 0)) continue;
+        t += d / pt.q * (d / pt.q);
+      }
+    }
+    return t;
+  }
+  function bestCvAt(points, mean, k, criterion, lo0, hi0) {
+    let bestCv = lo0;
+    let bestObj = Number.POSITIVE_INFINITY;
+    for (let cv = lo0; cv <= hi0 + 1e-9; cv += 0.02) {
+      const v = objective(points, mean, cv, cv * k, criterion);
+      if (v < bestObj) {
+        bestObj = v;
+        bestCv = cv;
+      }
+    }
+    const lo = Math.max(lo0, bestCv - 0.03);
+    const hi = Math.min(hi0, bestCv + 0.03);
+    for (let cv = lo; cv <= hi + 1e-9; cv += 3e-3) {
+      const v = objective(points, mean, cv, cv * k, criterion);
+      if (v < bestObj) {
+        bestObj = v;
+        bestCv = cv;
+      }
+    }
+    return { cv: bestCv, objective: bestObj };
+  }
+  function bestKAt(points, mean, criterion, lo0, hi0, cvLo, cvHi) {
+    let bestK = lo0;
+    let best = { cv: 0, objective: Number.POSITIVE_INFINITY };
+    for (let k = lo0; k <= hi0 + 1e-9; k += 0.5) {
+      const r = bestCvAt(points, mean, k, criterion, cvLo, cvHi);
+      if (r.objective < best.objective) {
+        best = r;
+        bestK = k;
+      }
+    }
+    const lo = Math.max(lo0, bestK - 0.4);
+    const hi = Math.min(hi0, bestK + 0.4);
+    for (let k = lo; k <= hi + 1e-9; k += 0.1) {
+      const r = bestCvAt(points, mean, Number(k.toFixed(2)), criterion, cvLo, cvHi);
+      if (r.objective < best.objective) {
+        best = r;
+        bestK = Number(k.toFixed(2));
+      }
+    }
+    return { k: bestK, cv: best.cv, objective: best.objective };
+  }
+  function recommendFit(points, input) {
+    const criterion = input.criterion ?? "sse";
+    const mean = input.mean;
+    if (!Number.isFinite(mean) || mean <= 0) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\u6570\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    if (!points || points.length < 3) throw new Error("\u9002\u7EBF\u81F3\u5C11\u9700\u8981 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    let cvLo = 0.05;
+    let cvHi = 1.2;
+    if (input.cvHint != null && Number.isFinite(input.cvHint) && input.cvHint > 0) {
+      cvLo = Math.max(0.05, input.cvHint - 0.3);
+      cvHi = Math.min(1.2, input.cvHint + 0.3);
+    }
+    let best = {
+      mean,
+      cv: Number.NaN,
+      cs: Number.NaN,
+      ratio: Number.NaN,
+      criterion,
+      objective: Number.POSITIVE_INFINITY
+    };
+    const take = (k, cv, objectiveValue) => {
+      if (objectiveValue < best.objective) {
+        best = {
+          mean,
+          cv: Number(cv.toFixed(4)),
+          cs: Number((cv * k).toFixed(4)),
+          ratio: Number(k.toFixed(2)),
+          criterion,
+          objective: objectiveValue
+        };
+      }
+    };
+    if (input.fixedK != null) {
+      if (!(input.fixedK > 0)) throw new Error("Cs/Cv \u500D\u6BD4\u5FC5\u987B\u4E3A\u6B63\u6570");
+      const r = bestCvAt(points, mean, input.fixedK, criterion, cvLo, cvHi);
+      take(input.fixedK, r.cv, r.objective);
+    } else {
+      const [k0, k1] = input.kRange ?? [2, 4];
+      if (!(k1 >= k0)) throw new Error("\u500D\u6BD4\u533A\u95F4\u4E0A\u754C\u5FC5\u987B\u4E0D\u5C0F\u4E8E\u4E0B\u754C");
+      const r = bestKAt(points, mean, criterion, k0, k1, cvLo, cvHi);
+      take(r.k, r.cv, r.objective);
+    }
+    return best;
+  }
+
+  // src/core/samplingError.ts
+  function dPhiDCs(p, cs) {
+    if (Math.abs(cs) <= 0.3) {
+      const z = phiPIII(p, 0);
+      return (z * z - 1) / 6 + cs / 36 * (z * z * z - 3 * z);
+    }
+    const h = 1e-3 * Math.max(1, Math.abs(cs));
+    return (phiPIII(p, cs + h) - phiPIII(p, cs - h)) / (2 * h);
+  }
+  function bValue(p, cs) {
+    if (!(p > 0 && p < 1)) throw new Error(`\u9891\u7387 p \u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${p}`);
+    if (!Number.isFinite(cs)) throw new Error(`Cs \u5FC5\u987B\u4E3A\u6709\u9650\u6570\uFF0C\u6536\u5230 ${cs}`);
+    const phi = phiPIII(p, cs);
+    const dphi = dPhiDCs(p, cs);
+    const c2 = cs * cs;
+    const b2 = 1 + phi * phi * (0.5 + 0.375 * c2) + dphi * dphi * (6 + 9 * c2 + 1.875 * c2 * c2) + phi * cs + 2 * phi * dphi * (1.5 * cs + 0.375 * cs * c2);
+    return Math.sqrt(Math.max(b2, 1e-12));
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = a + 1831565813 >>> 0;
+      let t = a;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function normSample(rnd) {
+    let u = rnd();
+    if (u < 1e-12) u = 1e-12;
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
+  }
+  function gammaSample(rnd, alpha) {
+    if (alpha < 1) return gammaSample(rnd, alpha + 1) * Math.pow(rnd(), 1 / alpha);
+    const d = alpha - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    for (let k = 0; k < 1e3; k++) {
+      let x = 0, v = 0;
+      do {
+        x = normSample(rnd);
+        v = 1 + c * x;
+      } while (v <= 0);
+      v = v * v * v;
+      const u = rnd();
+      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+      if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+    }
+    return d;
+  }
+  function gampdf(a, g) {
+    return Math.exp(-g + (a - 1) * Math.log(g) - gammaln(a));
+  }
+  function phiFast(pExceed, cs) {
+    if (Math.abs(cs) < 1e-8) return norminv(1 - pExceed);
+    if (cs < 0) return -phiFast(1 - pExceed, -cs);
+    if (Math.abs(cs) < 0.01) {
+      const z2 = norminv(1 - pExceed);
+      return z2 + cs / 6 * (z2 * z2 - 1) + cs * cs / 72 * (z2 * z2 * z2 - 3 * z2);
+    }
+    const a = 4 / (cs * cs);
+    const q = 1 - pExceed;
+    const z = norminv(q);
+    let g = a * Math.pow(1 - 1 / (9 * a) + z * Math.sqrt(1 / (9 * a)), 3);
+    if (!(g > 0)) g = a;
+    for (let i = 0; i < 60; i++) {
+      const f = gammaincLower(a, g) - q;
+      const d = gampdf(a, g);
+      if (!(d > 0)) break;
+      let step = f / d;
+      let gn = g - step;
+      let damp = 1;
+      while (!(gn > 0) && damp > 1e-6) {
+        damp *= 0.5;
+        gn = g - damp * step;
+      }
+      if (Math.abs(gn - g) < 1e-12 * Math.max(gn, 1)) {
+        g = gn;
+        break;
+      }
+      g = gn;
+    }
+    return cs / 2 * (g - a);
+  }
+  function bValueMC(p, cs, n, opts) {
+    const reps = Math.max(200, Math.round(opts?.reps ?? 2e3));
+    const seed = opts?.seed ?? 20260929;
+    if (!(n >= 2)) throw new Error("\u7CFB\u5217\u957F\u5EA6 n \u5FC5\u987B\u4E0D\u5C0F\u4E8E 2");
+    const rnd = mulberry32(seed);
+    const cv = 0.5, mean = 1;
+    const absCs = Math.abs(cs);
+    const alpha = absCs < 1e-8 ? 0 : 4 / (cs * cs);
+    const sign = cs >= 0 ? 1 : -1;
+    const xs = new Float64Array(n);
+    const xp = new Float64Array(reps);
+    const xp2 = new Float64Array(reps);
+    for (let r = 0; r < reps; r++) {
+      let sum = 0;
+      for (let i = 0; i < n; i++) {
+        let phiS;
+        if (alpha === 0) phiS = normSample(rnd);
+        else phiS = sign * (absCs / 2) * (gammaSample(rnd, alpha) - alpha);
+        const x = mean * (1 + cv * phiS);
+        xs[i] = x;
+        sum += x;
+      }
+      const m = sum / n;
+      let m2 = 0, m3 = 0;
+      for (let i = 0; i < n; i++) {
+        const d = xs[i] - m;
+        m2 += d * d;
+        m3 += d * d * d;
+      }
+      m2 /= n;
+      m3 /= n;
+      const sd = Math.sqrt(m2);
+      if (!(sd > 0)) {
+        xp[r] = m;
+        xp2[r] = m * m;
+        continue;
+      }
+      const cvh = sd / m;
+      const csh = m3 / (sd * sd * sd);
+      const v = m * (1 + cvh * phiFast(p, csh));
+      xp[r] = v;
+      xp2[r] = v * v;
+    }
+    let s1 = 0, s2 = 0;
+    for (let r = 0; r < reps; r++) {
+      s1 += xp[r];
+      s2 += xp2[r];
+    }
+    const mx = s1 / reps;
+    const varr = Math.max(s2 / reps - mx * mx, 0) * reps / (reps - 1);
+    const sdXp = Math.sqrt(varr);
+    const B = sdXp * Math.sqrt(n) / (mean * cv);
+    let s4 = 0;
+    for (let r = 0; r < reps; r++) s4 += (xp[r] - mx) ** 4;
+    const mu4 = s4 / reps;
+    const kurt = mu4 / Math.max(varr * varr, 1e-300);
+    const seSd = sdXp * Math.sqrt(Math.max(kurt - 1, 0) / (4 * reps));
+    return {
+      B,
+      reps,
+      BAnalytic: bValue(p, cs),
+      relSE: sdXp > 0 ? seSd / sdXp * 100 : 0
+    };
+  }
+  function designSamplingError(input) {
+    const { mean, cv, cs, p, n } = input;
+    const beta = input.beta ?? 0.7;
+    const method = input.method ?? "mc";
+    if (!(mean > 0)) throw new Error("\u5747\u503C\u5FC5\u987B\u4E3A\u6B63\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    if (!(cv > 0)) throw new Error("Cv \u5FC5\u987B\u4E3A\u6B63\uFF0C\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217");
+    if (!Number.isFinite(n) || n < 2) throw new Error("\u7CFB\u5217\u957F\u5EA6 n \u5FC5\u987B\u4E0D\u5C0F\u4E8E 2");
+    const phi = phiPIII(p, cs);
+    const kp = 1 + phi * cv;
+    const xp = mean * kp;
+    const mc = input.precomputed ?? (method === "mc" ? bValueMC(p, cs, n, { reps: input.reps }) : void 0);
+    const B = mc ? mc.B : bValue(p, cs);
+    const sigmaAbs = mean * cv * B / Math.sqrt(n);
+    const relPct = sigmaAbs / xp * 100;
+    const safetyDelta = beta * sigmaAbs;
+    const basis = method === "mc" ? `\u7EDF\u8BA1\u8BD5\u9A8C ${mc.reps} \u6B21\uFF08\u4E0E\u89C4\u8303\u56FE A.2 \u540C\u4E00\u8DEF\u6570\uFF0C\u77E9\u6CD5\u53E3\u5F84\uFF1BB \u7684\u8BD5\u9A8C\u7CBE\u5EA6 \xB1${mc.relSE.toFixed(1)}%\uFF09\uFF1B\u4E00\u9636\u6E10\u8FD1\u5BF9\u7167 B=${mc.BAnalytic.toFixed(2)}\uFF08n=${n} \u65F6\u6E10\u8FD1\u5F0F\u504F\u5927\u7EA6 ${((mc.BAnalytic / mc.B - 1) * 100).toFixed(0)}%\uFF0C\u56E0\u6837\u672C\u504F\u6001\u7CFB\u6570\u7684\u5B9E\u9645\u65B9\u5DEE\u8FDC\u5C0F\u4E8E\u6E10\u8FD1\u503C\uFF09` : `\u4E00\u9636\u89E3\u6790\u6E10\u8FD1\u5F0F\uFF08B \u7531\u77E9\u6CD5\u4F30\u8BA1\u7684\u89E3\u6790\u534F\u65B9\u5DEE\u63A8\u51FA\uFF0Cn\u2192\u221E \u624D\u4E25\u683C\u6210\u7ACB\uFF1B\u5C0F\u6837\u672C\u4E0B\u504F\u5B89\u5168\uFF09`;
+    const note = `\u03C3_xp = Q\u0304\xB7C_v\xB7B/\u221An = ${sigmaAbs.toFixed(0)}\uFF08B=${B.toFixed(3)}\uFF0Cn=${n}\uFF09\uFF1B\u76F8\u5BF9\u5747\u65B9\u8BEF \xB1${relPct.toFixed(1)}%\uFF1B\u5B89\u5168\u4FEE\u6B63\u503C \u0394=\u03B2\u03C3\uFF0C\u03B2=0.7 \u2192 +${safetyDelta.toFixed(0)}\u3002\u4F9D\u636E SL 44-2006 \u9644\u5F55 A.2\uFF1A${basis}\u3002`;
+    return { B, xp, kp, sigmaAbs, relPct, safetyDelta, xpSafe: xp + safetyDelta, note, method, mc };
+  }
+
+  // src/core/migrate.ts
+  var SCHEMA_V1 = "hongsuan-project@1";
+  var SCHEMA_V2 = "hongsuan-project@2";
+  var v1tov2 = {
+    from: SCHEMA_V1,
+    to: SCHEMA_V2,
+    note: "state \u8865\u9F50\u6865\u5B54/\u4E00\u822C\u51B2\u5237/\u5C40\u90E8\u51B2\u5237/\u603B\u51B2\u5237\u56DB\u7EC4\u6301\u4E45\u5316\u5B57\u6BB5\uFF08v0.11.0 \u65B0\u589E\uFF0C\u7F3A\u7701\u7A7A\uFF09",
+    migrate: (f) => ({
+      ...f,
+      schema: SCHEMA_V2,
+      state: {
+        open: {},
+        scour: {},
+        local: {},
+        total: {},
+        ...f.state
+      }
+    })
+  };
+  var MIGRATIONS = [v1tov2];
+  var LATEST_SCHEMA = MIGRATIONS.length ? MIGRATIONS[MIGRATIONS.length - 1].to : SCHEMA_V1;
+  function migrateProjectFile(json) {
+    if (typeof json !== "object" || json === null) {
+      throw new HsError({ code: "E_SCHEMA", message: "\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61" });
+    }
+    let f = json;
+    const migratedFrom = [];
+    for (; ; ) {
+      if (f.schema === LATEST_SCHEMA) return { file: f, migratedFrom };
+      const step = MIGRATIONS.find((m) => m.from === f.schema);
+      if (!step) {
+        const known = [SCHEMA_V1, ...MIGRATIONS.map((m) => m.to)].join(" \u2192 ");
+        throw new HsError({
+          code: "E_SCHEMA",
+          field: "schema",
+          value: f.schema,
+          message: `\u65E0\u6CD5\u8BC6\u522B\u7684\u5DE5\u7A0B\u6587\u4EF6 schema\uFF1A${String(f.schema)}\uFF08\u5DF2\u77E5\u8FC1\u79FB\u94FE\uFF1A${known}\uFF09`,
+          suggestion: "\u8BF7\u786E\u8BA4\u6587\u4EF6\u672A\u88AB\u5176\u4ED6\u8F6F\u4EF6\u7BE1\u6539\uFF1B\u82E5\u6765\u81EA\u66F4\u65E7\u7248\u672C\uFF0C\u8BF7\u5148\u7ECF\u4E2D\u95F4\u7248\u672C\u6253\u5F00\u4E00\u6B21"
+        });
+      }
+      f = step.migrate(f);
+      migratedFrom.push(`${step.from}\u2192${step.to}`);
+    }
+  }
+
+  // src/core/projectFile.ts
+  var PROJECT_SCHEMA = "hongsuan-project@2";
+  function emptyProject() {
+    return { name: "", bridgeSite: "", engineer: "", reviewer: "", note: "" };
+  }
+  function buildProjectFile(project, state2, appVersion) {
+    const p = { ...emptyProject(), ...project };
+    for (const k of Object.keys(p)) {
+      const v = p[k];
+      if (v === void 0) continue;
+      if (typeof v !== "string") throw new Error(`\u9879\u76EE\u4FE1\u606F\u5B57\u6BB5 ${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    return {
+      schema: PROJECT_SCHEMA,
+      savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      appVersion,
+      project: p,
+      state: state2
+    };
+  }
+  function parseProjectFile(json) {
+    if (typeof json !== "object" || json === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u5FC5\u987B\u4E3A JSON \u5BF9\u8C61");
+    const m = migrateProjectFile(json);
+    const f = m.file;
+    if (f.schema !== PROJECT_SCHEMA) throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 schema \u4E0D\u5339\u914D\uFF1A\u671F\u671B ${PROJECT_SCHEMA}\uFF0C\u6536\u5230 ${String(f.schema)}`);
+    if (m.migratedFrom.length) f.migratedFrom = m.migratedFrom;
+    if (typeof f.savedAt !== "string" || !f.savedAt) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 savedAt");
+    if (typeof f.appVersion !== "string" || !f.appVersion) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 appVersion");
+    if (typeof f.project !== "object" || f.project === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 project \u4FE1\u606F");
+    for (const k of ["name", "bridgeSite", "engineer", "reviewer", "note"]) {
+      if (typeof f.project[k] !== "string") throw new Error(`\u5DE5\u7A0B\u6587\u4EF6 project.${k} \u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32`);
+    }
+    if (typeof f.state !== "object" || f.state === null) throw new Error("\u5DE5\u7A0B\u6587\u4EF6\u7F3A\u5C11 state");
+    return f;
+  }
+  function serializeProject(file) {
+    return JSON.stringify(file, null, 2);
+  }
+
+  // src/core/hydrograph.ts
+  function parseHydrograph(text) {
+    if (typeof text !== "string") throw new Error("\u8FC7\u7A0B\u7EBF\u8F93\u5165\u5FC5\u987B\u4E3A\u5B57\u7B26\u4E32");
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u884C\u6570\u636E\uFF08\u6BCF\u884C\uFF1A\u65F6\u95F4h, \u6D41\u91CF\uFF09");
+    const out = [];
+    lines.forEach((line, i) => {
+      const parts = line.split(/[\s,，;；]+/).filter(Boolean);
+      if (parts.length !== 2) throw new Error(`\u7B2C ${i + 1} \u884C\u5E94\u6709 2 \u4E2A\u6570\u503C\uFF08\u65F6\u95F4, \u6D41\u91CF\uFF09\uFF0C\u6536\u5230 ${parts.length} \u4E2A\uFF1A${line}`);
+      const t = Number(parts[0]), q = Number(parts[1]);
+      if (!Number.isFinite(t)) throw new Error(`\u7B2C ${i + 1} \u884C\u65F6\u95F4\u4E0D\u662F\u6709\u6548\u6570\u503C\uFF1A${parts[0]}`);
+      if (!Number.isFinite(q) || q < 0) throw new Error(`\u7B2C ${i + 1} \u884C\u6D41\u91CF\u5FC5\u987B\u4E3A\u975E\u8D1F\u6570\u503C\uFF1A${parts[1]}`);
+      out.push({ t, q });
+    });
+    return out;
+  }
+  function scaleHydrograph(typical, designPeak) {
+    if (!Array.isArray(typical) || typical.length < 2) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u81F3\u5C11\u9700\u8981 2 \u4E2A\u70B9");
+    if (!typical.every((p) => Number.isFinite(p.t) && Number.isFinite(p.q) && p.q >= 0)) {
+      throw new Error("\u8FC7\u7A0B\u7EBF\u5404\u70B9\u5FC5\u987B\u4E3A\u6709\u9650\u6570\u4E14\u6D41\u91CF\u975E\u8D1F");
+    }
+    if (!(designPeak > 0)) throw new Error("\u8BBE\u8BA1\u6D2A\u5CF0 Qp \u5FC5\u987B\u4E3A\u6B63\uFF08m\xB3/s\uFF09");
+    const typicalPeak = Math.max(...typical.map((p) => p.q));
+    if (!(typicalPeak > 0)) throw new Error("\u5178\u578B\u6D2A\u6C34\u8FC7\u7A0B\u7EBF\u5CF0\u503C\u4E3A 0\uFF0C\u65E0\u6CD5\u653E\u5927");
+    const kg = designPeak / typicalPeak;
+    const points = typical.map((p) => ({
+      t: p.t,
+      q: Math.round(p.q * kg * 100) / 100
+    }));
+    return { kg, typicalPeak, designPeak, points };
+  }
+
+  // src/core/areaConvert.ts
+  function suggestExponent(fRef, fSite) {
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    if (diffPct <= 3) return 1;
+    const fMin = Math.min(fRef, fSite);
+    if (fMin < 100) return 0.75;
+    return 0.6;
+  }
+  function areaConvert(input) {
+    const { qRef, fRef, fSite } = input;
+    if (![qRef, fRef, fSite].every(Number.isFinite)) throw new Error("\u9762\u79EF\u6BD4\u62DF\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (!(qRef > 0)) throw new Error("\u53C2\u8BC1\u6210\u679C\u5FC5\u987B\u4E3A\u6B63");
+    if (!(fRef > 0) || !(fSite > 0)) throw new Error("\u6C47\u6C34\u9762\u79EF\u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    const n = input.n ?? suggestExponent(fRef, fSite);
+    if (!Number.isFinite(n) || n <= 0) throw new Error("\u9762\u79EF\u4FEE\u6B63\u6307\u6570 n \u5FC5\u987B\u4E3A\u6B63");
+    const diffPct = Math.abs(fSite - fRef) / fRef * 100;
+    const warnings = [];
+    const preconditionOk = diffPct < 20 && Math.max(fRef, fSite) <= 1e3;
+    if (diffPct >= 20) warnings.push(`\u9762\u79EF\u5DEE ${diffPct.toFixed(1)}% \u2265 20%\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003`);
+    if (Math.max(fRef, fSite) > 1e3) warnings.push("\u6C47\u6C34\u9762\u79EF >1000 km\xB2\uFF0C\u8D85\u51FA\u89C4\u8303 6.2.2 \u8F6C\u6362\u6761\u4EF6\uFF0C\u7ED3\u679C\u4EC5\u4F9B\u53C2\u8003");
+    const qSite = qRef * Math.pow(fSite / fRef, n);
+    return { qSite, n, diffPct, preconditionOk, warnings };
+  }
+
+  // src/core/methodB.ts
+  function manningQ(s) {
+    const { Ac, Bc, nc, At, Bt, nt, I } = s;
+    if (![Ac, Bc, nc, At, Bt, nt, I, s.Rc ?? 0, s.Rt ?? 0].every(Number.isFinite)) {
+      throw new Error("\u66FC\u5B81\u516C\u5F0F\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    }
+    if (I <= 0) throw new Error("\u6C34\u9762\u6BD4\u964D\u5FC5\u987B\u4E3A\u6B63");
+    if (Ac <= 0) throw new Error("\u6CB3\u69FD\u8FC7\u6C34\u9762\u79EF\u5FC5\u987B\u4E3A\u6B63");
+    if (nc <= 0) throw new Error("\u6CB3\u69FD\u7CD9\u7387\u5FC5\u987B\u4E3A\u6B63");
+    if (At < 0) throw new Error("\u6CB3\u6EE9\u8FC7\u6C34\u9762\u79EF\u4E0D\u80FD\u4E3A\u8D1F");
+    if (At > 0 && nt <= 0) throw new Error("\u6CB3\u6EE9\u7CD9\u7387\u5FC5\u987B\u4E3A\u6B63");
+    const Rc = s.Rc ?? (Bc > 0 ? Ac / Bc : NaN);
+    const Rt = At > 0 ? s.Rt ?? (Bt > 0 ? At / Bt : NaN) : 0;
+    if (!Number.isFinite(Rc) || Rc <= 0) throw new Error("\u6CB3\u69FD\u6C34\u529B\u534A\u5F84\u65E0\u6548\uFF08Rc=A/B \u9700\u6C34\u9762\u5BBD Bc>0\uFF0C\u6216\u76F4\u63A5\u7ED9\u5B9A Rc\uFF09");
+    if (At > 0 && (!Number.isFinite(Rt) || Rt <= 0)) throw new Error("\u6CB3\u6EE9\u6C34\u529B\u534A\u5F84\u65E0\u6548");
+    const sq = Math.sqrt(I);
+    const vc = Rc ** (2 / 3) * sq / nc;
+    const vt = At > 0 ? Rt ** (2 / 3) * sq / nt : 0;
+    const Qc = Ac * vc;
+    const Qt = At * vt;
+    return { Rc, Rt, vc, vt, Qc, Qt, Q: Qc + Qt };
+  }
+  function designFromHistory(floods, params, pExceed, phiFn) {
+    if (floods.length < 2) throw new Error("\u5229\u7528\u5386\u53F2\u6D2A\u6C34\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF\uFF0C\u5386\u53F2\u6D2A\u6C34\u6D41\u91CF\u4E0D\u5B9C\u5C11\u4E8E 2 \u6B21\uFF08\u89C4\u8303 6.3.3\uFF09");
+    if (!(pExceed > 0 && pExceed < 1)) throw new Error(`\u8BBE\u8BA1\u9891\u7387\u5FC5\u987B\u5728 (0,1)\uFF0C\u6536\u5230 ${pExceed}`);
+    if (!Number.isFinite(params.cv) || !Number.isFinite(params.cs)) throw new Error("\u5730\u533A\u53C2\u6570 Cv\u3001Cs \u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (params.cv <= 0) throw new Error("\u5730\u533A\u53D8\u5DEE\u7CFB\u6570 Cv \u5FC5\u987B\u4E3A\u6B63");
+    const qBars = floods.map((f) => {
+      if (!Number.isFinite(f.Q) || !Number.isFinite(f.T)) throw new Error("\u5386\u53F2\u6D2A\u6C34\u6D41\u91CF\u4E0E\u91CD\u73B0\u671F\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+      if (f.Q <= 0 || f.T < 1) throw new Error("\u5386\u53F2\u6D2A\u6C34\u6D41\u91CF\u4E0E\u91CD\u73B0\u671F\uFF08\u5E74\uFF09\u5FC5\u987B\u4E3A\u6B63");
+      const phiT = phiFn(1 / f.T, params.cs);
+      const denom = 1 + phiT * params.cv;
+      if (denom <= 0) throw new Error(`\u7B2C ${f.T} \u5E74\u4E00\u9047\u6D2A\u6C34\uFF1A1+\u03A6T\xB7Cv \u2264 0\uFF0C\u53C2\u6570\u4E0D\u5408\u7406`);
+      return f.Q / denom;
+    });
+    const mean = qBars.reduce((s, v) => s + v, 0) / qBars.length;
+    const phi = phiFn(pExceed, params.cs);
+    const kp = 1 + phi * params.cv;
+    return { qBars, mean, phi, kp, q: mean * kp };
+  }
+
+  // src/core/methodC.ts
+  function rationalFormula(p) {
+    if (![p.Sp, p.n, p.psi, p.tau, p.F].every(Number.isFinite)) throw new Error("\u63A8\u7406\u516C\u5F0F\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (p.F <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcF", value: p.F, message: "\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09", suggestion: "\u586B\u5199\u6865\u4F4D\u4EE5\u4E0A\u7684\u6C47\u6C34\u9762\u79EF\uFF0C\u53EF\u7528\u5730\u56FE\u91CF\u7B97\u52FE\u51FA", normRef: "JTG C30\u20142015 \u7B2C6.4\u6761" });
+    if (p.tau <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcTau", value: p.tau, message: "\u6C47\u6D41\u65F6\u95F4 \u03C4 \u5FC5\u987B\u4E3A\u6B63\uFF08h\uFF09", suggestion: "\u6309\u89C4\u8303\u8868 B-8 \u4F9D\u6C47\u6C34\u9762\u79EF\u53D6\u503C\uFF08\u4E00\u822C 30~80 min\uFF09", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-8" });
+    if (p.Sp <= 0) throw new Error("\u96E8\u529B Sp \u5FC5\u987B\u4E3A\u6B63\uFF08mm/h\uFF09");
+    if (p.n < 0) throw new Error("\u66B4\u96E8\u8870\u51CF\u6307\u6570 n \u4E0D\u80FD\u4E3A\u8D1F");
+    if (p.psi <= 0 || p.psi > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcPsi", value: p.psi, message: "\u6D2A\u5CF0\u5F84\u6D41\u7CFB\u6570 \u03C8 \u5E94\u5728 (0,1]", suggestion: "\u6309\u89C4\u8303\u8868 B-5 \u4F9D\u5730\u5F62\u4E0E\u4E3B\u6CB3\u6C9F\u5761\u5EA6\u53D6\u503C", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-5" });
+    if (p.F >= 100) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rcF", value: p.F, message: "\u63A8\u7406\u516C\u5F0F\u9002\u7528\u4E8E\u6C47\u6C34\u9762\u79EF <100 km\xB2\uFF08\u89C4\u8303 6.4.2\uFF09\uFF0C\u5F53\u524D " + p.F + " km\xB2", suggestion: "\u6539\u7528\u5730\u533A\u7ECF\u9A8C\u516C\u5F0F\u6216\u7531\u5B9E\u6D4B\u8D44\u6599\u63A8\u6C42", normRef: "JTG C30\u20142015 \u7B2C6.4\u6761" });
+    return 0.278 * p.psi * (p.Sp / Math.pow(p.tau, p.n)) * p.F;
+  }
+  function runoffDepthFormula(p) {
+    if (![p.psi, p.h, p.z, p.F, p.beta, p.gamma, p.delta].every(Number.isFinite)) throw new Error("\u5F84\u6D41\u539A\u5EA6\u6CD5\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (p.F <= 0) throw new Error("\u6C47\u6C34\u9762\u79EF F \u5FC5\u987B\u4E3A\u6B63\uFF08km\xB2\uFF09");
+    if (p.h - p.z <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rdH", value: p.h, message: "\u5F84\u6D41\u539A\u5EA6 h=" + p.h + "mm \u5FC5\u987B\u5927\u4E8E\u6EDE\u7559\u539A\u5EA6 z=" + p.z + "mm\uFF08\u5426\u5219\u4E0D\u4EA7\u751F\u5F84\u6D41\uFF09", suggestion: "\u67E5\u8868 B-9 \u6838\u5BF9\u66B4\u96E8\u5206\u533A\u4E0E\u571F\u7684\u7C7B\u5C5E\uFF1B\u6216\u6309\u8868 B-10 \u6838\u5BF9\u6EDE\u7559\u539A\u5EA6 z", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-9 / \u8868B-10" });
+    if (p.psi <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.nodata.rdPsi", value: p.psi, message: "\u5730\u8C8C\u7CFB\u6570 \u03C8 \u5FC5\u987B\u4E3A\u6B63", suggestion: "\u6309\u89C4\u8303\u8868 B-5 \u53D6\u503C", normRef: "\u6DB5\u6D1E\u89C4\u8303 \u9644\u5F55B \u8868B-5" });
+    if (p.beta <= 0 || p.beta > 1 || p.gamma <= 0 || p.gamma > 1 || p.delta <= 0 || p.delta > 1) {
+      throw new Error("\u6298\u51CF\u7CFB\u6570 \u03B2\u3001\u03B3\u3001\u03B4 \u5747\u5E94\u5728 (0,1]");
+    }
+    return p.psi * Math.pow(p.h - p.z, 3 / 2) * Math.pow(p.F, 4 / 5) * p.beta * p.gamma * p.delta;
+  }
+
+  // src/core/waterSurface.ts
+  var G = 9.8;
+  function trapA(g, y) {
+    return (g.b + g.m * y) * y;
+  }
+  function trapBs(g, y) {
+    return g.b + 2 * g.m * y;
+  }
+  function trapP(g, y) {
+    return g.b + 2 * y * Math.sqrt(1 + g.m * g.m);
+  }
+  function trapR(g, y) {
+    return trapA(g, y) / trapP(g, y);
+  }
+  function flowState(g, Q, y) {
+    const A = trapA(g, y), R = trapR(g, y);
+    const v = Q / A;
+    const fr = Math.sqrt(Q * Q * trapBs(g, y) / (G * A * A * A));
+    const sf = g.n * g.n * v * v / Math.pow(R, 4 / 3);
+    const E = y + v * v / (2 * G);
+    return { v, fr, sf, E };
+  }
+  function normalDepth(g, S0, Q) {
+    if (!(S0 > 0) || !(Q > 0)) throw new Error("\u6BD4\u964D\u4E0E\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    const f = (y) => trapA(g, y) * Math.pow(trapR(g, y), 2 / 3) * Math.sqrt(S0) / g.n - Q;
+    let lo = 1e-5, hi = 1;
+    let guard = 0;
+    while (f(hi) < 0 && guard++ < 200) {
+      lo = hi;
+      hi *= 2;
+      if (hi > 1e5) throw new Error("\u6B63\u5E38\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650");
+    }
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) < 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function criticalDepth(g, Q) {
+    if (!(Q > 0)) throw new Error("\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    const f = (y) => Q * Q * trapBs(g, y) / (G * Math.pow(trapA(g, y), 3)) - 1;
+    let lo = 1e-5, hi = 1;
+    let guard = 0;
+    while (f(hi) > 0 && guard++ < 200) {
+      lo = hi;
+      hi *= 2;
+      if (hi > 1e5) throw new Error("\u4E34\u754C\u6C34\u6DF1\u4E0A\u754C\u6269\u5F20\u8D85\u9650");
+    }
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) > 0) lo = mid;
+      else hi = mid;
+      if (hi - lo < 1e-6) break;
+    }
+    return (lo + hi) / 2;
+  }
+  function waterSurfaceProfile(opts) {
+    const { geom, S0, Q, yControl, length } = opts;
+    const N = opts.steps ?? 40;
+    if (![geom.b, geom.m, geom.n, S0, Q, yControl, length].every(Number.isFinite)) throw new Error("\u6C34\u9762\u7EBF\u8F93\u5165\u5FC5\u987B\u4E3A\u6709\u9650\u6570");
+    if (!(geom.b > 0) || !(geom.n > 0)) throw new Error("\u5E95\u5BBD\u4E0E\u7CD9\u7387\u5FC5\u987B\u4E3A\u6B63");
+    if (geom.m < 0) throw new Error("\u8FB9\u5761\u7CFB\u6570\u4E0D\u80FD\u4E3A\u8D1F");
+    if (!(S0 > 0)) throw new Error("\u6BD4\u964D\u5FC5\u987B\u4E3A\u6B63");
+    if (!(Q > 0)) throw new Error("\u5047\u5B9A\u6D41\u91CF\u5FC5\u987B\u4E3A\u6B63");
+    if (!(yControl > 0)) throw new Error("\u63A7\u5236\u65AD\u9762\u6C34\u6DF1\u5FC5\u987B\u4E3A\u6B63");
+    if (!(length > 0)) throw new Error("\u63A8\u7B97\u6CB3\u957F\u5FC5\u987B\u4E3A\u6B63");
+    const yn = normalDepth(geom, S0, Q);
+    const yc = criticalDepth(geom, Q);
+    const stCtrl = flowState(geom, Q, yControl);
+    const regime = stCtrl.fr < 1 ? "subcritical" : "supercritical";
+    const points = [{ x: 0, y: yControl, v: stCtrl.v, E: stCtrl.E, sf: stCtrl.sf }];
+    let reached = 0;
+    if (Math.abs(yControl - yn) / yn < 1e-4) {
+      const st = flowState(geom, Q, yn);
+      return { points: [{ x: -length, y: yn, v: st.v, E: st.E, sf: st.sf }, points[0]], yn, yc, regime, reachedLength: length };
+    }
+    if (yControl < yc * 1.0001) throw new Error("\u63A7\u5236\u65AD\u9762\u6C34\u6DF1\u63A5\u8FD1/\u4F4E\u4E8E\u4E34\u754C\u6C34\u6DF1\uFF0C\u6C34\u9762\u7EBF\u63A8\u7B97\u4E0D\u7A33\u5B9A\uFF08\u6025\u6D41\u63A7\u5236\u4F4D\u7F6E\u9700\u5728\u4E0A\u6E38\uFF09");
+    const yEnd = yn;
+    const dy = (yEnd - yControl) / N;
+    let x = 0;
+    for (let i = 0; i < N; i++) {
+      const y1 = yControl + dy * i;
+      const y2 = yControl + dy * (i + 1);
+      const s1 = flowState(geom, Q, y1);
+      const s2 = flowState(geom, Q, y2);
+      const sfBar = (s1.sf + s2.sf) / 2;
+      const denom = S0 - sfBar;
+      if (Math.abs(denom) < 1e-8) break;
+      const dx = (s2.E - s1.E) / denom;
+      const stepLen = Math.abs(dx);
+      if (reached + stepLen >= length) {
+        const frac = (length - reached) / stepLen;
+        const yL = y1 + (y2 - y1) * frac;
+        const stL = flowState(geom, Q, yL);
+        x = (regime === "subcritical" ? -1 : 1) * length;
+        points.push({ x, y: yL, v: stL.v, E: stL.E, sf: stL.sf });
+        reached = length;
+        break;
+      }
+      x += dx;
+      reached += stepLen;
+      points.push({ x, y: y2, v: s2.v, E: s2.E, sf: s2.sf });
+    }
+    return { points, yn, yc, regime, reachedLength: reached };
+  }
+  function depthAt(result, dist) {
+    const pts = result.points;
+    const d = Math.abs(dist);
+    if (d <= 0) return pts[0].y;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d1 = Math.abs(pts[i].x), d2 = Math.abs(pts[i + 1].x);
+      if (d >= d1 && d <= d2) {
+        const w = d2 === d1 ? 0 : (d - d1) / (d2 - d1);
+        return pts[i].y + w * (pts[i + 1].y - pts[i].y);
+      }
+    }
+    return pts[pts.length - 1].y;
+  }
+  function solveDischargeFromMarks(geom, S0, yDown, yUp, length) {
+    if (!(yUp > yDown)) throw new Error("\u672C\u7B97\u6CD5\u8981\u6C42\u4E0A\u6E38\u6D2A\u75D5\u6C34\u6DF1\u5927\u4E8E\u4E0B\u6E38\uFF08\u7F13\u6D41 M2 \u578B\uFF1B\u5176\u4ED6\u5F62\u6001\u8BF7\u4EBA\u5DE5\u8BD5\u7B97\uFF09");
+    const A = trapA(geom, yDown), R = trapR(geom, yDown);
+    const q0 = A * Math.pow(R, 2 / 3) * Math.sqrt(S0) / geom.n;
+    const residualOf = (Q) => {
+      const prof2 = waterSurfaceProfile({ geom, S0, Q, yControl: yDown, length });
+      return { r: depthAt(prof2, length) - yUp, prof: prof2 };
+    };
+    let lo = q0 * 0.3, hi = q0 * 3;
+    let rLo = residualOf(lo).r, rHi = residualOf(hi).r;
+    let guard = 0;
+    while (rLo * rHi > 0 && guard++ < 24) {
+      lo *= 0.5;
+      hi *= 2;
+      rLo = residualOf(lo).r;
+      rHi = residualOf(hi).r;
+      if (lo < q0 * 2e-3 || hi > q0 * 500) {
+        throw new Error("\u81EA\u52A8\u8BD5\u7B97\u672A\u627E\u5230\u6709\u6548\u6D41\u91CF\u533A\u95F4\uFF0C\u8BF7\u4EBA\u5DE5\u8C03\u6574\u65AD\u9762\u53C2\u6570\u6216\u6539\u7528\u5747\u5300\u6D41\u516C\u5F0F");
+      }
+    }
+    let mid = q0, rMid = residualOf(mid).r;
+    for (let i = 0; i < 60; i++) {
+      mid = (lo + hi) / 2;
+      rMid = residualOf(mid).r;
+      if (rLo * rMid <= 0) {
+        hi = mid;
+        rHi = rMid;
+      } else {
+        lo = mid;
+        rLo = rMid;
+      }
+      if (hi - lo < q0 * 1e-4) break;
+    }
+    const prof = residualOf(mid).prof;
+    return { Q: mid, residual: rMid, iterations: guard, profile: prof };
+  }
+
+  // src/web/main.ts
+  var stateCompare = {};
+  function freqLabelOf(p) {
+    const m = { "0.0033": "1/300", "0.01": "1/100", "0.02": "1/50", "0.04": "1/25" };
+    return m[String(p)] || (p * 100).toFixed(2) + "%";
+  }
+  function effCs(cs) {
+    const c = cs ?? state.params.cs;
+    return state.calcMode === "textbook" ? Math.round(c * 10) / 10 : c;
+  }
+  function renderCompare() {
+    const el = $("compareTable");
+    const rows = Object.values(stateCompare);
+    el.innerHTML = rows.length ? rows.map((r) => `<tr><td style="padding:4px 6px">${r.label}</td><td class="v">${fmt(r.q, 1)}</td><td>${r.freqLabel}</td><td style="color:var(--text3)">${r.note}</td></tr>`).join("") : `<tr><td colspan="4" style="color:var(--text3)">\u5728\u5404\u6A21\u5F0F\u8BA1\u7B97\u540E\u81EA\u52A8\u6C47\u603B\u5230\u6B64\u8868</td></tr>`;
+  }
+  var state = {
+    mode: "series",
+    series: [],
+    stats: null,
+    params: { mean: 1065, cv: 0.3, cs: 0.6 },
+    freq: 0.01,
+    calcMode: (function() {
+      try {
+        const v = localStorage.getItem("hongsuan_calc_mode");
+        return v === "textbook" ? "textbook" : "exact";
+      } catch {
+        return "exact";
+      }
+    })(),
+    pts: []
+  };
+  var fitTrials = [];
+  var fitTrialSeq = 0;
+  var comparisonFit = null;
+  var $ = (id) => {
+    const el = document.getElementById(id);
+    if (!el) throw new Error(`\u754C\u9762\u5143\u7D20\u4E0D\u5B58\u5728\uFF1A${id}`);
+    return el;
+  };
+  var fmt = (v, d = 2) => Number(v).toLocaleString("zh-CN", { maximumFractionDigits: d, minimumFractionDigits: d });
+  var XTICKS = [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 80, 90, 95, 99, 99.9];
+  var XMIN = norminv(1 - 0.999);
+  var XMAX = norminv(1 - 1e-4);
+  var PL = 66;
+  var PR = 906;
+  var PT = 26;
+  var PB = 478;
+  var sx = (x) => PL + (XMAX - x) / (XMAX - XMIN) * (PR - PL);
+  var pToX = (p) => sx(norminv(1 - p));
+  function niceTicks(lo, hi, n = 5) {
+    const span = hi - lo, step0 = span / n;
+    const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+    const norm = step0 / mag, step = (norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10) * mag;
+    const t0 = Math.ceil(lo / step) * step, out = [];
+    for (let v = t0; v <= hi + 1e-9; v += step) out.push(v);
+    return out;
+  }
+  var bMcCache = /* @__PURE__ */ new Map();
+  function samplingErrorCached(mean, cv, cs, p, n) {
+    const key = `${cs.toFixed(4)}|${p}|${n}`;
+    let mc = bMcCache.get(key);
+    if (!mc) {
+      const r = designSamplingError({ mean, cv, cs, p, n });
+      if (r.mc) {
+        bMcCache.set(key, r.mc);
+        if (bMcCache.size > 300) bMcCache.clear();
+      }
+      return r;
+    }
+    return designSamplingError({ mean, cv, cs, p, n, precomputed: mc });
+  }
+  function renderSamplingError() {
+    const el = $("outSigma");
+    const note = $("outErrNote");
+    const elB = $("outB");
+    if (!el || !note) return;
+    const n = state.stats && "n" in state.stats ? state.stats.n : 0;
+    try {
+      const r = samplingErrorCached(state.params.mean, state.params.cv, state.params.cs, state.freq, n);
+      el.textContent = fmt(r.sigmaAbs, 0);
+      if (elB) {
+        elB.textContent = r.B.toFixed(2);
+        elB.title = r.mc ? `B = f(Cs=${state.params.cs.toFixed(2)}, P=${(state.freq * 100).toFixed(2)}%, n=${n})\uFF0C\u7531 ${r.mc.reps} \u6B21\u7EDF\u8BA1\u8BD5\u9A8C\u5F97\u5230\uFF08\u4E0E\u89C4\u8303\u56FE A.2 \u8BFA\u6A21\u56FE\u540C\u4E00\u8DEF\u6570\uFF09\uFF1B\u4E00\u9636\u6E10\u8FD1\u5BF9\u7167 B=${r.mc.BAnalytic.toFixed(2)}` : `B = f(Cs=${state.params.cs.toFixed(2)}, P=${(state.freq * 100).toFixed(2)}%)\uFF0C\u4E00\u9636\u89E3\u6790\u6E10\u8FD1\u5F0F`;
+      }
+      note.textContent = `${r.note}\u3000\u76F8\u5BF9\u5747\u65B9\u8BEF \xB1${r.relPct.toFixed(1)}%\uFF0C\u52A0\u5B89\u5168\u4FEE\u6B63\u540E\u7684\u8BBE\u8BA1\u503C ${fmt(r.xpSafe, 0)} m\xB3/s`;
+    } catch {
+      el.textContent = "\u2014";
+      if (elB) elB.textContent = "\u2014";
+      note.textContent = "";
+    }
+  }
+  var FREQ_Q_ROWS = [
+    { p: 33e-4, label: "0.33%\uFF081/300\uFF09" },
+    { p: 0.01, label: "1%\uFF081/100\uFF09" },
+    { p: 0.02, label: "2%\uFF081/50\uFF09" },
+    { p: 0.04, label: "4%\uFF081/25\uFF09" }
+  ];
+  function renderFreqQTable() {
+    const box = $("freqQTable");
+    if (!box) return;
+    const linkage = $("paramLinkage");
+    if (linkage) {
+      const m = state.params.cs / state.params.cv;
+      linkage.innerHTML = `<b>\u53C2\u6570\u8054\u52A8\uFF1A</b>C<sub>v</sub>=${state.params.cv.toFixed(3)}\u3000\u2192\u3000M=C<sub>s</sub>/C<sub>v</sub>=${m.toFixed(2)}\u3000\u2192\u3000C<sub>s</sub>=M\xD7C<sub>v</sub>=${state.params.cs.toFixed(2)}<br>\u4EE3\u5165\u516C\u5F0F\uFF1AQ<sub>p</sub>=(\u03A6<sub>p</sub>\xD7C<sub>v</sub>+1)\xD7Q\u0304\u3002\u4F8B\u5982\u5F53\u524D\u9891\u7387 ${freqLabelOf(state.freq)}\uFF1AQ<sub>p</sub>=((${phiPIII(state.freq, effCs()).toFixed(3)}\xD7${state.params.cv.toFixed(3)})+1)\xD7${fmt(state.params.mean, 1)}=${fmt(state.params.mean * (1 + phiPIII(state.freq, effCs()) * state.params.cv), 0)} m\xB3/s`;
+    }
+    const rows = FREQ_Q_ROWS.map((r) => {
+      const phi = phiPIII(r.p, effCs());
+      const kp = 1 + phi * state.params.cv;
+      const q = state.params.mean * kp;
+      const active = Math.abs(r.p - state.freq) < 1e-12;
+      const subst = `(${phi.toFixed(3)}\xD7${state.params.cv.toFixed(3)}+1)\xD7${fmt(state.params.mean, 1)}=${fmt(q, 0)}`;
+      return `<tr data-p="${r.p}"${active ? ' class="hl" style="background:rgba(0,122,255,.14);font-weight:600"' : ""}>
+      <td>${r.label}</td>
+      <td class="v">${phi.toFixed(3)}</td>
+      <td class="v">${kp.toFixed(3)}</td>
+      <td class="v">${fmt(q, 0)}</td>
+      <td style="font-size:11.5px;font-variant-numeric:tabular-nums">${subst}</td>
+      <td>${active ? "\u5F53\u524D" : "\u70B9\u51FB\u9009\u7528"}</td>
+    </tr>`;
+    }).join("");
+    box.innerHTML = `<table class="ltab" style="width:100%">
+    <thead><tr><th>\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387</th><th class="v">\u03A6<sub>p</sub></th><th class="v">K<sub>p</sub></th><th class="v">Q<sub>p</sub>\uFF08m\xB3/s\uFF09</th><th>\u4EE3\u5165\u516C\u5F0F</th><th>\u72B6\u6001</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+    {
+      const csExact = state.params.cs;
+      const csRounded = Math.round(csExact * 10) / 10;
+      let note = "";
+      if (state.calcMode === "textbook") {
+        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u{1F4D8} \u5F53\u524D\u4E3A<b>\u6559\u6750\u67E5\u8868\u6A21\u5F0F</b>\uFF1AC<sub>s</sub>=${csExact.toFixed(2)} \u5DF2\u6309\u6559\u6750\u89C4\u5219\u5706\u6574\u4E3A ${csRounded.toFixed(1)} \u540E\u67E5 \u03A6 \u8868\uFF0C\u7ED3\u679C\u4E0E\u6559\u6750\u7B97\u6CD5\u4E00\u81F4\u3002</div>`;
+      } else if (Math.abs(csExact - csRounded) > 1e-9) {
+        const phiR = phiPIII(state.freq, csRounded);
+        const qR = state.params.mean * (1 + phiR * state.params.cv);
+        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u2139 \u6559\u6750\u67E5 \u03A6 \u8868\u65F6\u901A\u5E38\u628A C<sub>s</sub> \u5706\u6574\u5230 0.1\uFF08\u5982\u4F8B 3-1-1 \u7684 C<sub>s</sub>=1.47 \u5706\u6574\u4E3A 1.5\uFF0CQ<sub>p</sub>\u2248${fmt(qR, 0)}\uFF09\uFF1B\u5F53\u524D\u4E3A<b>\u7CBE\u786E\u8BA1\u7B97\u6A21\u5F0F</b>\uFF0C\u65E0\u5706\u6574\u8BEF\u5DEE\uFF0C\u5DEE\u5F02\u7EA6 0.3% \u5C5E\u6B63\u5E38\u3002\u53EF\u70B9\u4E0A\u65B9"\u6559\u6750\u67E5\u8868"\u6309\u94AE\u5207\u6362\u3002</div>`;
+      }
+      if (note) box.innerHTML += note;
+    }
+    box.onclick = (ev) => {
+      const tr = ev.target.closest("tr[data-p]");
+      if (!tr) return;
+      const p = Number(tr.dataset.p);
+      if (!Number.isFinite(p) || p <= 0) return;
+      state.freq = p;
+      const sel = $("freqSel");
+      if ([...sel.options].some((o) => o.value === String(p))) sel.value = String(p);
+      render();
+    };
+  }
+  function applyCalcModeUi() {
+    const be = $("modeExact");
+    const bt = $("modeTextbook");
+    if (!be || !bt) return;
+    const on = "background:var(--blue);color:#fff;border-color:var(--blue)";
+    be.setAttribute("style", state.calcMode === "exact" ? on : "");
+    bt.setAttribute("style", state.calcMode === "textbook" ? on : "");
+  }
+  function setCalcMode(mode) {
+    if (state.calcMode === mode) return;
+    state.calcMode = mode;
+    try {
+      localStorage.setItem("hongsuan_calc_mode", mode);
+    } catch {
+    }
+    applyCalcModeUi();
+    render();
+  }
+  {
+    const be = $("modeExact");
+    const bt = $("modeTextbook");
+    if (be) be.onclick = () => setCalcMode("exact");
+    if (bt) bt.onclick = () => setCalcMode("textbook");
+    applyCalcModeUi();
+  }
+  function render() {
+    const { params, freq } = state;
+    $("cvShow").textContent = params.cv.toFixed(3);
+    $("csShow").textContent = params.cs.toFixed(2);
+    $("ratioShow").textContent = (params.cs / params.cv).toFixed(2);
+    const phi = phiPIII(freq, effCs()), kp = 1 + phi * params.cv, q = params.mean * kp;
+    $("outQ").textContent = fmt(q, 0);
+    $("outQFreq").textContent = freqLabelOf(freq);
+    {
+      const qr = $("quickResult");
+      if (qr && qr.style.display === "block") $("qrQ").textContent = fmt(q, 0);
+    }
+    renderFreqQTable();
+    $("outPhi").textContent = phi.toFixed(3);
+    $("outKp").textContent = kp.toFixed(3);
+    renderSamplingError();
+    logRenderOnce();
+    stateCompare.A = {
+      label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
+      q,
+      freqLabel: freqLabelOf(freq),
+      note: `Q\u0304=${fmt(params.mean, 1)}, Cv=${params.cv.toFixed(3)}, Cs=${params.cs.toFixed(2)}`
+    };
+    renderCompare();
+    const pts = state.pts;
+    if (pts.length) {
+      $("stSse").textContent = fmt(sseOfPoints(pts, params, phiPIII), 0);
+    } else {
+      $("stSse").textContent = "\u2014";
+    }
+    const normCdf = (t) => {
+      const P = gammaincLower(0.5, t * t / 2);
+      return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+    };
+    const curveOf = (fit) => {
+      const out = [];
+      const NSAMP = 241;
+      for (let i = 0; i < NSAMP; i++) {
+        const t = XMAX - i * (XMAX - XMIN) / (NSAMP - 1);
+        const p = 1 - normCdf(t);
+        out.push({ x: sx(t), q: fit.mean * (1 + phiPIII(p, effCs(fit.cs)) * fit.cv) });
+      }
+      return out;
+    };
+    const curvePts = curveOf(params);
+    const comparisonPts = comparisonFit ? curveOf(comparisonFit) : [];
+    const allCurvePts = comparisonPts.length ? [...curvePts, ...comparisonPts] : curvePts;
+    const dataMax = Math.max(...pts.map((pt) => pt.q), ...allCurvePts.map((pt) => pt.q));
+    const dataMin = Math.min(...pts.map((pt) => pt.q), ...allCurvePts.map((pt) => pt.q), 0);
+    const qLo = Math.max(0, dataMin - (dataMax - dataMin) * 0.08);
+    const qHi = dataMax + (dataMax - dataMin) * 0.06;
+    const sy2 = (q2) => PB - (q2 - qLo) / (qHi - qLo) * (PB - PT);
+    let s = "";
+    s += `<rect x="${PL}" y="${PT}" width="${PR - PL}" height="${PB - PT}" fill="#fdfdfd" stroke="rgba(0,0,0,0.10)" stroke-width="1"/>`;
+    for (const t of niceTicks(qLo, qHi, 5)) {
+      const y = sy2(t);
+      s += `<line x1="${PL}" y1="${y}" x2="${PR}" y2="${y}" stroke="rgba(0,0,0,0.06)"/>`;
+      s += `<text x="${PL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6e6e73">${fmt(t, 0)}</text>`;
+    }
+    for (const p of XTICKS) {
+      const x = pToX(p / 100);
+      s += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PB}" stroke="rgba(0,0,0,0.06)"/>`;
+      s += `<text x="${x}" y="${PB + 18}" text-anchor="middle" font-size="11" fill="#6e6e73">${p < 1 ? p : p}</text>`;
+    }
+    s += `<text x="${(PL + PR) / 2}" y="${PB + 40}" text-anchor="middle" font-size="12" fill="#1d1d1f">\u9891\u7387 P\uFF08%\uFF09\u2014 \u6D77\u68EE\u673A\u7387\u683C\u7EB8</text>`;
+    s += `<text x="20" y="${(PT + PB) / 2}" font-size="12" fill="#1d1d1f" transform="rotate(-90 20 ${(PT + PB) / 2})" text-anchor="middle">\u6D41\u91CF Q\uFF08m\xB3/s\uFF09</text>`;
+    const fx = pToX(freq);
+    s += `<line x1="${fx}" y1="${PT}" x2="${fx}" y2="${PB}" stroke="#007AFF" stroke-width="1" stroke-dasharray="5 4" opacity="0.55"/>`;
+    if (comparisonFit) {
+      let cmpPath = "";
+      for (let i = 0; i < comparisonPts.length; i++) {
+        const c = comparisonPts[i];
+        if (c.q > qHi || c.q < qLo) continue;
+        cmpPath += (cmpPath ? "L" : "M") + c.x.toFixed(1) + " " + sy2(c.q).toFixed(1);
+      }
+      s += `<path d="${cmpPath}" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-dasharray="7 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+    }
+    let path = "";
+    for (let i = 0; i < curvePts.length; i++) {
+      const c = curvePts[i];
+      if (c.q > qHi || c.q < qLo) continue;
+      path += (path ? "L" : "M") + c.x.toFixed(1) + " " + sy2(c.q).toFixed(1);
+    }
+    s += `<path d="${path}" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<circle cx="${fx}" cy="${sy2(q)}" r="6" fill="#fff" stroke="#007AFF" stroke-width="2.5"/>`;
+    s += `<text x="${Math.min(fx + 10, PR - 120)}" y="${sy2(q) - 10}" font-size="12" fill="#007AFF" font-weight="600">Q${(freq * 100).toFixed(2).replace(/\.?0+$/, "")}% = ${fmt(q, 0)}</text>`;
+    for (const pt of pts) {
+      const px = pToX(pt.p), py = sy2(pt.q);
+      if (pt.kind === "hist") {
+        s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
+      } else {
+        s += `<circle cx="${px}" cy="${py}" r="4" fill="#1d1d1f"/>`;
+      }
+    }
+    s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
+    s += `<line id="chy" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
+    $("chart").innerHTML = s;
+    chartQLo = qLo;
+    chartQHi = qHi;
+    bindChartHover();
+  }
+  var chartQLo = 0;
+  var chartQHi = 1;
+  var chartHoverBound = false;
+  function bindChartHover() {
+    if (chartHoverBound) return;
+    chartHoverBound = true;
+    const svg = $("chart");
+    const normCdfT = (t) => {
+      const P = gammaincLower(0.5, t * t / 2);
+      return t >= 0 ? 0.5 * (1 + P) : 0.5 * (1 - P);
+    };
+    const hide = () => {
+      for (const id of ["chx", "chy"]) {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("opacity", "0");
+      }
+    };
+    svg.addEventListener("mousemove", (ev) => {
+      const rect = svg.getBoundingClientRect();
+      const mx = (ev.clientX - rect.left) / rect.width * 940;
+      const my = (ev.clientY - rect.top) / rect.height * 520;
+      if (mx < PL || mx > PR || my < PT || my > PB) {
+        hide();
+        return;
+      }
+      const t = XMAX - (mx - PL) / (PR - PL) * (XMAX - XMIN);
+      const p = 1 - normCdfT(t);
+      const q = chartQLo + (PB - my) / (PB - PT) * (chartQHi - chartQLo);
+      const chx = document.getElementById("chx"), chy = document.getElementById("chy");
+      if (chx && chy) {
+        chx.setAttribute("x1", String(mx));
+        chx.setAttribute("x2", String(mx));
+        chx.setAttribute("y1", String(PT));
+        chx.setAttribute("y2", String(PB));
+        chy.setAttribute("y1", String(my));
+        chy.setAttribute("y2", String(my));
+        chy.setAttribute("x1", String(PL));
+        chy.setAttribute("x2", String(PR));
+        chx.setAttribute("opacity", "0.4");
+        chy.setAttribute("opacity", "0.4");
+      }
+      $("chartReadout").textContent = `P = ${(p * 100).toFixed(2)}% \uFF5C Q = ${fmt(q, 0)} m\xB3/s`;
+    });
+    svg.addEventListener("mouseleave", hide);
+  }
+  function calcFromSeries() {
+    window.clearTimeout(seriesAutoTimer);
+    const errBox = $("parseErr");
+    const series = parseSeries($("series").value);
+    let xs = series.values;
+    const notices = [];
+    if (series.ignored.length) {
+      const shown = series.ignored.slice(0, 5).join("\u3001");
+      notices.push(`\u5DF2\u5FFD\u7565 ${series.ignored.length} \u4E2A\u65E0\u6548\u503C\uFF08${shown}${series.ignored.length > 5 ? " \u7B49" : ""}\uFF09`);
+    }
+    if (xs.length < 3) {
+      errBox.style.display = "block";
+      errBox.textContent = "\u81F3\u5C11\u9700\u8981 3 \u4E2A\u6709\u6548\u6D41\u91CF\u503C\uFF08\u5F53\u524D " + xs.length + " \u4E2A\uFF09\u3002\u89C4\u8303\u5EFA\u8BAE\u5B9E\u6D4B\u7CFB\u5217\u4E0D\u5B9C\u5C11\u4E8E 30 \u5E74\u3002";
+      return;
+    }
+    if ($("convEnable").checked) {
+      try {
+        const fRef = +$("convFRef").value, fSite = +$("convFSite").value;
+        const nRaw = $("convN").value.trim();
+        const conv = areaConvert({ qRef: 1, fRef, fSite, n: nRaw ? +nRaw : void 0 });
+        notices.push(...conv.warnings);
+        notices.push(`\u5DF2\u6309\u9762\u79EF\u6BD4\u62DF\u8F6C\u6362\u5230\u6865\u4F4D\u65AD\u9762\uFF08\xD7${conv.qSite.toFixed(4)}\uFF0Cn=${conv.n}\uFF09\u2014\u2014\u82E5\u8981\u4E0E\u6559\u6750/QW2.0 \u539F\u59CB\u7CFB\u5217\u5BF9\u7167\uFF0C\u8BF7\u5C55\u5F00\u300C\u7CFB\u5217\u9762\u79EF\u8F6C\u6362\u300D\u53D6\u6D88\u52FE\u9009`);
+        xs = xs.map((v) => v * conv.qSite);
+      } catch (e) {
+        errBox.style.display = "block";
+        delete errBox.dataset.kind;
+        errBox.textContent = "\u9762\u79EF\u8F6C\u6362\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
+        return;
+      }
+    }
+    state.series = xs;
+    let st;
+    let pts;
+    if ($("hasExtra").checked) {
+      try {
+        const N = Math.round(+$("inN").value);
+        const l = Math.round(+$("inL").value);
+        const extraParsed = parseSeries($("extraSeries").value);
+        if (extraParsed.ignored.length) {
+          notices.push(`\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u5DF2\u5FFD\u7565 ${extraParsed.ignored.length} \u4E2A\u65E0\u6548\u503C`);
+        }
+        const r = discontinuousPoints({
+          historicalExtra: extraParsed.values,
+          measuredDesc: xs,
+          l,
+          N
+        });
+        st = r.stats;
+        pts = r.points;
+        $("stN").textContent = `n=${st.n}\uFF0Ca=${st.a}\uFF0Cl=${l}\uFF0CN=${N}`;
+      } catch (e) {
+        errBox.style.display = "block";
+        errBox.textContent = "\u7279\u5927\u6D2A\u6C34\u8F93\u5165\u6709\u8BEF\uFF1A" + (e instanceof Error ? e.message : String(e));
+        return;
+      }
+    } else {
+      st = seriesStats(xs);
+      pts = continuousPoints(xs);
+      $("stN").textContent = st.n;
+    }
+    if (notices.length) {
+      errBox.style.display = "block";
+      errBox.dataset.kind = "notice";
+      errBox.textContent = notices.join("\uFF1B");
+    } else {
+      errBox.style.display = "none";
+      delete errBox.dataset.kind;
+    }
+    state.stats = st;
+    state.pts = pts;
+    fitTrials = [];
+    fitTrialSeq = 0;
+    comparisonFit = null;
+    renderFitTrials();
+    $("cvSlider").value = Math.min(Math.max(st.cv, 0.05), 1.2);
+    $("ratioSlider").value = 2;
+    state.params = { mean: st.mean, cv: st.cv, cs: 2 * st.cv };
+    syncParamInputs();
+    $("stMean").textContent = fmt(st.mean, 1);
+    $("stSigma").textContent = fmt(st.sigma, 1);
+    $("stCv").textContent = st.cv.toFixed(3);
+    $("stCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
+    render();
+    showQuickResult(st);
+  }
+  function showQuickResult(st) {
+    const el = $("quickResult");
+    if (!el) return;
+    const stAny = st;
+    $("qrMean").textContent = fmt(st.mean, 1);
+    $("qrSigma").textContent = typeof stAny.sigma === "number" ? fmt(stAny.sigma, 1) : "\u2014";
+    $("qrCv").textContent = st.cv.toFixed(3);
+    $("qrCs").textContent = ("csMoment" in st ? st.csMoment : st.cs).toFixed(2);
+    $("qrQ").textContent = ($("outQ").textContent || "\u2014").trim();
+    $("qrTitle").textContent = `\u77E9\u6CD5\u8BA1\u7B97\u7ED3\u679C\uFF08\u7CFB\u5217 n=${st.n}\uFF0C\u03A3=${fmt(st.mean * st.n, 0)}${"a" in st ? `\uFF0C\u542B\u7279\u5927\u6D2A\u6C34 a=${stAny.a}` : ""}\uFF09\u2014\u2014\u4F8B 3-1-1 \u6559\u6750\u7CFB\u5217\u4E3A n=32\u3001\u03A3=58,854\u3001Q\u0304=1,839\uFF0C\u5BF9\u4E0D\u4E0A\u8BF4\u660E\u6709\u6570\u8F93\u9519`;
+    el.style.display = "block";
+  }
+  function syncParamInputs() {
+    $("inMean").value = state.params.mean.toFixed(1);
+    $("inCv").value = state.params.cv.toFixed(3);
+    $("inCs").value = state.params.cs.toFixed(2);
+    if ($("meanIn")) $("meanIn").value = state.params.mean.toFixed(1);
+    if ($("cvIn")) $("cvIn").value = state.params.cv.toFixed(3);
+    if ($("ratioIn")) $("ratioIn").value = (state.params.cs / state.params.cv).toFixed(2);
+  }
+  $("btnCalc").onclick = calcFromSeries;
+  var seriesAutoTimer;
+  $("series").addEventListener("input", () => {
+    window.clearTimeout(seriesAutoTimer);
+    seriesAutoTimer = window.setTimeout(() => {
+      const vals = parseSeries($("series").value).values;
+      if (vals.length >= 3) calcFromSeries();
+    }, 700);
+  });
+  $("cvSlider").oninput = (e) => {
+    const cv = +e.target.value;
+    const ratio = +$("ratioSlider").value;
+    state.params = { ...state.params, cv, cs: cv * ratio };
+    syncParamInputs();
+    render();
+  };
+  $("ratioSlider").oninput = (e) => {
+    const ratio = +e.target.value;
+    state.params = { ...state.params, cs: state.params.cv * ratio };
+    syncParamInputs();
+    render();
+  };
+  $("cvIn").oninput = (e) => {
+    let cv = parseFloat(e.target.value);
+    if (!Number.isFinite(cv) || cv <= 0) return;
+    cv = Math.min(1.2, Math.max(0.05, cv));
+    const ratio = +$("ratioSlider").value;
+    state.params = { ...state.params, cv, cs: cv * ratio };
+    $("cvSlider").value = cv;
+    render();
+  };
+  $("ratioIn").oninput = (e) => {
+    let ratio = parseFloat(e.target.value);
+    if (!Number.isFinite(ratio) || ratio < 1) return;
+    ratio = Math.min(8, Math.max(1, ratio));
+    state.params = { ...state.params, cs: state.params.cv * ratio };
+    $("ratioSlider").value = ratio;
+    render();
+  };
+  $("meanIn").oninput = (e) => {
+    const mean = parseFloat(e.target.value);
+    if (Number.isFinite(mean) && mean > 0) {
+      state.params = { ...state.params, mean };
+      render();
+    }
+  };
+  $("freqSel").onchange = (e) => {
+    state.freq = +e.target.value;
+    render();
+  };
+  ["inMean", "inCv", "inCs"].forEach((id) => {
+    $(id).oninput = () => {
+      const mean = +$("inMean").value, cv = +$("inCv").value, cs = +$("inCs").value;
+      if (mean > 0 && cv > 0 && Number.isFinite(cs)) {
+        state.params = { mean, cv, cs };
+        $("cvSlider").value = Math.min(Math.max(cv, 0.05), 1.2);
+        $("ratioSlider").value = Math.min(Math.max(cs / cv, 1), 8);
+        render();
+      }
+    };
+  });
+  var MODE_BTN = {
+    series: "mSeries",
+    params: "mParams",
+    hist: "mHist",
+    noData: "mNoData",
+    hydro: "mHydro",
+    help: "mHelp",
+    map: "mMap"
+  };
+  var MODE_BOX = {
+    series: "seriesBox",
+    params: "paramsBox",
+    hist: "histBox",
+    noData: "noDataBox",
+    hydro: "hydroBox",
+    help: "helpBox",
+    map: "mapBox"
+  };
+  function switchMode(mode) {
+    state.mode = mode === "hist" ? "histB" : mode;
+    for (const key of Object.keys(MODE_BTN)) {
+      $(MODE_BTN[key]).classList.toggle("on", key === mode);
+      $(MODE_BOX[key]).style.display = key === mode ? "" : "none";
+    }
+    setFitCardsVisible(mode === "series" || mode === "params");
+    if (mode === "params") {
+      syncParamInputs();
+      render();
+    }
+    if (mode === "noData") calcMethodC();
+    if (mode === "noData") window.setTimeout(spMapEnsure, 80);
+    if (mode === "help") renderHelp();
+    if (mode === "map") renderMap();
+  }
+  for (const key of Object.keys(MODE_BTN)) {
+    $(MODE_BTN[key]).onclick = () => switchMode(key);
+  }
+  function setFitCardsVisible(v) {
+    for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
+      const el = document.querySelector(sel);
+      if (el) el.style.display = v ? "" : "none";
+    }
+  }
+  $("btnThreePoint").onclick = () => {
+    try {
+      if (!state.series.length) {
+        alert("请先计算系列（流量系列模式）。");
+        return;
+      }
+      const r = threePointFromSeries(state.series);
+      const cvFixed = state.params.cv;
+      let m = r.cv > 0 ? r.cs / r.cv : 2;
+      m = Math.min(8, Math.max(1, m));
+      const cs = m * cvFixed;
+      state.params = { mean: r.mean, cv: cvFixed, cs };
+      $("ratioSlider").value = String(m);
+      syncParamInputs();
+      render();
+      $("fitMsg").textContent = `三点法初估（Cv 固定为矩法值 ${cvFixed.toFixed(3)}）：Q\u0304=${fmt(r.mean, 1)}，M=${m.toFixed(2)}，Cs=${cs.toFixed(2)}`;
+    } catch (e) {
+      alert("三点法失败：" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnAutoFit").onclick = () => {
+    try {
+      if (state.pts.length < 3) {
+        alert("请先计算系列（流量系列模式）。");
+        return;
+      }
+      const cvFixed = state.params.cv;
+      const mean = state.params.mean;
+      const m0 = Math.max(0.1, state.params.cs / cvFixed);
+      const crit = (m, fn) => fn(state.pts, { mean, cv: cvFixed, cs: m * cvFixed }, phiPIII);
+      const sse0 = crit(m0, sseOfPoints), sad0 = crit(m0, sadOfPoints);
+      // 黄金分割精搜（一维凸优化，精度 1e-4）
+      const golden = (fn, lo, hi) => {
+        const gr = (Math.sqrt(5) - 1) / 2;
+        let a = lo, b = hi;
+        let c = b - gr * (b - a), d = a + gr * (b - a);
+        let fc = fn(c), fd = fn(d);
+        for (let it = 0; it < 80 && Math.abs(b - a) > 1e-4; it++) {
+          if (fc < fd) { b = d; d = c; fd = fc; c = b - gr * (b - a); fc = fn(c); }
+          else { a = c; c = d; fc = fd; d = a + gr * (b - a); fd = fn(d); }
+        }
+        return (a + b) / 2;
+      };
+      // 第一阶段：粗网格定位极值邻域
+      let bSAD = null, bSSE = null;
+      for (let m = 1; m <= 8.0001; m += 0.05) {
+        const s = crit(m, sadOfPoints);
+        if (!bSAD || s < bSAD.s) bSAD = { m, s };
+        const e = crit(m, sseOfPoints);
+        if (!bSSE || e < bSSE.e) bSSE = { m, e };
+      }
+      // 第二阶段：黄金分割精搜
+      const mSAD = golden((m) => crit(m, sadOfPoints), Math.max(1, bSAD.m - 0.06), Math.min(8, bSAD.m + 0.06));
+      const mSSE = golden((m) => crit(m, sseOfPoints), Math.max(1, bSSE.m - 0.06), Math.min(8, bSSE.m + 0.06));
+      // 主判据：绝对值准则（理论研究较优）；SSE 结果并列报告供目估复核
+      const mBest = mSAD;
+      const sadBest = crit(mBest, sadOfPoints), sseBest = crit(mBest, sseOfPoints);
+      state.params = { mean, cv: cvFixed, cs: mBest * cvFixed };
+      $("ratioSlider").value = String(mBest);
+      syncParamInputs();
+      render();
+      // 工程合理性校核
+      const hints = [];
+      if (mBest < 2) hints.push("优选 M<2：P-Ⅲ型 Cs≥2Cv 才保证下限非负，且工程上年洪峰 Cs/Cv 常用 2\uFF5E4，建议人工目估复核上部点据");
+      if (mBest > 4.5) hints.push("优选 M>4.5：超出常用倍比范围，请检查系列中是否有特大值需处理");
+      const topPts = [...state.pts].sort((a, b) => b.q - a.q).slice(0, 3);
+      const devs = topPts.map((pt) => {
+        const qt = mean * (1 + phiPIII(pt.p, mBest * cvFixed) * cvFixed);
+        return (pt.p * 100).toFixed(1) + "%:" + ((pt.q - qt) / qt * 100).toFixed(1) + "%";
+      }).join("、");
+      const dualNote = Math.abs(mSAD - mSSE) > 0.05 ? `\n双准则对照：SAD 最优 M=${mSAD.toFixed(3)}（已采用），SSE 最优 M=${mSSE.toFixed(3)}（大值点权重更高，可作目估参考）` : "";
+      $("fitMsg").textContent = `优化适线（Cv 固定=${cvFixed.toFixed(3)}，绝对值准则+黄金分割精搜）：M=${mBest.toFixed(3)}，Cs=${(mBest * cvFixed).toFixed(3)}\nSAD ${fmt(sad0, 0)} \u2192 ${fmt(sadBest, 0)}；SSE ${fmt(sse0, 0)} \u2192 ${fmt(sseBest, 0)}${dualNote}\n上部 3 点经验频率与相对偏差：${devs}${hints.length ? "\n⚠ " + hints.join("；") : ""}`;
+    } catch (e) {
+      alert("优化适线失败：" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  function renderFitTrials() {
+    const box = $("fitTrialTable");
+    const msg = $("fitTrialMsg");
+    if (!box) return;
+    box.innerHTML = "";
+    if (!fitTrials.length) {
+      const d = document.createElement("div");
+      d.style.cssText = "font-size:12px;color:var(--text3);line-height:1.7";
+      d.textContent = "尚无试线记录。Cv 已由矩法计算并固定，直接重选 M，点「记录本次试线」记录第 2、3 组，表格会列出 Qp 与 SSE，图中灰色虚线为对照组。";
+      box.appendChild(d);
+      if (msg) msg.textContent = "";
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const h of ["\u6B21\u5E8F", "Q\u0304", "Cv", "M", "Cs", "Qp", "SSE", "\u64CD\u4F5C"]) {
+      const th = document.createElement("th");
+      th.textContent = h;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    fitTrials.forEach((trial) => {
+      const p = trial.params;
+      const m = p.cs / p.cv;
+      const tr = document.createElement("tr");
+      const vals = [
+        `\u7B2C ${trial.id} \u6B21`,
+        fmt(p.mean, 1),
+        p.cv.toFixed(3),
+        m.toFixed(2),
+        p.cs.toFixed(2),
+        `${fmt(trial.q, 0)} @ ${freqLabelOf(trial.freq)}`,
+        fmt(trial.sse, 0)
+      ];
+      vals.forEach((v) => {
+        const td2 = document.createElement("td");
+        td2.textContent = v;
+        tr.appendChild(td2);
+      });
+      const td = document.createElement("td");
+      td.style.whiteSpace = "nowrap";
+      for (const [label, fn] of [
+        ["\u91C7\u7528", () => {
+          state.params = { ...p };
+          $("cvSlider").value = String(p.cv);
+          $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
+          syncParamInputs();
+          render();
+          flashUpdated();
+          if (msg) msg.textContent = `\u5DF2\u91C7\u7528\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF1ACv=${p.cv.toFixed(3)}\u3001M=${m.toFixed(2)}\u3001Cs=${p.cs.toFixed(2)}\u3002`;
+        }],
+        ["\u5BF9\u7167", () => {
+          comparisonFit = { ...p };
+          render();
+          renderFitTrials();
+          if (msg) msg.textContent = `\u5DF2\u628A\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\u8BBE\u4E3A\u56FE\u4E2D\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002`;
+        }],
+        ["\u5220\u9664", () => {
+          fitTrials = fitTrials.filter((x) => x.id !== trial.id);
+          if (comparisonFit && comparisonFit.cv === p.cv && comparisonFit.cs === p.cs && comparisonFit.mean === p.mean) comparisonFit = null;
+          renderFitTrials();
+          render();
+        }]
+      ]) {
+        const b = document.createElement("button");
+        b.className = "btn ghost";
+        b.style.cssText = "padding:2px 8px;font-size:11.5px;margin-right:4px";
+        b.textContent = label;
+        b.onclick = fn;
+        td.appendChild(b);
+      }
+      tr.appendChild(td);
+      table.appendChild(tr);
+    });
+    box.appendChild(table);
+    if (msg) {
+      const last = fitTrials[fitTrials.length - 1];
+      const m = last.params.cs / last.params.cv;
+      msg.textContent = `\u5DF2\u8BB0\u5F55 ${fitTrials.length} \u7EC4\u3002\u5F53\u524D\u5BF9\u7167\uFF1A${comparisonFit ? `Cv=${comparisonFit.cv.toFixed(3)}\u3001M=${(comparisonFit.cs / comparisonFit.cv).toFixed(2)}` : "\u672A\u6307\u5B9A"}\uFF1B重选 M 后曲线会立即重绘\u3002`;
+    }
+  }
+  function recordFitTrial() {
+    if (state.pts.length < 3) {
+      alert("\u8BF7\u5148\u8BA1\u7B97\u6D41\u91CF\u7CFB\u5217\uFF1B\u81F3\u5C11 3 \u4E2A\u7ECF\u9A8C\u70B9\u636E\u624D\u80FD\u8BB0\u5F55\u9002\u7EBF\u8BD5\u7B97\u3002");
+      return;
+    }
+    fitTrialSeq += 1;
+    const trial = {
+      id: fitTrialSeq,
+      params: { ...state.params },
+      freq: state.freq,
+      q: qDesignOf(state.params.mean, state.params.cv, state.params.cs),
+      sse: sseOfPoints(state.pts, state.params, phiPIII)
+    };
+    fitTrials.push(trial);
+    comparisonFit = { ...state.params };
+    renderFitTrials();
+    render();
+    const msg = $("fitTrialMsg");
+    if (msg) msg.textContent = `\u5DF2\u8BB0\u5F55\u7B2C ${trial.id} \u6B21\u8BD5\u7EBF\uFF0C\u5E76\u8BBE\u4E3A\u7070\u8272\u865A\u7EBF\u5BF9\u7167\u3002请重选 M，\u518D\u8BB0\u5F55\u4E0B\u4E00\u7EC4\u3002`;
+  }
+  if ($("btnRecordFitTrial")) {
+    $("btnRecordFitTrial").onclick = recordFitTrial;
+    $("btnClearFitTrials").onclick = () => {
+      fitTrials = [];
+      fitTrialSeq = 0;
+      comparisonFit = null;
+      renderFitTrials();
+      render();
+    };
+    document.querySelectorAll(".mPickBtn").forEach((btn2) => {
+      btn2.onclick = () => {
+        const m = Number(btn2.dataset.m);
+        if (!Number.isFinite(m) || m <= 0) return;
+        state.params = { ...state.params, cs: state.params.cv * m };
+        $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
+        syncParamInputs();
+        render();
+        const msg = $("fitTrialMsg");
+        if (msg) msg.textContent = `\u5DF2\u91CD\u9009 M=${m.toFixed(2)}\uFF0CCs=M\xD7Cv=${state.params.cs.toFixed(2)}\uFF0C\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u5DF2\u91CD\u7ED8\u3002`;
+      };
+    });
+    renderFitTrials();
+  }
+  function qDesignOf(mean, cv, cs) {
+    return mean * (1 + phiPIII(state.freq, effCs(cs)) * cv);
+  }
+  function applyFit(mean, cv, cs, msg) {
+    const c = Math.min(1.2, Math.max(0.05, cv));
+    state.params = { mean, cv: c, cs };
+    $("cvSlider").value = String(c);
+    $("ratioSlider").value = String(Math.min(8, Math.max(1, cs / c)));
+    syncParamInputs();
+    render();
+    flashUpdated();
+    if (phiPanelOpen()) {
+      $("phiCsIn").value = cs.toFixed(2);
+      renderPhiTable();
+    }
+    return msg;
+  }
+  function flashUpdated() {
+    for (const id of ["cvShow", "csShow", "ratioShow", "outQ", "qrQ"]) {
+      const el = $(id);
+      if (!el) continue;
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+      window.setTimeout(() => el.classList.remove("flash"), 700);
+    }
+  }
+  var fitBusy = false;
+  var FIT_BTN_IDS = ["btnRecommend", "btnThreePoint", "btnAutoFit"];
+  function setFitBusy(busy) {
+    fitBusy = busy;
+    for (const id of FIT_BTN_IDS) {
+      const el = $(id);
+      if (!el) continue;
+      el.disabled = busy;
+      el.setAttribute("aria-busy", busy ? "true" : "false");
+    }
+    const msg = $("recMsg");
+    if (busy) msg.classList.add("busy");
+    else msg.classList.remove("busy");
+  }
+  function runFit(label, work) {
+    if (fitBusy) return;
+    if (state.pts.length < 3) {
+      alert("\u8BF7\u5148\u8BA1\u7B97\u7CFB\u5217\uFF08\u6D41\u91CF\u7CFB\u5217\u6A21\u5F0F\uFF09\u3002");
+      return;
+    }
+    setFitBusy(true);
+    $("recMsg").textContent = `${label}\u2026`;
+    requestAnimationFrame(() => setTimeout(() => {
+      const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let tail = "";
+      try {
+        tail = work();
+        $("recMsg").textContent = tail;
+      } catch (e) {
+        $("recMsg").textContent = "\u9002\u7EBF\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e));
+      }
+      const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      setFitBusy(false);
+      if (tail) $("recMsg").textContent = `${tail}\u3000\u2713 \u5DF2\u5B8C\u6210\uFF08${((t1 - t0) / 1e3).toFixed(1)} s\uFF09`;
+    }, 0));
+  }
+  function recommendMsg(tag, r) {
+    const q = qDesignOf(state.params.mean, r.cv, r.cs);
+    let s = `${tag}\uFF08${CRITERION_LABEL[r.criterion] ?? r.criterion}\uFF0C\u5747\u503C\u56FA\u5B9A\u4E3A\u77E9\u6CD5\u503C\uFF09\uFF1ACv=${r.cv.toFixed(3)}\u3001Cs=${r.cs.toFixed(2)}\uFF08\u500D\u6BD4 ${r.ratio}\uFF09\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(q, 0)} m\xB3/s`;
+    return s;
+  }
+  var cvHintOf = () => state.stats && "cv" in state.stats ? state.stats.cv : void 0;
+  $("btnRecommend").onclick = () => {
+    runFit("\u6B63\u5728\u6309\u79BB\u5DEE\u5E73\u65B9\u548C\u51C6\u5219\u641C\u7D22\u6700\u4F18 M", () => {
+      const cvFixed = state.params.cv;
+      const mean = state.params.mean;
+      let best = null;
+      for (let m = 2; m <= 4.0001; m += 0.02) {
+        const cs = m * cvFixed;
+        const sse = sseOfPoints(state.pts, { mean, cv: cvFixed, cs }, phiPIII);
+        if (!best || sse < best.sse) best = { m, cs, sse };
+      }
+      const q = qDesignOf(mean, cvFixed, best.cs);
+      return applyFit(mean, cvFixed, best.cs, `\u89C4\u8303\u6700\u4F18\u9002\u7EBF\uFF08SSE \u51C6\u5219\uFF0CCv \u56FA\u5B9A\uFF09\uFF1AM=${best.m.toFixed(2)}\u3001Cs=${best.cs.toFixed(2)}\uFF0C\u8BBE\u8BA1\u6D41\u91CF Q = ${fmt(q, 0)} m\xB3/s`);
+    });
+  };
+  var PHI_PS = [1e-4, 1e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97, 0.99, 0.999];
+  var PHI_PS_LABEL = ["0.01", "0.1", "0.5", "1", "2", "5", "10", "20", "25", "50", "75", "90", "95", "97", "99", "99.9"];
+  var PHI_CS = [];
+  for (let c = 0; c <= 6.0001; c += 0.05) PHI_CS.push(Number(c.toFixed(2)));
+  var phiTableCache = null;
+  function phiTableRows() {
+    if (!phiTableCache) phiTableCache = PHI_CS.map((cs) => PHI_PS.map((p) => phiPIII(p, cs)));
+    return phiTableCache;
+  }
+  function phiPanelOpen() {
+    const el = $("phiTablePanel");
+    return !!el && el.style.display !== "none";
+  }
+  function renderPhiTable() {
+    const rows = phiTableRows();
+    const csSel = Number($("phiCsIn").value);
+    const pSel = Number($("phiPSel").value);
+    let ci = 0, cd = Infinity, pi = 0, pd = Infinity;
+    PHI_CS.forEach((c, i) => {
+      const d = Math.abs(c - csSel);
+      if (d < cd) {
+        cd = d;
+        ci = i;
+      }
+    });
+    PHI_PS.forEach((p, j) => {
+      const d = Math.abs(p - pSel);
+      if (d < pd) {
+        pd = d;
+        pi = j;
+      }
+    });
+    const head = `<tr><th>C<sub>s</sub> \\ P</th>${PHI_PS_LABEL.map((lb, j) => `<th class="${j === pi ? "hl" : ""}">${lb}%</th>`).join("")}</tr>`;
+    const body = rows.map((r, i) => `<tr><th class="${i === ci ? "hl" : ""}">${PHI_CS[i].toFixed(2)}</th>` + r.map((v, j) => `<td class="${j === pi ? "hl" : ""}"${i === ci ? ` style="font-weight:600"` : ""}>${v.toFixed(3)}</td>`).join("") + `</tr>`).join("");
+    $("phiTableWrap").innerHTML = `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    const phi = phiPIII(pSel, csSel);
+    const kp = 1 + phi * state.params.cv;
+    $("phiLookup").textContent = `\u03A6 = ${phi.toFixed(3)} \uFF5C Kp = ${kp.toFixed(3)}\uFF08Cv=${state.params.cv.toFixed(3)}\uFF09\uFF5C Qp = ${fmt(state.params.mean * kp, 0)} m\xB3/s`;
+  }
+  $("btnPhiTable").onclick = () => {
+    const el = $("phiTablePanel");
+    if (phiPanelOpen()) {
+      el.style.display = "none";
+      return;
+    }
+    $("phiCsIn").value = state.params.cs.toFixed(2);
+    const ps = $("phiPSel");
+    if ([...ps.options].some((o) => o.value === String(state.freq))) ps.value = String(state.freq);
+    el.style.display = "";
+    renderPhiTable();
+  };
+  $("phiCsIn").oninput = () => renderPhiTable();
+  $("phiPSel").onchange = () => renderPhiTable();
+  $("btnT3").onclick = () => {
+    $("mParams").click();
+    $("inMean").value = "5173.6";
+    $("inCv").value = "0.331";
+    $("inCs").value = "1.99";
+    state.params = { mean: 5173.6, cv: 0.331, cs: 1.99 };
+    $("cvSlider").value = 0.331;
+    render();
+  };
+  $("hasExtra").onchange = (e) => {
+    $("extraBox").style.display = e.target.checked ? "" : "none";
+  };
+  if (new URLSearchParams(location.search).get("extra") === "1") {
+    $("hasExtra").checked = true;
+    $("extraBox").style.display = "";
+  }
+  var BAYES_CSS = `
+  .brow { display: grid; grid-template-columns: 92px 1fr 120px 90px; gap: 8px; align-items: center; margin: 4px 0; font-size: 12.5px; }
+  .bbar-outer { height: 10px; background: rgba(120,120,128,0.12); border-radius: 5px; overflow: hidden; }
+  .bbar-inner { height: 100%; background: var(--blue); border-radius: 5px; transition: width .5s ease; }
+  .bw { font-variant-numeric: tabular-nums; font-weight: 500; text-align: right; }
+  .bq { font-variant-numeric: tabular-nums; color: var(--text2); text-align: right; }
+`;
+  (function injectBayesCss() {
+    const st = document.createElement("style");
+    st.textContent = BAYES_CSS;
+    document.head.appendChild(st);
+  })();
+  function runBayesCompare() {
+    const xs = state.series;
+    if (!xs || xs.length < 5) {
+      alert("\u7EBF\u578B\u6BD4\u9009\u81F3\u5C11\u9700\u8981 5 \u4E2A\u5B9E\u6D4B\u6D41\u91CF\u503C\uFF0C\u8BF7\u5148\u8BA1\u7B97\u5E76\u9002\u7EBF\u3002");
+      return;
+    }
+    try {
+      const result = compareLineages(xs);
+      const labels = {
+        P3: "P-\u2162\uFF08\u89C4\u8303\u91C7\u7528\uFF09",
+        GEV: "GEV",
+        Gumbel: "Gumbel"
+      };
+      $("bayesResult").style.display = "";
+      $("bayesBars").innerHTML = result.fits.map((f) => `
+      <div class="brow">
+        <span>${labels[f.name]}</span>
+        <div class="bbar-outer"><div class="bbar-inner" style="width:${(result.weights[f.name] * 100).toFixed(1)}%"></div></div>
+        <span class="bw">${(result.weights[f.name] * 100).toFixed(1)}%</span>
+        <span class="bq">Q\u2081%=${fmt(result.q1p[f.name], 0)}</span>
+      </div>`).join("");
+      $("bqP3").textContent = fmt(result.q1p.P3, 0);
+      $("bqGEV").textContent = fmt(result.q1p.GEV, 0);
+      $("bqGu").textContent = fmt(result.q1p.Gumbel, 0);
+    } catch (e) {
+      alert("\u7EBF\u578B\u6BD4\u9009\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  }
+  $("btnBayes").onclick = runBayesCompare;
+  var HIST_FIELDS = [
+    ["Ac", "\u6CB3\u69FD\u9762\u79EF A\uA700\uFF08m\xB2\uFF09"],
+    ["Bc", "\u6CB3\u69FD\u6C34\u9762\u5BBD B\uA700\uFF08m\uFF09"],
+    ["nc", "\u6CB3\u69FD\u7CD9\u7387 n\uA700"],
+    ["At", "\u6CB3\u6EE9\u9762\u79EF A\u209C\uFF08m\xB2\uFF09"],
+    ["Bt", "\u6CB3\u6EE9\u6C34\u9762\u5BBD B\u209C\uFF08m\uFF09"],
+    ["nt", "\u6CB3\u6EE9\u7CD9\u7387 n\u209C"],
+    ["Ipermil", "\u6BD4\u964D I\uFF08\u2030\uFF09"],
+    ["T", "\u91CD\u73B0\u671F T\uFF08\u5E74\uFF09"]
+  ];
+  (function buildHistRows() {
+    const defaults = [
+      { Ac: 500, Bc: 100, nc: 0.03, At: 200, Bt: 200, nt: 0.05, Ipermil: 0.5, T: 100 },
+      { Ac: 400, Bc: 95, nc: 0.03, At: 150, Bt: 180, nt: 0.05, Ipermil: 0.5, T: 50 }
+    ];
+    $("histRows").innerHTML = [0, 1].map((i) => `
+    <div style="margin:8px 0;padding:8px 10px;background:var(--bg);border-radius:10px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:6px">\u7B2C ${i + 1} \u6B21\u5386\u53F2\u6D2A\u6C34</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${HIST_FIELDS.map(([k, label]) => `<div><label style="margin-top:0">${label}</label><input type="number" step="any" id="hf${i}${k}" value="${defaults[i][k]}"></div>`).join("")}
+      </div>
+    </div>`).join("");
+  })();
+  function calcMethodB() {
+    const floods = [0, 1].map((i) => {
+      const g = (k) => +$(`hf${i}${k}`).value;
+      const s = { Ac: g("Ac"), Bc: g("Bc"), nc: g("nc"), At: g("At"), Bt: g("Bt"), nt: g("nt"), I: g("Ipermil") / 1e3 };
+      const m = manningQ(s);
+      return { Q: m.Q, T: g("T"), vc: m.vc, vt: m.vt };
+    });
+    const cv = +$("hbCv").value, cs = +$("hbCs").value;
+    try {
+      const res = designFromHistory(floods, { cv, cs }, state.freq, phiPIII);
+      stateCompare.B = {
+        label: "\u65B9\u6CD5B \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5",
+        q: res.q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `${floods.length} \u6B21\u5386\u53F2\u6D2A\u6C34\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09`
+      };
+      renderCompare();
+      $("histResult").style.display = "";
+      $("histResult").innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="color:var(--text2)"><th style="text-align:left;padding:4px">\u6D2A\u6C34</th><th>Q\u1D40\uFF08m\xB3/s\uFF09</th><th>v\uA700\uFF08m/s\uFF09</th><th>Q\u0304\u1D1B\u1D62</th></tr>
+        ${floods.map((f, i) => `<tr><td style="padding:4px">\u7B2C${i + 1}\u6B21\uFF08T=${f.T} \u5E74\uFF09</td>
+          <td style="text-align:right">${f.Q.toFixed(1)}</td><td style="text-align:right">${f.vc.toFixed(3)}</td>
+          <td style="text-align:right">${res.qBars[i].toFixed(1)}</td></tr>`).join("")}
+      </table>
+      <div class="metrics" style="margin-top:12px">
+        <div class="metric"><div class="k">\u5E73\u5747\u6D41\u91CF Q\u0304</div><div class="v">${res.mean.toFixed(1)}</div></div>
+        <div class="metric"><div class="k">\u03A6<sub>p</sub> / K<sub>p</sub></div><div class="v">${res.phi.toFixed(3)} / ${res.kp.toFixed(3)}</div></div>
+        <div class="metric hl"><div class="k">\u8BBE\u8BA1\u6D41\u91CF Q<sub>p</sub>\uFF08m\xB3/s\uFF09</div><div class="v">${res.q.toFixed(1)}</div></div>
+      </div>`;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      $("histResult").style.display = "";
+      $("histResult").innerHTML = `<div class="err" style="display:block">${msg}</div>`;
+    }
+  }
+  $("btnHist").onclick = calcMethodB;
+  function wsGeom() {
+    return { b: +$("wsB").value, m: +$("wsM").value, n: +$("wsN").value };
+  }
+  function wsShow(html) {
+    $("wsErr").textContent = "";
+    $("wsResult").style.display = "";
+    $("wsResult").innerHTML = html;
+  }
+  function wsFail(e) {
+    $("wsResult").style.display = "none";
+    const msg = e instanceof Error ? e.message : String(e);
+    $("wsErr").textContent = msg;
+    $("wsErr").style.display = "block";
+  }
+  function calcWsProfile() {
+    try {
+      const geom = wsGeom();
+      const S0 = +$("wsS0").value / 1e3, L = +$("wsL").value, yDown = +$("wsYc").value, Q = +$("wsQ").value;
+      const r = waterSurfaceProfile({ geom, S0, Q, yControl: yDown, length: L });
+      const yEnd = depthAt(r, L);
+      const upText = r.regime === "subcritical" ? "\u4E0A\u6E38\u7AEF" : "\u4E0B\u6E38\u7AEF";
+      const rows = r.points.filter((_, i) => i % Math.ceil(r.points.length / 12) === 0 || i === r.points.length - 1);
+      wsShow(`
+      <div class="metrics">
+        <div class="metric"><div class="k">\u6B63\u5E38\u6C34\u6DF1 y<sub>n</sub>\uFF08m\uFF09</div><div class="v">${r.yn.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u4E34\u754C\u6C34\u6DF1 y<sub>c</sub>\uFF08m\uFF09</div><div class="v">${r.yc.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6D41\u6001</div><div class="v">${r.regime === "subcritical" ? "\u7F13\u6D41" : "\u6025\u6D41"}</div></div>
+        <div class="metric hl"><div class="k">${upText}\u6C34\u6DF1\uFF08m\uFF09</div><div class="v">${yEnd.toFixed(3)}</div></div>
+      </div>
+      <table class="ltab" style="margin-top:10px">
+        <tr><th>\u8DDD\u63A7\u5236\u65AD\u9762\uFF08m\uFF09</th><th class="v">\u6C34\u6DF1 y\uFF08m\uFF09</th><th class="v">\u6D41\u901F v\uFF08m/s\uFF09</th><th class="v">\u6BD4\u80FD E\uFF08m\uFF09</th><th class="v">Sf</th></tr>
+        ${rows.map((p) => `<tr><td>${p.x.toFixed(0)}</td><td class="v">${p.y.toFixed(3)}</td><td class="v">${p.v.toFixed(3)}</td><td class="v">${p.E.toFixed(3)}</td><td class="v">${p.sf.toExponential(3)}</td></tr>`).join("")}
+      </table>
+      <div class="hint" style="margin-top:8px">\u5171 ${r.points.length} \u4E2A\u8BA1\u7B97\u70B9\uFF08\u9694\u884C\u663E\u793A\uFF09\uFF1Bx \u4E3A\u8D1F\u8868\u793A\u5728\u63A7\u5236\u65AD\u9762${r.regime === "subcritical" ? "\u4E0A\u6E38" : "\u4E0B\u6E38"}\u3002\u4E0E ${upText.replace("\u7AEF", "")}\u6D2A\u75D5\u5BF9\u7167\u8C03\u6574\u5047\u5B9A Q \u5373\u53EF\u8BD5\u7B97\u3002</div>`);
+    } catch (e) {
+      wsFail(e);
+    }
+  }
+  function calcWsSolve() {
+    try {
+      const geom = wsGeom();
+      const S0 = +$("wsS0").value / 1e3, L = +$("wsL").value, yDown = +$("wsYc").value, yUp = +$("wsYup").value;
+      const s = solveDischargeFromMarks(geom, S0, yDown, yUp, L);
+      stateCompare.B2 = {
+        label: "\u65B9\u6CD5B \xB7 \u4E24\u6D2A\u75D5\u53CD\u89E3 Q",
+        q: s.Q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `y\u4E0B=${yDown}m \u2192 y\u4E0A=${yUp}m\uFF0CL=${L}m`
+      };
+      renderCompare();
+      const yn = normalDepth(geom, S0, s.Q), yc = criticalDepth(geom, s.Q);
+      wsShow(`
+      <div class="metrics">
+        <div class="metric hl"><div class="k">\u53CD\u89E3\u6D41\u91CF Q\uFF08m\xB3/s\uFF09</div><div class="v">${s.Q.toFixed(1)}</div></div>
+        <div class="metric"><div class="k">\u5BF9\u5E94 y<sub>n</sub>\uFF08m\uFF09</div><div class="v">${yn.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u5BF9\u5E94 y<sub>c</sub>\uFF08m\uFF09</div><div class="v">${yc.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6B8B\u5DEE\uFF08m\uFF09</div><div class="v">${s.residual.toExponential(2)}</div></div>
+      </div>
+      <div class="hint" style="margin-top:8px">\u7531\u4E0B\u6E38\u6D2A\u75D5 ${yDown}m \u6309\u5047\u5B9A Q \u5411\u4E0A\u6E38\u63A8\u7B97\uFF0C\u4E0E\u4E0A\u6E38\u6D2A\u75D5 ${yUp}m \u5BF9\u7167\u8FED\u4EE3\uFF1B\u6210\u679C\u5DF2\u5199\u5165\u591A\u65B9\u6CD5\u5BF9\u6BD4\u8868\u3002</div>`);
+    } catch (e) {
+      wsFail(e);
+    }
+  }
+  $("btnWsProfile").onclick = calcWsProfile;
+  $("btnWsSolve").onclick = calcWsSolve;
+  function ssmShow(html) {
+    $("ssmErr").textContent = "";
+    $("ssmErr").style.display = "none";
+    $("ssmResult").style.display = "";
+    $("ssmResult").innerHTML = html;
+  }
+  function ssmFail(e) {
+    $("ssmResult").style.display = "none";
+    const lines = [e instanceof Error ? e.message : String(e)];
+    if (e instanceof HsError) {
+      if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+      if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+    }
+    $("ssmErr").textContent = lines.join(" \uFF5C ");
+    $("ssmErr").style.display = "block";
+  }
+  function ssmSvgProfile(r, units, bridges) {
+    const ss = r.sections;
+    const W = 940, H = 340, L = 60, R = 30, T = 30, B = 46;
+    const xMax = Math.max(...ss.map((s) => s.x), 1);
+    const yMin = Math.min(...ss.map((s) => s.bed)), yMax = Math.max(...ss.map((s) => s.wse));
+    const span = Math.max(yMax - yMin, (yMax - yMin) * 0.2 + 0.5);
+    const y0 = yMin - span * 0.12, y1 = yMax + span * 0.18;
+    const px = (x) => L + x / xMax * (W - L - R);
+    const py = (z) => T + (1 - (z - y0) / (y1 - y0)) * (H - T - B);
+    const f = (v) => Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2);
+    const ticks = [];
+    const step = (y1 - y0) / 5;
+    for (let i = 0; i <= 5; i++) {
+      const z = y0 + step * i;
+      ticks.push(`<line x1="${L}" y1="${py(z).toFixed(1)}" x2="${W - R}" y2="${py(z).toFixed(1)}" stroke="rgba(120,120,128,.14)" stroke-width="1"/><text x="${L - 6}" y="${(py(z) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text3)">${f(z)}</text>`);
+    }
+    const bedPath = ss.map((s) => `${px(s.x).toFixed(1)},${py(s.bed).toFixed(1)}`).join(" ");
+    const wsePath = ss.map((s) => `${px(s.x).toFixed(1)},${py(s.wse).toFixed(1)}`).join(" ");
+    const marks = ss.map((s) => `
+    <line x1="${px(s.x).toFixed(1)}" y1="${py(s.bed).toFixed(1)}" x2="${px(s.x).toFixed(1)}" y2="${py(s.wse).toFixed(1)}" stroke="rgba(0,122,255,.35)" stroke-width="1" stroke-dasharray="3,3"/>
+    <circle cx="${px(s.x).toFixed(1)}" cy="${py(s.wse).toFixed(1)}" r="3" fill="var(--blue)"/>
+    <text x="${px(s.x).toFixed(1)}" y="${(py(s.wse) - 7).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--blue)">${f(s.wse)}</text>
+    <line x1="${px(s.x).toFixed(1)}" y1="${H - B + 4}" x2="${px(s.x).toFixed(1)}" y2="${H - B + 10}" stroke="var(--text3)" stroke-width="1"/>
+    <text x="${px(s.x).toFixed(1)}" y="${H - B + 24}" text-anchor="middle" font-size="10" fill="var(--text2)">${s.id}</text>`).join("");
+    const bridgesSvg = ss.filter((s) => bridges.has(s.id)).map((s) => {
+      const br = bridges.get(s.id);
+      const dz = br.deckZ !== void 0 ? Math.min(Math.max(br.deckZ, y0), y1) : s.wse + span * 0.22;
+      const x1 = px(Math.max(s.x - br.width, 0)), x2 = px(s.x);
+      const flooded = br.deckZ !== void 0 && s.wse >= br.deckZ;
+      const plate = flooded ? "rgba(255,59,48,.72)" : "rgba(120,120,128,.62)";
+      return `
+    <line x1="${x1.toFixed(1)}" y1="${py(dz).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${py(dz).toFixed(1)}" stroke="${plate}" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="${x1.toFixed(1)}" y="${(py(dz) - 6).toFixed(1)}" width="${(x2 - x1).toFixed(1)}" height="6" rx="1.5" fill="${plate}"/>
+    <line x1="${x2.toFixed(1)}" y1="${(py(dz) - 6).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${py(s.bed).toFixed(1)}" stroke="${plate}" stroke-width="2"/>
+    <text x="${((x1 + x2) / 2).toFixed(1)}" y="${(py(dz) - 11).toFixed(1)}" text-anchor="middle" font-size="10" fill="${flooded ? "#ff3b30" : "var(--text2)"}">${flooded ? "\u6865\u5B54\u6DF9\u6CA1\u26A0" : "\u6865"}</text>`;
+    }).join("");
+    const u = units === "SI" ? "m" : "ft";
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;margin-top:10px;background:rgba(120,120,128,.06);border-radius:8px">
+    <text x="${L - 6}" y="${T - 10}" text-anchor="end" font-size="10" fill="var(--text3)">\u9AD8\u7A0B\uFF08${u}\uFF09</text>
+    <text x="${W - R}" y="${H - 8}" text-anchor="end" font-size="10" fill="var(--text3)">\u6CBF\u6CB3\u69FD\u7D2F\u79EF\u6CB3\u957F\uFF08${u}\uFF09\u2192 \u4E0A\u6E38</text>
+    ${ticks.join("")}
+    <polyline points="${bedPath}" fill="none" stroke="var(--text3)" stroke-width="1.5"/>
+    <polyline points="${wsePath}" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${marks}
+    ${bridgesSvg}
+  </svg>`;
+  }
+  var ssmLast = null;
+  function ssmTakeScour(idx) {
+    const tip = $("ssmTakeTip");
+    try {
+      if (!ssmLast) throw new Error("\u8BF7\u5148\u63A8\u7B97\u6C34\u9762\u7EBF");
+      const { secs, result, units, Q } = ssmLast;
+      const sec = secs[idx], sr = result.sections[idx];
+      if (!sec || !sr) throw new Error("\u65AD\u9762\u4E0D\u5B58\u5728\uFF0C\u8BF7\u91CD\u65B0\u63A8\u7B97\u6C34\u9762\u7EBF");
+      const wse = sr.wse;
+      const props = sectionProps(sec, wse, units);
+      const ch = props.zones[1];
+      if (!(ch.A > 0) || !(ch.T > 0)) throw new Error(`\u65AD\u9762 ${sec.id} \u6CB3\u69FD\u533A\u5728\u63A8\u7B97\u6C34\u4F4D ${wse.toFixed(2)} \u4E0B\u4E0D\u8FC7\u6C34\uFF0C\u65E0\u6CD5\u53D6\u503C`);
+      if (!(props.K > 0) || !(props.A > 0) || !(props.T > 0)) throw new Error("\u65AD\u9762\u6C34\u529B\u8981\u7D20\u5F02\u5E38\uFF08K/A/T=0\uFF09\uFF0C\u65E0\u6CD5\u53D6\u503C");
+      let bedCh = Infinity;
+      for (const p of sec.pts) if (sec.bankL - 1e-9 <= p.x && p.x <= sec.bankR + 1e-9) bedCh = Math.min(bedCh, p.z);
+      if (!Number.isFinite(bedCh)) throw new Error("\u6CB3\u69FD\u533A\u95F4\u5185\u6CA1\u6709\u6D4B\u70B9");
+      const L = units === "EN" ? 0.3048 : 1;
+      const QF = units === "EN" ? 0.0283168 : 1;
+      const Qch = Q * ch.K / props.K;
+      const Bcj = ch.T * L;
+      const Hmc = (wse - bedCh) * L;
+      const Hcq = ch.A / ch.T * L;
+      if (!(Hmc > 0)) throw new Error(`\u65AD\u9762 ${sec.id} \u6CB3\u69FD\u6700\u4F4E\u6CB3\u5E95 ${bedCh.toFixed(2)} \u9AD8\u4E8E\u63A8\u7B97\u6C34\u4F4D\uFF0Ch_mc \u2264 0`);
+      if (!(Qch > 0)) throw new Error("\u6CB3\u69FD\u5206\u6D41\u91CF Q\u2082 \u2264 0\uFF08\u6CB3\u69FD\u8F93\u8FD0\u7387\u5360\u6BD4\u4E3A 0\uFF09");
+      const set2 = (id, val, fmt2) => {
+        $(id).value = fmt2(val);
+      };
+      set2("scQ2", Qch * QF, (x) => x.toFixed(1));
+      set2("scBcj", Bcj, (x) => x.toFixed(1));
+      set2("scHmc", Hmc, (x) => x.toFixed(2));
+      set2("scHcq", Hcq, (x) => x.toFixed(2));
+      set2("lsV", Qch / ch.A * L, (x) => x.toFixed(2));
+      set2("abV", Q / props.A * L, (x) => x.toFixed(2));
+      set2("abH", props.A / props.T * L, (x) => x.toFixed(2));
+      let aTip = "";
+      try {
+        const a = concentrationFactorA(Bcj, Hcq);
+        set2("scA", a.A, (x) => x.toFixed(2));
+        aTip = a.capped ? `A=${a.A.toFixed(2)}\uFF08\u53CD\u7B97\u503C\u8D85 1.8\uFF0C\u6309\u89C4\u8303\u53D6\u4E0A\u9650\uFF09` : `A=${a.A.toFixed(2)}\uFF08\u7531 SSM \u6CB3\u69FD\u5BBD ${Bcj.toFixed(1)} m / \u5E73\u5747\u6C34\u6DF1 ${Hcq.toFixed(2)} m \u53CD\u7B97\uFF09`;
+        const at = $("scATip");
+        at.textContent = "SSM \u53D6\u503C\uFF1A" + aTip;
+      } catch {
+      }
+      tip.style.display = "";
+      tip.innerHTML = `\u5DF2\u5C06\u65AD\u9762 <b>${sec.id}</b>\uFF08WSE=${wse.toFixed(3)}${units === "EN" ? " ft\uFF0C\u5DF2\u6362\u7B97\u4E3A SI" : ""}\uFF09\u7684\u6CB3\u69FD\u8981\u7D20\u586B\u5165\u51B2\u5237\u6A21\u5757\uFF1A
+      Q\u2082=${(Qch * QF).toFixed(1)} m\xB3/s\uFF08\u6309\u8F93\u8FD0\u7387 K \u5206\u914D\uFF09\u3001B<sub>cj</sub>=${Bcj.toFixed(1)} m\uFF08\u6CB3\u69FD\u6C34\u9762\u5BBD\uFF0C\u6309\u6865\u5B54\u5E03\u7F6E\u4FEE\u6B63\uFF09\u3001
+      h<sub>mc</sub>=${Hmc.toFixed(2)} m\u3001h<sub>cq</sub>=${Hcq.toFixed(2)} m\u3001\u884C\u8FD1\u6D41\u901F v=${(Qch / ch.A * L).toFixed(2)} m/s\u3002
+      ${aTip ? aTip + "\u3002" : ""}<span style="color:var(--amber)">\u4ECD\u9700\u624B\u586B\uFF1A\u03BC\u3001\u542B\u6C99\u91CF \u03C1\u3001\u6CE5\u6C99 d\u0304\u3001\u58A9\u5BBD B\u2081\u3001\u58A9\u5F62 K<sub>\u03BE</sub></span>\uFF1B
+      \u884C\u8FD1\u6D41\u901F\u4E3A\u5EFA\u6865\u524D\u6CB3\u69FD\u5E73\u5747\u6D41\u901F\uFF0C\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u540E\u53EF\u7528\u300C\u7528\u4E00\u822C\u51B2\u5237\u7ED3\u679C\u63A8\u7B97 v\u300D\u6309 8.3.3-2 \u7CBE\u7B97\u3002`;
+      calcScour();
+    } catch (e) {
+      tip.style.display = "";
+      tip.textContent = "\u53D6\u503C\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e));
+    }
+  }
+  $("ssmResult").addEventListener("click", (ev) => {
+    const btn2 = ev.target.closest("button.ssmTakeBtn");
+    if (btn2) ssmTakeScour(+btn2.dataset.idx);
+  });
+  function calcSsm() {
+    try {
+      const Q = +$("ssmQ").value;
+      const units = $("ssmUnits").value;
+      const bdKind = $("ssmBd").value;
+      const boundary = bdKind === "wse" ? { kind: "wse", wse: +$("ssmWse").value } : { kind: "normalDepth", S0: +$("ssmS0").value };
+      const secs = parseSsmSections($("ssmText").value);
+      const r = ssmProfileRun(secs, { Q, boundary, units });
+      ssmLast = { secs, result: r, units, Q };
+      const u = units === "SI" ? { q: "m\xB3/s", l: "m", v: "m/s", a: "m\xB2" } : { q: "cfs", l: "ft", v: "ft/s", a: "ft\xB2" };
+      const bridges = new Map(secs.filter((s) => s.bridge).map((s) => [s.id, { width: s.bridge.width, deckZ: s.bridge.deckZ }]));
+      const nBridge = bridges.size;
+      const badge = (s) => bridges.has(s.id) ? ` <span style="background:rgba(0,122,255,.14);color:var(--blue);border-radius:4px;padding:0 4px;font-size:10px;font-weight:600">\u6865</span>` : "";
+      ssmShow(`
+      <div class="metrics">
+        <div class="metric"><div class="k">\u65AD\u9762\u6570</div><div class="v">${r.sections.length}</div></div>
+        <div class="metric"><div class="k">\u4E0B\u6E38\u8FB9\u754C WSE\uFF08${u.l}\uFF09</div><div class="v">${r.boundaryWse.toFixed(3)}</div></div>
+        <div class="metric"><div class="k">\u6700\u5927 Fr</div><div class="v">${r.maxFr.toFixed(3)}${r.maxFr >= 1 ? " \u26A0\u6025\u6D41" : " \u7F13\u6D41"}</div></div>
+        ${nBridge > 0 ? `<div class="metric"><div class="k">\u6865\u6881\u6CB3\u6BB5</div><div class="v">${nBridge} \u6BB5</div></div>` : ""}
+        <div class="metric hl"><div class="k">\u4E0A\u6E38\u672B\u7AEF WSE\uFF08${u.l}\uFF09</div><div class="v">${r.sections[r.sections.length - 1].wse.toFixed(3)}</div></div>
+      </div>
+      ${ssmSvgProfile(r, units, bridges)}
+      <table class="ltab" style="margin-top:10px">
+        <tr><th>\u7AD9\u53F7</th><th class="v">\u6CB3\u957F\uFF08${u.l}\uFF09</th><th class="v">WSE\uFF08${u.l}\uFF09</th><th class="v">\u6CB3\u5E95\uFF08${u.l}\uFF09</th><th class="v">A\uFF08${u.a}\uFF09</th><th class="v">v\uFF08${u.v}\uFF09</th><th class="v">\u03B1</th><th class="v">Fr</th><th class="v">\u6CB3\u6BB5 h<sub>L</sub>\uFF08${u.l}\uFF09\xB7 C<sub>\u91C7\u7528</sub></th><th>\u53D6\u503C</th></tr>
+        ${r.sections.map((s, i) => `<tr><td>${s.id}${badge(s)}</td><td class="v">${s.x.toFixed(1)}</td><td class="v"><b>${s.wse.toFixed(3)}</b></td><td class="v">${s.bed.toFixed(2)}</td><td class="v">${s.A.toFixed(1)}</td><td class="v">${s.v.toFixed(3)}</td><td class="v">${s.alpha.toFixed(3)}</td><td class="v">${s.fr.toFixed(3)}</td><td class="v">${i === 0 ? "\uFF08\u8FB9\u754C\uFF09" : `${s.hL.toFixed(3)}${s.c !== void 0 ? `\uFF08${s.cKind === "expansion" ? "\u6269" : "\u7F29"} ${s.c}\uFF09` : ""}`}</td><td><button class="btn ssmTakeBtn" data-idx="${i}" style="padding:2px 8px;font-size:11px">\u2192\u51B2\u5237</button></td></tr>`).join("")}
+      </table>
+      <div id="ssmTakeTip" style="display:none;font-size:12px;color:var(--text2);margin-top:8px;padding:8px 10px;background:rgba(0,122,255,.06);border-radius:6px"></div>
+      <div class="hint" style="margin-top:8px">${r.notes.join("\uFF1B")}\u3002\u65B9\u6CD5\uFF1A\u4E09\u533A\u8F93\u8FD0\u7387 K\u1D62=(K\u2099/n\u1D62)A\u1D62R\u1D62^(2/3)\u3001\u52A8\u80FD\u4FEE\u6B63 \u03B1\u3001\u6469\u963B\u5761 S_f=(2Q/(K\u4E0B+K\u4E0A))\xB2\u3001\u6EE9\u69FD\u52A0\u6743\u6CB3\u957F\u2014\u2014JTG C30-2015 6.3.1 \u7684\u5929\u7136\u6CB3\u9053\u5B9E\u73B0\uFF0C\u5BF9\u9F50 HEC-RAS \u6807\u51C6\u6B65\u957F\u6CD5\u3002${nBridge > 0 ? "\u6865\u6881\u6CB3\u6BB5\uFF08\u6807\u300C\u6865\u300D\u65AD\u9762\uFF09\uFF1AL\u0304=\u6865\u5BBD\u3001C=\u6865\u6881 BR \u7CFB\u6570\uFF0C\u58C5\u6C34\u6309 HEC-RAS energy \u6CD5\u5185\u4E1A\u8BA1\u5165\uFF1B\u6C34\u4F4D \u2265 \u6881\u5E95\u9AD8\u7A0B\u65F6\u63D0\u793A\u5830\u6D41/\u538B\u529B\u6D41\u8D85\u8303\u56F4\u3002" : "\u542B\u6865\u6CB3\u6BB5\u53EF\u5728\u65AD\u9762\u5934\u52A0 bridge=\u6865\u5BBD,\u6536\u7F29\u7CFB\u6570,\u6269\u5F20\u7CFB\u6570,\u6881\u5E95\u9AD8\u7A0B \u8BA1\u5165\u6865\u6881\u58C5\u6C34\uFF08HEC-RAS energy \u6CD5\uFF09\u3002"}\u56DE\u5F52\u9A8C\u8BC1\uFF1ASCOUR \u5B98\u65B9\u7B97\u4F8B\u5168 9 \u65AD\u9762 |\u0394WSE|\u22640.1 ft\uFF08\u6865\u5185\u6BB5 \u22640.05 ft\uFF09\u3002\u70B9\u6BCF\u884C\u300C\u2192\u51B2\u5237\u300D\u53EF\u5C06\u8BE5\u65AD\u9762\u6CB3\u69FD\u8981\u7D20\uFF08Q\u2082 \u6309 K \u5206\u914D\u3001B<sub>cj</sub>\u3001h<sub>mc</sub>\u3001h<sub>cq</sub>\u3001A\u3001v\uFF09\u4E00\u952E\u586B\u5165\u51B2\u5237\u6A21\u5757\uFF08\u82F1\u5236\u81EA\u52A8\u6362\u7B97 SI\uFF09\u3002</div>`);
+      logCalc(
+        "\u6C34\u9762\u7EBF \xB7 \u590D\u5F0F\u65AD\u9762\u6807\u51C6\u6B65\u957F\u6CD5\uFF08SSM\uFF09",
+        { \u65AD\u9762\u6570: String(secs.length), \u6D41\u91CFQ: Q + " " + u.q, \u4E0B\u6E38\u8FB9\u754C: r.notes[r.notes.length - 1] },
+        { \u4E0A\u6E38\u672B\u7AEFWSE: r.sections[r.sections.length - 1].wse.toFixed(3) + " " + u.l, \u6700\u5927Fr: r.maxFr.toFixed(3) },
+        "JTG C30-2015 6.3.1\uFF08\u8BD5\u7B97\u6CD5\xB7\u5929\u7136\u6CB3\u9053\u7248\uFF0C\u65B9\u6CD5\u5BF9\u9F50 HEC-RAS\uFF09"
+      );
+    } catch (e) {
+      ssmFail(e);
+    }
+  }
+  $("btnSsmRun").onclick = calcSsm;
+  function ssmBdSync() {
+    const wse = $("ssmBd").value === "wse";
+    $("ssmS0").closest("div").style.display = wse ? "none" : "";
+    $("ssmWse").closest("div").style.display = wse ? "" : "none";
+  }
+  $("ssmBd").onchange = ssmBdSync;
+  $("btnSsmDemoSi").onclick = () => {
+    $("ssmUnits").value = "SI";
+    $("ssmQ").value = "500";
+    $("ssmBd").value = "normalDepth";
+    $("ssmS0").value = "0.0009";
+    $("ssmText").value = SSM_DEMO_SI;
+    ssmBdSync();
+    calcSsm();
+  };
+  $("btnSsmDemoHec").onclick = () => {
+    $("ssmUnits").value = "EN";
+    $("ssmQ").value = "30000";
+    $("ssmBd").value = "normalDepth";
+    $("ssmS0").value = "0.002";
+    $("ssmText").value = SSM_DEMO_HECRAS;
+    ssmBdSync();
+    calcSsm();
+  };
+  $("btnSsmClear").onclick = () => {
+    $("ssmText").value = "";
+    $("ssmResult").style.display = "none";
+    $("ssmErr").textContent = "";
+    scheduleSave();
+  };
+  document.querySelectorAll("#nTable .fillBtn").forEach((item) => {
+    const btn2 = item;
+    btn2.onclick = () => {
+      $(`hf${btn2.dataset.r}${btn2.dataset.k}`).value = btn2.dataset.n;
+    };
+  });
+  function showMethodCError(which, msg, e) {
+    const out = $(which === "rc" ? "rcOut" : "rdOut");
+    const err = $(which === "rc" ? "rcErr" : "rdErr");
+    if (msg === null) {
+      err.style.display = "none";
+      err.textContent = "";
+    } else {
+      err.style.display = "block";
+      const lines = [msg];
+      if (e instanceof HsError) {
+        if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+        if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+        const el = elementForField(e.field);
+        if (el) el.classList.add("field-error");
+      }
+      err.textContent = lines.join(" \uFF5C ");
+    }
+    return out;
+  }
+  function calcMethodC() {
+    clearFieldErrors();
+    const v = (id) => +$(id).value;
+    try {
+      const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
+      const q = rationalFormula({ Sp, n, psi, tau, F });
+      stateCompare.C1 = {
+        label: "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F} km\xB2, \u03C4=${tau} h`
+      };
+      renderCompare();
+      showMethodCError("rc", null).textContent = q.toFixed(2);
+      logCalc(
+        "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        { \u96E8\u529BSp: Sp + " mm/h", \u8870\u51CF\u6307\u6570n: n, \u5F84\u6D41\u7CFB\u6570\u03C8: psi, \u6C47\u6D41\u65F6\u95F4\u03C4: tau + " h", \u6C47\u6C34\u9762\u79EFF: F + " km\xB2" },
+        { Qp: q.toFixed(2) + " m\xB3/s" },
+        "JTG/T 3365-02-2020 \u7B2C6.2\u6761\uFF08\u66B4\u96E8\u63A8\u7406\u6CD5\uFF09"
+      );
+    } catch (e) {
+      showMethodCError("rc", e instanceof Error ? e.message : String(e), e).textContent = "\u2014";
+    }
+    try {
+      const phi = v("rdPhi"), h = v("rdH"), z = v("rdZ"), F2 = v("rdF"), b = v("rdBeta"), g = v("rdGamma"), d = v("rdDelta");
+      $("rdH").classList.remove("invalid");
+      $("rdZ").classList.remove("invalid");
+      const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
+      stateCompare.C2 = {
+        label: "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        q,
+        freqLabel: freqLabelOf(state.freq),
+        note: `F=${F2} km\xB2, h=${h} mm`
+      };
+      renderCompare();
+      showMethodCError("rd", null).textContent = q.toFixed(2);
+      logCalc(
+        "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        {
+          \u5730\u8C8C\u7CFB\u6570\u03C8: phi,
+          \u5F84\u6D41\u539A\u5EA6h: h + " mm",
+          \u6EDE\u7559\u539A\u5EA6z: z + " mm",
+          \u6C47\u6C34\u9762\u79EFF: F2 + " km\xB2",
+          \u6298\u51CF\u03B2: b,
+          \u6298\u51CF\u03B3: g,
+          \u6298\u51CF\u03B4: d
+        },
+        { Qp: q.toFixed(2) + " m\xB3/s" },
+        "JTG/T 3365-02-2020 \u7B2C6.3\u6761\uFF08\u5F84\u6D41\u5F62\u6210\u6CD5\uFF0C\u9644\u5F55B \u8868B-9/B-5/B-10~13\uFF09"
+      );
+    } catch (e) {
+      showMethodCError("rd", e instanceof Error ? e.message : String(e), e).textContent = "\u2014";
+    }
+    document.querySelectorAll("#rdTables .fillBtn").forEach((item) => {
+      const btn2 = item;
+      if (btn2.dataset.bound) return;
+      btn2.dataset.bound = "1";
+      btn2.onclick = () => {
+        const d = btn2.dataset;
+        if (d.psi) $("rdPhi").value = d.psi;
+        if (d.h) $("rdH").value = d.h;
+        if (d.z) $("rdZ").value = d.z;
+        if (d.beta) $("rdBeta").value = d.beta;
+        if (d.gamma) $("rdGamma").value = d.gamma;
+        if (d.delta) $("rdDelta").value = d.delta;
+        calcMethodC();
+      };
+    });
+  }
+  ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"].forEach((id) => {
+    $(id).oninput = calcMethodC;
+  });
+  $("btnHydroSample").onclick = () => {
+    $("hydroTypical").value = "0 0\n2 267\n4 533\n6 800\n8 533\n10 267\n12 0";
+    scheduleSave();
+  };
+  $("btnHydroUseQp").onclick = () => {
+    const q = state.params.mean * (1 + phiPIII(state.freq, effCs()) * state.params.cv);
+    $("hydroQp").value = q.toFixed(0);
+    scheduleSave();
+  };
+  $("btnHydroScale").onclick = () => {
+    const errEl = $("hydroErr");
+    try {
+      const typical = parseHydrograph($("hydroTypical").value);
+      const r = scaleHydrograph(typical, +$("hydroQp").value);
+      errEl.style.display = "none";
+      $("hydroKg").textContent = r.kg.toFixed(4);
+      $("hydroOut").style.display = "";
+      $("hydroTable").innerHTML = r.points.map((p) => `<tr><td>${p.t}</td><td class="v">${fmt(p.q, 1)}</td></tr>`).join("");
+      state.hydro = r;
+    } catch (e) {
+      errEl.style.display = "block";
+      errEl.textContent = e instanceof Error ? e.message : String(e);
+      $("hydroKg").textContent = "\u2014";
+      $("hydroOut").style.display = "none";
+      state.hydro = null;
+    }
+  };
+  $("lkGo").onclick = () => {
+    try {
+      const zone = Math.round(+$("lkZone").value);
+      const soil = $("lkSoil").value;
+      const freq = +$("lkFreq").value;
+      const tau = +$("lkTau").value;
+      const r = lookupRunoffH(RUNOFF_TABLE_FULL, zone, soil, freq, tau);
+      const onFreqNode = [1, 2, 4].some((p) => Math.abs(freq - p) < 1e-9);
+      const onTauNode = [30, 45, 60, 80].some((t) => Math.abs(tau - t) < 1e-9);
+      let note = "";
+      if (!onFreqNode && !onTauNode) note = "\uFF08\u9891\u7387\u4E0E\u6C47\u6D41\u65F6\u95F4\u5747\u4E3A\u63D2\u503C/\u5916\u63A8\uFF09";
+      else if (!onFreqNode) note = "\uFF08\u9891\u7387\u4E3A\u5BF9\u6570\u5916\u63A8\uFF0C\u8D85\u51FA\u8868\u5217 1/2/4%\uFF0C\u4EC5\u4F9B\u53C2\u8003\uFF09";
+      else if (!onTauNode) note = "\uFF08\u6C47\u6D41\u65F6\u95F4\u63D2\u503C\uFF09";
+      $("rdH").value = String(r.h);
+      $("lkOut").textContent = `h=${r.h} mm${note}`;
+      $("lkOut").style.color = "var(--text2)";
+      logCalc(
+        "\u67E5\u8868 \xB7 \u5F84\u6D41\u539A\u5EA6h",
+        { \u66B4\u96E8\u5206\u533A: zone, \u571F\u58E4\u7C7B\u5C5E: soil, \u9891\u7387: freq + "%", \u6C47\u6D41\u65F6\u95F4: tau + " min" },
+        { h: r.h + " mm" + (r.interpolated ? "\uFF08\u63D2\u503C/\u5916\u63A8\uFF09" : "\uFF08\u8868\u503C\uFF09") },
+        "\u9644\u5F55B \u8868B-9"
+      );
+      calcMethodC();
+    } catch (e) {
+      $("lkOut").textContent = e instanceof Error ? e.message : String(e);
+      $("lkOut").style.color = "var(--red)";
+    }
+  };
+  function cbMsg(text, isErr = false) {
+    const el = $("cbOut");
+    el.textContent = text;
+    el.style.color = isErr ? "var(--red)" : "var(--text2)";
+  }
+  function cbErr(e) {
+    cbMsg(e instanceof Error ? e.message : String(e), true);
+  }
+  function cbFill(id, value, note, meta) {
+    $(id).value = String(value);
+    cbMsg(note);
+    if (meta) logCalc(meta.module, meta.inputs, { [meta.key]: value }, meta.basis);
+    calcMethodC();
+  }
+  for (const item of listZ()) {
+    const opt = document.createElement("option");
+    opt.value = item.z;
+    opt.textContent = `${item.feature}\uFF08${item.z} mm\uFF09`;
+    $("cbZFeature").appendChild(opt);
+  }
+  $("cbPsi").onclick = () => {
+    try {
+      const terrain = $("cbPsiTerrain").value;
+      const f = +$("rdF").value;
+      const r = lookupPsi(terrain, f);
+      cbFill("rdPhi", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u5730\u8C8C\u7CFB\u6570\u03C8", basis: "\u9644\u5F55B \u8868B-5", inputs: { \u5730\u5F62: terrain, \u6C47\u6C34\u9762\u79EFF: f + " km\xB2" }, key: "\u03C8" });
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbTau").onclick = () => {
+    try {
+      const r = lookupTau(+$("cbTauF").value);
+      cbFill("rcTau", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6C47\u6D41\u65F6\u95F4\u03C4", basis: "\u9644\u5F55B \u8868B-8", inputs: { \u6C47\u6C34\u9762\u79EFF: $("cbTauF").value + " km\xB2" }, key: "\u03C4(min)" });
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbZ").onclick = () => {
+    try {
+      const sel = $("cbZFeature");
+      const opt = sel.options[sel.selectedIndex];
+      cbFill(
+        "rdZ",
+        sel.value,
+        `\u5730\u9762\u7279\u5F81\uFF1A${opt.textContent ?? ""} \u2192 z=${sel.value} mm\uFF08\u8868B-10\uFF09`,
+        { module: "\u67E5\u8868 \xB7 \u6EDE\u7559\u539A\u5EA6z", basis: "\u9644\u5F55B \u8868B-10", inputs: { \u5730\u9762\u7279\u5F81: opt.textContent ?? "" }, key: "z(mm)" }
+      );
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbBeta").onclick = () => {
+    try {
+      const d = +$("cbBetaD").value;
+      const mtn = $("cbBetaMtn").value === "1";
+      const r = lookupBeta(d, mtn);
+      cbFill("rdBeta", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6D2A\u5CF0\u4F20\u64AD\u6298\u51CF\u03B2", basis: "\u9644\u5F55B \u8868B-11", inputs: { \u91CD\u5FC3\u8DDD\u6DB5\u4F4D: d + " km", \u5730\u5F62: mtn ? "\u5C71\u5730\u53CA\u5C71\u5CAD" : "\u5E73\u539F\u53CA\u4E18\u9675" }, key: "\u03B2" });
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbGamma").onclick = () => {
+    try {
+      const w = +$("cbGammaW").value;
+      const nw = $("cbGammaNw").value === "1";
+      const tau = +$("rcTau").value;
+      const r = lookupGamma(tau, w, nw);
+      cbFill("rdGamma", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u964D\u96E8\u4E0D\u5747\u5300\u6298\u51CF\u03B3", basis: "\u9644\u5F55B \u8868B-12", inputs: { \u6C47\u6C34\u533A\u5C3A\u5BF8: w + " km", \u6C47\u6D41\u65F6\u95F4: tau + " min", \u6C14\u5019\u533A: nw ? "\u897F\u5317\u548C\u5185\u8499" : "\u5B63\u5019\u98CE\u5730\u533A" }, key: "\u03B3" });
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbDelta").onclick = () => {
+    try {
+      const r = lookupDelta(+$("cbDeltaF").value);
+      cbFill("rdDelta", r.value, r.note, { module: "\u67E5\u8868 \xB7 \u6E56\u5E93\u8C03\u8282\u6298\u51CF\u03B4", basis: "\u9644\u5F55B \u8868B-13", inputs: { \u6E56\u6CCA\u7387: $("cbDeltaF").value + "%" }, key: "\u03B4" });
+    } catch (e) {
+      cbErr(e);
+    }
+  };
+  $("cbZoneGo").onclick = () => {
+    const q = $("cbZoneQ").value.trim();
+    const out = $("cbZoneOut");
+    if (!q) {
+      out.textContent = "\u8BF7\u8F93\u5165\u7701\u4EFD\u6216\u5C71\u5DDD\u540D";
+      out.style.color = "var(--red)";
+      return;
+    }
+    const zones = allZones();
+    const hits = [];
+    for (const [no, z2] of Object.entries(zones)) {
+      const hay = `${z2.range} ${z2.east} ${z2.south} ${z2.west} ${z2.north}`;
+      if (hay.includes(q)) hits.push(no);
+    }
+    if (!hits.length) {
+      out.textContent = `\u672A\u627E\u5230\u5305\u542B\u300C${q}\u300D\u7684\u5206\u533A\uFF0C\u53EF\u6362\u7701\u4EFD\u6216\u5C71\u8109\u540D\u518D\u8BD5`;
+      out.style.color = "var(--red)";
+      return;
+    }
+    $("lkZone").value = hits[0];
+    const z = lookupZone(Number(hits[0]));
+    out.textContent = `\u547D\u4E2D\u7B2C ${hits.join("\u3001")} \u533A \u2192 \u5DF2\u586B\u5165 ${hits[0]} \u533A\uFF1B${z.range}`;
+    out.style.color = "var(--text2)";
+  };
+  function calcBridgeOpening() {
+    const err = $("opErr");
+    const out = $("opOut");
+    const detail = $("opDetail");
+    const reachSel = $("opReach").value;
+    const vOf = (id) => +$(id).value;
+    try {
+      if (reachSel === "wide") {
+        const qtRaw = $("opQt").value;
+        const r2 = wideOpening({
+          Qp: vOf("opQp"),
+          Qc: vOf("opQc"),
+          Bc: vOf("opBc"),
+          Qt: qtRaw.trim() === "" ? void 0 : Number(qtRaw)
+        });
+        out.textContent = r2.Lj.toFixed(1);
+        detail.innerHTML = `Lj = Qp/(\u03B2\xB7qc) = ${r2.Lj.toFixed(1)} m \uFF5C \u03B2 = 1.19\xB7(Qc/Qt)^0.10 = ${r2.beta.toFixed(3)}\uFF0Cqc = Qc/Bc = ${r2.qc.toFixed(2)} m\xB3/(s\xB7m)<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 7.2.1-3\uFF08\u5BBD\u6EE9\u6CB3\u6BB5\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u5BBD\u6EE9\u6CB3\u6BB5",
+          { \u8BBE\u8BA1\u6D41\u91CFQp: vOf("opQp"), \u6CB3\u69FD\u6D41\u91CFQc: vOf("opQc"), \u6CB3\u69FD\u5BBD\u5EA6Bc: vOf("opBc"), \u6CB3\u6EE9\u6D41\u91CFQt: r2.Qt },
+          { \u03B2: r2.beta.toFixed(3), qc: r2.qc.toFixed(2), Lj: r2.Lj.toFixed(1) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F7.2.1-3\uFF08\u5BBD\u6EE9\u6CB3\u6BB5\u5355\u5BBD\u6D41\u91CF\u516C\u5F0F\uFF09"
+        );
+        return;
+      }
+      if (reachSel === "indist") {
+        const r2 = indistinguishableOpening({ Qp: vOf("opQp"), Q2pct: vOf("opQ2"), Qmean: vOf("opQm"), d50: vOf("opD50") });
+        out.textContent = r2.Lj.toFixed(1);
+        detail.innerHTML = `Lj = Cp\xB7B\u2080 = ${r2.Lj.toFixed(1)} m \uFF5C B\u2080 = 16.07\xB7Q\u0304^0.24/d\u0304^0.30 = ${r2.B0.toFixed(1)} m\uFF0CCp = (Qp/Q\u2082%)^0.33 = ${r2.Cp.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 7.2.1-4~6\uFF08\u6EE9\u3001\u69FD\u96BE\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u6EE9\u69FD\u96BE\u5206\u6CB3\u6BB5",
+          { \u8BBE\u8BA1\u6D41\u91CFQp: vOf("opQp"), Q2\u767E\u5206\u6BD4\u6D41\u91CF: vOf("opQ2"), \u5E74\u6700\u5927\u6D41\u91CF\u5747\u503CQ: vOf("opQm"), \u6CE5\u6C99\u5E73\u5747\u7C92\u5F84d: vOf("opD50") },
+          { B0: r2.B0.toFixed(1) + " m", Cp: r2.Cp.toFixed(3), Lj: r2.Lj.toFixed(1) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F7.2.1-4~6\uFF08\u6EE9\u3001\u69FD\u96BE\u5206\u7684\u4E0D\u7A33\u5B9A\u6CB3\u6BB5\uFF09"
+        );
+        return;
+      }
+      const Qp = +$("opQp").value, Qc = +$("opQc").value, Bc = +$("opBc").value;
+      const reach = reachSel;
+      const r = minBridgeOpening({ Qp, Qc, Bc, reach });
+      out.textContent = r.Lj.toFixed(2);
+      const coef = REACH_TABLE[reach];
+      detail.innerHTML = "";
+      const lines = [
+        `Lj = ${r.Kq} \xD7 (${Qp}/${Qc})<sup>${r.n3}</sup> \xD7 ${Bc} = <b>${r.Lj.toFixed(2)} m</b>`,
+        `\u6CB3\u6BB5\uFF1A${coef.label}\uFF08Kq=${r.Kq}\uFF0Cn\u2083=${r.n3}\uFF09`,
+        `\u6D41\u91CF\u6BD4 Qp/Qc = ${r.ratio.toFixed(3)}\uFF0C\u6CB3\u6EE9\u6D41\u91CF Qt = Qp\u2212Qc = ${r.Qt.toFixed(2)} m\xB3/s`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u6865\u5B54\u8BBE\u8BA1 \xB7 \u6700\u5C0F\u51C0\u957F\u5EA6",
+        { \u8BBE\u8BA1\u6D41\u91CFQp: Qp + " m\xB3/s", \u6CB3\u69FD\u6D41\u91CFQc: Qc + " m\xB3/s", \u6CB3\u69FD\u5BBD\u5EA6Bc: Bc + " m", \u6CB3\u6BB5: coef.label },
+        { Lj: r.Lj.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C7.2.1\u6761\uFF08\u516C\u5F0F7.2.1-1\uFF0C\u88687.2.1\uFF09",
+        { Kq: r.Kq, n3: r.n3, "Qp/Qc": r.ratio.toFixed(3) }
+      );
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  function syncOpenRows() {
+    const reach = $("opReach").value;
+    const wide = $("opWideRow");
+    const ind = $("opIndRow");
+    if (wide) wide.style.display = reach === "wide" ? "" : "none";
+    if (ind) ind.style.display = reach === "indist" ? "" : "none";
+  }
+  if ($("opGo")) {
+    $("opGo").onclick = calcBridgeOpening;
+    $("opReach").onchange = syncOpenRows;
+    syncOpenRows();
+    $("opUseQ").onclick = () => {
+      const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
+      const q = Number(raw);
+      if (Number.isFinite(q) && q > 0) {
+        $("opQp").value = String(q);
+        calcBridgeOpening();
+      } else {
+        const err = $("opErr");
+        err.style.display = "block";
+        err.textContent = "\u5F53\u524D\u8FD8\u6CA1\u6709\u6709\u6548\u7684\u8BBE\u8BA1\u6D41\u91CF\uFF0C\u8BF7\u5148\u8BA1\u7B97\u5E76\u9002\u7EBF";
+      }
+    };
+    const reachBtns = [["reach0", "stable"], ["reach1", "substable"], ["reach2", "unstable"]];
+    for (const [btnId, val] of reachBtns) {
+      $(btnId).onclick = () => {
+        $("opReach").value = val;
+        calcBridgeOpening();
+      };
+    }
+  }
+  function calcScour() {
+    const err = $("scErr"), out = $("scOut"), detail = $("scDetail");
+    const vOf = (id) => +$(id).value;
+    try {
+      if ($("scSoil")?.value === "clay") {
+        const part = $("scPart").value;
+        const r2 = clayGeneralScour({
+          A: vOf("scAclay"),
+          Q: vOf("scQ2"),
+          mu: vOf("scMu"),
+          B: vOf("scBcj"),
+          hmax: vOf("scHmc"),
+          havg: vOf("scHcq"),
+          IL: vOf("scIL"),
+          part
+        });
+        lastGeneralHp = r2.hp;
+        lastGeneralHy = r2.depth;
+        lastScourE = NaN;
+        lastD50 = NaN;
+        out.textContent = r2.hp.toFixed(2);
+        detail.innerHTML = `hp = [ A\xB7(Q/(\u03BC\xB7B))\xB7(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> \xF7 (0.33\xB7(1/I<sub>L</sub>)) ]<sup>${r2.exponent}</sup> = <b>${r2.hp.toFixed(2)} m</b><br>\u51B2\u5237\u6DF1\u5EA6 = hp \u2212 h<sub>max</sub> = <b>${r2.depth.toFixed(2)} m</b>\uFF08\u9ECF\u6027\u571F\uFF0C${part === "channel" ? "\u6CB3\u69FD" : "\u6CB3\u6EE9"}\u90E8\u5206\uFF09<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.2\uFF08\u9ECF\u6027\u571F\u6CB3\u5E8A\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u4E00\u822C\u51B2\u5237 \xB7 \u9ECF\u6027\u571F\uFF088.3.2\uFF09",
+          { \u90E8\u4F4D: part === "channel" ? "\u6CB3\u69FD" : "\u6CB3\u6EE9", \u96C6\u4E2D\u7CFB\u6570A: vOf("scA"), \u6DB2\u6027\u6307\u6570IL: vOf("scIL"), \u901A\u8FC7\u6D41\u91CFQ: vOf("scQ2"), \u51C0\u5BBDB: vOf("scBcj"), \u6700\u5927\u6C34\u6DF1: vOf("scHmc"), \u5E73\u5747\u6C34\u6DF1: vOf("scHcq") },
+          { hp: r2.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6: r2.depth.toFixed(2) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F8.3.2\uFF08\u9ECF\u6027\u571F\u6CB3\u5E8A\u4E00\u822C\u51B2\u5237\uFF09"
+        );
+        return;
+      }
+      if ($("scPart").value === "floodplain") {
+        const r2 = floodplainScour({
+          A: vOf("scA"),
+          Qt: vOf("scQ2"),
+          mu: vOf("scMu"),
+          Btj: vOf("scBcj"),
+          htm: vOf("scHmc"),
+          htq: vOf("scHcq"),
+          d50: vOf("scD50")
+        });
+        lastGeneralHp = r2.hp;
+        lastGeneralHy = r2.depth;
+        lastScourE = NaN;
+        lastD50 = NaN;
+        out.textContent = r2.hp.toFixed(2);
+        detail.innerHTML = `hp = [ A\xB7(Qt/(\u03BC\xB7B<sub>tj</sub>))\xB7(h<sub>tm</sub>/h<sub>tq</sub>)<sup>5/3</sup> \xF7 v<sub>H1</sub> ]<sup>5/6</sup> = <b>${r2.hp.toFixed(2)} m</b><br>v<sub>H1</sub> = ${r2.vH1.toFixed(2)} m/s\uFF08${r2.band}\uFF09\uFF5C \u51B2\u5237\u6DF1\u5EA6 = <b>${r2.depth.toFixed(2)} m</b><br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.1-5\uFF08\u975E\u9ECF\u6027\u571F\u6CB3\u6EE9\uFF1B\u8868 8.3.1-3 \u5DF2\u5185\u7F6E\u5BF9\u6570\u63D2\u503C\uFF09</span>`;
+        err.style.display = "none";
+        logCalc(
+          "\u4E00\u822C\u51B2\u5237 \xB7 \u975E\u9ECF\u6027\u571F\u6CB3\u6EE9\uFF088.3.1-5\uFF09",
+          { \u6CB3\u6EE9\u6D41\u91CFQt: vOf("scQ2"), \u6CB3\u6EE9\u51C0\u957FBtj: vOf("scBcj"), \u6700\u5927\u6C34\u6DF1htm: vOf("scHmc"), \u5E73\u5747\u6C34\u6DF1htq: vOf("scHcq"), \u6CE5\u6C99\u7C92\u5F84d: vOf("scD50") },
+          { vH1: r2.vH1.toFixed(2) + " m/s", hp: r2.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6: r2.depth.toFixed(2) + " m" },
+          "JTG C30\u20142015 \u516C\u5F0F8.3.1-5 + \u88688.3.1-3\uFF08\u6CB3\u6EE9\u4E0D\u51B2\u5237\u6D41\u901F\uFF09"
+        );
+        return;
+      }
+      const Q2 = +$("scQ2").value, mu = +$("scMu").value, Bcj = +$("scBcj").value;
+      const hmc = +$("scHmc").value, hcq = +$("scHcq").value, d50 = +$("scD50").value;
+      const rho = +$("scRho").value;
+      const { E, band } = sandCoefE(rho);
+      const A = +$("scA").value;
+      const r = generalScour641({ Q2, mu, Bcj, hmc, hcq, E, d50, A });
+      lastGeneralHp = r.hp;
+      lastGeneralHy = r.hy;
+      lastScourE = E;
+      lastD50 = d50;
+      out.textContent = r.hp.toFixed(2);
+      detail.innerHTML = "";
+      const lines = [
+        `hp = [ ${A} \xD7 (${Q2}/(${mu}\xD7${Bcj})) \xD7 (${hmc}/${hcq})<sup>5/3</sup> \xF7 (${E}\xD7${d50}<sup>1/6</sup>) ]<sup>3/5</sup> = <b>${r.hp.toFixed(2)} m</b>`,
+        `\u5355\u5BBD\u6D41\u91CF q = ${r.q} m\xB3/(s\xB7m)\uFF1B\u51B2\u5237\u6DF1\u5EA6 hy = hp \u2212 hmc = <b>${r.hy.toFixed(2)} m</b>`,
+        `\u51B2\u6B62\u6D41\u901F\u6821\u6838 vz = ${r.vz} m/s\uFF08\u7406\u8BBA E\xB7d\u0304<sup>1/6</sup> = ${r.vzTheory} m/s\uFF0C\u4E00\u81F4\u5373\u516C\u5F0F\u95ED\u5408\uFF09`,
+        `\u542B\u6C99\u91CF\u7CFB\u6570 E = ${E}\uFF08${band} kg/m\xB3\uFF0C\u88688.3.1-2\uFF09`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      for (const w of r.warnings) {
+        const d = document.createElement("div");
+        d.textContent = "\u63D0\u793A\uFF1A" + w;
+        d.style.color = "var(--amber)";
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u51B2\u5237 \xB7 \u4E00\u822C\u51B2\u523764-1",
+        {
+          \u8BBE\u8BA1\u6D41\u91CFQ2: Q2 + " m\xB3/s",
+          \u538B\u7F29\u7CFB\u6570\u03BC: mu,
+          \u8FC7\u6C34\u51C0\u5BBDBcj: Bcj + " m",
+          \u6CB3\u69FD\u6700\u5927\u6C34\u6DF1: hmc + " m",
+          \u6CB3\u69FD\u5E73\u5747\u6C34\u6DF1: hcq + " m",
+          \u5E73\u5747\u7C92\u5F84: d50 + " mm",
+          \u542B\u6C99\u91CF: rho + " kg/m\xB3",
+          \u96C6\u4E2D\u7CFB\u6570A: A
+        },
+        { hp: r.hp.toFixed(2) + " m", \u51B2\u5237\u6DF1\u5EA6hy: r.hy.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C8.3.1\u6761\uFF0864-1\u4FEE\u6B63\u5F0F\uFF0C\u88688.3.1-2\uFF09",
+        { E, q: r.q, \u51B2\u6B62\u6D41\u901Fvz: r.vz }
+      );
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  if ($("scGo")) {
+    let syncScSoil = function() {
+      const clay = $("scSoil").value === "clay";
+      $("scHintNonclay").style.display = clay ? "none" : "";
+      $("scHintClay").style.display = clay ? "" : "none";
+      $("scPart").style.display = "";
+      $("scIL").style.display = clay ? "" : "none";
+    };
+    $("scGo").onclick = calcScour;
+    $("scSoil").onchange = syncScSoil;
+    syncScSoil();
+    $("scUseQ").onclick = () => {
+      const raw = ($("outQ").textContent ?? "").replace(/[^0-9.]/g, "");
+      const q = Number(raw);
+      if (Number.isFinite(q) && q > 0) {
+        $("scQ2").value = String(q);
+        calcScour();
+      } else {
+        const err = $("scErr");
+        err.style.display = "block";
+        err.textContent = "\u5F53\u524D\u8FD8\u6CA1\u6709\u6709\u6548\u7684\u8BBE\u8BA1\u6D41\u91CF\uFF0C\u8BF7\u5148\u8BA1\u7B97\u5E76\u9002\u7EBF";
+      }
+    };
+    $("scCalcA").onclick = () => {
+      try {
+        const r = concentrationFactorA(+$("scBd").value, +$("scHz").value);
+        $("scA").value = String(r.A);
+        const tip = $("scATip");
+        tip.textContent = r.capped ? `A=${r.A}\uFF08\u539F\u59CB\u503C>1.8\uFF0C\u5DF2\u6309\u89C4\u8303\u53D6 1.8\uFF09` : `A = (\u221A${$("scBd").value} / ${$("scHz").value})^0.15 = ${r.A}`;
+        calcScour();
+      } catch (e) {
+        const err = $("scErr");
+        err.style.display = "block";
+        showErr(err, e);
+      }
+    };
+  }
+  var lastGeneralHp = 0;
+  var lastGeneralHy = 0;
+  var lastScourE = 0.66;
+  var lastD50 = 0.14;
+  function buildPierQuick() {
+    const box = $("pierQuick");
+    if (!box) return;
+    const esc2 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let html = `<table class="ltab"><tr><th colspan="3">\u9644\u5F55 C \u58A9\u5F62\u7CFB\u6570\u53CA\u58A9\u5BBD\u8BA1\u7B97\uFF08JTG C30\u20142015\uFF0C\u5168 12 \u79CD\u58A9\u5F62\uFF09</th></tr>`;
+    for (const p of PIER_TABLE_C) {
+      if (p.kind === "exact") {
+        const anchors = [];
+        if (p.no === 1) anchors.push(["\u5355\u5706\u67F1\uFF08\u5706\u5F62\u58A9\uFF09", 1]);
+        if (p.no === 2) {
+          anchors.push(
+            ["\u53CC\u5706\u67F1\xB7\u4E0D\u5E26\u8054\u7CFB\u6881", 1],
+            ["\u53CC\u5706\u67F1\xB7\u5E26\u8054\u7CFB\u6881 \u03B1=0\xB0", pierKxi2(0)],
+            ["\u03B1=15\xB0", pierKxi2(15)],
+            ["\u03B1=30\xB0", pierKxi2(30)],
+            ["\u03B1=45\xB0", pierKxi2(45)]
+          );
+        }
+        if (p.no === 4) {
+          anchors.push(
+            ["\u5C16\u7AEF\u5F62 \u03B8=45\xB0", pierKxi4(45)],
+            ["\u03B8=60\xB0", pierKxi4(60)],
+            ["\u03B8=75\xB0", pierKxi4(75)],
+            ["\u03B8=90\xB0", pierKxi4(90)],
+            ["\u03B8=120\xB0", pierKxi4(120)]
+          );
+        }
+        for (const [label, kxi] of anchors) {
+          html += `<tr><td>\u2116${p.no} ${esc2(label)}</td><td class="v">K\u03BE = ${kxi.toFixed(2)}</td><td><button class="btn" data-kxi="${kxi}" style="padding:2px 10px;font-size:12px">\u586B\u5165</button></td></tr>`;
+        }
+        if (p.note) html += `<tr><td colspan="3" style="color:var(--text2);font-size:11px">${esc2("\u6CE8\uFF1A" + p.note)}</td></tr>`;
+      } else {
+        const tag = p.kind === "curve" ? "\u9700\u67E5\u89C4\u8303\u66F2\u7EBF" : p.kind === "formula" ? "\u6309\u4E13\u7528\u516C\u5F0F" : "\u6587\u5B57\u8BF4\u660E";
+        html += `<tr><td>\u2116${p.no} ${esc2(p.name)}</td><td colspan="2" style="font-size:12px">${esc2(p.kxi)}<br><span style="color:var(--text2)">B\u2081\uFF1A${esc2(p.b1)}</span><br><span style="color:var(--amber)">[${tag}]${p.note ? " " + esc2(p.note) : ""}</span></td></tr>`;
+      }
+    }
+    html += `</table><div style="font-size:11px;color:var(--text2);margin-top:4px">\u6765\u6E90\uFF1AJTG C30\u20142015 \u9644\u5F55 C\uFF08\u5B8C\u6574\u7248 P73~76\uFF09\u3002\u66F2\u7EBF\u578B\u58A9\u5F62\u7684\u7CBE\u786E\u503C\u8BF7\u67E5\u89C4\u8303\u9644\u5F55 C \u66F2\u7EBF\u56FE\uFF1B\u70B9\u300C\u586B\u5165\u300D\u540E\u4ECD\u5E94\u6309\u58A9\u5F62\u590D\u6838\u3002</div>`;
+    box.innerHTML = html;
+    box.onclick = (ev) => {
+      const btn2 = ev.target.closest("button[data-kxi]");
+      if (!btn2) return;
+      const inp = $("lsKxi");
+      inp.value = btn2.dataset.kxi ?? "";
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      const old = btn2.textContent;
+      btn2.textContent = "\u2713 \u5DF2\u586B\u5165";
+      setTimeout(() => {
+        btn2.textContent = old;
+      }, 1200);
+      logCalc(
+        "\u51B2\u5237 \xB7 \u9644\u5F55C\u58A9\u5F62\u901F\u67E5",
+        { \u53D6\u503C: btn2.dataset.kxi ?? "" },
+        { K\u03BE: inp.value },
+        "JTG C30\u20142015 \u9644\u5F55 C \u8868 C",
+        {}
+      );
+    };
+  }
+  function setupRockBurial() {
+    const go = $("rockGo"), out = $("rockOut");
+    if (!go || !out) return;
+    const esc2 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    go.onclick = () => {
+      try {
+        const cls = $("rockCls").value;
+        const band = $("rockBand").value;
+        const r = rockBurial(cls, band);
+        out.innerHTML = `<div style="font-size:13px;color:var(--text)"><b>${esc2(r.row.cls)} ${esc2(r.row.group)}</b>\uFF08\u5F3A\u5EA6 ${esc2(r.row.strength)} MPa\uFF0C\u8C03\u67E5 ${r.row.bridges} \u5EA7\u6865\uFF0C\u5404\u6865\u6700\u5927\u51B2\u5237 ${esc2(r.row.maxScour)} m\uFF09\u2192 <b style="color:var(--blue)">${esc2(r.bandLabel)}\uFF1A\u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6 ${esc2(r.range)} m</b>\uFF08\u81EA\u5CA9\u9762\u7B97\u8D77\uFF0C\u542B\u98CE\u5316\u5C42\uFF09</div><div style="margin-top:4px">\u5CA9\u77F3\u7279\u5F81\uFF1A${esc2(r.row.feature)}</div><div style="margin-top:4px;color:var(--amber)">\u6CE8 1\uFF1A\u6761\u4EF6\u597D\u53D6\u4E0B\u9650\u3001\u6761\u4EF6\u5DEE\u53D6\u4E0A\u9650\uFF1B\u6CE8 2\uFF1A\u975E\u4E3B\u6D41\u90E8\u5206\u53CA\u6D41\u901F\u8F83\u5C0F\u7684\u6865\u58A9\u53EF\u9002\u5F53\u51CF\u5C11\u57CB\u6DF1\uFF1B\u6CE8 6\uFF1A\u6869\u57FA\u7840\u53EF\u4F5C\u4E3A\u6700\u5927\u51B2\u5237\u7EBF\u4F4D\u7F6E\u3002</div>`;
+        logCalc(
+          "\u51B2\u5237 \xB7 \u9644\u5F55D\u5CA9\u77F3\u57CB\u6DF1",
+          { \u7C7B\u522B: cls, \u6C34\u6DF1\u6863: r.bandLabel },
+          { \u5EFA\u8BAE\u5165\u5CA9\u6DF1\u5EA6: r.range + " m" },
+          "JTG C30\u20142015 \u9644\u5F55 D \u8868 D",
+          { \u5F3A\u5EA6\u6863: r.row.strength, \u8C03\u67E5\u6865\u6881\u6570: r.row.bridges }
+        );
+      } catch (e) {
+        out.innerHTML = `<span style="color:var(--red)">${esc2(e instanceof Error ? e.message : String(e))}</span>`;
+      }
+    };
+  }
+  function calcLocalScour() {
+    const err = $("lsErr"), out = $("lsOut"), detail = $("lsDetail");
+    try {
+      const v = +$("lsV").value, B1 = +$("lsB1").value, Kxi = +$("lsKxi").value;
+      const d50 = lastD50;
+      const hp = lastGeneralHp > 0 ? lastGeneralHp : +$("scHmc").value;
+      const r = localScour652({ v, d50, B1, hp, Kxi });
+      out.textContent = r.hb.toFixed(2);
+      detail.innerHTML = "";
+      const lines = [
+        `v\u2080 = 0.28\xB7(${d50}+0.7)^0.5 = ${r.v0} m/s\uFF1Bv\u2080\u2032 = 0.12\xB7(${d50}+0.5)^0.55 = ${r.v0p} m/s`,
+        `K<sub>\u03B72</sub> = ${r.Keta2}\uFF1Bn\u2082 = ${r.n2}\uFF1B\u91C7\u7528\u5206\u652F\uFF1A${r.branch === "no-scour" ? "\u4E0D\u51B2\u5237" : r.branch === "v<=v0" ? "v\u2264v\u2080\uFF08\u4E00\u5F0F\uFF09" : "v>v\u2080\uFF08\u4E8C\u5F0F\uFF09"}`,
+        `h<sub>p</sub> = ${hp.toFixed(2)} m\uFF08\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1\uFF09`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      for (const w of r.warnings) {
+        const d = document.createElement("div");
+        d.textContent = "\u63D0\u793A\uFF1A" + w;
+        d.style.color = "var(--amber)";
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "\u51B2\u5237 \xB7 \u5C40\u90E8\u51B2\u523765-2",
+        { \u884C\u8FD1\u6D41\u901Fv: v + " m/s", \u6865\u58A9\u8BA1\u7B97\u5BBD\u5EA6B1: B1 + " m", \u58A9\u5F62\u7CFB\u6570K\u03BE: Kxi, \u5E73\u5747\u7C92\u5F84: d50 + " mm", \u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1hp: hp.toFixed(2) + " m" },
+        { hb: r.hb.toFixed(2) + " m" },
+        "JTG C30\u20142015 \u7B2C8.4.1\u6761\uFF0865-2\u5F0F\uFF09",
+        { v0: r.v0, "v0\u2032": r.v0p, Keta2: r.Keta2, n2: r.n2, \u5206\u652F: r.branch }
+      );
+      return r.hb;
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+      return 0;
+    }
+  }
+  if ($("lsGo")) {
+    $("lsGo").onclick = () => {
+      calcLocalScour();
+    };
+    buildPierQuick();
+    setupRockBurial();
+    $("lsUseV").onclick = () => {
+      try {
+        if (lastGeneralHp <= 0) throw new Error("\u8BF7\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97");
+        const v = approachVelocity641(lastScourE, lastD50, lastGeneralHp);
+        $("lsV").value = v.toFixed(3);
+        const err = $("lsErr");
+        err.style.display = "none";
+        calcLocalScour();
+      } catch (e) {
+        const err = $("lsErr");
+        err.style.display = "block";
+        showErr(err, e);
+      }
+    };
+    $("tsGo").onclick = () => {
+      const hbRaw = ($("lsOut").textContent ?? "").replace(/[^0-9.]/g, "");
+      const hb = Number(hbRaw);
+      const r = totalScour({
+        natural: +$("tsNat").value,
+        general: lastGeneralHy,
+        local: Number.isFinite(hb) ? hb : 0
+      });
+      $("tsOut").textContent = r.total.toFixed(2);
+      const note = $("tsNote");
+      note.innerHTML = "";
+      for (const n of r.notes) {
+        const d = document.createElement("div");
+        d.textContent = "\xB7 " + n;
+        note.appendChild(d);
+      }
+      try {
+        const dm = burialDelta(r.total, "major");
+        const dg = burialDelta(r.total, "grand");
+        const d = document.createElement("div");
+        d.style.marginTop = "6px";
+        d.innerHTML = `\u57FA\u5E95\u57CB\u6DF1\u5B89\u5168\u503C\uFF08\u8868 8.6.2\uFF09\uFF1A\u5927\u4E2D\u6865 <b>\u2265 ${dm.delta} m</b>\uFF0C\u7279\u5927\u6865 <b>\u2265 ${dg.delta} m</b><span style="color:var(--text3)">\uFF08${dm.band}\uFF1B\u57FA\u5E95\u5E94\u57CB\u5165\u603B\u51B2\u5237\u7EBF\u4EE5\u4E0B\uFF09</span>`;
+        note.appendChild(d);
+      } catch {
+      }
+    };
+  }
+  var helpRendered = false;
+  function renderHelp() {
+    if (helpRendered) return;
+    const secBox = $("helpSections");
+    for (const sec of HELP_SECTIONS) {
+      const d = document.createElement("details");
+      d.open = true;
+      d.style.marginTop = "10px";
+      const s = document.createElement("summary");
+      s.style.cursor = "pointer";
+      s.style.fontSize = "13px";
+      s.style.fontWeight = "500";
+      s.style.color = "var(--blue)";
+      s.textContent = `${sec.title}\uFF08${sec.spec}\uFF09`;
+      d.appendChild(s);
+      const table = document.createElement("table");
+      table.className = "ltab";
+      table.style.fontSize = "12px";
+      for (const it of sec.items) {
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        td1.style.whiteSpace = "nowrap";
+        td1.innerHTML = `<b>${it.no}</b>` + (it.page ? `<br><span style="color:var(--text2)">${it.page}</span>` : "");
+        const td2 = document.createElement("td");
+        td2.innerHTML = `<b>${it.title}</b><br><span style="color:var(--text2)">${it.summary}</span>`;
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
+      }
+      d.appendChild(table);
+      secBox.appendChild(d);
+    }
+    const srcBox = $("helpSources");
+    for (const s of HELP_SOURCES) {
+      const d = document.createElement("div");
+      d.style.marginBottom = "8px";
+      const link = s.url ? `<br><a href="${s.url}" target="_blank" rel="noopener" style="color:var(--blue);font-size:12px">${s.url}</a>` : "";
+      d.innerHTML = `<b>${s.name}</b><br><span style="color:var(--text2);font-size:12px">${s.detail}</span>${link}`;
+      srcBox.appendChild(d);
+    }
+    const faqBox = $("helpFaq");
+    for (const f of HELP_FAQ) {
+      const d = document.createElement("div");
+      d.style.marginBottom = "8px";
+      d.innerHTML = `<b>\u95EE\uFF1A${f.q}</b><br><span style="color:var(--text2);font-size:12px">\u7B54\uFF1A${f.a}</span>`;
+      faqBox.appendChild(d);
+    }
+    const valBox = $("helpValidation");
+    for (const v of HELP_VALIDATION) {
+      const d = document.createElement("div");
+      d.style.fontSize = "12px";
+      d.style.color = "var(--text2)";
+      d.textContent = "\xB7 " + v;
+      valBox.appendChild(d);
+    }
+    helpRendered = true;
+  }
+  function svgMarkup() {
+    const svg = $("chart");
+    let s = svg.outerHTML;
+    if (!/xmlns=/.test(s)) s = s.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    return s;
+  }
+  if ($("exSvg")) {
+    $("exSvg").onclick = () => {
+      downloadBlob(new Blob([svgMarkup()], { type: "image/svg+xml;charset=utf-8" }), "\u9891\u7387\u66F2\u7EBF.svg");
+    };
+    $("exPng").onclick = async () => {
+      const btn2 = $("exPng");
+      try {
+        const url = await svgToPngDataUrl();
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "\u9891\u7387\u66F2\u7EBF.png";
+        a.click();
+        $("exMsg").textContent = "\u5DF2\u5BFC\u51FA PNG\uFF082 \u500D\u50CF\u7D20\u5BC6\u5EA6\uFF09";
+        showButtonFeedback(btn2, true, "\u5DF2\u5BFC\u51FA");
+      } catch {
+        $("exMsg").textContent = "PNG \u5BFC\u51FA\u5931\u8D25\uFF0C\u8BF7\u6539\u7528 SVG";
+        showButtonFeedback(btn2, false, "\u5BFC\u51FA\u5931\u8D25");
+      }
+    };
+  }
+  function readFileText(inputId) {
+    return new Promise((resolve, reject) => {
+      const el = $(inputId);
+      const f = el.files && el.files[0];
+      if (!f) {
+        reject(new Error("\u8BF7\u5148\u9009\u62E9\u6587\u4EF6"));
+        return;
+      }
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error("\u6587\u4EF6\u8BFB\u53D6\u5931\u8D25"));
+      r.readAsText(f, "utf-8");
+    });
+  }
+  if ($("pdGo")) {
+    $("pdGo").onclick = async () => {
+      const btn2 = $("pdGo");
+      const box = $("pdOut");
+      const msg = $("pdMsg");
+      try {
+        const [ta, tb] = await Promise.all([readFileText("pdA"), readFileText("pdB")]);
+        const A = parseProjectFile(JSON.parse(ta));
+        const B = parseProjectFile(JSON.parse(tb));
+        const d = diffProjectFiles(A, B);
+        box.innerHTML = "";
+        const head = document.createElement("div");
+        head.style.fontSize = "12px";
+        head.innerHTML = `\u65E7\u7248\uFF1A<b>${d.aLabel || "\u2014"}</b> \uFF5C \u65B0\u7248\uFF1A<b>${d.bLabel || "\u2014"}</b> \uFF5C \u53D8\u5316 <b>${d.rows.length}</b> \u9879`;
+        box.appendChild(head);
+        if (d.rows.length === 0) {
+          const none = document.createElement("div");
+          none.style.fontSize = "12px";
+          none.textContent = "\u4E24\u4EFD\u5DE5\u7A0B\u6587\u4EF6\u5728\u8BBE\u8BA1\u8F93\u5165\u4E0A\u5B8C\u5168\u4E00\u81F4\uFF08\u65F6\u95F4\u6233\u4E0E\u7248\u672C\u53F7\u7684\u5DEE\u5F02\u5DF2\u5FFD\u7565\uFF09";
+          box.appendChild(none);
+          return;
+        }
+        const table = document.createElement("table");
+        table.className = "ltab";
+        table.style.fontSize = "12px";
+        const trh = document.createElement("tr");
+        for (const h of ["\u5B57\u6BB5", "\u65E7\u503C", "\u65B0\u503C", "\u53D8\u5316"]) {
+          const th = document.createElement("th");
+          th.textContent = h;
+          trh.appendChild(th);
+        }
+        table.appendChild(trh);
+        for (const r of d.rows) {
+          const tr = document.createElement("tr");
+          for (const v of [r.path, r.a, r.b, r.delta ?? "\u2014"]) {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+          }
+          table.appendChild(tr);
+        }
+        box.appendChild(table);
+        msg.textContent = "";
+      } catch (e) {
+        msg.textContent = e instanceof Error ? e.message : String(e);
+        showButtonFeedback(btn2, false, "\u672A\u5B8C\u6210");
+      }
+    };
+    $("pdMd").onclick = async () => {
+      const btn2 = $("pdMd");
+      const msg = $("pdMsg");
+      try {
+        const [ta, tb] = await Promise.all([readFileText("pdA"), readFileText("pdB")]);
+        const d = diffProjectFiles(parseProjectFile(JSON.parse(ta)), parseProjectFile(JSON.parse(tb)));
+        downloadText(diffToMarkdown(d), "\u5DE5\u7A0B\u6587\u4EF6\u5BF9\u6BD4.md", "text/markdown;charset=utf-8");
+        msg.textContent = "\u5DF2\u5BFC\u51FA\u5BF9\u6BD4\u6458\u8981";
+        showButtonFeedback(btn2, true, "\u5DF2\u5BFC\u51FA");
+      } catch (e) {
+        msg.textContent = e instanceof Error ? e.message : String(e);
+        showButtonFeedback(btn2, false, "\u672A\u5B8C\u6210");
+      }
+    };
+  }
+  var mapState = { bg: null, calib: [], poly: [], river: [], scale: null, last: null };
+  var geo = {
+    tk: localStorage.getItem("hongsuan_tdt_tk") ?? "",
+    layer: "img_w",
+    lon: 112.9388,
+    lat: 28.2282,
+    z: 12,
+    poly: [],
+    river: [],
+    loaded: false
+  };
+  var CANVAS_W = 900;
+  var CANVAS_H = 560;
+  function isOnline() {
+    return $("mapSrc").value === "online";
+  }
+  function tdtUrl(tx, ty, z) {
+    const s = Math.floor(Math.abs(tx + ty)) % 4;
+    return `https://t${s}.tianditu.gov.cn/DataServer?T=${geo.layer}&x=${tx}&y=${ty}&l=${z}&tk=${encodeURIComponent(geo.tk)}`;
+  }
+  function canvasToLonLat(cx, cy) {
+    const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+    const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+    return worldPxToLonLat(ox + cx, oy + cy, geo.z);
+  }
+  function lonLatToCanvas(p) {
+    const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+    const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+    const w = lonLatToWorldPx(p, geo.z);
+    return { x: w.x - ox, y: w.y - oy };
+  }
+  function renderOnlineMap() {
+    const parts = [];
+    if (geo.loaded && geo.tk) {
+      const c = lonLatToWorldPx({ lon: geo.lon, lat: geo.lat }, geo.z);
+      const ox = c.x - CANVAS_W / 2, oy = c.y - CANVAS_H / 2;
+      const tx0 = Math.floor(ox / 256), tx1 = Math.floor((ox + CANVAS_W) / 256);
+      const ty0 = Math.floor(oy / 256), ty1 = Math.floor((oy + CANVAS_H) / 256);
+      for (let tx = tx0; tx <= tx1; tx++) {
+        for (let ty = ty0; ty <= ty1; ty++) {
+          const px = tx * 256 - ox, py = ty * 256 - oy;
+          parts.push(
+            `<image href="${tdtUrl(tx, ty, geo.z)}" x="${px}" y="${py}" width="256" height="256"/>`
+          );
+        }
+      }
+    } else {
+      parts.push(
+        `<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="#f5f5f7"/><text x="20" y="46" font-size="16" font-weight="600" fill="#2c2c2a">\u8FD9\u91CC\u662F\u5730\u56FE\u91CF\u7B97\u753B\u5E03</text><text x="20" y="78" font-size="14" fill="#5f5e5a">\u65B9\u5F0F\u4E00\uFF1A\u4E0A\u65B9\u586B\u5165\u5929\u5730\u56FE tk\uFF08\u5B98\u7F51\u514D\u8D39\u7533\u8BF7\uFF09\u2192 \u70B9\u300C\u52A0\u8F7D\u5E95\u56FE\u300D\uFF0C\u5373\u53EF\u770B\u5230\u771F\u5B9E\u5F71\u50CF / \u5730\u5F62 / \u77E2\u91CF</text><text x="20" y="104" font-size="14" fill="#5f5e5a">\u65B9\u5F0F\u4E8C\uFF1A\u5E95\u56FE\u65B9\u5F0F\u5207\u5230\u300C\u672C\u5730\u56FE\u7247\u300D\uFF0C\u5BFC\u5165\u4F60\u81EA\u5DF1\u7684\u5730\u5F62\u56FE\u6216\u5F71\u50CF\u622A\u56FE\uFF08\u65AD\u7F51\u4E5F\u80FD\u7528\uFF09</text><text x="20" y="138" font-size="13" fill="#8a8a84">\u65E0\u8BBA\u54EA\u79CD\u65B9\u5F0F\uFF0C\u90FD\u53EF\u4EE5\u76F4\u63A5\u6CBF\u5206\u6C34\u5CAD\u70B9\u51FB\u52FE\u51FA\u6C47\u6C34\u533A\uFF1B\u5728\u7EBF\u6A21\u5F0F\u4E0B F \u7531\u7ECF\u7EAC\u5EA6\u81EA\u52A8\u7B97\u51FA\uFF0C\u4E0D\u7528\u6807\u6BD4\u4F8B\u5C3A</text>`
+      );
+    }
+    if (geo.poly.length >= 2) {
+      const d = geo.poly.map((p) => {
+        const q = lonLatToCanvas(p);
+        return `${q.x},${q.y}`;
+      }).join(" ");
+      parts.push(`<polygon points="${d}" fill="#378add" fill-opacity="0.18" stroke="#185fa5" stroke-width="2"/>`);
+    }
+    if (geo.river.length >= 2) {
+      const d = geo.river.map((p) => {
+        const q = lonLatToCanvas(p);
+        return `${q.x},${q.y}`;
+      }).join(" ");
+      parts.push(`<polyline points="${d}" fill="none" stroke="#1d9e75" stroke-width="2.5"/>`);
+    }
+    for (const arr of [geo.poly, geo.river]) {
+      for (const p of arr) {
+        const q = lonLatToCanvas(p);
+        parts.push(`<circle cx="${q.x}" cy="${q.y}" r="3.5" fill="#fff" stroke="#333" stroke-width="1.2"/>`);
+      }
+    }
+    const mode = $("mapMode").value;
+    const tip = mode === "poly" ? "\u6CBF\u5206\u6C34\u5CAD\u4F9D\u6B21\u70B9\u51FB\uFF08\u6309\u7ECF\u7EAC\u5EA6\u8BB0\u5F55\uFF0C\u65E0\u9700\u6807\u6BD4\u4F8B\u5C3A\uFF09" : mode === "river" ? "\u4ECE\u4E0A\u6E38\u5230\u51FA\u53E3\u4F9D\u6B21\u70B9\u51FB\u4E3B\u6CB3\u6C9F\u4E2D\u5FC3\u7EBF" : "\u5728\u7EBF\u5E95\u56FE\u65E0\u9700\u6807\u5B9A\uFF1B\u5207\u5230\u672C\u5730\u56FE\u7247\u624D\u9700\u8981\u6807\u5B9A\u6BD4\u4F8B\u5C3A";
+    parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${tip}</text>`);
+    $("mapCanvas").innerHTML = parts.join("");
+  }
+  function mapPtsOfCurrentMode() {
+    const mode = $("mapMode").value;
+    if (mode === "calib") return mapState.calib;
+    if (mode === "poly") return mapState.poly;
+    return mapState.river;
+  }
+  function toSvgPoint(evt) {
+    const svg = $("mapCanvas");
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    const m = svg.getScreenCTM();
+    if (!m) return { x: 0, y: 0 };
+    const p = pt.matrixTransform(m.inverse());
+    return { x: p.x, y: p.y };
+  }
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function renderMap() {
+    if (isOnline()) {
+      renderOnlineMap();
+      return;
+    }
+    const pts = mapPtsOfCurrentMode();
+    const parts = [];
+    if (mapState.bg) {
+      parts.push(`<image href="${mapState.bg}" x="0" y="0" width="900" height="560" preserveAspectRatio="xMidYMid meet" opacity="0.9"/>`);
+    }
+    if (mapState.calib.length >= 2) {
+      const [a, b] = mapState.calib;
+      parts.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#d85a30" stroke-width="2"/>`);
+    }
+    if (mapState.poly.length >= 2) {
+      const d = mapState.poly.map((p) => `${p.x},${p.y}`).join(" ");
+      parts.push(`<polygon points="${d}" fill="#378add" fill-opacity="0.15" stroke="#185fa5" stroke-width="2"/>`);
+    }
+    if (mapState.river.length >= 2) {
+      const d = mapState.river.map((p) => `${p.x},${p.y}`).join(" ");
+      parts.push(`<polyline points="${d}" fill="none" stroke="#1d9e75" stroke-width="2.5"/>`);
+    }
+    for (const arr of [mapState.calib, mapState.poly, mapState.river]) {
+      for (const p of arr) {
+        parts.push(`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#fff" stroke="#333" stroke-width="1.2"/>`);
+      }
+    }
+    const mode = $("mapMode").value;
+    const tip = mode === "calib" ? "\u5728\u56FE\u4E0A\u70B9\u4E24\u70B9\uFF0C\u6807\u51FA\u4E00\u6BB5\u5DF2\u77E5\u5B9E\u9645\u8DDD\u79BB" : mode === "poly" ? "\u6CBF\u5206\u6C34\u5CAD\u4F9D\u6B21\u70B9\u51FB\uFF0C\u56F4\u51FA\u6C47\u6C34\u533A" : "\u4ECE\u4E0A\u6E38\u5230\u51FA\u53E3\u4F9D\u6B21\u70B9\u51FB\u4E3B\u6CB3\u6C9F\u4E2D\u5FC3\u7EBF";
+    parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${esc(tip)}</text>`);
+    $("mapCanvas").innerHTML = parts.join("");
+  }
+  if ($("mapCanvas")) {
+    $("mapCanvas").addEventListener("click", (e) => {
+      const p = toSvgPoint(e);
+      if (isOnline()) {
+        const ll = canvasToLonLat(p.x, p.y);
+        const mode = $("mapMode").value;
+        if (mode === "river") geo.river.push(ll);
+        else geo.poly.push(ll);
+        renderMap();
+        return;
+      }
+      const arr = mapPtsOfCurrentMode();
+      arr.push(p);
+      if ($("mapMode").value === "calib" && arr.length > 2) arr.splice(0, arr.length - 2);
+      renderMap();
+    });
+    $("mapImg").onchange = () => {
+      const el = $("mapImg");
+      const f = el.files && el.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        mapState.bg = String(r.result);
+        renderMap();
+      };
+      r.readAsDataURL(f);
+    };
+    $("mapMode").onchange = renderMap;
+    $("mapClear").onclick = () => {
+      mapState.calib = [];
+      mapState.poly = [];
+      mapState.river = [];
+      mapState.scale = null;
+      mapState.last = null;
+      geo.poly = [];
+      geo.river = [];
+      $("mapOut").innerHTML = "";
+      $("mapErr").textContent = "";
+      $("mapScaleTip").textContent = "";
+      renderMap();
+    };
+    $("mapGo").onclick = () => {
+      const out = $("mapOut"), err = $("mapErr");
+      try {
+        if (isOnline()) {
+          const h12 = +$("mapH1").value, h22 = +$("mapH2").value;
+          const r2 = measureFromLonLat({
+            poly: geo.poly,
+            river: geo.river.length >= 2 ? geo.river : void 0,
+            hTop: Number.isFinite(h12) ? h12 : void 0,
+            hBottom: Number.isFinite(h22) ? h22 : void 0
+          });
+          mapState.last = { F: r2.F, L: r2.L, I: r2.I };
+          const lines2 = [
+            `\u6C47\u6C34\u9762\u79EF <b>F = ${r2.F} km\xB2</b>\uFF08\u7531 ${geo.poly.length} \u4E2A\u7ECF\u7EAC\u5EA6\u9876\u70B9\u76F4\u63A5\u91CF\u7B97\uFF0C\u65E0\u9700\u6807\u6BD4\u4F8B\u5C3A\uFF09`,
+            r2.L === null ? "\u4E3B\u6CB3\u6C9F\u957F\u5EA6 L\uFF1A\u672A\u52FE\uFF08\u53EF\u9009\uFF09" : `\u4E3B\u6CB3\u6C9F\u957F\u5EA6 <b>L = ${r2.L} km</b>\uFF08Haversine\uFF09`,
+            r2.I === null ? "\u5E73\u5747\u6BD4\u964D I\uFF1A\u9700\u540C\u65F6\u7ED9\u51FA\u4E0A\u4E0B\u6E38\u9AD8\u7A0B" : `\u5E73\u5747\u6BD4\u964D <b>I = ${r2.I}</b>\uFF08${r2.Ipermille}\u2030\uFF09`
+          ];
+          out.innerHTML = lines2.map((l) => `<div>${l}</div>`).join("") + r2.warnings.map((w) => `<div style="color:var(--amber)">\u63D0\u793A\uFF1A${w}</div>`).join("");
+          err.style.display = "none";
+          logCalc(
+            "\u5730\u56FE\u91CF\u7B97 \xB7 \u6C47\u6C34\u533A\uFF08\u5728\u7EBF\u5E95\u56FE\uFF09",
+            { \u5E95\u56FE: "\u5929\u5730\u56FE " + geo.layer, \u7EA7\u522B: geo.z, \u6C47\u6C34\u533A\u9876\u70B9: geo.poly.length, \u4E3B\u6CB3\u6C9F\u70B9: geo.river.length },
+            { F: r2.F + " km\xB2", L: r2.L === null ? "\u672A\u52FE" : r2.L + " km", I: r2.I === null ? "\u7F3A\u9AD8\u7A0B" : String(r2.I) },
+            "\u7ECF\u7EAC\u5EA6\u591A\u8FB9\u5F62\u9762\u79EF\uFF08\u7B49\u8DDD\u5706\u67F1\u6295\u5F71\uFF09+ Haversine \u6CB3\u957F"
+          );
+          return;
+        }
+        if (mapState.calib.length < 2) throw new Error("\u8BF7\u5148\u5728\u56FE\u4E0A\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF08\u70B9\u4E24\u70B9 + \u586B\u5B9E\u9645\u8DDD\u79BB\uFF09");
+        const a = mapState.calib[0], b = mapState.calib[1];
+        const pixelDistance = Math.hypot(b.x - a.x, b.y - a.y);
+        if (!(pixelDistance > 0)) throw new Error("\u6807\u5B9A\u70B9\u91CD\u5408\uFF0C\u8BF7\u91CD\u65B0\u70B9\u4E24\u70B9");
+        const realDistanceM = +$("mapRealD").value;
+        mapState.scale = { pixelDistance, realDistanceM };
+        const h1 = +$("mapH1").value, h2 = +$("mapH2").value;
+        const r = measureCatchment({
+          poly: mapState.poly,
+          river: mapState.river.length >= 2 ? mapState.river : void 0,
+          scale: mapState.scale,
+          hTop: Number.isFinite(h1) ? h1 : void 0,
+          hBottom: Number.isFinite(h2) ? h2 : void 0
+        });
+        mapState.last = { F: r.F, L: r.L, I: r.I };
+        const lines = [
+          `\u6BD4\u4F8B\u5C3A\uFF1A${pixelDistance.toFixed(1)} \u50CF\u7D20 = ${realDistanceM} m\uFF081 \u50CF\u7D20 = ${r.metersPerPixel} m\uFF09`,
+          `\u6C47\u6C34\u9762\u79EF <b>F = ${r.F} km\xB2</b>\uFF08\u56FE\u4E0A ${r.areaPx} \u50CF\u7D20\xB2\uFF09`,
+          r.L === null ? "\u4E3B\u6CB3\u6C9F\u957F\u5EA6 L\uFF1A\u672A\u52FE\uFF08\u53EF\u9009\uFF09" : `\u4E3B\u6CB3\u6C9F\u957F\u5EA6 <b>L = ${r.L} km</b>`,
+          r.I === null ? "\u5E73\u5747\u6BD4\u964D I\uFF1A\u9700\u540C\u65F6\u7ED9\u51FA\u4E0A\u4E0B\u6E38\u9AD8\u7A0B" : `\u5E73\u5747\u6BD4\u964D <b>I = ${r.I}</b>\uFF08${r.Ipermille}\u2030\uFF09`
+        ];
+        out.innerHTML = lines.map((l) => `<div>${l}</div>`).join("") + r.warnings.map((w) => `<div style="color:var(--amber)">\u63D0\u793A\uFF1A${esc(w)}</div>`).join("");
+        $("mapScaleTip").textContent = `\u5DF2\u6807\u5B9A\uFF1A1 \u50CF\u7D20 = ${r.metersPerPixel} m`;
+        err.style.display = "none";
+        logCalc(
+          "\u5730\u56FE\u91CF\u7B97 \xB7 \u6C47\u6C34\u533A",
+          {
+            \u6807\u5B9A\u70B9: `${pixelDistance.toFixed(1)} \u50CF\u7D20 = ${realDistanceM} m`,
+            \u6C47\u6C34\u533A\u9876\u70B9: mapState.poly.length,
+            \u4E3B\u6CB3\u6C9F\u70B9: mapState.river.length
+          },
+          { F: r.F + " km\xB2", L: r.L === null ? "\u672A\u52FE" : r.L + " km", I: r.I === null ? "\u7F3A\u9AD8\u7A0B" : String(r.I) },
+          "\u56FE\u5F62\u91CF\u7B97\uFF08\u978B\u5E26\u516C\u5F0F \xD7 \u7528\u6237\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF09"
+        );
+      } catch (e) {
+        out.innerHTML = "";
+        err.style.display = "block";
+        showErr(err, e);
+      }
+    };
+    const syncSrc = () => {
+      const on = isOnline();
+      $("mapOnlineCtl").style.display = on ? "inline-flex" : "none";
+      $("mapLocalCtl").style.display = on ? "none" : "inline";
+      renderMap();
+    };
+    $("mapSrc").onchange = syncSrc;
+    $("mapTk").value = geo.tk;
+    $("mapLoad").onclick = () => {
+      geo.tk = $("mapTk").value.trim();
+      geo.layer = $("mapLayer").value;
+      geo.lon = +$("mapLon").value;
+      geo.lat = +$("mapLat").value;
+      geo.z = Math.round(+$("mapZ").value);
+      if (!geo.tk) {
+        const err = $("mapErr");
+        err.style.display = "block";
+        err.textContent = "\u8BF7\u5148\u586B\u5165\u5929\u5730\u56FE tk\uFF08\u5B98\u7F51\u514D\u8D39\u7533\u8BF7\uFF1B\u4EC5\u4FDD\u5B58\u5728\u672C\u673A localStorage\uFF09";
+        return;
+      }
+      localStorage.setItem("hongsuan_tdt_tk", geo.tk);
+      geo.loaded = true;
+      $("mapErr").style.display = "none";
+      renderMap();
+    };
+    const reZoom = (dz) => {
+      geo.z = Math.max(1, Math.min(18, geo.z + dz));
+      $("mapZ").value = String(geo.z);
+      renderMap();
+    };
+    $("mapZoomIn").onclick = () => reZoom(1);
+    $("mapZoomOut").onclick = () => reZoom(-1);
+    syncSrc();
+    $("mapFill").onclick = () => {
+      const err = $("mapErr");
+      if (!mapState.last) {
+        err.style.display = "block";
+        err.textContent = "\u8BF7\u5148\u5B8C\u6210\u91CF\u7B97\uFF0C\u518D\u628A F \u586B\u5165\u65B9\u6CD5 C";
+        return;
+      }
+      $("rdF").value = String(mapState.last.F);
+      calcMethodC();
+      err.style.display = "none";
+      $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u65B9\u6CD5 C\uFF08\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF09\u5E76\u91CD\u7B97</div>`;
+    };
+  }
+  var SYS_KEY = "hongsuan_sys_settings";
+  function applySysDefaults() {
+    try {
+      const raw = localStorage.getItem(SYS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.freq) {
+        state.freq = s.freq;
+        $("freqSel").value = String(s.freq);
+      }
+      if (s.reach) $("opReach").value = s.reach;
+    } catch {
+    }
+  }
+  if ($("sysCard")) {
+    applySysDefaults();
+    $("sysSave").onclick = () => {
+      const s = {
+        freq: Number($("sysFreq").value),
+        reach: $("sysReach").value
+      };
+      localStorage.setItem(SYS_KEY, JSON.stringify(s));
+      state.freq = s.freq;
+      $("opReach").value = s.reach;
+      $("sysOut").textContent = `\u5DF2\u4FDD\u5B58\uFF1A\u9ED8\u8BA4\u9891\u7387 ${(s.freq * 100).toFixed(2)}%\uFF0C\u9ED8\u8BA4\u6CB3\u6BB5 ${s.reach}`;
+      render();
+    };
+    $("sysUsage").onclick = () => {
+      let bytes = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        bytes += (localStorage.getItem(k) ?? "").length + k.length;
+      }
+      $("sysOut").textContent = `\u672C\u673A\u6570\u636E\u7EA6 ${(bytes / 1024).toFixed(1)} KB\uFF08\u542B\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u3001\u9ED8\u8BA4\u8BBE\u7F6E\u3001\u5929\u5730\u56FE tk\uFF09\uFF1B\u8BA1\u7B97\u65E5\u5FD7 ${calcLog.size()} \u6761`;
+    };
+    $("sysExport").onclick = () => {
+      const dump = { schema: "hongsuan-local-dump@1", savedAt: (/* @__PURE__ */ new Date()).toISOString() };
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        const raw = localStorage.getItem(k) ?? "";
+        try {
+          dump[k] = JSON.parse(raw);
+        } catch {
+          dump[k] = raw;
+        }
+      }
+      downloadText(JSON.stringify(dump, null, 2), "\u6CD3\u7B97\u672C\u673A\u6570\u636E.json", "application/json;charset=utf-8");
+      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u672C\u673A\u5168\u90E8\u6570\u636E\uFF08JSON\uFF09";
+    };
+    $("sysReset").onclick = () => {
+      if (!confirm("\u5C06\u6E05\u7A7A\u672C\u673A\u4FDD\u5B58\u7684\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u4E0E\u9ED8\u8BA4\u8BBE\u7F6E\uFF08\u4E0D\u5F71\u54CD\u5DF2\u5BFC\u51FA\u7684\u6587\u4EF6\uFF09\uFF0C\u786E\u5B9A\uFF1F")) return;
+      localStorage.clear();
+      $("sysOut").textContent = "\u5DF2\u6E05\u7A7A\u672C\u673A\u6570\u636E\uFF0C\u5237\u65B0\u9875\u9762\u540E\u56DE\u5230\u9ED8\u8BA4\u72B6\u6001";
+    };
+    $("sysKb").onclick = () => {
+      downloadText(helpToMarkdown(), "\u6CD3\u7B97\u77E5\u8BC6\u5E93.md", "text/markdown;charset=utf-8");
+      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown";
+    };
+  }
+  function helpToMarkdown() {
+    const lines = ["# \u6CD3\u7B97\u77E5\u8BC6\u5E93", "", `> \u5BFC\u51FA\u65F6\u95F4\uFF1A${(/* @__PURE__ */ new Date()).toLocaleString("zh-CN")}`, ""];
+    for (const sec of HELP_SECTIONS) {
+      lines.push(`## ${sec.title}\uFF08${sec.spec}\uFF09`, "");
+      for (const it of sec.items) {
+        lines.push(`- **${it.no}** ${it.title}${it.page ? `\uFF08${it.page}\uFF09` : ""}`, `  ${it.summary}`);
+      }
+      lines.push("");
+    }
+    lines.push("## \u6570\u636E\u6765\u6E90\u4E0E\u51FA\u5904", "");
+    for (const s of HELP_SOURCES) lines.push(`- **${s.name}**\uFF1A${s.detail}${s.url ? ` \u2014 ${s.url}` : ""}`);
+    lines.push("", "## \u5E38\u89C1\u95EE\u9898", "");
+    for (const f of HELP_FAQ) lines.push(`- **\u95EE**\uFF1A${f.q}`, `  **\u7B54**\uFF1A${f.a}`);
+    lines.push("", "## \u8BA1\u7B97\u6B63\u786E\u6027\u9A8C\u8BC1", "");
+    for (const v of HELP_VALIDATION) lines.push(`- ${v}`);
+    return lines.join("\n");
+  }
+  function kbSearch(q) {
+    const kw = q.trim();
+    if (!kw) return [];
+    const hits = [];
+    for (const sec of HELP_SECTIONS) {
+      for (const it of sec.items) {
+        const hay = `${it.no} ${it.title} ${it.summary} ${sec.title} ${sec.spec}`;
+        if (hay.includes(kw)) hits.push(`[${it.no}] ${it.title} \u2014 ${it.summary}`);
+      }
+    }
+    for (const f of HELP_FAQ) {
+      if (`${f.q} ${f.a}`.includes(kw)) hits.push(`[FAQ] ${f.q} \u2014 ${f.a}`);
+    }
+    for (const s of HELP_SOURCES) {
+      if (`${s.name} ${s.detail}`.includes(kw)) hits.push(`[\u6765\u6E90] ${s.name} \u2014 ${s.detail}`);
+    }
+    for (const v of HELP_VALIDATION) {
+      if (v.includes(kw)) hits.push(`[\u9A8C\u8BC1] ${v}`);
+    }
+    return hits;
+  }
+  if ($("kbSearchGo")) {
+    $("kbSearchGo").onclick = () => {
+      const q = $("kbSearch").value;
+      const hits = kbSearch(q);
+      const box = $("kbResult");
+      box.innerHTML = "";
+      if (!q.trim()) {
+        box.textContent = "\u8BF7\u8F93\u5165\u5173\u952E\u8BCD";
+        return;
+      }
+      if (hits.length === 0) {
+        box.textContent = `\u672A\u547D\u4E2D\u300C${q}\u300D\uFF1A\u53EF\u6362\u4E2A\u8BF4\u6CD5\uFF08\u5982\u300C\u51B2\u5237\u300D\u300C\u6865\u5B54\u300D\u300CB-9\u300D\u300C\u03C8\u300D\uFF09`;
+        return;
+      }
+      const head = document.createElement("div");
+      head.innerHTML = `\u547D\u4E2D <b>${hits.length}</b> \u6761\uFF1A`;
+      box.appendChild(head);
+      for (const h of hits) {
+        const d = document.createElement("div");
+        d.style.marginTop = "4px";
+        d.textContent = "\xB7 " + h;
+        box.appendChild(d);
+      }
+    };
+    $("kbSearchClear").onclick = () => {
+      $("kbSearch").value = "";
+      $("kbResult").innerHTML = "";
+    };
+  }
+  function clearFieldErrors() {
+    for (const el of document.querySelectorAll(".field-error")) el.classList.remove("field-error");
+  }
+  function elementForField(field) {
+    if (!field) return null;
+    const id = field.split(".").pop() ?? "";
+    const el = document.getElementById(id);
+    return el ? el : null;
+  }
+  function showErr(box, e) {
+    clearFieldErrors();
+    box.style.display = "block";
+    if (e instanceof HsError) {
+      const lines = [e.message];
+      if (e.suggestion) lines.push("\u5EFA\u8BAE\uFF1A" + e.suggestion);
+      if (e.normRef) lines.push("\u4F9D\u636E\uFF1A" + e.normRef);
+      box.textContent = lines.join(" \uFF5C ");
+      const el = elementForField(e.field);
+      if (el) {
+        el.classList.add("field-error");
+        const scroller = el.closest("details");
+        if (scroller instanceof HTMLDetailsElement) scroller.open = true;
+        try {
+          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        } catch {
+        }
+        el.focus();
+      }
+      return;
+    }
+    box.textContent = e instanceof Error ? e.message : String(e);
+  }
+  function buildCommands() {
+    const go = (m) => () => switchMode(m);
+    const click = (id) => () => $(id).click();
+    return [
+      { title: "\u5207\u5230 \xB7 \u6709\u8D44\u6599\u7CFB\u5217\uFF08\u9002\u7EBF\uFF09", hint: "\u6A21\u5F0F", run: go("series") },
+      { title: "\u5207\u5230 \xB7 \u76F4\u63A5\u53C2\u6570\u6A21\u5F0F", hint: "\u6A21\u5F0F", run: go("params") },
+      { title: "\u5207\u5230 \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5", hint: "\u6A21\u5F0F", run: go("hist") },
+      { title: "\u5207\u5230 \xB7 \u65E0\u8D44\u6599\u5730\u533A", hint: "\u6A21\u5F0F", run: go("noData") },
+      { title: "\u5207\u5230 \xB7 \u5730\u56FE\u91CF\u7B97", hint: "\u6A21\u5F0F", run: go("map") },
+      { title: "\u5207\u5230 \xB7 \u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", hint: "\u6A21\u5F0F", run: go("hydro") },
+      { title: "\u5207\u5230 \xB7 \u5E2E\u52A9\u4E0E\u77E5\u8BC6\u5E93", hint: "\u6A21\u5F0F", run: go("help") },
+      { title: "\u8BA1\u7B97\u5E76\u9002\u7EBF\uFF08\u65B9\u6CD5 A\uFF09", hint: "\u8BA1\u7B97", run: click("btnCalc") },
+      { title: "\u4E09\u70B9\u6CD5\u521D\u4F30\u53C2\u6570", hint: "\u8BA1\u7B97", run: click("btnThreePoint") },
+      { title: "\u81EA\u52A8\u4F18\u5316\u9002\u7EBF", hint: "\u8BA1\u7B97", run: click("btnAutoFit") },
+      { title: "\u7EBF\u578B\u6BD4\u9009\uFF08\u8D1D\u53F6\u65AF\uFF09", hint: "\u8BA1\u7B97", run: click("btnBayes") },
+      { title: "\u8BA1\u7B97\u5386\u53F2\u6D2A\u6C34\u6CD5\u8BBE\u8BA1\u6D41\u91CF", hint: "\u8BA1\u7B97", run: click("btnHist") },
+      { title: "\u63A8\u7B97\u6C34\u9762\u7EBF", hint: "\u8BA1\u7B97", run: click("btnWsProfile") },
+      { title: "\u4E24\u6D2A\u75D5\u53CD\u89E3 Q", hint: "\u8BA1\u7B97", run: click("btnWsSolve") },
+      { title: "\u8BA1\u7B97\u6865\u5B54\u6700\u5C0F\u51C0\u957F\u5EA6", hint: "\u8BA1\u7B97", run: click("opGo") },
+      { title: "\u8BA1\u7B97\u4E00\u822C\u51B2\u5237\uFF0864-1\uFF09", hint: "\u8BA1\u7B97", run: click("scGo") },
+      { title: "\u8BA1\u7B97\u5C40\u90E8\u51B2\u5237\uFF0865-2\uFF09", hint: "\u8BA1\u7B97", run: click("lsGo") },
+      { title: "\u6C47\u603B\u603B\u51B2\u5237\u6DF1\u5EA6", hint: "\u8BA1\u7B97", run: click("tsGo") },
+      { title: "\u8BA1\u7B97\u6865\u53F0\u5C40\u90E8\u51B2\u5237\uFF088.4.3\uFF09", hint: "\u8BA1\u7B97", run: click("abGo") },
+      { title: "\u5730\u56FE\uFF1A\u8BA1\u7B97\u6C47\u6C34\u533A F / L / I", hint: "\u8BA1\u7B97", run: click("mapGo") },
+      { title: "\u5730\u56FE\uFF1A\u628A F \u586B\u5165\u65B9\u6CD5 C", hint: "\u8BA1\u7B97", run: click("mapFill") },
+      { title: "\u67E5\u5F84\u6D41\u539A\u5EA6 h \u5E76\u586B\u5165", hint: "\u67E5\u8868", run: click("lkGo") },
+      { title: "\u67E5 \u03C8 / \u03C4 / z / \u03B2 / \u03B3 / \u03B4", hint: "\u67E5\u8868", run: click("cbPsi") },
+      { title: "\u5BFC\u51FA Word \u8BA1\u7B97\u4E66", hint: "\u5BFC\u51FA", run: click("btnReport") },
+      { title: "\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6\uFF08JSON\uFF09", hint: "\u5BFC\u51FA", run: click("btnExportProject") },
+      { title: "\u5BFC\u51FA\u8BA1\u7B97\u65E5\u5FD7 Markdown", hint: "\u5BFC\u51FA", run: click("logExportMd") },
+      { title: "\u5BFC\u51FA\u8BA1\u7B97\u65E5\u5FD7 JSON", hint: "\u5BFC\u51FA", run: click("logExportJson") },
+      { title: "\u5BFC\u51FA\u9891\u7387\u66F2\u7EBF SVG / PNG", hint: "\u5BFC\u51FA", run: click("exSvg") },
+      { title: "\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown", hint: "\u5BFC\u51FA", run: click("sysKb") },
+      { title: "\u5DE5\u7A0B\u6587\u4EF6\u7248\u672C\u5BF9\u6BD4", hint: "\u5DE5\u7A0B", run: () => {
+        const d = $("projDiffCard");
+        if (d) {
+          d.open = true;
+          d.scrollIntoView({ block: "center" });
+        }
+      } },
+      { title: "\u6E05\u7A7A\u8BA1\u7B97\u65E5\u5FD7", hint: "\u7BA1\u7406", run: click("logClear") },
+      { title: "\u67E5\u770B\u672C\u673A\u6570\u636E\u5360\u7528", hint: "\u7BA1\u7406", run: click("sysUsage") },
+      { title: "\u6E05\u7A7A\u672C\u673A\u8BB0\u5FC6\uFF0C\u6062\u590D\u9ED8\u8BA4", hint: "\u7BA1\u7406", run: click("btnReset") }
+    ];
+  }
+  var CMDS = buildCommands();
+  var cmdIndex = 0;
+  var cmdHits = [];
+  function renderCmd(q) {
+    const kw = q.trim();
+    cmdHits = kw ? CMDS.filter((c) => `${c.title} ${c.hint}`.includes(kw)) : CMDS.slice(0, 12);
+    if (cmdIndex >= cmdHits.length) cmdIndex = 0;
+    const list = $("cmdList");
+    list.innerHTML = "";
+    if (cmdHits.length === 0) {
+      const d = document.createElement("div");
+      d.style.cssText = "padding:14px;font-size:13px;color:var(--text3)";
+      d.textContent = "\u6CA1\u6709\u5339\u914D\u7684\u547D\u4EE4";
+      list.appendChild(d);
+    }
+    cmdHits.forEach((c, i) => {
+      const row = document.createElement("div");
+      row.style.cssText = `padding:9px 15px;cursor:pointer;font-size:13px;display:flex;gap:10px;align-items:center;${i === cmdIndex ? "background:#eef4ff" : ""}`;
+      const ttl = document.createElement("span");
+      ttl.textContent = c.title;
+      ttl.style.flex = "1";
+      const tag = document.createElement("span");
+      tag.textContent = c.hint;
+      tag.style.cssText = "font-size:11px;color:var(--text3);flex:none";
+      row.append(ttl, tag);
+      row.onmouseenter = () => {
+        cmdIndex = i;
+        renderCmd($("cmdInput").value);
+      };
+      row.onclick = () => {
+        execCmd(i);
+      };
+      list.appendChild(row);
+    });
+    $("cmdCount").textContent = `${cmdHits.length} \u4E2A\u547D\u4EE4`;
+  }
+  function execCmd(i) {
+    const c = cmdHits[i];
+    closeCmd();
+    if (c) {
+      try {
+        c.run();
+      } catch (e) {
+        console.warn("\u547D\u4EE4\u6267\u884C\u5931\u8D25", c.title, e);
+      }
+    }
+  }
+  function openCmd() {
+    $("cmdPanel").style.display = "flex";
+    $("cmdInput").value = "";
+    cmdIndex = 0;
+    renderCmd("");
+    $("cmdInput").focus();
+  }
+  function closeCmd() {
+    $("cmdPanel").style.display = "none";
+  }
+  if ($("cmdPanel")) {
+    $("cmdInput").oninput = (e) => {
+      cmdIndex = 0;
+      renderCmd(e.target.value);
+    };
+    $("cmdInput").onkeydown = (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        cmdIndex = (cmdIndex + 1) % Math.max(1, cmdHits.length);
+        renderCmd($("cmdInput").value);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        cmdIndex = (cmdIndex - 1 + cmdHits.length) % Math.max(1, cmdHits.length);
+        renderCmd($("cmdInput").value);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        execCmd(cmdIndex);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeCmd();
+      }
+    };
+    $("cmdPanel").onclick = (e) => {
+      if (e.target === $("cmdPanel")) closeCmd();
+    };
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if ($("cmdPanel").style.display === "flex") closeCmd();
+        else openCmd();
+      }
+      if (e.key === "Escape" && $("cmdPanel").style.display === "flex") closeCmd();
+    });
+  }
+  var multi = { data: null, plans: [], pick: null };
+  function planMsg(text, isErr = false) {
+    const el = $("planMsg");
+    el.textContent = text;
+    el.style.display = text ? "block" : "none";
+    el.style.color = isErr ? "var(--red)" : "";
+  }
+  function renderPlans() {
+    const box = $("planList");
+    box.innerHTML = "";
+    if (multi.plans.length === 0) {
+      const d = document.createElement("div");
+      d.style.cssText = "font-size:12px;color:var(--text3)";
+      d.textContent = "\u8FD8\u6CA1\u6709\u65B9\u6848\u3002\u8C03\u597D\u4E00\u7EC4\u53C2\u6570\u540E\u70B9\u300C\u4FDD\u5B58\u5F53\u524D\u4E3A\u65B0\u65B9\u6848\u300D\uFF0C\u4E4B\u540E\u6BCF\u6B21\u6539\u52A8\u518D\u5B58\u4E00\u4E2A\uFF0C\u5C31\u80FD\u76F4\u63A5\u5BF9\u6BD4\u5DEE\u5F02\u3002";
+      box.appendChild(d);
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const x of ["\u65B9\u6848", "\u5DEE\u5F02\u9879", "\u4FDD\u5B58\u65F6\u95F4", "\u64CD\u4F5C"]) {
+      const th = document.createElement("th");
+      th.textContent = x;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    multi.plans.forEach((pl, i) => {
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td");
+      td1.innerHTML = `<b>${pl.name}</b>${pl.note ? `<br><span style="color:var(--text3)">${pl.note}</span>` : ""}`;
+      const td2 = document.createElement("td");
+      td2.textContent = String(Object.keys(pl.deltas).length);
+      const td3 = document.createElement("td");
+      td3.style.whiteSpace = "nowrap";
+      td3.textContent = new Date(pl.createdAt).toLocaleString("zh-CN", { hour12: false }).slice(5);
+      const td4 = document.createElement("td");
+      td4.style.whiteSpace = "nowrap";
+      for (const [label, fn] of [
+        ["\u5207\u6362", () => {
+          if (!multi.data) return;
+          applySaved(applyPlan(multi.data, pl));
+          planMsg(`\u5DF2\u5207\u6362\u5230\u65B9\u6848\u300C${pl.name}\u300D`);
+        }],
+        [multi.pick && multi.pick.includes(i) ? "\u53D6\u6D88\u5BF9\u6BD4" : "\u5BF9\u6BD4", () => {
+          if (!multi.pick) {
+            multi.pick = [i, -1];
+          } else if (multi.pick[1] === -1 && multi.pick[0] !== i) {
+            multi.pick[1] = i;
+          } else if (multi.pick[0] === i || multi.pick[1] === i) {
+            multi.pick = null;
+          } else {
+            multi.pick = [i, -1];
+          }
+          renderPlans();
+          renderPlanDiff();
+        }],
+        ["\u5220\u9664", () => {
+          multi.plans.splice(i, 1);
+          multi.pick = null;
+          renderPlans();
+          renderPlanDiff();
+        }]
+      ]) {
+        const b = document.createElement("button");
+        b.className = "btn ghost";
+        b.style.cssText = "padding:2px 8px;font-size:11.5px;margin-right:4px";
+        b.textContent = label;
+        b.onclick = fn;
+        td4.appendChild(b);
+      }
+      tr.append(td1, td2, td3, td4);
+      table.appendChild(tr);
+    });
+    box.appendChild(table);
+  }
+  function renderPlanDiff() {
+    const box = $("planDiff");
+    box.innerHTML = "";
+    if (!multi.data || !multi.pick || multi.pick[1] < 0) return;
+    const [i, j] = multi.pick;
+    const a = multi.plans[i], b = multi.plans[j];
+    if (!a || !b) return;
+    const rows = diffPlans(multi.data, a, b);
+    const head = document.createElement("div");
+    head.style.cssText = "font-size:12px;margin-bottom:4px";
+    head.innerHTML = `\u300C<b>${a.name}</b>\u300D\u4E0E\u300C<b>${b.name}</b>\u300D\u5171 <b>${rows.length}</b> \u5904\u4E0D\u540C`;
+    box.appendChild(head);
+    if (rows.length === 0) return;
+    const table = document.createElement("table");
+    table.className = "ltab";
+    table.style.fontSize = "12px";
+    const trh = document.createElement("tr");
+    for (const x of ["\u5B57\u6BB5", a.name, b.name]) {
+      const th = document.createElement("th");
+      th.textContent = x;
+      trh.appendChild(th);
+    }
+    table.appendChild(trh);
+    for (const r of rows) {
+      const tr = document.createElement("tr");
+      for (const v of [r.path, String(r.a ?? "\u2014"), String(r.b ?? "\u2014")]) {
+        const td = document.createElement("td");
+        td.textContent = v;
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    box.appendChild(table);
+  }
+  if ($("planCard")) {
+    renderPlans();
+    $("planAdd").onclick = () => {
+      try {
+        const name = $("planName").value.trim();
+        if (!name) throw new Error("\u8BF7\u5148\u586B\u5199\u65B9\u6848\u540D");
+        const cur = collectInputs();
+        if (!multi.data) {
+          multi.data = cur;
+          multi.plans.push(createPlan(name, cur, cur, "\u57FA\u51C6\u65B9\u6848\uFF08\u5171\u4EAB\u6570\u636E\uFF09"));
+          planMsg(`\u5DF2\u5EFA\u7ACB\u57FA\u51C6\u6570\u636E\uFF0C\u5E76\u4FDD\u5B58\u65B9\u6848\u300C${name}\u300D`);
+        } else {
+          multi.plans.push(createPlan(name, multi.data, cur));
+          planMsg(`\u5DF2\u4FDD\u5B58\u65B9\u6848\u300C${name}\u300D\uFF08\u4EC5\u5B58\u5DEE\u5F02\uFF09`);
+        }
+        $("planName").value = "";
+        renderPlans();
+      } catch (e) {
+        planMsg(e instanceof Error ? e.message : String(e), true);
+      }
+    };
+    $("planClear").onclick = () => {
+      multi.data = null;
+      multi.plans = [];
+      multi.pick = null;
+      renderPlans();
+      renderPlanDiff();
+      planMsg("\u5DF2\u6E05\u7A7A\u5168\u90E8\u65B9\u6848");
+    };
+    $("planExport").onclick = () => {
+      if (multi.plans.length === 0) {
+        planMsg("\u8FD8\u6CA1\u6709\u65B9\u6848\u53EF\u5BFC\u51FA", true);
+        return;
+      }
+      const payload = {
+        schema: "hongsuan-multiproject@1",
+        appVersion: "1.0.6",
+        data: multi.data,
+        plans: multi.plans
+      };
+      downloadText(JSON.stringify(payload, null, 2), "\u6CD3\u7B97\u591A\u65B9\u6848\u5DE5\u7A0B.json", "application/json;charset=utf-8");
+      planMsg("\u5DF2\u5BFC\u51FA\u591A\u65B9\u6848\u5DE5\u7A0B\uFF08\u542B\u5171\u4EAB\u6570\u636E + \u5404\u65B9\u6848\u5DEE\u5F02\uFF09");
+    };
+    $("planImport").onclick = () => {
+      $("planFile").click();
+    };
+    $("planFile").onchange = () => {
+      const inp = $("planFile");
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const mp = parseMultiProject(JSON.parse(String(r.result)));
+          multi.data = mp.data;
+          multi.plans = mp.plans;
+          multi.pick = null;
+          renderPlans();
+          renderPlanDiff();
+          planMsg(`\u5DF2\u5BFC\u5165 ${mp.plans.length} \u4E2A\u65B9\u6848`);
+        } catch (e) {
+          planMsg(e instanceof Error ? e.message : String(e), true);
+        }
+      };
+      r.readAsText(f, "utf-8");
+    };
+  }
+  function calcAbutment() {
+    const err = $("abErr"), out = $("abOut"), detail = $("abDetail");
+    const vOf = (id) => +$(id).value;
+    try {
+      const f = $("abFormula").value;
+      if (f === "f1") {
+        const r = abutmentScour1({ v: vOf("abV"), h: vOf("abH"), Az: vOf("abAz"), CA: vOf("abCA"), alpha: vOf("abAlpha") });
+        out.textContent = r.hs.toFixed(2);
+        detail.innerHTML = `hs = 1.95\xB7Fr<sup>0.2</sup>\xB7A<sub>z</sub><sup>0.5</sup>\xB7C<sub>A</sub>\xB7C<sub>\u03B1</sub> = <b>${r.hs.toFixed(2)} m</b><br>Fr = v\xB2/(g\xB7h) = ${r.Fr} \uFF5C C<sub>\u03B1</sub> = (\u03B1/90)<sup>0.15</sup> = ${r.Calpha.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.4.3-1\uFF08\u6865\u53F0\u963B\u6C34\u9762\u79EF\u6CD5\uFF09</span>`;
+        logCalc("\u6865\u53F0\u5C40\u90E8\u51B2\u5237 \xB7 8.4.3-1", { \u6D41\u901Fv: vOf("abV"), \u6C34\u6DF1h: vOf("abH"), \u963B\u6C34\u9762\u79EFAz: vOf("abAz"), \u5F62\u72B6\u7CFB\u6570CA: vOf("abCA"), \u4EA4\u89D2\u03B1: vOf("abAlpha") }, { Fr: String(r.Fr), hs: r.hs.toFixed(2) + " m" }, "JTG C30\u20142015 \u516C\u5F0F8.4.3-1");
+      } else {
+        const r = abutmentScour2({ Kxi: vOf("abKxi"), alpha: vOf("abAlpha"), hp: vOf("abHp"), l: vOf("abL"), d0: vOf("abD0"), v: vOf("abV"), v0s: vOf("abV0s") });
+        out.textContent = r.hb.toFixed(2);
+        detail.innerHTML = `hb = 1.17\xB7K<sub>\u03BE</sub>\xB7k<sub>\u03B1</sub>\xB7h<sub>p</sub>\xB7(l/h<sub>p</sub>)<sup>0.6</sup>\xB7(d<sub>0</sub>/h<sub>p</sub>)<sup>\u2026</sup>\xB7[(v\u2212v'<sub>0</sub>)\xB2/(g\xB7h<sub>p</sub>)]<sup>0.15</sup> = <b>${r.hb.toFixed(2)} m</b><br>${r.exponentNote} \uFF5C k<sub>\u03B1</sub> = (\u03B1/90)<sup>0.2</sup> = ${r.kalpha.toFixed(3)}<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.4.3-2\uFF08\u4E00\u822C\u51B2\u5237\u540E\u6C34\u6DF1\u6CD5\uFF09</span>`;
+        logCalc("\u6865\u53F0\u5C40\u90E8\u51B2\u5237 \xB7 8.4.3-2", { \u53F0\u5F62\u7CFB\u6570K: vOf("abKxi"), \u4EA4\u89D2\u03B1: vOf("abAlpha"), \u6C34\u6DF1hp: vOf("abHp"), \u6865\u53F0\u957Fl: vOf("abL"), \u7C92\u5F84d0: vOf("abD0"), \u6D41\u901Fv: vOf("abV"), \u8D77\u51B2\u6D41\u901F: vOf("abV0s") }, { hb: r.hb.toFixed(2) + " m" }, "JTG C30\u20142015 \u516C\u5F0F8.4.3-2");
+      }
+      err.style.display = "none";
+    } catch (e) {
+      out.textContent = "\u2014";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  if ($("abGo")) {
+    $("abGo").onclick = calcAbutment;
+    $("abFormula").onchange = () => {
+      const f2 = $("abFormula").value === "f2";
+      $("ab2Row").style.display = f2 ? "" : "none";
+    };
+  }
+  function logCalc(module, inputs, results, basis, params) {
+    try {
+      calcLog.add({ module, inputs, results, basis, params });
+      renderCalcLog();
+    } catch {
+    }
+  }
+  function kvText(o) {
+    return !o ? "\u2014" : Object.entries(o).map(([k, v]) => `${k}=${v}`).join("\uFF1B");
+  }
+  var logExpandedAll = false;
+  function logSummary(e) {
+    const r = e.results ?? {};
+    const keys = Object.keys(r).slice(0, 3);
+    return keys.length ? keys.map((k) => `${k}=${r[k]}`).join("\uFF1B") : "\u2014";
+  }
+  function refreshModuleFilter() {
+    const sel = $("logModule");
+    if (!sel) return;
+    const cur = sel.value;
+    const mods = [...new Set(calcLog.recent(0).map((e) => e.module))].sort();
+    sel.innerHTML = '<option value="">\u5168\u90E8\u6A21\u5757</option>' + mods.map((m) => `<option value="${m}">${m}</option>`).join("");
+    sel.value = cur;
+  }
+  function renderCalcLog() {
+    const list = $("logList");
+    const body = $("logBody");
+    if (!list || !body) return;
+    const kw = ($("logSearch").value || "").trim();
+    const mod = $("logModule").value;
+    const limit = Number($("logLimit").value || 10);
+    refreshModuleFilter();
+    let rows = calcLog.recent(0).slice().reverse();
+    if (mod) rows = rows.filter((e) => e.module === mod);
+    if (kw) {
+      const hay = (e) => `${e.module} ${kvText(e.inputs)} ${kvText(e.params)} ${kvText(e.results)} ${e.basis}`;
+      rows = rows.filter((e) => hay(e).includes(kw));
+    }
+    const shown = limit > 0 ? rows.slice(0, limit) : rows;
+    list.innerHTML = "";
+    if (shown.length === 0) {
+      const empty = document.createElement("div");
+      empty.style.fontSize = "12px";
+      empty.style.color = "var(--text3)";
+      empty.textContent = kw || mod ? "\u6CA1\u6709\u5339\u914D\u7684\u65E5\u5FD7\u6761\u76EE" : "\u8FD8\u6CA1\u6709\u8BA1\u7B97\u8BB0\u5F55\uFF0C\u505A\u4EFB\u4F55\u4E00\u6B21\u8BA1\u7B97\u540E\u8FD9\u91CC\u4F1A\u81EA\u52A8\u7559\u75D5";
+      list.appendChild(empty);
+    }
+    for (const e of shown) {
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden";
+      const head = document.createElement("div");
+      head.style.cssText = "display:flex;gap:10px;align-items:center;padding:7px 10px;cursor:pointer;background:#fafafa;font-size:12.5px";
+      const tm = document.createElement("span");
+      tm.style.cssText = "color:var(--text3);font-variant-numeric:tabular-nums;flex:none";
+      tm.textContent = new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false });
+      const md = document.createElement("span");
+      md.style.cssText = "font-weight:600;flex:none;min-width:120px";
+      md.textContent = e.module;
+      const sm = document.createElement("span");
+      sm.style.cssText = "color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      sm.textContent = logSummary(e);
+      const caret = document.createElement("span");
+      caret.style.cssText = "margin-left:auto;color:var(--text3);flex:none";
+      caret.textContent = "\u25B8";
+      head.append(tm, md, sm, caret);
+      wrap.appendChild(head);
+      const detail = document.createElement("div");
+      detail.style.cssText = "padding:8px 10px;font-size:12px;color:var(--text2);border-top:1px solid var(--border);display:none";
+      for (const [label, obj] of [
+        ["\u4E3B\u8981\u8F93\u5165", e.inputs],
+        ["\u91C7\u7528/\u4E2D\u95F4\u503C", e.params],
+        ["\u7ED3\u679C", e.results]
+      ]) {
+        if (!obj || Object.keys(obj).length === 0) continue;
+        const d = document.createElement("div");
+        d.style.marginBottom = "4px";
+        d.textContent = `${label}\uFF1A${kvText(obj)}`;
+        detail.appendChild(d);
+      }
+      const b = document.createElement("div");
+      b.style.color = "var(--text3)";
+      b.textContent = `\u4F9D\u636E\uFF1A${e.basis}`;
+      detail.appendChild(b);
+      wrap.appendChild(detail);
+      let open = logExpandedAll;
+      const apply = () => {
+        detail.style.display = open ? "" : "none";
+        caret.textContent = open ? "\u25BE" : "\u25B8";
+      };
+      head.onclick = () => {
+        open = !open;
+        apply();
+      };
+      apply();
+      list.appendChild(wrap);
+    }
+    body.innerHTML = "";
+    for (const e of shown) {
+      const tr = document.createElement("tr");
+      for (const text of [
+        new Date(e.t).toLocaleTimeString("zh-CN", { hour12: false }),
+        e.module,
+        kvText(e.inputs),
+        kvText(e.params),
+        kvText(e.results),
+        e.basis
+      ]) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+    const cnt = $("logCount");
+    if (cnt) {
+      cnt.textContent = `\u5171 ${calcLog.size()} \u6761\uFF0C\u5F53\u524D\u663E\u793A ${shown.length} \u6761` + (kw || mod ? "\uFF08\u5DF2\u8FC7\u6EE4\uFF09" : "");
+    }
+  }
+  if ($("logSearch")) {
+    $("logSearch").oninput = renderCalcLog;
+    $("logModule").onchange = renderCalcLog;
+    $("logLimit").onchange = renderCalcLog;
+    $("logExpandAll").onclick = () => {
+      logExpandedAll = true;
+      renderCalcLog();
+    };
+    $("logCollapseAll").onclick = () => {
+      logExpandedAll = false;
+      renderCalcLog();
+    };
+  }
+  var logTimer;
+  var lastSig = "";
+  function logRenderOnce() {
+    const sig = `${state.params.mean}|${state.params.cv}|${state.params.cs}|${state.freq}|${state.series.length}`;
+    if (logTimer) clearTimeout(logTimer);
+    logTimer = setTimeout(() => {
+      if (sig === lastSig) return;
+      lastSig = sig;
+      const phi = phiPIII(state.freq, effCs());
+      const kp = 1 + phi * state.params.cv;
+      const q = state.params.mean * kp;
+      logCalc(
+        "\u65B9\u6CD5A \xB7 P-\u2162\u9002\u7EBF",
+        { \u7CFB\u5217\u957F\u5EA6: state.series.length, \u8BBE\u8BA1\u9891\u7387: (state.freq * 100).toFixed(2) + "%", \u4E0D\u8FDE\u5E8F: $("hasExtra").checked ? "\u662F" : "\u5426" },
+        { \u03A6: phi.toFixed(3), Kp: kp.toFixed(3), Qp: fmt(q, 0) + " m\xB3/s" },
+        "JTG C30-2015 \u7B2C6.2\u6761\uFF08\u76AE\u5C14\u900A\u2162\u578B\uFF09",
+        {
+          Q\u0304: fmt(state.params.mean, 1),
+          Cv: state.params.cv.toFixed(3),
+          Cs: state.params.cs.toFixed(3),
+          CsCv: (state.params.cs / state.params.cv).toFixed(2)
+        }
+      );
+    }, 800);
+  }
+  function downloadText(text, fileName, mime) {
+    downloadBlob(new Blob([text], { type: mime }), fileName);
+  }
+  if ($("logExportMd")) {
+    $("logExportMd").onclick = () => {
+      downloadText(calcLog.toMarkdown("\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7"), "\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7.md", "text/markdown;charset=utf-8");
+    };
+    $("logExportJson").onclick = () => {
+      downloadText(calcLog.toJSON(), "\u6CD3\u7B97\u8BA1\u7B97\u65E5\u5FD7.json", "application/json;charset=utf-8");
+    };
+    $("logClear").onclick = () => {
+      calcLog.clear();
+      renderCalcLog();
+    };
+  }
+  function svgToPngDataUrl() {
+    return new Promise((resolve, reject) => {
+      try {
+        const svg = $("chart");
+        const xml = new XMLSerializer().serializeToString(svg);
+        const url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml" }));
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement("canvas");
+          c.width = 940 * 2;
+          c.height = 520 * 2;
+          const ctx = c.getContext("2d");
+          if (!ctx) {
+            URL.revokeObjectURL(url);
+            reject(new Error("\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301 Canvas 2D \u4E0A\u4E0B\u6587\uFF0C\u65E0\u6CD5\u5BFC\u51FA\u9002\u7EBF\u56FE"));
+            return;
+          }
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL("image/png"));
+        };
+        img.onerror = reject;
+        img.src = url;
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+  function downloadBlob(blob, fileName) {
+    const legacyNavigator = window.navigator;
+    if (legacyNavigator.msSaveOrOpenBlob) {
+      legacyNavigator.msSaveOrOpenBlob(blob, fileName);
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 3e4);
+  }
+  async function buildReportDocx() {
+    const D = await window.hsEnsureLib("docx").catch((e) => { alert("docx 组件加载失败：" + (e.message || e)); return null; });
+    if (!D) return;
+    const p = state.params, freq = state.freq;
+    const pj = currentProject();
+    const pjAny = pj.name || pj.bridgeSite || pj.engineer || pj.reviewer;
+    const phi = phiPIII(freq, effCs(p.cs)), kp = 1 + phi * p.cv, q = p.mean * kp;
+    const st = state.stats ? {
+      n: state.stats.n,
+      mean: state.stats.mean,
+      cv: state.stats.cv,
+      cs: "cs" in state.stats ? state.stats.cs : state.stats.csMoment
+    } : { n: state.series.length };
+    const freqLabel = { "0.0033": "1/300\uFF08\u7279\u5927\u6865\uFF09", "0.01": "1/100\uFF08\u5927\u3001\u4E2D\u6865\uFF09", "0.02": "1/50", "0.04": "1/25" }[String(freq)] || (freq * 100).toFixed(2) + "%";
+    const now = /* @__PURE__ */ new Date();
+    const H1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: t, bold: true, size: 30 })] });
+    const H2 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun({ text: t, bold: true, size: 26 })] });
+    const P = (t, opt = {}) => new D.Paragraph({ children: [new D.TextRun({ text: t, size: 22, ...opt })], spacing: { after: 120 } });
+    const PB2 = (label, val) => new D.Paragraph({ children: [new D.TextRun({ text: label + "\uFF1A", bold: true, size: 22 }), new D.TextRun({ text: val, size: 22 })], spacing: { after: 60 } });
+    const mkTable = (header, rows) => new D.Table({
+      width: { size: 100, type: D.WidthType.PERCENTAGE },
+      rows: [
+        new D.TableRow({ tableHeader: true, children: header.map((h) => new D.TableCell({ children: [new D.Paragraph({ children: [new D.TextRun({ text: h, bold: true, size: 20 })] })] })) }),
+        ...rows.map((r) => new D.TableRow({ children: r.map((c) => new D.TableCell({ children: [new D.Paragraph({ children: [new D.TextRun({ text: String(c), size: 20 })] })] })) }))
+      ]
+    });
+    const FREQS = [0.05, 0.1, 0.2, 0.5, 1, 2, 3.33, 5, 10, 20, 50, 90];
+    const freqRows = FREQS.map((pp) => {
+      const ph = phiPIII(pp / 100, effCs(p.cs)), k = 1 + ph * p.cv;
+      return [pp < 1 ? pp.toFixed(2) + " %" : pp.toFixed(2).replace(/\.?0+$/, "") + " %", ph.toFixed(3), k.toFixed(3), (p.mean * k).toFixed(1)];
+    });
+    const sorted = [...state.series].sort((a, b) => b - a);
+    const empRows = sorted.slice(0, 15).map((qi, i) => [i + 1, qi, ((i + 1) / (sorted.length + 1) * 100).toFixed(2) + " %"]);
+    svgToPngDataUrl().then((dataUrl) => {
+      const doc = new D.Document({
+        sections: [{
+          children: [
+            new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\u6CD3\u7B97 \xB7 \u6865\u6DB5\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u4E66", bold: true, size: 40 })] }),
+            new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "\uFF08P-\u2162 \u578B\u9891\u7387\u66F2\u7EBF\u9002\u7EBF\u6CD5\uFF09", size: 24, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...pjAny ? [
+              H1("\u3007\u3001\u5DE5\u7A0B\u4FE1\u606F"),
+              PB2("\u9879\u76EE\u540D", pj.name || "\u2014"),
+              PB2("\u6865\u4F4D / \u65AD\u9762", pj.bridgeSite || "\u2014"),
+              PB2("\u8BA1\u7B97\u4EBA / \u590D\u6838\u4EBA", `${pj.engineer || "\u2014"} / ${pj.reviewer || "\u2014"}`)
+            ] : [],
+            H1("\u4E00\u3001\u8BA1\u7B97\u4F9D\u636E"),
+            P("1.\u300A\u516C\u8DEF\u5DE5\u7A0B\u6C34\u6587\u52D8\u6D4B\u8BBE\u8BA1\u89C4\u8303\u300BJTG C30-2015\uFF1A\u7B2C 6.2 \u8282\uFF08\u5229\u7528\u5B9E\u6D4B\u6D41\u91CF\u7CFB\u5217\u63A8\u7B97\u8BBE\u8BA1\u6D41\u91CF\uFF09\uFF0C\u5F0F 6.2.6\uFF1AQp = Q\u0304(1 + \u03A6p\xB7Cv)\uFF1B\u8868 1.0.8\uFF08\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387\uFF09\u3002"),
+            P("2. \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u91C7\u7528\u76AE\u5C14\u900A\u2162\u578B\uFF08\u89C4\u8303\u7B2C 6.2.4 \u6761\uFF09\uFF1B\u03A6p \u7531 P-\u2162 \u5206\u5E03\u6570\u503C\u8BA1\u7B97\uFF08\u4E0D\u5B8C\u5168 \u0393 \u51FD\u6570\u5206\u4F4D\u6570\uFF09\uFF0C\u7ECF scipy \u72EC\u7ACB\u4EA4\u53C9\u9A8C\u8BC1\u3002"),
+            H1("\u4E8C\u3001\u57FA\u672C\u8D44\u6599"),
+            PB2("\u5B9E\u6D4B\u7CFB\u5217\u9879\u6570 n", String(st.n ?? sorted.length)),
+            PB2("\u7CFB\u5217\u6D41\u91CF\uFF08m\xB3/s\uFF0C\u4ECE\u5927\u5230\u5C0F\uFF09", sorted.join("\uFF0C")),
+            mkTable(["\u5E8F\u53F7 m", "\u6D41\u91CF Q\uFF08m\xB3/s\uFF09", "\u7ECF\u9A8C\u9891\u7387 Pm = m/(n+1)"], empRows),
+            new D.Paragraph({ children: [new D.TextRun({ text: sorted.length > 15 ? "\uFF08\u4EC5\u5217\u524D 15 \u9879\uFF09" : "", size: 18, color: "aeaeb2" })], spacing: { after: 120 } }),
+            H1("\u4E09\u3001\u7EDF\u8BA1\u53C2\u6570"),
+            PB2("\u77E9\u6CD5\u521D\u4F30\u5747\u503C Q\u0304", st.mean ? st.mean.toFixed(1) + " m\xB3/s" : "\u2014\uFF08\u53C2\u6570\u6A21\u5F0F\uFF09"),
+            PB2("\u77E9\u6CD5\u521D\u4F30 Cv", st.cv ? st.cv.toFixed(3) : "\u2014"),
+            PB2("\u77E9\u6CD5\u521D\u4F30 Cs\uFF08\u4EC5\u53C2\u8003\uFF09", st.cs ? st.cs.toFixed(2) : "\u2014"),
+            PB2("\u9002\u7EBF\u91C7\u7528 Q\u0304", p.mean.toFixed(1) + " m\xB3/s"),
+            PB2("\u9002\u7EBF\u91C7\u7528 Cv", p.cv.toFixed(3)),
+            PB2("\u9002\u7EBF\u91C7\u7528 Cs", p.cs.toFixed(2) + "\uFF08= " + (p.cs / p.cv).toFixed(1) + " Cv\uFF09"),
+            P("\u6309\u89C4\u8303 6.2.5\uFF0C\u7EDF\u8BA1\u53C2\u6570\u4EE5\u9002\u7EBF\u6CD5\u786E\u5B9A\uFF1A\u5148\u7531\u77E9\u6CD5\u521D\u4F30 Q\u0304\u3001Cv\uFF0C\u518D\u8BD5\u9009 M=Cs/Cv \u5E76\u4EE4 Cs=M\xB7Cv\uFF1B\u82E5\u7406\u8BBA\u9891\u7387\u66F2\u7EBF\u4E0E\u7ECF\u9A8C\u70B9\u636E\u4E0D\u543B\u5408\uFF0C\u53EF\u4FEE\u6539 Cv\u3001\u91CD\u9009 M\uFF0C\u7ECF 2~3 \u6B21\u8BD5\u7B97\u540E\u91C7\u7528\u4EBA\u5DE5\u5224\u65AD\u6700\u6EE1\u610F\u7684\u4E00\u7EC4\u3002", { color: "6e6e73" }),
+            H1("\u56DB\u3001\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97"),
+            PB2("\u8BBE\u8BA1\u6D2A\u6C34\u9891\u7387", freqLabel),
+            PB2("\u79BB\u5747\u7CFB\u6570 \u03A6p", phi.toFixed(4)),
+            PB2("\u6A21\u6BD4\u7CFB\u6570 Kp = 1 + \u03A6p\xB7Cv", kp.toFixed(4)),
+            PB2("\u8BBE\u8BA1\u6D41\u91CF Qp = Q\u0304\xB7Kp", q.toFixed(1) + " m\xB3/s"),
+            H1("\u4E94\u3001\u9891\u7387\u66F2\u7EBF\u6210\u679C\u8868"),
+            mkTable(["\u9891\u7387 P", "\u03A6p", "Kp", "Qp\uFF08m\xB3/s\uFF09"], freqRows),
+            H1("\u516D\u3001\u9002\u7EBF\u56FE"),
+            new D.Paragraph({ children: [new D.ImageRun({ type: "png", data: dataUrl.split(",")[1], transformation: { width: 600, height: 332 } })], spacing: { before: 120, after: 120 } }),
+            new D.Paragraph({ children: [new D.TextRun({ text: "\u56FE\uFF1A\u6D77\u68EE\u673A\u7387\u683C\u7EB8\u4E0A\u7684\u7ECF\u9A8C\u70B9\u636E\u4E0E P-\u2162 \u7406\u8BBA\u9891\u7387\u66F2\u7EBF\uFF08\u6A2A\u8F74\u9891\u7387\u3001\u7EB5\u8F74\u6D41\u91CF m\xB3/s\uFF09", size: 18, color: "6e6e73" })], spacing: { after: 240 } }),
+            ...state.hydro ? [
+              H1("\u4E03\u3001\u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF"),
+              P(`\u6309\u89C4\u8303 6.6 \u540C\u500D\u6BD4\u653E\u5927\u6CD5\uFF1Akg = Qp / Q\u5178\u5CF0 = ${state.hydro.designPeak.toFixed(0)} / ${state.hydro.typicalPeak.toFixed(0)} = ${state.hydro.kg.toFixed(4)}\u3002`),
+              mkTable(["\u65F6\u95F4 t\uFF08h\uFF09", "\u8BBE\u8BA1\u6D41\u91CF Q\uFF08m\xB3/s\uFF09"], state.hydro.points.map((p2) => [p2.t, p2.q.toFixed(1)]))
+            ] : [],
+            new D.Paragraph({
+              border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
+              children: [new D.TextRun({ text: "\u672C\u8BA1\u7B97\u4E66\u7531\u6CD3\u7B97 v1 \u751F\u6210\uFF0C\u03A6 \u503C\u7B97\u6CD5\u7ECF\u591A\u6E90\u4EA4\u53C9\u9A8C\u8BC1\uFF08scipy \u72EC\u7ACB\u5B9E\u73B0\u4E00\u81F4\u5230 1e-6\uFF09\u3002\u8BA1\u7B97\u7ED3\u679C\u4F9B\u5B66\u4E60\u4E0E\u8BFE\u7A0B\u8BBE\u8BA1\u53C2\u8003\uFF0C\u5DE5\u7A0B\u5E94\u7528\u987B\u7ECF\u6CE8\u518C\u5DE5\u7A0B\u5E08\u590D\u6838\u3002\u751F\u6210\u65F6\u95F4\uFF1A" + now.toLocaleString("zh-CN"), size: 18, color: "6e6e73" })]
+            })
+          ]
+        }]
+      });
+      return D.Packer.toBlob(doc).then((blob) => {
+        console.log("DOCX_OK", blob.size);
+        downloadBlob(blob, "\u8BBE\u8BA1\u6D41\u91CF\u8BA1\u7B97\u4E66_P3\u9002\u7EBF.docx");
+        const b = $("btnReport"), old = b.textContent;
+        b.textContent = "\u5DF2\u751F\u6210 " + Math.round(blob.size / 1024) + " KB\uFF0C\u6D4F\u89C8\u5668\u5DF2\u5F00\u59CB\u4E0B\u8F7D\uFF08\u770B\u4E0B\u8F7D\u680F\uFF09";
+        b.disabled = true;
+        setTimeout(() => {
+          b.textContent = old;
+          b.disabled = false;
+        }, 5e3);
+      });
+    }).catch((e) => {
+      console.error("DOCX_FAIL", e);
+      alert("\u8BA1\u4E66\u751F\u6210\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    });
+  }
+  $("btnReport").onclick = buildReportDocx;
+  var LS_KEY = "hongsuan_v09";
+  var LEGACY_KEYS = ["hongsuan_v08", "hongsuan_v07"];
+  var HIST_IDS = ["hf0Ac", "hf0Bc", "hf0nc", "hf0At", "hf0Bt", "hf0nt", "hf0Ipermil", "hf0T", "hf1Ac", "hf1Bc", "hf1nc", "hf1At", "hf1Bt", "hf1nt", "hf1Ipermil", "hf1T", "hbCv", "hbCs"];
+  var NODATA_IDS = ["rcSp", "rcN", "rcPsi", "rcTau", "rcF", "rdPhi", "rdH", "rdZ", "rdF", "rdBeta", "rdGamma", "rdDelta"];
+  var WS_IDS = ["wsB", "wsM", "wsN", "wsS0", "wsL", "wsYc", "wsQ", "wsYup"];
+  var SSM_IDS = ["ssmQ", "ssmUnits", "ssmBd", "ssmS0", "ssmWse", "ssmText"];
+  var OPEN_IDS = ["opQp", "opQc", "opBc", "opReach"];
+  var SCOUR_IDS = ["scQ2", "scMu", "scBcj", "scHmc", "scHcq", "scD50", "scRho", "scA", "scBd", "scHz"];
+  var LOCAL_IDS = ["lsV", "lsB1", "lsKxi"];
+  var TOTAL_IDS = ["tsNat"];
+  function migrateState(parsed) {
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.schemaVersion === 9) return parsed;
+    if (parsed.schemaVersion == null) return { ...parsed, schemaVersion: 9 };
+    console.warn("\u672A\u77E5\u6301\u4E45\u5316\u7248\u672C\uFF0C\u6309\u5F53\u524D\u7248\u672C\u5C3D\u529B\u8BFB\u53D6", parsed.schemaVersion);
+    return { ...parsed, schemaVersion: 9 };
+  }
+  function collectInputs() {
+    const pick = (ids) => {
+      const o = {};
+      ids.forEach((id) => {
+        const el = $(id);
+        if (el) o[id] = el.value;
+      });
+      return o;
+    };
+    return {
+      schemaVersion: 9,
+      mode: state.mode,
+      series: $("series").value,
+      hasExtra: $("hasExtra").checked,
+      inN: $("inN").value,
+      inL: $("inL").value,
+      extraSeries: $("extraSeries").value,
+      inMean: $("inMean").value,
+      inCv: $("inCv").value,
+      inCs: $("inCs").value,
+      freq: state.freq,
+      adopted: { ...state.params },
+      hist: pick(HIST_IDS),
+      nodata: pick(NODATA_IDS),
+      wsurf: pick(WS_IDS),
+      ssm: pick(SSM_IDS),
+      open: pick(OPEN_IDS),
+      scour: pick(SCOUR_IDS),
+      local: pick(LOCAL_IDS),
+      total: pick(TOTAL_IDS),
+      project: currentProject(),
+      conv: {
+        enable: $("convEnable").checked,
+        fRef: $("convFRef").value,
+        fSite: $("convFSite").value,
+        n: $("convN").value
+      },
+      hydro: { typical: $("hydroTypical").value, qp: $("hydroQp").value }
+    };
+  }
+  function currentProject() {
+    const v = (id) => $(id).value;
+    return {
+      name: v("pjName"),
+      bridgeSite: v("pjSite"),
+      engineer: v("pjEng"),
+      reviewer: v("pjRev"),
+      note: "",
+      river: v("pjRiver"),
+      reach: v("pjReach"),
+      station: v("pjStation"),
+      stationArea: v("pjStationArea"),
+      siteArea: v("pjSiteArea"),
+      designFreq: v("pjDesignFreq"),
+      spec: v("pjSpec"),
+      zone: v("pjZone")
+    };
+  }
+  function fillProjectForm(p) {
+    const set2 = (id, val) => {
+      $(id).value = val ?? "";
+    };
+    set2("pjName", p.name ?? "");
+    set2("pjSite", p.bridgeSite ?? "");
+    set2("pjEng", p.engineer ?? "");
+    set2("pjRev", p.reviewer ?? "");
+    set2("pjRiver", p.river ?? "");
+    set2("pjReach", p.reach ?? "");
+    set2("pjStation", p.station ?? "");
+    set2("pjStationArea", p.stationArea ?? "");
+    set2("pjSiteArea", p.siteArea ?? "");
+    set2("pjDesignFreq", p.designFreq ?? "");
+    set2("pjSpec", p.spec ?? "JTG C30\u20142015");
+    set2("pjZone", p.zone ?? "");
+  }
+  var saveTimer = null;
+  function markSaved() {
+    const el = $("saveHint");
+    if (!el) return;
+    el.classList.add("on");
+    setTimeout(() => el.classList.remove("on"), 900);
+  }
+  function saveAll() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(collectInputs()));
+      if (window.hsApi && window.hsApi.saveSnapshot) window.hsApi.saveSnapshot(localStorage.getItem(LS_KEY));
+      markSaved();
+    } catch (e) {
+    }
+  }
+  function scheduleSave() {
+    if (saveTimer !== null) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveAll, 400);
+  }
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave();
+  });
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.matches && e.target.matches("input,textarea,select")) scheduleSave();
+  });
+  function checkNum(el) {
+    const raw = el.value.trim();
+    let bad = raw === "";
+    if (!bad) {
+      const v = parseFloat(raw);
+      bad = !Number.isFinite(v);
+      if (!bad && el.min !== "" && v < +el.min) bad = true;
+      if (!bad && el.max !== "" && v > +el.max) bad = true;
+    }
+    el.classList.toggle("invalid", bad);
+    return !bad;
+  }
+  document.querySelectorAll("input[type=number]").forEach((item) => {
+    const el = item;
+    el.addEventListener("input", () => checkNum(el));
+    el.addEventListener("blur", () => {
+      if (el.value.trim() === "") {
+        el.classList.add("invalid");
+      }
+    });
+  });
+  function restoreAll() {
+    let d = null;
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        d = migrateState(parsed);
+      } else {
+        for (const k of LEGACY_KEYS) {
+          const legacy = localStorage.getItem(k);
+          if (legacy) {
+            d = migrateState(JSON.parse(legacy));
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      d = null;
+    }
+    if (!d || typeof d !== "object") return null;
+    return applySaved(d);
+  }
+  function applySaved(d) {
+    if (typeof d.series === "string") $("series").value = d.series;
+    if (d.hasExtra) {
+      $("hasExtra").checked = true;
+      $("extraBox").style.display = "";
+    }
+    if (d.inN != null) $("inN").value = d.inN;
+    if (d.inL != null) $("inL").value = d.inL;
+    if (typeof d.extraSeries === "string") $("extraSeries").value = d.extraSeries;
+    if (d.inMean != null) $("inMean").value = d.inMean;
+    if (d.inCv != null) $("inCv").value = d.inCv;
+    if (d.inCs != null) $("inCs").value = d.inCs;
+    if (d.freq != null && Number.isFinite(+d.freq)) {
+      state.freq = +d.freq;
+      $("freqSel").value = String(d.freq);
+    }
+    if (d.adopted && Number.isFinite(d.adopted.mean) && d.adopted.mean > 0 && Number.isFinite(d.adopted.cv) && d.adopted.cv > 0 && Number.isFinite(d.adopted.cs)) {
+      state.adoptedOverride = { mean: d.adopted.mean, cv: d.adopted.cv, cs: d.adopted.cs };
+    }
+    if (d.hist) for (const k in d.hist) {
+      const el = $(k);
+      if (el && d.hist[k] != null) el.value = d.hist[k];
+    }
+    if (d.nodata) for (const k in d.nodata) {
+      const el = $(k);
+      if (el && d.nodata[k] != null) el.value = d.nodata[k];
+    }
+    if (d.wsurf) for (const k in d.wsurf) {
+      const el = $(k);
+      if (el && d.wsurf[k] != null) el.value = d.wsurf[k];
+    }
+    if (d.ssm) for (const k in d.ssm) {
+      const el = $(k);
+      if (el && d.ssm[k] != null) el.value = d.ssm[k];
+    }
+    if (d.open) for (const k in d.open) {
+      const el = $(k);
+      if (el && d.open[k] != null) el.value = d.open[k];
+    }
+    if (d.scour) for (const k in d.scour) {
+      const el = $(k);
+      if (el && d.scour[k] != null) el.value = d.scour[k];
+    }
+    if (d.local) for (const k in d.local) {
+      const el = $(k);
+      if (el && d.local[k] != null) el.value = d.local[k];
+    }
+    if (d.total) for (const k in d.total) {
+      const el = $(k);
+      if (el && d.total[k] != null) el.value = d.total[k];
+    }
+    if (d.conv) {
+      $("convEnable").checked = false;
+      if (d.conv.fRef != null) $("convFRef").value = d.conv.fRef;
+      if (d.conv.fSite != null) $("convFSite").value = d.conv.fSite;
+      if (d.conv.n != null) $("convN").value = d.conv.n;
+    }
+    if (d.hydro) {
+      if (typeof d.hydro.typical === "string") $("hydroTypical").value = d.hydro.typical;
+      if (d.hydro.qp != null) $("hydroQp").value = d.hydro.qp;
+    }
+    if (d.project) {
+      $("pjName").value = d.project.name ?? "";
+      $("pjSite").value = d.project.bridgeSite ?? "";
+      $("pjEng").value = d.project.engineer ?? "";
+      $("pjRev").value = d.project.reviewer ?? "";
+    }
+    console.log("RESTORE_MODE", d.mode || "series", "ADOPTED", state.adoptedOverride ? "yes" : "no", "FREQ", state.freq);
+    return d.mode || null;
+  }
+  $("btnExportProject").onclick = () => {
+    try {
+      const file = buildProjectFile(currentProject(), collectInputs(), "1.0.6");
+      const blob = new Blob([serializeProject(file)], { type: "application/json" });
+      downloadBlob(blob, `\u6CD3\u7B97\u5DE5\u7A0B-${file.project.name || "\u672A\u547D\u540D"}.json`);
+      $("pjMsg").textContent = "\u5DF2\u5BFC\u51FA\u5DE5\u7A0B\u6587\u4EF6";
+    } catch (e) {
+      alert("\u5BFC\u51FA\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+  $("btnImportProject").onclick = () => {
+    $("pjFile").click();
+  };
+  $("pjFile").onchange = () => {
+    const inp = $("pjFile");
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseProjectFile(JSON.parse(String(reader.result)));
+        fillProjectForm(parsed.project);
+        applySaved({ ...parsed.state, project: parsed.project });
+        saveAll();
+        const dt = parsed.savedAt.slice(0, 10);
+        $("pjMsg").textContent = `\u5DF2\u5BFC\u5165\uFF1A${parsed.project.name || "\u672A\u547D\u540D"}\uFF08${dt}\uFF0C\u6CD3\u7B97 v${parsed.appVersion}\uFF09`;
+        location.reload();
+      } catch (e) {
+        alert("\u5BFC\u5165\u5931\u8D25\uFF1A" + (e instanceof Error ? e.message : String(e)));
+      }
+    };
+    reader.readAsText(f);
+    inp.value = "";
+  };
+  $("btnReset").onclick = () => {
+    if (confirm("\u786E\u5B9A\u6E05\u9664\u672C\u673A\u8BB0\u5FC6\u7684\u5168\u90E8\u53C2\u6570\u5E76\u6062\u590D\u9ED8\u8BA4\u793A\u4F8B\uFF1F")) {
+      localStorage.removeItem(LS_KEY);
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
+      if (window.hsApi && window.hsApi.clearSnapshot) window.hsApi.clearSnapshot();
+      location.reload();
+    }
+  };
+  var urlQ = new URLSearchParams(location.search);
+  var restoredMode = restoreAll();
+  ssmBdSync();
+  var urlMethod = urlQ.get("method");
+  var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : restoredMode || "series";
+  if (startMode === "params") {
+    $("mParams").click();
+  } else if (startMode === "histB") {
+    $("mHist").click();
+  } else if (startMode === "noData") {
+    $("mNoData").click();
+  } else if (startMode === "hydro") {
+    $("mHydro").click();
+  } else {
+    $("mSeries").click();
+    calcFromSeries();
+  }
+  if (state.adoptedOverride) {
+    state.params = { ...state.adoptedOverride };
+    delete state.adoptedOverride;
+    $("cvSlider").value = Math.min(Math.max(state.params.cv, 0.05), 1.2);
+    $("ratioSlider").value = Math.min(Math.max(state.params.cs / state.params.cv, 1), 8);
+    syncParamInputs();
+    render();
+  }
+  if (new URLSearchParams(location.search).get("bayes") === "1") {
+    runBayesCompare();
+  }
+  if (new URLSearchParams(location.search).get("report") === "1") {
+    buildReportDocx();
+  }
+  if (new URLSearchParams(location.search).get("autosave") === "1") {
+    saveAll();
+  }
+  var ocrImageDataUrl = "";
+  var ocrSelectedFile = null;
+  var ocrSourceRows = [];
+  var ocrSourceCells = [];
+  var ocrPageUrls = [];
+  var ocrActivePage = 0;
+  var ocrPairs = [];
+  var ocrSourceLabel = "";
+  function ocrApi() {
+    return window.hsApi && window.hsApi.localOcrAvailable ? window.hsApi : null;
+  }
+  var tessWorker = null;
+  var tessInitPromise = null;
+  function tessAbsUrl(rel) {
+    try {
+      return new URL(rel, location.href).href;
+    } catch {
+      return rel;
+    }
+  }
+  async function getTessWorker(onStatus) {
+    const T = await window.hsEnsureLib("tesseract");
+    if (tessWorker) return tessWorker;
+    if (!tessInitPromise) {
+      tessInitPromise = (async () => {
+        onStatus?.("\u6B63\u5728\u542F\u52A8\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\uFF08\u9996\u6B21\u542F\u52A8\u8BC6\u522B\u5F15\u64CE\uFF08\u52A0\u8F7D\u672C\u5730\u6A21\u578B\uFF09\uFF09\u2026");
+        const worker = await T.createWorker("chi_sim", 1, {
+          workerPath: tessAbsUrl("libs/tesseract/worker.min.js"),
+          corePath: tessAbsUrl("libs/tesseract"),
+          langPath: tessAbsUrl("libs/tesseract/lang"),
+          logger: (m) => {
+            if (m && typeof m.progress === "number" && /loading|language/i.test(String(m.status))) {
+              onStatus?.(`\u52A0\u8F7D\u8BC6\u522B\u6A21\u578B ${Math.round(m.progress * 100)}%\u2026`);
+            }
+          }
+        });
+        tessWorker = worker;
+        return worker;
+      })().catch((e) => {
+        tessInitPromise = null;
+        throw e;
+      });
+    }
+    return tessInitPromise;
+  }
+  function tessFixNumeric(t) {
+    let out = String(t || "").trim();
+    out = out.replace(/[０-９，．]/g, (ch) => {
+      const map = { "\uFF10": "0", "\uFF11": "1", "\uFF12": "2", "\uFF13": "3", "\uFF14": "4", "\uFF15": "5", "\uFF16": "6", "\uFF17": "7", "\uFF18": "8", "\uFF19": "9", "\uFF0C": ",", "\uFF0E": "." };
+      return map[ch] || ch;
+    });
+    let prev = "";
+    while (prev !== out) {
+      prev = out;
+      out = out.replace(/(?<![\d.])(\d{1,3})[\s,](\d{3})(?![\d.])/g, "$1$2");
+    }
+    if (/^\d{1,3}\.\d{3}$/.test(out)) out = out.replace(".", "");
+    return out;
+  }
+  function tessClusterTable(words, scale = 1) {
+    const k = scale > 0 ? scale : 1;
+    const items = words.filter((w) => w.text && w.text.trim()).map((w) => ({
+      text: w.text.trim(),
+      score: Math.max(0, Math.min(1, (w.confidence || 0) / 100)),
+      cx: (w.bbox.x0 + w.bbox.x1) / 2 / k,
+      cy: (w.bbox.y0 + w.bbox.y1) / 2 / k,
+      w: (w.bbox.x1 - w.bbox.x0) / k,
+      h: (w.bbox.y1 - w.bbox.y0) / k
+    }));
+    if (!items.length) return null;
+    const hs = items.map((i) => i.h).sort((a, b) => a - b);
+    const hMed = hs[Math.floor(hs.length / 2)] || 16;
+    const yTol = Math.max(0.55 * hMed, 8);
+    const sorted = [...items].sort((a, b) => a.cy - b.cy);
+    const groups = [];
+    let cur = [];
+    let prevCy = -1e9;
+    for (const it of sorted) {
+      if (it.cy - prevCy <= yTol) cur.push(it);
+      else {
+        if (cur.length) groups.push(cur);
+        cur = [it];
+      }
+      prevCy = it.cy;
+    }
+    if (cur.length) groups.push(cur);
+    const rows = groups.map((g) => ({
+      cy: g.reduce((s, i) => s + i.cy, 0) / g.length,
+      items: g.sort((a, b) => a.cx - b.cx)
+    }));
+    rows.sort((a, b) => a.cy - b.cy);
+    const ws = items.map((i) => i.w).sort((a, b) => a - b);
+    const wMed = ws[Math.floor(ws.length / 2)] || 45;
+    const xGap = Math.max(0.6 * wMed, 20);
+    const centers = rows.flatMap((r) => r.items.map((i) => i.cx)).sort((a, b) => a - b);
+    const segs = [];
+    for (const c of centers) {
+      const last = segs[segs.length - 1];
+      if (last && c - last[last.length - 1] <= xGap) last.push(c);
+      else segs.push([c]);
+    }
+    const colTargets = segs.map((s) => s.reduce((x, y) => x + y, 0) / s.length);
+    const ncol = Math.max(1, colTargets.length);
+    const outRows = [];
+    const outConf = [];
+    const outCells = [];
+    rows.forEach((r, ri) => {
+      const row = new Array(ncol).fill("");
+      const conf = new Array(ncol).fill(1);
+      for (const it of r.items) {
+        let idx = 0, best = Infinity;
+        colTargets.forEach((ct, i) => {
+          const d = Math.abs(ct - it.cx);
+          if (d < best) {
+            best = d;
+            idx = i;
+          }
+        });
+        if (best > xGap * 2.5) continue;
+        const fixed = tessFixNumeric(it.text);
+        row[idx] = row[idx] ? row[idx] + " " + fixed : fixed;
+        conf[idx] = Math.min(conf[idx], it.score);
+        outCells.push({
+          row: ri,
+          col: idx,
+          box: [[it.cx - it.w / 2, it.cy - it.h / 2], [it.cx + it.w / 2, it.cy - it.h / 2], [it.cx + it.w / 2, it.cy + it.h / 2], [it.cx - it.w / 2, it.cy + it.h / 2]],
+          text: fixed,
+          score: Math.round(it.score * 1e3) / 1e3
+        });
+      }
+      outRows.push(row.map(tessFixNumeric));
+      outConf.push(conf.map((c) => Math.round(c * 1e3) / 1e3));
+    });
+    return { ok: true, ncol, rows: outRows, conf: outConf, cells: outCells, engine: "tesseract" };
+  }
+  function tessOtsuThreshold(gray) {
+    const hist = new Array(256).fill(0);
+    for (let i = 0; i < gray.length; i++) hist[gray[i]]++;
+    const total = gray.length;
+    let sum = 0;
+    for (let i = 0; i < 256; i++) sum += i * hist[i];
+    let sumB = 0, wB = 0, best = -1, threshold = 127;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t];
+      if (!wB) continue;
+      const wF = total - wB;
+      if (!wF) break;
+      sumB += t * hist[t];
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+      const between = wB * wF * (mB - mF) * (mB - mF);
+      if (between > best) {
+        best = between;
+        threshold = t;
+      }
+    }
+    return threshold;
+  }
+  function removeTableLines(canvas) {
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const { width, height } = canvas;
+    if (!width || !height) return;
+    const src = ctx.getImageData(0, 0, width, height);
+    const d = src.data;
+    const n = width * height;
+    const gray = new Uint8Array(n);
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      gray[i] = Math.max(0, Math.min(255, Math.round(0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2])));
+    }
+    const threshold = tessOtsuThreshold(gray);
+    const dark = new Uint8Array(n);
+    let darkCount = 0;
+    for (let i = 0; i < n; i++) {
+      if (gray[i] < threshold) {
+        dark[i] = 1;
+        darkCount++;
+      }
+    }
+    if (darkCount < n * 0.01 || darkCount > n * 0.72) return;
+    const line = new Uint8Array(n);
+    const hMin = Math.max(35, Math.round(width * 0.035));
+    for (let y = 0; y < height; y++) {
+      let start = -1;
+      for (let x = 0; x <= width; x++) {
+        const on = x < width && dark[y * width + x] === 1;
+        if (on && start < 0) start = x;
+        if (!on && start >= 0) {
+          if (x - start >= hMin) for (let i = start; i < x; i++) line[y * width + i] = 1;
+          start = -1;
+        }
+      }
+    }
+    const vMin = Math.max(35, Math.round(height * 0.035));
+    for (let x = 0; x < width; x++) {
+      let start = -1;
+      for (let y = 0; y <= height; y++) {
+        const on = y < height && dark[y * width + x] === 1;
+        if (on && start < 0) start = y;
+        if (!on && start >= 0) {
+          if (y - start >= vMin) for (let i = start; i < y; i++) line[i * width + x] = 1;
+          start = -1;
+        }
+      }
+    }
+    const out = new Uint8Array(n);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        if (!line[i]) continue;
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= height) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            const xx = x + dx;
+            if (xx < 0 || xx >= width) continue;
+            out[yy * width + xx] = 1;
+          }
+        }
+      }
+    }
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      const v = dark[i] && !out[i] ? 0 : 255;
+      d[p] = v;
+      d[p + 1] = v;
+      d[p + 2] = v;
+      d[p + 3] = 255;
+    }
+    ctx.putImageData(src, 0, 0);
+  }
+  async function dataUrlToCanvas(dataUrl) {
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("\u56FE\u7247\u52A0\u8F7D\u5931\u8D25\uFF0C\u8BF7\u6362 PNG/JPG \u8BD5\u8BD5"));
+      img.src = dataUrl;
+    });
+    const w0 = Math.max(1, img.naturalWidth || img.width || 1);
+    const h0 = Math.max(1, img.naturalHeight || img.height || 1);
+    const scale = w0 < 900 ? 2 : w0 < 1800 ? 1.5 : 1;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w0 * scale));
+    canvas.height = Math.max(1, Math.round(h0 * scale));
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = scale > 1;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    removeTableLines(canvas);
+    return { canvas, scale };
+  }
+  async function tessRecognizeWords(worker, canvas, psm) {
+    await worker.setParameters({ tessedit_pageseg_mode: psm });
+    const ret = await worker.recognize(canvas, {}, { text: true, blocks: true });
+    const words = [];
+    for (const block of ret?.data?.blocks || []) {
+      for (const para of block.paragraphs || []) {
+        for (const line of para.lines || []) {
+          for (const w of line.words || []) words.push(w);
+        }
+      }
+    }
+    return words;
+  }
+  function tessTableScore(t) {
+    if (!t) return -1;
+    const rows = t.rows || [];
+    const cells = rows.reduce((n, r) => n + r.filter((x) => String(x || "").trim()).length, 0);
+    const nums = rows.reduce((n, r) => n + r.filter((x) => /\d/.test(String(x || ""))).length, 0);
+    return rows.length * 2 + cells + nums * 1.5;
+  }
+  async function browserOcrTable(dataUrl, onStatus) {
+    const worker = await getTessWorker(onStatus);
+    onStatus?.("\u6D4F\u89C8\u5668\u672C\u5730\u8BC6\u522B\u4E2D\u2026\uFF08\u56FE\u7247\u4E0D\u79BB\u5F00\u4F60\u7684\u7535\u8111\uFF09");
+    const { canvas, scale } = await dataUrlToCanvas(dataUrl);
+    const words = await tessRecognizeWords(worker, canvas, "3");
+    let table = tessClusterTable(words, scale);
+    if (tessTableScore(table) < 12) {
+      onStatus?.("\u8BC6\u522B\u5185\u5BB9\u8F83\u5C11\uFF0C\u6B63\u5728\u6362\u6A21\u5F0F\u91CD\u8BD5\u2026");
+      const words2 = await tessRecognizeWords(worker, canvas, "4");
+      const table2 = tessClusterTable(words2, scale);
+      if (tessTableScore(table2) > tessTableScore(table)) table = table2;
+    }
+    if (!table) return JSON.stringify({ ok: false, error: "\u56FE\u4E2D\u6CA1\u6709\u8BC6\u522B\u5230\u6587\u5B57\uFF0C\u6362\u66F4\u6E05\u6670\u7684\u56FE\u7247\u8BD5\u8BD5" });
+    return JSON.stringify(table);
+  }
+  function fileExt(name) {
+    const m = /\.([a-zA-Z0-9]+)$/.exec(name || "");
+    return m ? m[1].toLowerCase() : "";
+  }
+  function isImageLike(f) {
+    if (!f) return false;
+    if (f.type && String(f.type).indexOf("image/") === 0) return true;
+    return ["png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff"].indexOf(fileExt(f.name)) >= 0;
+  }
+  function cleanCell(v) {
+    if (v == null) return "";
+    if (v instanceof Date) return v.toLocaleDateString("zh-CN");
+    return String(v).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function ocrEscape(s) {
+    return cleanCell(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function normalizeRows(rows) {
+    return rows.map((r) => Array.isArray(r) ? r.map(cleanCell) : [cleanCell(r)]).filter((r) => r.some((c) => c));
+  }
+  function tableWidth(rows) {
+    return rows.reduce((m, r) => Math.max(m, r.length), 0);
+  }
+  function numericCellCount(rows) {
+    let n = 0;
+    for (const r of rows) {
+      for (const c of r) {
+        const t = c.replace(/,/g, "").replace(/[±＋＋]/g, "");
+        if (t && /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(t)) n++;
+      }
+    }
+    return n;
+  }
+  function tableScore(rows) {
+    const nr = numericCellCount(rows);
+    return nr * 3 + Math.min(rows.length, 200) * 0.3 + Math.min(tableWidth(rows), 20) * 1.5;
+  }
+  function bestTable(tables) {
+    let best = null;
+    let bestScore = -1;
+    for (const t of tables) {
+      const rows = normalizeRows(t.rows);
+      if (!rows.length) continue;
+      const score = tableScore(rows);
+      if (score > bestScore) {
+        bestScore = score;
+        best = { rows, source: t.source };
+      }
+    }
+    if (!best) throw new Error("\u672A\u5728\u6587\u6863\u4E2D\u627E\u5230\u53EF\u8BC6\u522B\u7684\u6570\u636E\u8868");
+    return best;
+  }
+    function splitTextRow(line) {
+    const t = cleanCell(line);
+    if (!t) return [];
+    if (t.indexOf("\t") >= 0) return t.split(/\t+/).map(cleanCell);
+    if (/\s{2,}/.test(t)) return t.split(/\s{2,}/).map(cleanCell);
+    // 逗号分隔的文本行（含全角逗号），如 "2001,123.4"
+    if (t.indexOf(",") >= 0 || t.indexOf("\uFF0C") >= 0) {
+      const parts = t.split(/[,\uFF0C]/).map(cleanCell);
+      const numParts = parts.filter((x) => /\d/.test(x)).length;
+      if (parts.length >= 2 && numParts >= 2) return parts;
+    }
+    // "2001年 123.4" 这类以 4 位年份开头的中文行：按空白拆列（“年”字在取值时剔除）
+    if (/^[+-]?\d{4}(?=\s|\u5E74)/.test(t)) return t.split(/\s+/).map(cleanCell);
+    const numericTokens = t.match(/(?<!\d[.])[+-]?\d+(?:\.\d+)?/g) || [];
+    if (numericTokens.length >= 2 && !/[A-Za-z\u4e00-\u9fff]/.test(t)) return t.split(/\s+/).map(cleanCell);
+    return [t];
+  }
+function textToTable(text, source) {
+    const lines = String(text || "").split(/\r\n|\r|\n/).map(splitTextRow).filter((r) => r.length);
+    return { rows: normalizeRows(lines), source };
+  }
+  function hasAncestorLocalName(el, name) {
+    let p = el.parentElement;
+    while (p) {
+      if (p.localName === name) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+  function xmlTablesToCandidates(root, source) {
+    const out = [];
+    const tables = Array.from(root.getElementsByTagNameNS("*", "tbl")).filter((t) => !hasAncestorLocalName(t, "tbl"));
+    for (const tb of tables) {
+      const rows = [];
+      const trs = Array.from(tb.children).filter((x) => x.localName === "tr");
+      for (const tr of trs) {
+        const cells = Array.from(tr.children).filter((x) => x.localName === "tc").map((td) => cleanCell(td.textContent));
+        if (cells.length) rows.push(cells);
+      }
+      if (rows.length) out.push({ rows, source });
+    }
+    return out;
+  }
+  function htmlTablesToCandidates(root, source) {
+    const out = [];
+    for (const tb of Array.from(root.querySelectorAll("table"))) {
+      const rows = [];
+      for (const tr of Array.from(tb.querySelectorAll("tr"))) {
+        const cells = Array.from(tr.children).map((td) => cleanCell(td.innerText || td.textContent));
+        if (cells.length) rows.push(cells);
+      }
+      if (rows.length) out.push({ rows, source });
+    }
+    return out;
+  }
+  async function parseDocx(f) {
+    const JSZip = await window.hsEnsureLib("jszip");
+    const zip = await JSZip.loadAsync(await f.arrayBuffer());
+    const entry = zip.file("word/document.xml");
+    if (!entry) throw new Error("\u8FD9\u4E0D\u662F\u6709\u6548\u7684 .docx \u6587\u4EF6\uFF1B\u65E7 .doc \u8BF7\u5148\u53E6\u5B58\u4E3A .docx \u6216 PDF");
+    const xml = await entry.async("string");
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    const tables = xmlTablesToCandidates(doc, "Word \u8868\u683C");
+    if (tables.length) return bestTable(tables);
+    const ps = Array.from(doc.getElementsByTagNameNS("*", "p")).filter((p) => !hasAncestorLocalName(p, "tbl")).map((p) => cleanCell(p.textContent)).filter(Boolean);
+    if (!ps.length) throw new Error("Word \u6587\u4EF6\u4E2D\u6CA1\u6709\u53EF\u8BC6\u522B\u7684\u6587\u672C\u6216\u8868\u683C");
+    return textToTable(ps.join("\n"), "Word \u6587\u672C");
+  }
+  async function parseWorkbook(f) {
+    const XLSX = await window.hsEnsureLib("xlsx");
+        let wb;
+    try {
+      wb = XLSX.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+    } catch (e) {
+      throw new Error("\u65E0\u6CD5\u89E3\u6790\u8BE5\u8868\u683C\u6587\u4EF6\uFF1B\u8BF7\u7528 Excel/WPS \u53E6\u5B58\u4E3A .xlsx \u6216 .csv \u540E\u91CD\u8BD5");
+    }
+    const tables = [];
+    for (const name of wb.SheetNames || []) {
+      const ws = wb.Sheets[name];
+      if (!ws) continue;
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "", blankrows: false });
+      const rows = normalizeRows(raw);
+      if (rows.length) tables.push({ rows, source: `Excel \u5DE5\u4F5C\u8868\u300C${name}\u300D` });
+    }
+    return bestTable(tables);
+  }
+  function pdfItemsToRows(items) {
+    const objs = (items || []).map((it) => {
+      const tx = it.transform || [1, 0, 0, 1, 0, 0];
+      const h = Math.hypot(tx[2] || 0, tx[3] || 0) || Number(it.height) || 10;
+      return {
+        text: cleanCell(it.str),
+        x: Number(tx[4]) || 0,
+        y: Number(tx[5]) || 0,
+        w: Number(it.width) || 10,
+        h
+      };
+    }).filter((x) => x.text);
+    if (!objs.length) return [];
+    objs.sort((a, b) => b.y - a.y || a.x - b.x);
+    const hs = objs.map((x) => x.h).sort((a, b) => a - b);
+    const medH = hs[Math.floor(hs.length / 2)] || 10;
+    const tol = Math.max(1.8, medH * 0.65);
+    const lines = [];
+    for (const it of objs) {
+      const line = lines.find((l) => Math.abs(l.y - it.y) <= tol);
+      if (line) line.items.push(it);
+      else lines.push({ y: it.y, items: [it] });
+    }
+    const rows = [];
+    for (const line of lines) {
+      line.items.sort((a, b) => a.x - b.x);
+      const cells = [];
+      let cur = "";
+      let prev = null;
+      for (const it of line.items) {
+        if (prev) {
+          const gap = it.x - (prev.x + prev.w);
+          const threshold = Math.max(5.5, medH * 0.72);
+          if (gap > threshold) {
+            cells.push(cur);
+            cur = it.text;
+          } else {
+            cur += (cur && gap > medH * 0.22 ? " " : "") + it.text;
+          }
+        } else {
+          cur = it.text;
+        }
+        prev = it;
+      }
+      if (cur) cells.push(cur);
+      const expanded = [];
+      for (let c of cells) {
+        const numericOnly = !/[A-Za-z\u4e00-\u9fff]/.test(c);
+        const numericTokens = c.match(/[+-]?\d+(?:\.\d+)?/g) || [];
+        if (numericOnly && numericTokens.length >= 2) expanded.push(...c.split(/\s+/).map(cleanCell));
+        else expanded.push(c);
+      }
+      if (expanded.some(Boolean)) rows.push(normalizeRows([expanded])[0] || []);
+    }
+    return rows.filter((r) => r.some(Boolean));
+  }
+  async function pdfPageToDataUrl(pdf, pageNo) {
+    const page = await pdf.getPage(pageNo);
+    const base = page.getViewport({ scale: 1 });
+    const scale = Math.min(3, Math.max(1.6, 1800 / Math.max(base.width, base.height)));
+    const viewport = page.getViewport({ scale });
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(viewport.width);
+    cv.height = Math.round(viewport.height);
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return cv.toDataURL("image/jpeg", 0.94);
+  }
+  async function parsePdf(f, status) {
+    const pdfjs = await window.hsEnsureLib("pdfjs");
+    pdfjs.GlobalWorkerOptions.workerSrc = "libs/pdf.worker.min.js";
+    const data = await f.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data }).promise;
+    const rows = [];
+    const pageCount = Math.min(Number(pdf.numPages) || 1, 80);
+    for (let i = 1; i <= pageCount; i++) {
+      status.textContent = `\u6B63\u5728\u89E3\u6790 PDF \u7B2C ${i}/${pageCount} \u9875\u2026`;
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent({ includeMarkedContent: false });
+      rows.push(...pdfItemsToRows(tc.items));
+    }
+    const pageUrls = [];
+    const previewPages = Math.min(pageCount, 10);
+    for (let i = 1; i <= previewPages; i++) {
+      status.textContent = `\u6B63\u5728\u751F\u6210 PDF \u539F\u59CB\u9884\u89C8 \u7B2C ${i}/${previewPages} \u9875\u2026`;
+      pageUrls.push(await pdfPageToDataUrl(pdf, i));
+    }
+    const nr = numericCellCount(normalizeRows(rows));
+    if (nr >= 5) {
+      return { rows: normalizeRows(rows), source: "PDF \u6587\u5B57\u5C42", pages: pageUrls };
+    }
+    const api = ocrApi();
+    const ocrRows = [];
+    const ocrCells = [];
+    for (let i = 1; i <= pageCount; i++) {
+      status.textContent = `\u626B\u63CF\u7248 PDF \u6B63\u5728${api ? "\u672C\u673A" : "\u6D4F\u89C8\u5668"}\u8BC6\u522B\u7B2C ${i}/${pageCount} \u9875\u2026`;
+      const dataUrl = pageUrls[i - 1] || await pdfPageToDataUrl(pdf, i);
+            let d = null;
+      if (api && api.ocrTable) {
+        d = JSON.parse(await api.ocrTable.call(api, dataUrl, { deskew: true }));
+      }
+      if (!d || !d.ok) {
+        d = JSON.parse(await browserOcrTable(dataUrl, (s) => {
+          status.textContent = `第 ${i}/${pageCount} 页 · ${s}`;
+        }));
+      }
+      if (!d.ok) throw new Error(d.error || "PDF OCR 失败");
+      const pageRows = d.rows || [];
+      const rowOffset = ocrRows.length;
+      ocrRows.push(...pageRows);
+      for (const c of d.cells || []) {
+        ocrCells.push({ ...c, row: (c.row || 0) + rowOffset, page: i - 1 });
+      }
+      if (!pageUrls[i - 1]) pageUrls.push(dataUrl);
+    }
+    const table = ocrRows.map((r) => r.map(cleanCell));
+    if (!table.length) throw new Error("\u626B\u63CF\u7248 PDF \u4E2D\u672A\u8BC6\u522B\u5230\u8868\u683C");
+    return { rows: table, source: "PDF \u626B\u63CF\u9875 OCR", cells: ocrCells, pages: pageUrls };
+  }
+  async function parseHtmlText(text) {
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    const tables = htmlTablesToCandidates(doc, "HTML \u8868\u683C");
+    if (tables.length) return bestTable(tables);
+    return textToTable(doc.body.innerText || doc.body.textContent || "", "HTML \u6587\u672C");
+  }
+  async function parseRtf(f) {
+    const raw = await f.text();
+    const text = raw.replace(/\\par[d]?\b/g, "\n").replace(/\\line\b/g, "\n").replace(/\\tab\b/g, "	").replace(/\\u(-?\d+)\s?/g, (_m, d) => String.fromCharCode((Number(d) % 65536 + 65536) % 65536)).replace(/\\'([0-9a-f]{2})/gi, (_m, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\[a-zA-Z]+-?\d* ?/g, "").replace(/[{}]/g, "");
+    return textToTable(text, "RTF \u6587\u672C");
+  }
+  async function parseAnyDocument(f, status) {
+    const ext = fileExt(f.name);
+    if (ext === "pdf") return parsePdf(f, status);
+    if (ext === "docx" || ext === "docm") return parseDocx(f);
+    if (["xlsx", "xlsm", "xls", "csv", "tsv", "et"].indexOf(ext) >= 0) return parseWorkbook(f);
+    if (["htm", "html", "mht"].indexOf(ext) >= 0) return parseHtmlText(await f.text());
+    if (ext === "rtf") return parseRtf(f);
+    if (["txt", "md", "log", "tsv"].indexOf(ext) >= 0) return textToTable(await f.text(), "\u6587\u672C\u6587\u4EF6");
+    try {
+      const t = await parseHtmlText(await f.text());
+      if (t.rows.length && numericCellCount(t.rows) > 0) return t;
+    } catch {
+    }
+    throw new Error("\u6682\u4E0D\u80FD\u8BC6\u522B\u8BE5\u683C\u5F0F\uFF1B\u8BF7\u53E6\u5B58\u4E3A PDF\u3001DOCX\u3001XLSX/CSV/TXT \u540E\u518D\u8BD5");
+  }
+    function parseFlowValue(s) {
+    let t = cleanCell(s);
+    if (!t) return null;
+    t = t.replace(/\uFFFD/g, "");
+    // 去掉常见流量单位：m³/s、m^3/s、m3/s、cms、立方米每秒 等
+    t = t.replace(/m[\u00B3^3]\s*\/\s*s(ec|ond)?s?\b/gi, "").replace(/cms\b/gi, "").replace(/\u7ACB\u65B9\u7C73\u6BCF\u79D2|\u7ACB\u65B9\u7C73\/\u79D2/g, "");
+    if (!t || /[A-Za-z\u4e00-\u9fff]/.test(t)) return null;
+    t = t.replace(/,/g, "").replace(/[\u00B0\u00BA]/g, "").replace(/\s+/g, "");
+    if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    const m = /^[+-]?(\d+(\.\d*)?|\.\d+)$/.exec(t);
+    if (!m) return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  function parseYearValue(s) {
+    let t = cleanCell(s);
+    if (!t) return null;
+    t = t.replace(/\uFFFD/g, "");
+    t = t.replace(/[,\uFF0C\s]/g, "").replace(/[\u00B0\u00BA]/g, "");
+    if (/[A-Za-z]/.test(t)) return null;
+    t = t.replace(/\u5E74(\u5EA6|\u4EFD)?/g, "");
+    let m = /^(\d{4})[\/\-\u5E74]/.exec(t);
+    if (m) {
+      const n0 = Number(m[1]);
+      return n0 >= 1800 && n0 <= 2100 ? n0 : null;
+    }
+    m = /^(\d{4})$/.exec(t);
+    if (!m) return null;
+    const n = Number(m[1]);
+    return n >= 1800 && n <= 2100 ? n : null;
+  }
+function buildColumnPairs(rows) {
+    const width = tableWidth(rows);
+    const candidates = [];
+    for (let y = 0; y < width; y++) {
+      for (let q = 0; q < width; q++) {
+        if (y === q) continue;
+        let count = 0;
+        let header = 0;
+        let adjacent = 0;
+        for (const r of rows) {
+          const yv = parseYearValue(r[y] || "");
+          const fv = parseFlowValue(r[q] || "");
+          if (yv != null && fv != null) count++;
+          if (/年份/.test(r[y] || "") && /流量/.test(r[q] || "")) header += 10;
+        }
+        if (count < 2) continue;
+        if (q === y + 1) adjacent += 2;
+        candidates.push({ yearCol: y, flowCol: q, count, score: count * 2 + header + adjacent });
+      }
+    }
+    candidates.sort((a, b) => b.score - a.score || b.count - a.count);
+    const bestScore = candidates.length ? candidates[0].score : 0;
+    const chosen = [];
+    for (const c of candidates) {
+      if (c.flowCol <= c.yearCol && c.header <= 0) continue;
+      if (c.score < bestScore * 0.6) continue;
+      if (chosen.some((x) => x.yearCol === c.yearCol || x.flowCol === c.flowCol)) continue;
+      chosen.push(c);
+      if (chosen.length >= 4) break;
+    }
+    return chosen;
+  }
+  function buildRowPairs(rows) {
+    const pairs = [];
+    for (let r = 0; r < rows.length; r++) {
+      for (let c = 0; c < rows[r].length; c++) {
+        const year = parseYearValue(rows[r][c] || "");
+        if (year == null) continue;
+        for (let q = c + 1; q < rows[r].length; q++) {
+          const flow = parseFlowValue(rows[r][q] || "");
+          if (flow == null) continue;
+          pairs.push({ row: r, yearCol: c, flowCol: q, yearText: rows[r][c], flowText: rows[r][q] });
+          break;
+        }
+      }
+    }
+    return pairs;
+  }
+  function buildOcrPairs(rows) {
+    const columnPairs = buildColumnPairs(rows);
+        const out = [];
+            if (columnPairs.length) {
+                  for (let r = 0; r < rows.length; r++) {
+                          for (const cp of columnPairs) {
+                                    const yearText = rows[r][cp.yearCol] || "";
+                                              const flowText = rows[r][cp.flowCol] || "";
+                                                        const year = parseYearValue(yearText);
+                                                                  const flow = parseFlowValue(flowText);
+                                                                            if (year == null && flow == null) continue;
+                                                                                      out.push({ row: r, yearCol: cp.yearCol, flowCol: cp.flowCol, yearText, flowText, year, flow, included: year != null });
+                                                                                              }
+                                                                                                    }
+                                                                                                        } else {
+                                                                                                              for (const p of buildRowPairs(rows)) {
+                                                                                                                      const year = parseYearValue(p.yearText);
+                                                                                                                              const flow = parseFlowValue(p.flowText);
+                                                                                                                                      out.push({ ...p, year, flow, included: year != null });
+                                                                                                                                            }
+                                                                                                                                                }
+                                                                                                                                                
+    const knownYears = out.map((p) => p.year).filter((y) => y != null);
+        if (knownYears.length) {
+              const minYear = Math.min(...knownYears);
+                    const maxYear = Math.max(...knownYears);
+                          const existing = new Set(knownYears);
+                                for (let y = minYear; y <= maxYear; y++) {
+                                        if (!existing.has(y)) {
+                                                  out.push({ row: -1, yearCol: -1, flowCol: -1, yearText: String(y), flowText: "", year: y, flow: null, included: true });
+                                                          }
+                                                                }
+                                                                    }
+                                                                    
+    return out.sort((a, b) => (a.year ?? Number.MAX_SAFE_INTEGER) - (b.year ?? Number.MAX_SAFE_INTEGER) || (a.row ?? 0) - (b.row ?? 0));
+      }
+        function assessOcrResult(btn2) {
+    const included = ocrPairs.filter((p) => p.included);
+    const valid = included.filter((p) => parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null);
+    const years = valid.map((p) => parseYearValue(p.yearText));
+    const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+    const pending = included.filter((p) => parseYearValue(p.yearText) == null || parseFlowValue(p.flowText) == null);
+    if (!ocrPairs.length || !valid.length) {
+      return finishAction(btn2, "fail", "未识别到表格");
+    }
+    if (duplicates.length) {
+      return finishAction(btn2, "warning", "年份重复");
+    }
+    if (pending.length) {
+      return finishAction(btn2, "warning", "部分识别");
+    }
+    return finishAction(btn2, "success", "已识别");
+  }
+  function updateOcrReview() {
+    const included = ocrPairs.filter((p) => p.included);
+    const valid = included.filter((p) => parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null);
+    const years = included.map((p) => parseYearValue(p.yearText)).filter((y) => y != null).sort((a, b) => a - b);
+    const summary = $("ocrPairSummary");
+    const continuity = $("ocrContinuity");
+    if (!ocrPairs.length) {
+      summary.textContent = "\u672A\u80FD\u81EA\u52A8\u914D\u5BF9\u51FA\u300C\u5E74\u4EFD / \u6D41\u91CF\u300D\u3002\u8BF7\u67E5\u770B\u5DE6\u4FA7\u539F\u59CB\u5185\u5BB9\uFF1B\u6E05\u6670\u5EA6\u4E0D\u8DB3\u65F6\u53EF\u6539\u7528 Excel/CSV \u6216\u66F4\u6E05\u6670\u56FE\u7247\u3002";
+      continuity.textContent = "";
+      return;
+    }
+    const placeholders = ocrPairs.filter((p) => p.row < 0);
+    summary.innerHTML = `\u8BC6\u522B/\u6574\u7406\u51FA <b>${ocrPairs.length}</b> \u884C\uFF0C\u5DF2\u52FE\u9009 <b>${valid.length}</b> \u884C${placeholders.length ? `\uFF0C\u5176\u4E2D <b>${placeholders.length}</b> \u884C\u5F85\u586B\u6D41\u91CF` : ""}\u3002\u7EFF\u8272\u4E3A\u5E74\u4EFD\uFF0C\u84DD\u8272\u4E3A\u6D41\u91CF\u3002`;
+    if (!years.length) {
+      continuity.innerHTML = `<span style="color:var(--red)">\u6CA1\u6709\u53EF\u7528\u4E8E\u8FDE\u7EED\u6027\u68C0\u67E5\u7684\u5B8C\u6574\u5E74\u4EFD/\u6D41\u91CF\u3002</span>`;
+      return;
+    }
+    const missing = [];
+    for (let y = years[0]; y <= years[years.length - 1]; y++) {
+      if (years.indexOf(y) < 0) missing.push(y);
+    }
+    const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+    const uniqueDup = Array.from(new Set(duplicates));
+    let html = `\u5E74\u4EFD\u8303\u56F4\uFF1A<b>${years[0]}\u2013${years[years.length - 1]}</b>\uFF0C\u5171 <b>${years.length}</b> \u5E74\u3002`;
+    if (!missing.length && !uniqueDup.length) {
+      html += ` <span style="color:var(--green)">\u5E74\u4EFD\u8FDE\u7EED\u3002</span>`;
+    } else {
+      if (uniqueDup.length) html += ` <span style="color:var(--red)">\u91CD\u590D\uFF1A${uniqueDup.join("\u3001")}</span>`;
+      if (missing.length) html += ` <span style="color:var(--red)">\u7F3A\u5C11\uFF1A${missing.join("\u3001")}</span>`;
+    }
+    continuity.innerHTML = html;
+  }
+  function renderOcrPairTable() {
+    const box = $("ocrPairTable");
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:36px">\u7528</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:82px">\u6765\u6E90</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border);width:90px">\u5E74\u4EFD</th>
+    <th style="padding:5px;border-bottom:1px solid var(--border)">\u6D41\u91CF (m\xB3/s)</th>
+  </tr></thead><tbody>`;
+    ocrPairs.forEach((p, i) => {
+      const ok = parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null;
+      html += `<tr data-i="${i}" style="background:${ok ? "transparent" : "rgba(239,68,68,0.06)"}">
+      <td style="padding:4px;text-align:center;border-bottom:1px solid var(--border)">
+        <input type="checkbox" data-kind="include" data-i="${i}" ${p.included ? "checked" : ""} style="width:auto">
+      </td>
+      <td style="padding:4px;color:var(--text3);border-bottom:1px solid var(--border)">${p.row < 0 ? "\u5F85\u586B" : `\u7B2C${p.row + 1}\u884C`}</td>
+      <td style="padding:4px;border-bottom:1px solid var(--border)">
+        <input data-kind="year" data-i="${i}" value="${ocrEscape(p.yearText)}" style="width:100%;padding:4px 6px;font-size:12px">
+      </td>
+      <td style="padding:4px;border-bottom:1px solid var(--border)">
+        <input data-kind="flow" data-i="${i}" value="${ocrEscape(p.flowText)}" style="width:100%;padding:4px 6px;font-size:12px">
+      </td>
+    </tr>`;
+    });
+    html += `</tbody></table>`;
+    box.innerHTML = html;
+    box.querySelectorAll("input[data-i]").forEach((el) => {
+      const i = Number(el.getAttribute("data-i"));
+      const kind = el.getAttribute("data-kind");
+      const p = ocrPairs[i];
+      if (!p) return;
+      el.oninput = () => {
+        if (kind === "year") p.yearText = el.value;
+        if (kind === "flow") p.flowText = el.value;
+        if (kind === "include") p.included = !!el.checked;
+        updateOcrReview();
+      };
+      el.onchange = () => {
+        if (kind === "year" || kind === "flow") {
+          const tr = el.closest("tr");
+          const ok = parseYearValue(p.yearText) != null && parseFlowValue(p.flowText) != null;
+          if (tr) tr.style.background = ok ? "transparent" : "rgba(239,68,68,0.06)";
+        }
+      };
+    });
+  }
+  function renderOcrPageBar() {
+    const bar = $("ocrPageBar");
+    if (ocrPageUrls.length <= 1) {
+      bar.innerHTML = "";
+      return;
+    }
+    let html = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">`;
+    for (let i = 0; i < ocrPageUrls.length; i++) {
+      html += `<button class="btn ghost" data-page="${i}" style="padding:2px 8px;font-size:11px;${i === ocrActivePage ? "font-weight:700" : ""}">\u7B2C${i + 1}\u9875</button>`;
+    }
+    html += `</div>`;
+    bar.innerHTML = html;
+    bar.querySelectorAll("button[data-page]").forEach((b) => {
+      b.onclick = async () => {
+        ocrActivePage = Number(b.getAttribute("data-page"));
+        await showOcrPage(ocrActivePage);
+        renderOcrPageBar();
+      };
+    });
+  }
+  function loadDataUrlToCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = $("ocrCanvas");
+        cv.width = img.naturalWidth;
+        cv.height = img.naturalHeight;
+        const ctx = cv.getContext("2d");
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0);
+        cv.style.display = "block";
+        resolve();
+      };
+      img.onerror = () => reject(new Error("\u539F\u59CB\u5185\u5BB9\u8BFB\u53D6\u5931\u8D25"));
+      img.src = src;
+    });
+  }
+  function drawOcrOverlay() {
+    const cv = $("ocrCanvas");
+    if (cv.style.display === "none" || !cv.width || !cv.height) return;
+    const ctx = cv.getContext("2d");
+    for (const p of ocrPairs) {
+      if (!p.included) continue;
+      for (const c of ocrSourceCells) {
+        if ((c.page ?? 0) !== ocrActivePage) continue;
+        if (c.row !== p.row || c.col !== p.yearCol && c.col !== p.flowCol) continue;
+        const box = c.box || [];
+        if (box.length < 4) continue;
+        const xs = box.map((x) => Number(x[0] || 0));
+        const ys = box.map((x) => Number(x[1] || 0));
+        const x0 = Math.min(...xs) - 3, y0 = Math.min(...ys) - 3;
+        const x1 = Math.max(...xs) + 3, y1 = Math.max(...ys) + 3;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = c.col === p.yearCol ? "#16a34a" : "#2563eb";
+        ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+      }
+    }
+  }
+  async function showOcrPage(page) {
+    if (!ocrPageUrls.length) {
+      $("ocrCanvas").style.display = "none";
+      return;
+    }
+    ocrActivePage = Math.max(0, Math.min(page, ocrPageUrls.length - 1));
+    await loadDataUrlToCanvas(ocrPageUrls[ocrActivePage]);
+    drawOcrOverlay();
+  }
+  function renderOcrReview(t) {
+    ocrSourceRows = t.rows || [];
+    ocrSourceCells = t.cells || [];
+    ocrPageUrls = t.pages || [];
+    ocrSourceLabel = t.source || "\u8BC6\u522B\u7ED3\u679C";
+    ocrActivePage = 0;
+    ocrPairs = buildOcrPairs(ocrSourceRows);
+    $("ocrReview").style.display = "block";
+    renderOcrPairTable();
+    updateOcrReview();
+    renderOcrPageBar();
+    void showOcrPage(0);
+  }
+  function loadImageToCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = $("ocrCanvas");
+        const LONG = 1800;
+        const s = Math.min(1, LONG / Math.max(img.naturalWidth, img.naturalHeight));
+        cv.width = Math.max(1, Math.round(img.naturalWidth * s));
+        cv.height = Math.max(1, Math.round(img.naturalHeight * s));
+        const ctx = cv.getContext("2d");
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        cv.style.display = "block";
+        ocrImageDataUrl = cv.toDataURL("image/png");
+        resolve();
+      };
+      img.onerror = () => reject(new Error("\u56FE\u7247\u8BFB\u53D6\u5931\u8D25"));
+      img.src = src;
+    });
+  }
+  function showOcrLoading(text = "\u6B63\u5728\u8BC6\u522B\uFF0C\u8BF7\u7A0D\u5019\u2026") {
+    const overlay = $("ocrLoading");
+    const msg = $("ocrLoadingText");
+    if (msg) msg.textContent = text;
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.classList.add("ocr-loading-active");
+    const status = $("ocrStatus");
+    if (status) status.textContent = text;
+  }
+  function hideOcrLoading() {
+    const overlay = $("ocrLoading");
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("ocr-loading-active");
+  }
+  function setupOcr() {
+    const file = $("ocrFile");
+    const status = $("ocrStatus");
+    const readFile = (f) => {
+      ocrSelectedFile = f;
+      ocrImageDataUrl = "";
+      ocrSourceRows = [];
+      ocrSourceCells = [];
+      ocrPageUrls = [];
+      ocrPairs = [];
+      ocrSourceLabel = "";
+      ocrActivePage = 0;
+      $("ocrReview").style.display = "none";
+      $("ocrPairTable").innerHTML = "";
+      $("ocrPageBar").innerHTML = "";
+      $("ocrContinuity").textContent = "";
+      if (isImageLike(f)) {
+        const r = new FileReader();
+        r.onload = () => {
+          loadImageToCanvas(String(r.result)).then(() => {
+            $("ocrReview").style.display = "block";
+            renderOcrPageBar();
+            status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name || "\u526A\u8D34\u677F\u622A\u56FE"}\u300D\uFF0C\u70B9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
+          }).catch((e) => {
+            status.textContent = String(e && e.message || e);
+          });
+        };
+        r.readAsDataURL(f);
+      } else {
+        $("ocrCanvas").style.display = "none";
+        status.textContent = `\u5DF2\u8F7D\u5165\u300C${f.name}\u300D\uFF0C\u70B9\u6309\u94AE\u5F00\u59CB\u8BC6\u522B\u3002`;
+      }
+    };
+    file.onchange = () => {
+      const f = file.files && file.files[0];
+      if (f) readFile(f);
+    };
+    window.addEventListener("paste", (ev) => {
+      const dt = ev.clipboardData;
+      const items = dt && dt.items ? Array.from(dt.items) : [];
+      for (const it of items) {
+        if (it.type && String(it.type).indexOf("image/") === 0) {
+          const f = it.getAsFile();
+          if (f) readFile(f);
+          break;
+        }
+      }
+    });
+    $("ocrRun").onclick = async () => {
+      const btn2 = $("ocrRun");
+      try {
+        if (isImageLike(ocrSelectedFile)) {
+          const api = ocrApi();
+          if (!ocrImageDataUrl) {
+            status.textContent = "未选择图片；请先选择截图，或按 Ctrl+V 粘贴截图。";
+            showButtonFeedback(btn2, false, "未选择文件");
+            return;
+          }
+          showOcrLoading(api ? "正在识别图片（首次要加载模型，约 10~30 秒）…" : "正在准备浏览器识别引擎（首次需下载约 5MB 模型）…");
+          let d = null;
+          if (api && api.ocrTable) {
+            d = JSON.parse(await api.ocrTable.call(api, ocrImageDataUrl, { deskew: true }));
+          }
+          if (!d || !d.ok) {
+            d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
+          }
+          if (!d.ok) {
+            status.textContent = "识别失败：" + d.error;
+            showButtonFeedback(btn2, false, "识别失败");
+            return;
+          }
+          renderOcrReview({
+            rows: d.rows || [],
+            source: "图片 OCR",
+            cells: d.cells || [],
+            pages: [ocrImageDataUrl]
+          });
+          status.textContent = "识别完成：请核对右侧年份和流量；黄色表示仍有待填或重复年份。";
+          assessOcrResult(btn2);
+          return;
+        }
+        if (!ocrSelectedFile) {
+          status.textContent = "未选择文件；请先选择 PDF、Word、Excel、CSV/TXT 或图片。";
+          showButtonFeedback(btn2, false, "未选择文件");
+          return;
+        }
+        showOcrLoading("正在解析文档，请稍候…");
+        const t = await parseAnyDocument(ocrSelectedFile, status);
+        renderOcrReview(t);
+        status.textContent = `识别完成（来源：${t.source}）。请核对右侧年份和流量；黄色表示仍有待填或重复年份。`;
+        assessOcrResult(btn2);
+      } catch (e) {
+        status.textContent = "识别出错：" + (e instanceof Error ? e.message : String(e));
+        showButtonFeedback(btn2, false, "识别失败");
+      } finally {
+        hideOcrLoading();
+      }
+    };
+    $("ocrApply").onclick = () => {
+      const btn2 = $("ocrApply");
+      const chosen = ocrPairs.filter((p) => p.included).map((p) => ({ year: parseYearValue(p.yearText), flow: parseFlowValue(p.flowText), raw: p }));
+      const invalid = chosen.filter((p) => p.year == null || p.flow == null);
+      if (!chosen.length) {
+        status.textContent = "\u6CA1\u6709\u52FE\u9009\u53EF\u586B\u5165\u7684\u6570\u636E\uFF1B\u8BF7\u5148\u6838\u5BF9\u5E76\u52FE\u9009\u5E74\u4EFD/\u6D41\u91CF\u3002";
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
+        return;
+      }
+      if (invalid.length) {
+        status.textContent = `\u8FD8\u6709 ${invalid.length} \u884C\u5E74\u4EFD\u6216\u6D41\u91CF\u4E0D\u662F\u6709\u6548\u6570\u5B57\uFF0C\u8BF7\u4FEE\u6B63\u540E\u518D\u586B\u5165\u3002`;
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
+        return;
+      }
+      const withYear = chosen;
+      withYear.sort((a, b) => a.year - b.year);
+      const years = withYear.map((p) => p.year);
+      const missing = [];
+      for (let y = years[0]; y <= years[years.length - 1]; y++) {
+        if (years.indexOf(y) < 0) missing.push(y);
+      }
+      const duplicates = years.filter((y, i) => years.indexOf(y) !== i);
+      if (missing.length || duplicates.length) {
+        const msg = [];
+        if (duplicates.length) msg.push("\u91CD\u590D\u5E74\u4EFD " + Array.from(new Set(duplicates)).join("\u3001"));
+        if (missing.length) msg.push("\u7F3A\u5C11\u5E74\u4EFD " + missing.join("\u3001"));
+        status.textContent = "\u4E3A\u4FDD\u8BC1\u5E74\u4EFD\u8FDE\u7EED\u6027\uFF0C\u672A\u586B\u5165\uFF1A" + msg.join("\uFF1B") + "\u3002\u8BF7\u5728\u6838\u5BF9\u8868\u4E2D\u4FEE\u6B63\u3002";
+        showButtonFeedback(btn2, false, "\u672A\u586B\u5165");
+        return;
+      }
+      $("series").value = withYear.map((p) => String(p.flow)).join("\n");
+      calcFromSeries();
+      status.textContent = `\u5DF2\u586B\u5165 ${withYear.length} \u5E74\u6D41\u91CF\uFF08${years[0]}\u2013${years[years.length - 1]}\uFF0C\u8FDE\u7EED\uFF09\uFF0C\u5E76\u5B8C\u6210\u8BA1\u7B97\u3002\u8BF7\u590D\u6838\u8BA1\u7B97\u7ED3\u679C\u3002`;
+      showButtonFeedback(btn2, true, "\u5DF2\u586B\u5165");
+    };
+    $("ocrClear").onclick = () => {
+      const btn2 = $("ocrClear");
+      ocrPairs = [];
+      ocrSourceRows = [];
+      ocrSourceCells = [];
+      ocrPageUrls = [];
+      $("ocrReview").style.display = "none";
+      $("ocrPairTable").innerHTML = "";
+      $("ocrPageBar").innerHTML = "";
+      status.textContent = "\u5DF2\u6E05\u7A7A\u8BC6\u522B\u7ED3\u679C\u3002";
+      showButtonFeedback(btn2, true, "\u5DF2\u6E05\u7A7A");
+    };
+  }
+  setupOcr();
+  function feedbackTextForButton(btn2) {
+    const map = {
+      mSeries: "已切换", mParams: "已切换", mHist: "已切换", mNoData: "已切换", mMap: "已切换", mHydro: "已切换", mHelp: "已打开",
+      ocrRun: "已识别", ocrApply: "已填入", ocrClear: "已清空",
+      btnCalc: "已计算", btnThreePoint: "已适线", btnAutoFit: "已适线", btnRecommend: "已推荐", btnPhiTable: "已打开",
+      btnT3: "已载入", btnBayes: "已对比", btnHist: "已计算",
+      opUseQ: "已使用", opGo: "已计算",
+      scCalcA: "已计算", scUseQ: "已使用", scGo: "已计算",
+      lsUseV: "已使用", lsGo: "已计算",
+      abGo: "已计算", tsGo: "已汇总", rockGo: "已查得",
+      btnWsProfile: "已计算", btnWsSolve: "已反解",
+      btnSsmDemoSi: "已载入", btnSsmDemoHec: "已载入", btnSsmRun: "已计算", btnSsmClear: "已清空",
+      lkGo: "已填入", cbPsi: "已填入", cbTau: "已填入", cbZ: "已填入",
+      cbBeta: "已填入", cbGamma: "已填入", cbDelta: "已填入", cbZoneGo: "已查得",
+      logExpandAll: "已展开", logCollapseAll: "已收起", logExportMd: "已导出", logExportJson: "已导出", logClear: "已清空"
+    };
+    if (btn2.dataset.feedback) return btn2.dataset.feedback;
+    if (map[btn2.id]) return map[btn2.id];
+    const label = btn2.textContent?.trim() || "";
+    if (/清空|清除|重置/.test(label)) return "已清空";
+    if (/填入|选用|填\d/.test(label)) return "已填入";
+    if (/导出|下载|复制/.test(label)) return "已导出";
+    if (/计算|适线|推算|反解|汇总/.test(label)) return "已计算";
+    if (/识别|解析/.test(label)) return "已识别";
+    if (/载入|加载/.test(label)) return "已载入";
+    if (/打开|显示/.test(label)) return "已打开";
+    if (/收起|关闭|隐藏/.test(label)) return "已收起";
+    if (/展开/.test(label)) return "已展开";
+    if (/保存/.test(label)) return "已保存";
+    return "已完成";
+  }
+
+  var FEEDBACK_SNAPSHOT_IDS = [
+    "parseErr","opErr","scErr","lsErr","abErr","wsErr","ssmErr","mapErr","hydroErr",
+    "fitMsg","fitTrialMsg","recMsg","pjMsg","sysMsg","planMsg","pdMsg","exMsg",
+    "lkOut","ocrStatus","ocrContinuity","ocrPairSummary","qrMean","qrSigma","qrCv","qrCs","qrQ",
+    "outQ","opOut","scOut","fitOut","ssmOut","mapOut","hydroOut"
+  ];
+  var ACTION_PANEL_IDS = ["seriesBox","paramsBox","histBox","noDataBox","hydroBox","helpBox","mapBox"];
+  function snapshotActionState() {
+    const snap = {};
+    for (const id of FEEDBACK_SNAPSHOT_IDS) {
+      const el = document.getElementById(id);
+      snap["el:" + id] = el ? (el.textContent || "").trim() : "";
+    }
+    document.querySelectorAll("input, textarea, select").forEach((el, i) => {
+      snap["ctl:" + i] = (el.value || "") + "|" + (el.checked ? "1" : "0");
+    });
+    for (const id of ACTION_PANEL_IDS) {
+      const el = document.getElementById(id);
+      snap["panel:" + id] = el ? getComputedStyle(el).display : "";
+    }
+    return snap;
+  }
+  function classifyFeedbackText(t) {
+    if (!t || !t.trim()) return "none";
+    const s = t.trim();
+    if (/识别失败|识别出错|无法|不能|没有勾选|请先|先选|先选择|失败|出错|无效|必须|不得|错误|未填入|未选择|未识别到表格|未完成|至少需要|有误|不满足|为了保证|为保证|不是有效/.test(s)) return "fail";
+    if (/待填|部分识别|缺少|缺失|重复|请核对|请检查|注意/.test(s)) return "warning";
+    return "success";
+  }
+  function shortenFeedbackText(msg, level) {
+    const s = String(msg || "").trim();
+    if (!s) return level === "fail" ? "未完成" : level === "warning" ? "请核对" : "已完成";
+    if (/未选择文件|先选一张|先选择 PDF/.test(s)) return "未选择文件";
+    if (/未能?自动配对|未识别到表格|没有可用于连续性/.test(s)) return "未识别到表格";
+    if (/待填/.test(s)) return "部分识别";
+    if (/重复年份/.test(s)) return "年份重复";
+    if (/缺少|缺失/.test(s)) return "年份缺失";
+    if (/未填入|不是有效数字/.test(s)) return "未填入";
+    if (/识别失败|识别出错/.test(s)) return "识别失败";
+    if (/至少需要/.test(s)) return "数据不足";
+    if (/无效|不是有效/.test(s)) return "数据无效";
+    if (/失败|出错|错误/.test(s)) return "未完成";
+    if (/不能|无法/.test(s)) return "未完成";
+    return level === "fail" ? "未完成" : level === "warning" ? "请核对" : "已完成";
+  }
+  function assertActionResult(btn2) {
+    const visible = (id) => {
+      const el = document.getElementById(id);
+      return !!el && getComputedStyle(el).display !== "none";
+    };
+    const filled = (id, bad) => {
+      const el = document.getElementById(id);
+      return !!el && !["", "—", "-"].includes((el.textContent || "").trim()) && !(bad || []).some((x) => (el.textContent || "").includes(x));
+    };
+    switch (btn2.id) {
+      case "btnCalc":
+        if (visible("quickResult") && filled("qrMean")) return { level: "success", text: "已计算" };
+        return { level: "fail", text: "未计算" };
+      case "btnThreePoint":
+      case "btnAutoFit":
+        return filled("fitMsg") ? { level: "success", text: "已适线" } : { level: "fail", text: "未完成" };
+      case "btnRecommend":
+        return filled("recMsg") ? { level: "success", text: "已推荐" } : { level: "fail", text: "未完成" };
+      case "btnRecordFitTrial":
+        return filled("fitTrialMsg") ? { level: "success", text: "已记录" } : { level: "fail", text: "未完成" };
+      case "opGo":
+        return filled("opOut") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "scGo":
+        return filled("scOut") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnHist":
+        return visible("histResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnWsProfile":
+      case "btnWsSolve":
+        return visible("wsResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnSsmRun":
+        return visible("ssmResult") ? { level: "success", text: "已计算" } : { level: "fail", text: "未完成" };
+      case "btnBayes":
+        return visible("bayesResult") ? { level: "success", text: "已对比" } : { level: "fail", text: "未完成" };
+      default:
+        return null;
+    }
+  }
+  function evaluateActionResult(btn2, before) {
+    const state = actionStates.get(btn2) || {};
+    const now = snapshotActionState();
+    let warning = null;
+    for (const key of Object.keys(now)) {
+      if (before[key] !== now[key] && /^el:/.test(key) && /Err|Status|Msg|Continuity|Summary/i.test(key)) {
+        const level = classifyFeedbackText(now[key]);
+        if (level === "fail") return { level, text: shortenFeedbackText(now[key], level) };
+        if (level === "warning" && !warning) warning = { level, text: shortenFeedbackText(now[key], level) };
+      }
+    }
+    if (window.__hongsuanActionError) return { level: "fail", text: "未完成" };
+    if (!state.ran) return { level: "fail", text: "未完成" };
+    const asserted = assertActionResult(btn2);
+    if (asserted) return asserted;
+    return warning || { level: "success", text: feedbackTextForButton(btn2) };
+  }
+  var actionStates = /* @__PURE__ */ new WeakMap();
+  function getActionState(btn2) {
+    let state = actionStates.get(btn2);
+    if (!state) {
+      state = { busy: false, explicit: false, ran: false, token: 0, level: "idle" };
+      actionStates.set(btn2, state);
+    }
+    return state;
+  }
+  function ensureFeedbackLiveRegion() {
+    let live = document.getElementById("__hsFeedbackLive");
+    if (!live) {
+      live = document.createElement("span");
+      live.id = "__hsFeedbackLive";
+      live.className = "sr-only";
+      live.setAttribute("role", "status");
+      live.setAttribute("aria-live", "polite");
+      document.body.appendChild(live);
+    }
+    return live;
+  }
+  function showActionFeedback(btn2, level, textOverride) {
+    if (!btn2) return;
+    const state = getActionState(btn2);
+    state.token += 1;
+    state.level = level;
+    state.busy = level === "pending";
+    state.explicit = level !== "pending";
+    const text = textOverride || feedbackTextForButton(btn2);
+    state.text = text;
+    btn2.querySelector(".btn-feedback")?.remove();
+    const tip = document.createElement("span");
+    tip.className = "btn-feedback " + level;
+    tip.setAttribute("role", "status");
+    tip.textContent = text;
+    tip.title = text;
+    const width = btn2.getBoundingClientRect().width;
+    if (width < 68) {
+      tip.style.fontSize = "10px";
+      tip.style.letterSpacing = "-0.2px";
+    }
+    btn2.appendChild(tip);
+    if (level === "pending") {
+      btn2.dataset.feedbackBusy = "1";
+      btn2.setAttribute("aria-busy", "true");
+    } else {
+      delete btn2.dataset.feedbackBusy;
+      btn2.removeAttribute("aria-busy");
+    }
+    requestAnimationFrame(() => tip.classList.add("show"));
+    ensureFeedbackLiveRegion().textContent = (btn2.textContent || "").trim() + "：" + text;
+    if (level !== "pending") {
+      const delay = level === "warning" ? 1250 : 850;
+      const token = state.token;
+      setTimeout(() => { if (state.token === token) tip.classList.add("hide"); }, delay);
+      setTimeout(() => { if (state.token === token) tip.remove(); }, delay + 360);
+    }
+    return state.token;
+  }
+  function beginAction(btn2, text) {
+    const state = getActionState(btn2);
+    state.busy = true;
+    state.explicit = false;
+    state.ran = false;
+    state.error = "";
+    return showActionFeedback(btn2, "pending", text || "处理中...");
+  }
+  function finishAction(btn2, level, text) {
+    const state = getActionState(btn2);
+    state.busy = false;
+    state.explicit = true;
+    state.ran = true;
+    state.level = level;
+    return showActionFeedback(btn2, level, text || feedbackTextForButton(btn2));
+  }
+  window.HongsuanFeedback = { begin: beginAction, finish: finishAction, show: showActionFeedback };
+  function showButtonFeedback(btn2, ok, textOverride) {
+    if (textOverride === "处理中...") return beginAction(btn2, textOverride);
+    return finishAction(btn2, ok === false ? "fail" : "success", textOverride);
+  }
+  window.__hongsuanOriginalAlert = window.alert.bind(window);
+  window.alert = function (message) {
+    window.__hongsuanActionError = "未完成";
+    return window.__hongsuanOriginalAlert(message);
+  };
+  function __wrapHongsuanButton(btn2) {
+    const original = btn2.onclick;
+    if (typeof original !== "function" || original.__hongsuanWrapped) return;
+    const wrapped = function (event) {
+      if (btn2.dataset.hsNoFeedback === "1") return original.call(this, event);
+      const state = getActionState(btn2);
+      if (state.busy) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      const before = snapshotActionState();
+      beginAction(btn2);
+      try {
+        const result = original.call(this, event);
+        state.ran = true;
+        if (result && typeof result.then === "function") {
+          Promise.resolve(result).then(() => {
+            if (!state.explicit) {
+              const r = evaluateActionResult(btn2, before);
+              finishAction(btn2, r.level, r.text);
+            }
+          }, (e) => {
+            finishAction(btn2, "fail", (e && e.message) || "执行失败");
+            console.error(e);
+          });
+          return result;
+        }
+        setTimeout(() => {
+          if (!state.explicit) {
+            const r = evaluateActionResult(btn2, before);
+            finishAction(btn2, r.level, r.text);
+          }
+        }, 220);
+        return result;
+      } catch (e) {
+        finishAction(btn2, "fail", (e && e.message) || "执行失败");
+        console.error(e);
+      }
+    };
+    wrapped.__hongsuanWrapped = true;
+    wrapped.__hongsuanOriginal = original;
+    btn2.onclick = wrapped;
+  }
+  const __actionClick = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "onclick");
+  if (__actionClick && __actionClick.set && !HTMLButtonElement.prototype.__hongsuanActionPatched) {
+    Object.defineProperty(HTMLButtonElement.prototype, "onclick", {
+      configurable: true,
+      enumerable: __actionClick.enumerable,
+      get() { return __actionClick.get.call(this); },
+      set(value) {
+        if (typeof value === "function" && !value.__hongsuanWrapped) {
+          const wrapped = function (event) {
+            const btn2 = this;
+            if (btn2.dataset.hsNoFeedback === "1") return value.call(this, event);
+            const state = getActionState(btn2);
+            if (state.busy) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            const before = snapshotActionState();
+            beginAction(btn2);
+            try {
+              const result = value.call(this, event);
+              state.ran = true;
+              if (result && typeof result.then === "function") {
+                Promise.resolve(result).then(() => {
+                  if (!state.explicit) {
+                    const r = evaluateActionResult(btn2, before);
+                    finishAction(btn2, r.level, r.text);
+                  }
+                }, (e) => {
+                  finishAction(btn2, "fail", (e && e.message) || "执行失败");
+                  console.error(e);
+                });
+                return result;
+              }
+              setTimeout(() => {
+                if (!state.explicit) {
+                  const r = evaluateActionResult(btn2, before);
+                  finishAction(btn2, r.level, r.text);
+                }
+              }, 220);
+              return result;
+            } catch (e) {
+              finishAction(btn2, "fail", (e && e.message) || "执行失败");
+              console.error(e);
+            }
+          };
+          wrapped.__hongsuanWrapped = true;
+          wrapped.__hongsuanOriginal = value;
+          __actionClick.set.call(this, wrapped);
+        } else {
+          __actionClick.set.call(this, value);
+        }
+      }
+    });
+    HTMLButtonElement.prototype.__hongsuanActionPatched = true;
+  }
+  document.querySelectorAll("button").forEach((btn2) => __wrapHongsuanButton(btn2));
+
+  // ---------- 暴雨雨力 Sp 等值线地图 ----------
+  var spMap = null;
+  var spAdminLayer = null;
+  var spCityLayer = null;
+  var spContourLayer = null;
+  var spCurrentAdmin = "";
+  var spCityCache = {};
+  var spDataset = "1";
+  var spLastPoint = null;
+  var spOverlayLayer = null;
+  var spMarker = null;
+  var spCityAdcode = "";
+  var spCountyLayer = null;
+  function spContoursData() {
+    if (spDataset === "grid") {
+      const g = window.HONGSUAN_ATLAS_H1P_60MIN;
+      return g && Array.isArray(g.features) ? g.features : [];
+    }
+    const d = window.HONGSUAN_SP_CONTOURS;
+    if (!d || !Array.isArray(d.features)) return [];
+    const p = Number(spDataset);
+    return d.features.filter((f) => !f.properties || !f.properties.p || Number(f.properties.p) === p);
+  }
+  function spOverlayAdd() {
+    if (spOverlayLayer) { try { spMap.removeLayer(spOverlayLayer); } catch (e3) {} spOverlayLayer = null; }
+    if (spDataset === "grid") return;
+    const ov = (window.HONGSUAN_SP_OVERLAYS || {})[spDataset];
+    if (ov && ov.url && ov.bounds) {
+      try {
+        spOverlayLayer = L.imageOverlay(ov.url, ov.bounds, { opacity: 0.9, interactive: false });
+        spOverlayLayer.addTo(spMap);
+        spOverlayLayer.bringToBack();
+      } catch (e3) { spOverlayLayer = null; }
+    }
+  }
+  function spSampleAt(lat, lng) {
+    const pts = [];
+    const pushPt = (sp, plng, plat) => pts.push({ sp, lng: plng, lat: plat });
+    for (const f of spContoursData()) {
+      const sp = f.properties ? Number(f.properties.sp) : NaN;
+      if (!Number.isFinite(sp)) continue;
+      let lines = [];
+      const g = f.geometry;
+      if (!g) continue;
+      if (g.type === "Point") { pushPt(sp, g.coordinates[0], g.coordinates[1]); continue; }
+      if (g.type === "LineString") lines = [g.coordinates];
+      else if (g.type === "MultiLineString" || g.type === "Polygon") lines = g.coordinates;
+      else if (g.type === "MultiPolygon") for (const poly of g.coordinates) lines = lines.concat(poly);
+      for (const line of lines) {
+        for (const pt of line) pushPt(sp, pt[0], pt[1]);
+        // 投影到相邻顶点连线，等值线顶点稀疏时也能取准最近距离
+        for (let i = 1; i < line.length; i++) {
+          const a = line[i - 1], b = line[i];
+          const ax = (a[0] - lng) * 111 * Math.cos(lat * Math.PI / 180), ay = a[1] - lat;
+          const bx = (b[0] - lng) * 111 * Math.cos(lat * Math.PI / 180), by = b[1] - lat;
+          const abx = bx - ax, aby = by - ay;
+          const len2 = abx * abx + aby * aby;
+          let t = len2 > 0 ? -(ax * abx + ay * aby) / len2 : 0;
+          t = Math.max(0, Math.min(1, t));
+          const mx = ax + t * abx, my = ay + t * aby;
+          pts.push({ sp, lng: 0, lat: 0, d: Math.hypot(mx, my), _raw: true });
+        }
+      }
+    }
+    if (!pts.length) return null;
+    for (const p of pts) {
+      if (!p._raw) p.d = Math.hypot((p.lng - lng) * 111 * Math.cos(lat * Math.PI / 180), (p.lat - lat) * 111);
+    }
+    pts.sort((a, b) => a.d - b.d);
+    const k = Math.min(8, pts.length);
+    let num = 0, den = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / Math.pow(Math.max(pts[i].d, 0.5), 2);
+      num += w * pts[i].sp;
+      den += w;
+    }
+    const nearList = pts.slice(0, 3).filter((p) => Number.isFinite(p.sp)).map((p) => ({ sp: p.sp, d: p.d }));
+    return { sp: num / den, nearestSp: pts[0].sp, distKm: pts[0].d, nearList };
+  }
+  function spUpdateInfo(lat, lng, adminName) {
+    const box = $("spInfoBox");
+    if (!box) return;
+    const admin = adminName ? "｜行政区：" + adminName : "";
+    const r = spSampleAt(lat, lng);
+    if (!r) {
+      box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "<br>等值线数据未载入，暂无法插值 Sp。";
+      return;
+    }
+    const near = (r.nearList || [{ sp: r.nearestSp, d: r.distKm }]).slice(0, 3)
+      .map((x) => "S\u209a=" + x.sp + "（" + x.d.toFixed(0) + " km）").join("、");
+    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>该点插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考，请对照底图原图等值线读数校核" : "");
+    const btn = $("spFillBtn");
+    if (btn) btn.onclick = () => {
+      $("rcSp").value = r.sp.toFixed(0);
+      calcMethodC();
+      box.innerHTML = box.innerHTML.replace("<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>", "<span style=\"color:#34c759\">✓ 已填入 Sp=" + r.sp.toFixed(0) + "</span>");
+    };
+  }
+  function spRefreshContours() {
+    if (!spMap) return;
+    if (spContourLayer) {
+      spMap.removeLayer(spContourLayer);
+      spContourLayer = null;
+    }
+    const feats = spContoursData();
+    const st = $("spMapStatus");
+    spOverlayAdd();
+    if (!feats.length) {
+      if (st) st.textContent = "等值线数据未载入";
+      return;
+    }
+    const dsName = spDataset === "grid" ? "图集格网（60min）" : (spDataset === "1" ? "1%" : "4%");
+    spContourLayer = L.geoJSON(
+      { type: "FeatureCollection", features: feats },
+      {
+        style: () => ({ color: "#1d6fd1", weight: 2, opacity: 0.9 }),
+        pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 2.5, color: "#1d6fd1", weight: 1, fillColor: "#4da3ff", fillOpacity: 0.9 }),
+        onEachFeature: (f, layer) => {
+          if (f.properties && f.properties.sp != null) layer.bindTooltip("S\u209a（" + dsName + "）= " + f.properties.sp + " mm/h", { sticky: true });
+        }
+      }
+    ).addTo(spMap);
+    if (st) st.textContent = "已载入 S\u209a（" + dsName + "）标注 " + feats.length + " 点 + 配准扫描底图";
+  }
+  function spClearAdminLayers() {
+    if (spCityLayer) { try { spMap.removeLayer(spCityLayer); } catch (e4) {} spCityLayer = null; }
+    if (spCountyLayer) { try { spMap.removeLayer(spCountyLayer); } catch (e4) {} spCountyLayer = null; }
+    spCityAdcode = "";
+    const bb = $("spBackBtn");
+    if (bb) bb.style.display = "none";
+  }
+  async function spLoadAdminGeo(adcode, name, level) {
+    try {
+      if (!spCityCache[adcode]) {
+        const res = await fetch("https://geo.datav.aliyun.com/areas_v3/bound/" + adcode + "_full.json");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        spCityCache[adcode] = await res.json();
+      }
+      if (level === "city") {
+        if (spCountyLayer) { try { spMap.removeLayer(spCountyLayer); } catch (e4) {} spCountyLayer = null; }
+        if (spCityLayer) spMap.removeLayer(spCityLayer);
+        spCityLayer = L.geoJSON(spCityCache[adcode], {
+          style: () => ({ color: "#c2571f", weight: 1.5, fillColor: "#f7e8df", fillOpacity: 0.08 }),
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip((f.properties && f.properties.name) || "", { sticky: true });
+            layer.on("click", () => {
+              spCurrentAdmin = (f.properties && f.properties.name) || name;
+              try { spMap.fitBounds(layer.getBounds(), { padding: [24, 24] }); } catch (e5) {}
+              if (f.properties && f.properties.adcode) {
+                spCityAdcode = String(f.properties.adcode);
+                spLoadAdminGeo(spCityAdcode, spCurrentAdmin, "county");
+              }
+            });
+          }
+        }).addTo(spMap);
+        const bb = $("spBackBtn");
+        if (bb) { bb.style.display = ""; bb.textContent = "⬅ 返回省级"; bb.onclick = () => {
+          spClearAdminLayers();
+          if (spMap) spMap.setView([35.5, 105], 4);
+          const st2 = $("spMapStatus");
+          if (st2) st2.textContent = "已返回全国视图，点击省域下钻";
+        }; }
+        const st = $("spMapStatus");
+        if (st) st.textContent = name + "：已显示市界 · 点击市域可继续下钻到区县";
+      } else {
+        if (spCountyLayer) spMap.removeLayer(spCountyLayer);
+        spCountyLayer = L.geoJSON(spCityCache[adcode], {
+          style: () => ({ color: "#a33", weight: 1.2, fillColor: "#ffe9ec", fillOpacity: 0.1 }),
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip((f.properties && f.properties.name) || "", { sticky: true });
+            layer.on("click", () => { spCurrentAdmin = (f.properties && f.properties.name) || name; });
+          }
+        }).addTo(spMap);
+        const st = $("spMapStatus");
+        if (st) st.textContent = name + "：已显示区县界 · 点击区县标记行政区";
+      }
+    } catch (e) {
+      const st = $("spMapStatus");
+      if (st) st.textContent = name + "：行政区划需联网加载（离线时仅显示上级边界）";
+    }
+  }
+  function spMapEnsure() {
+    if (spMap || !window.L) return;
+    spMap = L.map("spMap", { zoomSnap: 0.25, attributionControl: false }).setView([35.5, 105], 4);
+    spAdminLayer = L.geoJSON(window.HONGSUAN_CHINA_PROVINCES || { type: "FeatureCollection", features: [] }, {
+      style: () => ({ color: "#5b7a99", weight: 1, fillColor: "#dfe9f3", fillOpacity: 0.6 }),
+      onEachFeature: (f, layer) => {
+        const nm = f.properties && f.properties.name;
+        if (nm) layer.bindTooltip(nm, { sticky: true });
+        layer.on("click", () => {
+          spCurrentAdmin = nm || "";
+          try { spMap.fitBounds(layer.getBounds(), { padding: [24, 24] }); } catch (e2) {}
+          if (f.properties && f.properties.adcode) spLoadAdminGeo(String(f.properties.adcode), nm || "该省", "city");
+        });
+      }
+    }).addTo(spMap);
+    spRefreshContours();
+    spMap.on("click", (e) => {
+      const ll = e.latlng;
+      spLastPoint = { lat: ll.lat, lng: ll.lng };
+      if (!spMarker) {
+        spMarker = L.circleMarker(ll, { radius: 7, color: "#d32f2f", weight: 2, fillColor: "#ff5252", fillOpacity: 0.9 }).addTo(spMap);
+      } else {
+        spMarker.setLatLng(ll);
+      }
+      spUpdateInfo(ll.lat, ll.lng, spCurrentAdmin);
+    });
+    const sel = $("spProvSel");
+    if (sel) {
+      const feats = ((window.HONGSUAN_CHINA_PROVINCES || {}).features || []).filter((f) => f.properties && f.properties.name);
+      sel.innerHTML = "<option value=\"\">—选择省份—</option>" + feats.map((f) => "<option value=\"" + f.properties.adcode + "\">" + f.properties.name + "</option>").join("");
+      sel.onchange = () => {
+        const adcode = sel.value;
+        const f = feats.find((x) => String(x.properties.adcode) === String(adcode));
+        if (!f || !spMap) return;
+        spCurrentAdmin = f.properties.name;
+        const lyr = spAdminLayer.getLayers().find((l) => l.feature === f);
+        if (lyr) { try { spMap.fitBounds(lyr.getBounds(), { padding: [24, 24] }); } catch (e2) {} }
+        spLoadAdminGeo(String(adcode), f.properties.name, "city");
+      };
+    }
+    const bDs1 = $("spDs1"), bDs4 = $("spDs4");
+    const bGrid = $("spGridBtn");
+    if (bDs1) bDs1.onclick = () => spSetDataset("1");
+    if (bDs4) bDs4.onclick = () => spSetDataset("4");
+    if (bGrid) bGrid.onclick = () => spSetDataset("grid");
+    const bFs = $("spFsBtn");
+    if (bFs) bFs.onclick = () => {
+      const panel = $("spMapPanel");
+      if (!panel) return;
+      const on = panel.classList.toggle("sp-fullscreen");
+      bFs.textContent = on ? "✕ 退出全屏" : "⛶ 全屏";
+      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 60);
+      window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 250);
+    };
+    const goBtn = $("spGoBtn");
+    if (goBtn) goBtn.onclick = () => {
+      const lat = parseFloat($("spLatInput").value), lng = parseFloat($("spLonInput").value);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 15 || lat > 54 || lng < 71 || lng > 136) return;
+      spMap.setView([lat, lng], Math.max(spMap.getZoom(), 7));
+      spLastPoint = { lat, lng };
+      if (!spMarker) {
+        spMarker = L.circleMarker([lat, lng], { radius: 7, color: "#d32f2f", weight: 2, fillColor: "#ff5252", fillOpacity: 0.9 }).addTo(spMap);
+      } else {
+        spMarker.setLatLng([lat, lng]);
+      }
+      spUpdateInfo(lat, lng, spCurrentAdmin);
+    };
+    spSetDataset("1");
+    const panel = $("spMapPanel");
+    if (panel) panel.addEventListener("toggle", () => {
+      if (panel.open) {
+        spMapEnsure();
+        window.setTimeout(() => { if (spMap) spMap.invalidateSize(); }, 120);
+      }
+    });
+    window.__hsSpMap = spMap;
+    window.__hsSpReady = true;
+  }
+  function spSetDataset(p) {
+    spDataset = String(p);
+    spRefreshContours();
+    const b1 = $("spDs1"), b4 = $("spDs4"), bGrid = $("spGridBtn");
+    if (b1) b1.style.opacity = spDataset === "1" ? "1" : "0.45";
+    if (b4) b4.style.opacity = spDataset === "4" ? "1" : "0.45";
+    if (bGrid) bGrid.style.opacity = spDataset === "grid" ? "1" : "0.45";
+    const box = $("spInfoBox");
+    if (box) box.innerHTML = spDataset === "grid" ? "当前数据集：图集格网（60min）· 点击地图任意位置即可查该点 1% 点雨量，点「填入 S<sub>p</sub>」写入推理公式。" : "当前数据集：S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）· 点击地图任意位置即可查该点 S<sub>p</sub>，点「填入 S<sub>p</sub>」写入推理公式。";
+  }
+  function p3Interpolate(points, lat, lng) {
+    if (!Array.isArray(points) || !points.length) return null;
+    const norm = Math.cos(lat * Math.PI / 180);
+    const pts = points.map((p) => ({
+      x: Number(p[0]), y: Number(p[1]), v: Number(p[2]),
+      d: Math.hypot((Number(p[0]) - lng) * 111 * norm, (Number(p[1]) - lat) * 111)
+    })).filter((p) => [p.x,p.y,p.v].every(Number.isFinite)).sort((a,b) => a.d - b.d);
+    if (!pts.length) return null;
+    const k = Math.min(8, pts.length);
+    let num = 0, den = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / Math.pow(Math.max(pts[i].d, 0.5), 2);
+      num += w * pts[i].v; den += w;
+    }
+    return { value: num / den, nearest: pts[0].v, distKm: pts[0].d, used: k };
+  }
+  function p3Calculate() {
+    const lng = parseFloat($("p3Lon").value), lat = parseFloat($("p3Lat").value);
+    const freqPct = parseFloat($("p3Freq").value), nExp = parseFloat($("p3N").value);
+    const durKey = $("p3Dur").value;
+    const data = (window.HONGSUAN_ATLAS_P3_PARAMS || {}).durations || {};
+    const out = $("p3Out");
+    if (![lng,lat,freqPct].every(Number.isFinite)) throw new Error("请先输入有效的经纬度和频率");
+    if (lat < 15 || lat > 54 || lng < 71 || lng > 136) throw new Error("经纬度超出图集覆盖范围");
+    if (!(freqPct > 0 && freqPct < 100)) throw new Error("频率应在 0~100% 之间");
+    if (!data[durKey] || !Array.isArray(data[durKey].mean)) throw new Error("图集参数未载入");
+    const m = p3Interpolate(data[durKey].mean, lat, lng);
+    const cv = p3Interpolate(data[durKey].cv, lat, lng);
+    if (!m || !cv) throw new Error("该历时的均值或 Cv 格网未载入");
+    const cs = 3.5 * cv.value;
+    const phi = phiPIII(freqPct / 100, cs);
+    const h = m.value * (1 + cv.value * phi);
+    if (!(h > 0)) throw new Error("推算点雨量异常，请检查坐标附近格网");
+    const hours = Number(data[durKey].hours) || 1;
+    const sp = nExp === 1 ? h : h / Math.pow(hours, 1 - nExp);
+    const nearText = `均值最近 ${m.distKm.toFixed(0)} km · Cv 最近 ${cv.distKm.toFixed(0)} km`;
+    return { h, sp, mean: m.value, cv: cv.value, cs, phi, hours, nearText };
+  }
+  function p3ShowResult() {
+    const out = $("p3Out"), btn = $("p3FillSp");
+    try {
+      const r = p3Calculate();
+      out.innerHTML = `<b style="color:var(--blue)">H<sub>p</sub> = ${r.h.toFixed(1)} mm</b>　·　换算 S<sub>p</sub> ≈ <b>${r.sp.toFixed(1)} mm/h</b><br>均值 ${r.mean.toFixed(1)} mm · Cv ${r.cv.value.toFixed(2)} · Cs = 3.5Cv = ${r.cs.toFixed(2)} · Φ = ${r.phi.toFixed(2)}<br><span style="color:var(--text3)">${r.nearText}；60min 的 H 可直接视为 Sp，其他历时依赖 n 换算。</span>`;
+      if (btn) { btn.style.display = ""; btn.dataset.sp = r.sp.toFixed(1); }
+    } catch (e) {
+      out.innerHTML = `<span style="color:var(--red)">${e.message || e}</span>`;
+      if (btn) btn.style.display = "none";
+    }
+  }
+  window.__hsP3Calculate = p3Calculate;
+  window.__hsSpSample = spSampleAt;
+  window.__hsSpSetDataset = spSetDataset;
+  const p3CalcBtn = document.getElementById("p3Calc");
+  if (p3CalcBtn) p3CalcBtn.onclick = p3ShowResult;
+  const p3UseMapBtn = document.getElementById("p3UseMap");
+  if (p3UseMapBtn) p3UseMapBtn.onclick = () => {
+    if (!spLastPoint) { const o = document.getElementById("p3Out"); if (o) o.innerHTML = "请先在上方地图点击桥位位置。"; return; }
+    document.getElementById("p3Lon").value = spLastPoint.lng.toFixed(3);
+    document.getElementById("p3Lat").value = spLastPoint.lat.toFixed(3);
+    p3ShowResult();
+  };
+  const p3FillBtn = document.getElementById("p3FillSp");
+  if (p3FillBtn) p3FillBtn.onclick = () => {
+    const sp = Number(p3FillBtn.dataset.sp);
+    if (!Number.isFinite(sp)) return;
+    $("rcSp").value = sp.toFixed(1);
+    if (typeof calcMethodC === "function") calcMethodC();
+  };
+  window.__hsSpRefresh = spRefreshContours;
+  window.__hsSpUpdateInfo = spUpdateInfo;
+})();
+
+
+

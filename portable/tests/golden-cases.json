@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "base": "v1.0.14",
+  "provenance": "case1/2 依据 2026-10-14 v1.0.10 CDP 实测（知识库校核轮）；case3 依据《水文水利计算》式(5-10) 口径手算复核（2026-10-14）；2026-10-16 校准：mean 按 UI 显示精度 147.9（tol 0.06 覆盖舍入）",
+  "cases": [
+    {
+      "id": "freq_params_12yr",
+      "kind": "series",
+      "desc": "12 年流量序列矩法参数（UI 显示 1 位小数，按显示值校准）",
+      "series": [
+        100,
+        150,
+        120,
+        180,
+        200,
+        130,
+        160,
+        110,
+        170,
+        140,
+        190,
+        125
+      ],
+      "expect": {
+        "mean": 147.9,
+        "cv": 0.219,
+        "tol": 0.06
+      }
+    },
+    {
+      "id": "autofit_12yr",
+      "kind": "autofit",
+      "desc": "自动适线：绝对值准则+黄金分割（Cv 沿用 case1）",
+      "dependsOn": "freq_params_12yr",
+      "expect": {
+        "M": 1,
+        "tol": 0.01,
+        "warnCs2Cv": true
+      }
+    },
+    {
+      "id": "rational_formula",
+      "kind": "rational",
+      "desc": "推理公式 Q=0.278·ψ·(Sp/τ^n)·F（《水文水利计算》式 5-10 口径）",
+      "input": {
+        "Sp": 50,
+        "n": 0.7,
+        "psi": 0.9,
+        "tau": 1.83,
+        "F": 95
+      },
+      "expect": {
+        "q": 778.5,
+        "tol": 0.5
+      }
+    }
+  ]
+}
