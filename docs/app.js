@@ -7288,6 +7288,58 @@ function buildColumnPairs(rows) {
       const f = file.files && file.files[0];
       if (f) readFile(f);
     };
+    async function runDemoScan(autoApply, demoSrc) {
+      const status = $("ocrStatus");
+      const btn = $("demoScanBtn");
+      try {
+        if (btn) showButtonFeedback(btn, true, "加载示例");
+        ocrSelectedFile = { name: "demo_table.jpg", type: "image/jpeg" };
+        ocrImageDataUrl = "";
+        ocrSourceRows = []; ocrSourceCells = []; ocrPageUrls = [];
+        ocrPairs = []; ocrSourceLabel = ""; ocrActivePage = 0;
+        $("ocrReview").style.display = "none";
+        $("ocrPairTable").innerHTML = "";
+        $("ocrPageBar").innerHTML = "";
+        $("ocrContinuity").textContent = "";
+        const resp = await fetch(demoSrc || "demo/demo_table.jpg");
+        if (!resp.ok) throw new Error("示例图片加载失败（HTTP " + resp.status + "）");
+        const blob = await resp.blob();
+        const dataUrl = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result));
+          r.onerror = () => rej(new Error("示例图片读取失败"));
+          r.readAsDataURL(blob);
+        });
+        await loadImageToCanvas(dataUrl);
+        $("ocrReview").style.display = "block";
+        renderOcrPageBar();
+        showOcrLoading("正在识别示例扫描件（浏览器 OCR，首次加载模型约 5MB，请稍候）…");
+        const d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
+        if (!d || !d.ok) throw new Error((d && d.error) || "识别失败");
+        renderOcrReview({ rows: d.rows || [], source: "示例扫描件 OCR（表3-1-1）", cells: d.cells || [], pages: [ocrImageDataUrl] });
+        if (autoApply && $("ocrApply")) {
+          $("ocrApply").click();
+        } else {
+          status.textContent = "识别完成：示例为《桥涵水文（第五版）》表3-1-1 年最大流量（1951\u20131982）。请核对后点「填入」。";
+        }
+      } catch (e) {
+        status.textContent = "示例加载失败：" + (e instanceof Error ? e.message : String(e));
+        if (btn) showButtonFeedback(btn, false, "失败");
+      } finally {
+        hideOcrLoading();
+      }
+    }
+    window.__hsDemoScan = runDemoScan;
+    const demoScanBtn = $("demoScanBtn");
+    if (demoScanBtn) demoScanBtn.onclick = () => { void runDemoScan(true); };
+    if (new URLSearchParams(location.search).get("demo")) {
+      window.addEventListener("load", () => setTimeout(() => {
+        const b = $("demoScanBtn");
+        if (b) b.click();
+        const card = $("inputCard");
+        if (card) card.scrollIntoView({ behavior: "smooth" });
+      }, 600));
+    }
     window.addEventListener("paste", (ev) => {
       const dt = ev.clipboardData;
       const items = dt && dt.items ? Array.from(dt.items) : [];
