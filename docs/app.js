@@ -7313,10 +7313,15 @@ function buildColumnPairs(rows) {
         await loadImageToCanvas(dataUrl);
         $("ocrReview").style.display = "block";
         renderOcrPageBar();
-        showOcrLoading("正在识别示例扫描件（浏览器 OCR，首次加载模型约 5MB，请稍候）…");
-        const d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
+        showOcrLoading("正在载入示例识别数据（桌面版同款 RapidOCR 引擎预识别）…");
+        let d = null;
+        if (window.HONGSUAN_DEMO_OCR && window.HONGSUAN_DEMO_OCR.ok) {
+          d = JSON.parse(JSON.stringify(window.HONGSUAN_DEMO_OCR));
+        } else {
+          d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
+        }
         if (!d || !d.ok) throw new Error((d && d.error) || "识别失败");
-        renderOcrReview({ rows: d.rows || [], source: "示例扫描件 OCR（表3-1-1）", cells: d.cells || [], pages: [ocrImageDataUrl] });
+        renderOcrReview({ rows: d.rows || [], source: (window.HONGSUAN_DEMO_OCR ? "桌面版同款 RapidOCR 预识别（表3-1-1）" : "浏览器 OCR（表3-1-1）"), cells: d.cells || [], pages: [ocrImageDataUrl] });
         if (autoApply && $("ocrApply")) {
           $("ocrApply").click();
         } else {
