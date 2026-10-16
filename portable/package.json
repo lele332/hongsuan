@@ -62,7 +62,7 @@
         }
       ],
       "icon": "icon-matching.ico",
-      "artifactName": "泓算安装包.exe"
+      "artifactName": "HongSuan-Setup-v${version}-x64.exe"
     },
     "nsis": {
       "perMachine": true,

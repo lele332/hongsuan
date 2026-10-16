@@ -15,6 +15,7 @@ const errors = [];
 if (!semver.test(pkg.version)) errors.push(`package.json version is not valid semver: ${pkg.version}`);
 if (lock.version !== pkg.version) errors.push(`package-lock.json version (${lock.version}) != package.json version (${pkg.version})`);
 if (!pkg.build || pkg.build.electronVersion !== "44.7.2") errors.push("build.electronVersion must be 44.7.2");
+if (!pkg.build || !pkg.build.win || pkg.build.win.artifactName !== "HongSuan-Setup-v${version}-x64.exe") errors.push("build.win.artifactName must use the stable English setup name");
 if (!pkg.build || !pkg.build.publish || pkg.build.publish.owner !== "lele332" || pkg.build.publish.repo !== "hongsuan") errors.push("build.publish must target lele332/hongsuan");
 for (const file of ["main.js", "preload.js", "index.html", "app.js", "libs/hs-libs-loader.js"]) {
   if (!fs.existsSync(path.join(root, file))) errors.push(`required runtime file is missing: ${file}`);
