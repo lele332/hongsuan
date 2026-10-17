@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   if (document.getElementById("dlOverlay")) return;
-  var HS_RELEASE = "v1.0.13";
+  var HS_RELEASE = "v1.0.14";
   var GH = "https://github.com/lele332/hongsuan/releases/download/" + HS_RELEASE + "/";
   var ASSETS = {
     x64: "HongSuan-Setup-" + HS_RELEASE + "-x64.exe",

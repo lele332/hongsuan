@@ -1,7 +1,7 @@
 /* 泓算 Service Worker：预缓存应用外壳 + 运行时缓存（Workbox 风格策略的轻量实现）
  * 更新方式：改代码时把 CACHE 版本号 +1，旧缓存自动清理。
  */
-const CACHE = "hongsuan-v1-0-13-a1da248";
+const CACHE = "hongsuan-v1-0-14-a75a714";
 const PRECACHE = [
   "./",
   "index.html",
@@ -64,10 +64,22 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // 外部请求（Umami 等）直连，不缓存
 
-  // 页面导航：命中缓存则离线可用，否则联网并回写
+  // 页面导航：网络优先（保证内容最新），失败时回退到缓存（网络抖动不再 ERR_FAILED）
   if (req.mode === "navigate") {
     e.respondWith(
-      caches.match("index.html").then((hit) => hit || fetch(req))
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("index.html", copy));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match("index.html")
+            .then((hit) => hit || caches.match("./"))
+            .then((hit) => hit || Response.error())
+        )
     );
     return;
   }
