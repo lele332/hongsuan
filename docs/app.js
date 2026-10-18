@@ -6630,6 +6630,64 @@
     const nums = rows.reduce((n, r) => n + r.filter((x) => /\d/.test(String(x || ""))).length, 0);
     return rows.length * 2 + cells + nums * 1.5;
   }
+  // ===== 服务器 OCR（RapidOCR 同源引擎，可选增强；不可用时自动回退浏览器识别） =====
+  function hsOcrServers() {
+    const list = Array.isArray(window.HS_OCR_SERVERS) && window.HS_OCR_SERVERS.length
+      ? window.HS_OCR_SERVERS
+      : ["https://ocr.csuft-sce.cn/ocr", "http://120.26.35.167:9005/ocr"];
+    const pageHttps = location.protocol === "https:";
+    // HTTPS 页面禁止访问 HTTP 接口（混合内容），直接过滤避免报错
+    return list.filter((u) => !pageHttps || String(u).indexOf("https://") === 0);
+  }
+  function rapidBoxesToWords(results) {
+    const words = [];
+    for (const r of results || []) {
+      if (!Array.isArray(r) || r.length < 2) continue;
+      const box = r[0];
+      const text = String(r[1] || "").trim();
+      if (!box || !text) continue;
+      const xs = box.map((p) => Number(p[0]) || 0);
+      const ys = box.map((p) => Number(p[1]) || 0);
+      words.push({
+        text,
+        confidence: Math.max(0, Math.min(100, (Number(r[2]) || 0) * 100)),
+        bbox: { x0: Math.min.apply(null, xs), y0: Math.min.apply(null, ys), x1: Math.max.apply(null, xs), y1: Math.max.apply(null, ys) }
+      });
+    }
+    return words;
+  }
+  async function serverOcrTable(dataUrl, onStatus) {
+    const servers = hsOcrServers();
+    if (!servers.length) return null;
+    const base64 = String(dataUrl).replace(/^data:[^,]*,/, "");
+    for (const url of servers) {
+      try {
+        onStatus?.("正在使用服务器 RapidOCR 识别…");
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 30000);
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: base64, deskew: true }),
+          signal: ctrl.signal
+        });
+        clearTimeout(timer);
+        if (!resp.ok) continue;
+        const d = await resp.json();
+        if (d && d.ok && Array.isArray(d.rows)) {
+          return { ok: true, ncol: d.ncol || (d.rows[0] ? d.rows[0].length : 0), rows: d.rows, conf: d.conf || [], cells: d.cells || [], engine: d.engine || "rapidocr-server" };
+        }
+        if (d && Array.isArray(d.results)) {
+          const t = tessClusterTable(rapidBoxesToWords(d.results));
+          if (t && t.ok) return { ok: true, ncol: t.ncol, rows: t.rows, conf: t.conf, cells: t.cells, engine: "rapidocr-server" };
+        }
+      } catch {
+        // 服务器不可用/超时 → 尝试下一个端点
+      }
+    }
+    return null;
+  }
+
   async function browserOcrTable(dataUrl, onStatus) {
     const worker = await getTessWorker(onStatus);
     onStatus?.("\u6D4F\u89C8\u5668\u672C\u5730\u8BC6\u522B\u4E2D\u2026\uFF08\u56FE\u7247\u4E0D\u79BB\u5F00\u4F60\u7684\u7535\u8111\uFF09");
@@ -6888,6 +6946,9 @@ function textToTable(text, source) {
             let d = null;
       if (api && api.ocrTable) {
         d = JSON.parse(await api.ocrTable.call(api, dataUrl, { deskew: true }));
+      }
+      if (!d || !d.ok) {
+        d = await serverOcrTable(dataUrl);
       }
       if (!d || !d.ok) {
         d = JSON.parse(await browserOcrTable(dataUrl, (s) => {
@@ -7378,6 +7439,9 @@ function buildColumnPairs(rows) {
             d = JSON.parse(await api.ocrTable.call(api, ocrImageDataUrl, { deskew: true }));
           }
           if (!d || !d.ok) {
+            d = await serverOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s));
+          }
+          if (!d || !d.ok) {
             d = JSON.parse(await browserOcrTable(ocrImageDataUrl, (s) => showOcrLoading(s)));
           }
           if (!d.ok) {
@@ -7387,7 +7451,7 @@ function buildColumnPairs(rows) {
           }
           renderOcrReview({
             rows: d.rows || [],
-            source: "图片 OCR",
+            source: d.engine && d.engine !== "tesseract" ? "图片 OCR（服务器 RapidOCR）" : "图片 OCR",
             cells: d.cells || [],
             pages: [ocrImageDataUrl]
           });
