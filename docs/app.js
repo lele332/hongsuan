@@ -2710,22 +2710,78 @@
   // τ = K3·(L/√I)^α1 (北方) 或 K4·(L/√I)^α2 (南方)
   // n: τ<1h→n1, 1~6h→n2, 6~24h→n3
 
+  /* 表11-2 损失参数分区系数指数（部分省份，其余待补充） */
   var GSK_ZONES = {
     "hb": { name: "河北", regions: [
-      { id: "hb-1", name: "平原区", zone: 1, k1: 1.23, b1: 0.61 },
-      { id: "hb-2", name: "冀北山区", zone: 2, k1: 0.95, b1: 0.60 },
-      { id: "hb-3", name: "冀西北盆区", zone: 3, k1: 1.15, b1: 0.58 },
-      { id: "hb-4", name: "冀西山区", zone: 4, k1: 1.12, b1: 0.56 },
-      { id: "hb-5", name: "坝上高原区", zone: 5, k1: 1.52, b1: 0.50 }
+      { id: "hb-1", name: "平原区", zone: "I", k1: 1.23, b1: 0.61 },
+      { id: "hb-2", name: "冀北山区", zone: "II", k1: 0.95, b1: 0.60 },
+      { id: "hb-3", name: "冀西北盆区", zone: "III", k1: 1.15, b1: 0.58 },
+      { id: "hb-4", name: "冀西山区", zone: "IV", k1: 1.12, b1: 0.56 },
+      { id: "hb-5", name: "坝上高原区", zone: "V", k1: 1.52, b1: 0.50 }
     ]},
     "sx": { name: "山西", regions: [
-      { id: "sx-1", name: "煤矿塌陷和森林覆盖较好地区", zone: 1, k1: 0.85, b1: 0.98 },
-      { id: "sx-2", name: "裸露石山区", zone: 2, k1: 0.25, b1: 0.98, lambda: 0.08 }
+      { id: "sx-1", name: "煤矿塌陷和森林覆盖较好地区", zone: "I", k1: 0.85, b1: 0.98 },
+      { id: "sx-2", name: "裸露石山区", zone: "II", k1: 0.25, b1: 0.98, lambda: 0.08 }
     ]},
-    "custom": { name: "手动输入系数", regions: [
-      { id: "custom-1", name: "自定义", zone: 0, k1: 1.0, b1: 0.6 }
+    "custom": { name: "手动输入", regions: [
+      { id: "custom-1", name: "自定义", zone: "", k1: 1.0, b1: 0.6 }
     ]}
   };
+
+  /* 表11-3 土壤植被分类（用于确定损失参数分区等级） */
+  var GSK_SOIL_CLASS = [
+    { cls: "I", desc: "黏土、黏壤土", desc2: "渗透性很弱，植被差" },
+    { cls: "II", desc: "壤土", desc2: "渗透性弱" },
+    { cls: "III", desc: "砂壤土", desc2: "渗透性中等" },
+    { cls: "IV", desc: "粉砂土", desc2: "渗透性较强" },
+    { cls: "V", desc: "砂土、砂砾", desc2: "渗透性强" },
+    { cls: "VI", desc: "卵石、碎石", desc2: "渗透性极强" }
+  ];
+
+  /* 表11-4 n值分区（部分省份，τ<1h→n1, 1~6h→n2, >6h→n3） */
+  var GSK_N_VALUES = {
+    "华北": { n1: 0.55, n2: 0.65, n3: 0.75 },
+    "东北": { n1: 0.50, n2: 0.65, n3: 0.75 },
+    "西北": { n1: 0.60, n2: 0.70, n3: 0.80 },
+    "华中": { n1: 0.50, n2: 0.60, n3: 0.70 },
+    "华南": { n1: 0.45, n2: 0.60, n3: 0.70 },
+    "西南": { n1: 0.50, n2: 0.65, n3: 0.75 },
+    custom: { n1: 0.55, n2: 0.65, n3: 0.75 }
+  };
+
+  /* 表11-5 汇流时间系数和指数值（部分） */
+  var GSK_TAU_COEF = {
+    north: [
+      { region: "华北平原", k3: 0.55, alpha1: 0.75 },
+      { region: "华北山区", k3: 0.45, alpha1: 0.80 },
+      { region: "东北平原", k3: 0.60, alpha1: 0.70 },
+      { region: "西北山区", k3: 0.40, alpha1: 0.85 },
+      { region: "自定义", k3: 0.55, alpha1: 0.75 }
+    ],
+    south: [
+      { region: "江南丘陵", k4: 0.35, alpha2: 0.80 },
+      { region: "华南山地", k4: 0.30, alpha2: 0.85 },
+      { region: "四川盆地", k4: 0.40, alpha2: 0.75 },
+      { region: "云贵高原", k4: 0.35, alpha2: 0.80 },
+      { region: "自定义", k4: 0.35, alpha2: 0.80 }
+    ]
+  };
+
+  /* 经验公式（1980年代初制定，两个公式） */
+  function gskExpFormula1(p) {
+    // 经验公式一：Q = C · F^n
+    const { C, F, n } = p;
+    if (![C, F, n].every(Number.isFinite)) throw new Error("经验公式一输入不完整");
+    if (F <= 0) throw new Error("汇水面积 F 必须为正");
+    return C * Math.pow(F, n);
+  }
+  function gskExpFormula2(p) {
+    // 经验公式二：Q = C · K · F^n · Q_ref^(1-n)（含重现期折算）
+    const { C, K, F, n, Qref } = p;
+    if (![C, K, F, n, Qref].every(Number.isFinite)) throw new Error("经验公式二输入不完整");
+    if (F <= 0 || Qref <= 0) throw new Error("F 和 Q_ref 必须为正");
+    return C * K * Math.pow(F, n) * Math.pow(Qref, 1 - n);
+  }
 
   function gskCalcMu(sp, k1, b1) {
     return k1 * Math.pow(sp, b1);
@@ -2830,7 +2886,41 @@
     });
   })();
 
-  // src/core/waterSurface.ts
+  // GSK zone → K3/alpha1 auto-fill based on region
+  (function initGskTau() {
+    const regionSel = $("gskRegion");
+    if (!regionSel) return;
+    const updateTau = () => {
+      const isSouth = regionSel.value === "south";
+      const coefs = isSouth ? GSK_TAU_COEF.south : GSK_TAU_COEF.north;
+      // Use first entry as default
+      if (coefs.length > 0) {
+        $("gskK3").value = isSouth ? (coefs[0].k4 || 0.35) : (coefs[0].k3 || 0.55);
+        $("gskAlpha1").value = isSouth ? (coefs[0].alpha2 || 0.80) : (coefs[0].alpha1 || 0.75);
+      }
+    };
+    regionSel.addEventListener("change", updateTau);
+  })();
+
+    // Exp formula handlers
+  (function initExp() {
+    const calc1 = () => {
+      try {
+        const r = gskExpFormula1({ C: +$("exp1C").value, F: +$("exp1F").value, n: +$("exp1N").value });
+        $("exp1Out").textContent = r.toFixed(2);
+      } catch(e) { $("exp1Out").textContent = "—"; }
+    };
+    const calc2 = () => {
+      try {
+        const r = gskExpFormula2({ C: +$("exp2C").value, K: +$("exp2K").value, F: +$("exp2F").value, n: +$("exp2N").value, Qref: +$("exp2Qref").value });
+        $("exp2Out").textContent = r.toFixed(2);
+      } catch(e) { $("exp2Out").textContent = "—"; }
+    };
+    ["exp1C","exp1N","exp1F"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc1); el.addEventListener("change", calc1); } });
+    ["exp2C","exp2K","exp2N","exp2F","exp2Qref"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc2); el.addEventListener("change", calc2); } });
+  })();
+
+// src/core/waterSurface.ts
   var G = 9.8;
   function trapA(g, y) {
     return (g.b + g.m * y) * y;
