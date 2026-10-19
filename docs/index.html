@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.30</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.31</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@
 <!-- 桌面版下载入口 -->
 <div id="dlBar">
   <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
-  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.30</a>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.31</a>
 </div>
 
 
@@ -1391,6 +1391,32 @@
   <div id="ocrLoadingText" class="loader-caption">正在识别，请稍候…</div>
 </div>
 
+<script>
+(function(){
+  var EXPECT = "1.0.31";
+  function hsCacheChk(){
+    try{
+      var v = window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.version;
+      if (v === EXPECT) return;
+      if (document.getElementById("hsCacheBanner")) return;
+      var b = document.createElement("div");
+      b.id = "hsCacheBanner";
+      b.style.cssText = "position:fixed;left:10px;right:10px;bottom:10px;z-index:2147483647;background:#b91c1c;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.4)";
+      b.innerHTML = "\u26a0\ufe0f \u68c0\u6d4b\u5230\u65e7\u7248\u7f13\u5b58\uff08\u5f53\u524d " + (v || "\u672a\u77e5") + " / \u6700\u65b0 " + EXPECT + "\uff09\u53ef\u80fd\u5bfc\u81f4\u529f\u80fd\u5f02\u5e38\u3002<button id=\"hsCacheFix\" style=\"margin-left:8px;padding:4px 12px;border:none;border-radius:8px;background:#fff;color:#b91c1c;font-weight:700;cursor:pointer\">\u4e00\u952e\u6e05\u9664\u7f13\u5b58\u5e76\u5237\u65b0</button>";
+      document.body.appendChild(b);
+      document.getElementById("hsCacheFix").onclick = async function(){
+        try{
+          if (window.caches) { var ks = await caches.keys(); for (var i=0;i<ks.length;i++) await caches.delete(ks[i]); }
+          if (navigator.serviceWorker) { var regs = await navigator.serviceWorker.getRegistrations(); regs.forEach(function(r){ try{ r.unregister(); }catch(e){} }); }
+        }catch(e){}
+        location.href = location.pathname + "?fresh=" + Date.now();
+      };
+    }catch(e){}
+  }
+  setTimeout(hsCacheChk, 4000);
+  setTimeout(hsCacheChk, 10000);
+})();
+</script>
 </body>
 </html>
 
