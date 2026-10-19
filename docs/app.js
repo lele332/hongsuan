@@ -6656,9 +6656,33 @@
     }
     return words;
   }
+  // 上传前缩图：长边≤1600 + JPEG 0.88，大图提速明显（失败/无需缩放时原样返回）
+  function shrinkForUpload(dataUrl, maxSide) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const s = Math.min(1, (maxSide || 1600) / Math.max(img.naturalWidth, img.naturalHeight));
+          if (s >= 1) { resolve(dataUrl); return; }
+          const cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(img.naturalWidth * s));
+          cv.height = Math.max(1, Math.round(img.naturalHeight * s));
+          const ctx = cv.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, cv.width, cv.height);
+          ctx.drawImage(img, 0, 0, cv.width, cv.height);
+          resolve(cv.toDataURL("image/jpeg", 0.88));
+        } catch (e) { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
   async function serverOcrTable(dataUrl, onStatus) {
     const servers = hsOcrServers();
     if (!servers.length) return null;
+    dataUrl = await shrinkForUpload(dataUrl, 1600);
     const base64 = String(dataUrl).replace(/^data:[^,]*,/, "");
     for (const url of servers) {
       try {
