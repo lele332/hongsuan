@@ -8533,21 +8533,16 @@ function spChaikin(pts) {
       });
       cq.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && cgo) cgo.click(); });
     }
-    if (cgo) cgo.onclick = async () => {
+    const spLocateCounty = async (hit) => {
       const st = $("spMapStatus");
       try {
         if (!spMap) return;
-        const idx = await spCountyEnsure();
-        const q = (cq.value || "").trim();
-        if (!q) return;
-        const hit = idx.find((e) => e.n === q) || idx.find((e) => e.n.indexOf(q) === 0) || idx.find((e) => e.n.indexOf(q) >= 0);
-        if (!hit) { if (st) st.textContent = "未找到县名：" + q; return; }
-        let geo = spCityCache[hit.a];
+        let geo = spCityCache["c" + hit.a];
         if (!geo) {
           const res = await fetch("https://geo.datav.aliyun.com/areas_v3/bound/" + hit.a + ".json");
           if (!res.ok) throw new Error("HTTP " + res.status);
           geo = await res.json();
-          spCityCache[hit.a] = geo;
+          spCityCache["c" + hit.a] = geo;
         }
         const feat = geo.type === "Feature" ? geo : (geo.features || [])[0];
         if (!feat) throw new Error("边界数据为空");
@@ -8566,6 +8561,61 @@ function spChaikin(pts) {
         if (st) st.textContent = "县级定位需联网：" + (e5 && e5.message ? e5.message : e5);
       }
     };
+    if (cgo) cgo.onclick = async () => {
+      const st = $("spMapStatus");
+      try {
+        const idx = await spCountyEnsure();
+        const q = (cq.value || "").trim();
+        if (!q) return;
+        const hit = idx.find((e) => e.n === q) || idx.find((e) => e.n.indexOf(q) === 0) || idx.find((e) => e.n.indexOf(q) >= 0);
+        if (!hit) { if (st) st.textContent = "未找到县名：" + q; return; }
+        await spLocateCounty(hit);
+      } catch (e5) {
+        if (st) st.textContent = "县级定位需联网：" + (e5 && e5.message ? e5.message : e5);
+      }
+    };
+    // 省 → 市 → 县 级联定位（索引来自本地 sp_counties.json，2859 县级区划）
+    const csel = $("spCitySel"), cnsel = $("spCountySel");
+    if (sel && csel && cnsel) {
+      const uniq = (arr) => Array.from(new Set(arr));
+      sel.addEventListener("change", async () => {
+        try {
+          const idx = await spCountyEnsure();
+          const prov = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
+          const cities = uniq(idx.filter((e) => e.p === prov).map((e) => e.c || "省直辖县级"));
+          cnsel.innerHTML = '<option value="">—选择区县—</option>';
+          cnsel.disabled = true;
+          csel.innerHTML = '<option value="">—选择地市—</option>' + cities.map((c) => '<option value="' + c + '">' + c + '</option>').join("");
+          csel.disabled = cities.length === 0;
+        } catch (e2) {}
+      });
+      csel.addEventListener("change", async () => {
+        try {
+          const idx = await spCountyEnsure();
+          const prov = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
+          const city = csel.value;
+          if (!city) return;
+          const hits = idx.filter((e) => e.p === prov && (e.c || "省直辖县级") === city);
+          cnsel.innerHTML = '<option value="">—选择区县—</option>' + hits.map((e) => '<option value="' + e.a + '">' + e.n + '</option>').join("");
+          cnsel.disabled = hits.length === 0;
+          // 显示该市下辖县界（点选任意县会高亮）
+          if (hits.length && spMap) {
+            const first = Number(hits[0].a);
+            let cityAdcode = String(Math.floor(first / 100) * 100);
+            const pfx = cityAdcode.slice(0, 2);
+            if (pfx === "11" || pfx === "12" || pfx === "31" || pfx === "50") cityAdcode = String(Math.floor(first / 10000) * 10000);
+            if (!cityAdcode.endsWith("900")) spLoadAdminGeo(cityAdcode, city, "county");
+          }
+        } catch (e2) {}
+      });
+      cnsel.addEventListener("change", async () => {
+        try {
+          const idx = await spCountyEnsure();
+          const hit = idx.find((e) => String(e.a) === String(cnsel.value));
+          if (hit) await spLocateCounty(hit);
+        } catch (e2) {}
+      });
+    }
     const bDs1 = $("spDs1"), bDs4 = $("spDs4");
     const bGrid = $("spGridBtn");
     if (bDs1) bDs1.onclick = () => spSetDataset("1");
