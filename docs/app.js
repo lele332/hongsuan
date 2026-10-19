@@ -5271,6 +5271,9 @@
   function isOnline() {
     return $("mapSrc").value === "online";
   }
+  function isDemo() {
+    return $("mapSrc").value === "demo";
+  }
   function tdtUrl(tx, ty, z) {
     const s = Math.floor(Math.abs(tx + ty)) % 4;
     return `https://t${s}.tianditu.gov.cn/DataServer?T=${geo.layer}&x=${tx}&y=${ty}&l=${z}&tk=${encodeURIComponent(geo.tk)}`;
@@ -5350,6 +5353,41 @@
   function esc(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+  var DEMO_SCALE = { pixelDistance: 100, realDistanceM: 1000 };
+  var DEMO_POLY = [
+    {x:150,y:120},{x:280,y:90},{x:400,y:122},{x:470,y:200},{x:500,y:300},
+    {x:460,y:400},{x:360,y:450},{x:250,y:430},{x:160,y:360},{x:120,y:250}
+  ];
+  var DEMO_RIVER = [
+    {x:210,y:140},{x:255,y:200},{x:318,y:278},{x:368,y:352},{x:410,y:432},{x:432,y:505}
+  ];
+  function demoTerrainSvg() {
+    const hills = [
+      [95,85,75,48],[185,65,95,52],[85,225,62,42],[250,55,115,46],[560,105,85,52],
+      [665,215,95,62],[725,385,105,66],[560,470,92,52],[120,475,82,46],[810,120,70,44]
+    ];
+    const ring1 = hills.map((g) => `<ellipse cx="${g[0]}" cy="${g[1]}" rx="${g[2]}" ry="${g[3]}" fill="none" stroke="#cdc5ae" stroke-width="1.6"/>`).join("");
+    const ring2 = hills.map((g) => `<ellipse cx="${g[0]}" cy="${g[1]}" rx="${g[2]*0.55}" ry="${g[3]*0.55}" fill="none" stroke="#d9d2bd" stroke-width="1"/>`).join("");
+    const riverD = DEMO_RIVER.map((p) => `${p.x},${p.y}`).join(" ");
+    return [
+      '<rect x="0" y="0" width="900" height="560" fill="#f1eee3"/>',
+      ring1, ring2,
+      `<polyline points="${riverD}" fill="none" stroke="#7fb3d5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`,
+      `<polyline points="${riverD}" fill="none" stroke="#2e86c1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      '<line x1="432" y1="520" x2="456" y2="520" stroke="#b03a2e" stroke-width="4"/>',
+      '<line x1="432" y1="514" x2="432" y2="526" stroke="#b03a2e" stroke-width="2"/>',
+      '<line x1="456" y1="514" x2="456" y2="526" stroke="#b03a2e" stroke-width="2"/>',
+      '<text x="462" y="524" font-size="12" fill="#b03a2e">桥位</text>',
+      '<line x1="50" y1="528" x2="150" y2="528" stroke="#444" stroke-width="3"/>',
+      '<line x1="50" y1="522" x2="50" y2="534" stroke="#444" stroke-width="2"/>',
+      '<line x1="150" y1="522" x2="150" y2="534" stroke="#444" stroke-width="2"/>',
+      '<text x="52" y="518" font-size="11" fill="#444">0            1 km（1:10000，1 像素 = 10 m）</text>',
+      '<path d="M858 38 L866 58 L858 52 L850 58 Z" fill="#444"/>',
+      '<text x="853" y="74" font-size="12" fill="#444">N</text>',
+      '<text x="20" y="30" font-size="14" font-weight="600" fill="#4a4a44">示例地形图（教学演示数据 · 非真实地形）</text>',
+      '<text x="20" y="52" font-size="12" fill="#6b6b62">蓝色 = 主河沟 · 红色 = 桥位 · 虚线山脊即分水岭：沿山脊点一圈勾汇水区</text>'
+    ].join("");
+  }
   function renderMap() {
     if (isOnline()) {
       renderOnlineMap();
@@ -5357,6 +5395,9 @@
     }
     const pts = mapPtsOfCurrentMode();
     const parts = [];
+    if (isDemo()) {
+      parts.push(demoTerrainSvg());
+    }
     if (mapState.bg) {
       parts.push(`<image href="${mapState.bg}" x="0" y="0" width="900" height="560" preserveAspectRatio="xMidYMid meet" opacity="0.9"/>`);
     }
@@ -5421,7 +5462,20 @@
       $("mapOut").innerHTML = "";
       $("mapErr").textContent = "";
       $("mapScaleTip").textContent = "";
+      if (isDemo()) {
+        mapState.scale = { pixelDistance: DEMO_SCALE.pixelDistance, realDistanceM: DEMO_SCALE.realDistanceM };
+        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 = 10 m（1:10000）";
+      }
       renderMap();
+    };
+    $("mapDemo").onclick = () => {
+      $("mapMode").value = "poly";
+      mapState.poly = DEMO_POLY.map((p) => ({ x: p.x, y: p.y }));
+      mapState.river = DEMO_RIVER.map((p) => ({ x: p.x, y: p.y }));
+      $("mapH1").value = "486";
+      $("mapH2").value = "402";
+      renderMap();
+      $("mapGo").click();
     };
     $("mapGo").onclick = () => {
       const out = $("mapOut"), err = $("mapErr");
@@ -5450,11 +5504,17 @@
           );
           return;
         }
-        if (mapState.calib.length < 2) throw new Error("\u8BF7\u5148\u5728\u56FE\u4E0A\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF08\u70B9\u4E24\u70B9 + \u586B\u5B9E\u9645\u8DDD\u79BB\uFF09");
-        const a = mapState.calib[0], b = mapState.calib[1];
-        const pixelDistance = Math.hypot(b.x - a.x, b.y - a.y);
-        if (!(pixelDistance > 0)) throw new Error("\u6807\u5B9A\u70B9\u91CD\u5408\uFF0C\u8BF7\u91CD\u65B0\u70B9\u4E24\u70B9");
-        const realDistanceM = +$("mapRealD").value;
+        if (mapState.calib.length < 2 && !isDemo()) throw new Error("\u8BF7\u5148\u5728\u56FE\u4E0A\u6807\u5B9A\u6BD4\u4F8B\u5C3A\uFF08\u70B9\u4E24\u70B9 + \u586B\u5B9E\u9645\u8DDD\u79BB\uFF09\uFF0C\u6216\u5207\u5230\u5185\u7F6E\u793A\u4F8B\u5730\u5F62\uFF08\u5DF2\u9884\u6807\u5B9A\uFF09");
+        let pixelDistance, realDistanceM;
+        if (isDemo()) {
+          pixelDistance = DEMO_SCALE.pixelDistance;
+          realDistanceM = DEMO_SCALE.realDistanceM;
+        } else {
+          const a = mapState.calib[0], b = mapState.calib[1];
+          pixelDistance = Math.hypot(b.x - a.x, b.y - a.y);
+          if (!(pixelDistance > 0)) throw new Error("\u6807\u5B9A\u70B9\u91CD\u5408\uFF0C\u8BF7\u91CD\u65B0\u70B9\u4E24\u70B9");
+          realDistanceM = +$("mapRealD").value;
+        }
         mapState.scale = { pixelDistance, realDistanceM };
         const h1 = +$("mapH1").value, h2 = +$("mapH2").value;
         const r = measureCatchment({
@@ -5492,8 +5552,14 @@
     };
     const syncSrc = () => {
       const on = isOnline();
+      const demo = isDemo();
       $("mapOnlineCtl").style.display = on ? "inline-flex" : "none";
       $("mapLocalCtl").style.display = on ? "none" : "inline";
+      $("mapDemoCtl").style.display = demo ? "inline" : "none";
+      if (demo) {
+        mapState.scale = { pixelDistance: DEMO_SCALE.pixelDistance, realDistanceM: DEMO_SCALE.realDistanceM };
+        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 = 10 m（1:10000）";
+      }
       renderMap();
     };
     $("mapSrc").onchange = syncSrc;
@@ -5534,6 +5600,61 @@
       calcMethodC();
       err.style.display = "none";
       $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u65B9\u6CD5 C\uFF08\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF09\u5E76\u91CD\u7B97</div>`;
+    };
+  }
+    if ($("dkGo")) {
+    $("dkGo").onclick = () => {
+      const out = $("dkOut"), detail = $("dkDetail"), err = $("dkErr");
+      try {
+        const g = 9.80;
+        const Hs = +$("dkHs").value;
+        const vM = +$("dkVM").value, v0M = +$("dkV0M").value;
+        const KN = +$("dkKN").value, K = +$("dkK").value;
+        if (!Number.isFinite(Hs)) throw new Error("\u8BF7\u586B\u8BBE\u8BA1\u6C34\u4F4D Hs");
+        if (!(vM > 0)) throw new Error("\u51B2\u5237\u540E\u6865\u4E0B\u5E73\u5747\u6D41\u901F v_M \u5FC5\u987B\u5927\u4E8E 0");
+        if (!(vM > v0M)) throw new Error("v_M \u5E94\u5927\u4E8E v_0M\uFF08\u58C5\u6C34\u7531\u6865\u4E0B\u6D41\u901F\u589E\u5927\u4EA7\u751F\uFF09\uFF0C\u8BF7\u6838\u5BF9\u4E24\u4E2A\u6D41\u901F");
+        if (!(KN > 0) || !(K > 0)) throw new Error("\u7CFB\u6570 K_N \u4E0E K \u5FC5\u987B\u5927\u4E8E 0");
+        const dz = K * KN * (vM * vM - v0M * v0M) / (2 * g);
+        const sit = +$("dkSit").value;
+        const dzp = dz * sit;
+        const wave = +$("dkWave").value;
+        const waveAdd = Number.isFinite(wave) && wave > 0 ? wave * 2 / 3 : 0;
+        let bendAdd = 0;
+        let bendStr = "\u672A\u586B\uFF080\uFF09";
+        const wv = +$("dkWV").value, wb = +$("dkWB").value, wr = +$("dkWR").value;
+        if (Number.isFinite(wv) && Number.isFinite(wb) && Number.isFinite(wr) && wv > 0 && wb > 0 && wr > 0) {
+          const dh = wv * wv * wb / (g * wr);
+          bendAdd = dh / 2;
+          bendStr = `\u0394h=v\xB2B/(gR)=${dh.toFixed(3)} m\uFF0C\u8BA1\u5165 1/2 = ${bendAdd.toFixed(3)} m`;
+        }
+        const clr = +$("dkClr").value;
+        const Hmin = Hs + dzp + waveAdd + bendAdd + clr;
+        out.textContent = Hmin.toFixed(2) + " m";
+        const iv = +$("dkI").value;
+        const curveStr = Number.isFinite(iv) && iv > 0
+          ? `\u58C5\u6C34\u66F2\u7EBF\u5168\u957F L\u22482\u0394z/i=${(2 * dz / iv).toFixed(0)} m\uFF08\u4E8C\u6B21\u629B\u7269\u7EBF\u8FD1\u4F3C\uFF1A\u0394z_A=\u0394z\xB7(1\u2212(x/L)\xB2)\uFF09`
+          : "\u58C5\u6C34\u66F2\u7EBF\u5168\u957F\uFF1A\u672A\u586B\u6BD4\u964D i\uFF08\u5168\u957F L\u22482\u0394z/i\uFF09";
+        detail.innerHTML = [
+          `\u6865\u524D\u6700\u5927\u58C5\u6C34 \u0394z = ${dz.toFixed(3)} m\uFF08K=${K}\uFF0CK_N=${KN}\uFF0Cv_M=${vM} m/s\uFF0Cv_0M=${v0M} m/s\uFF09`,
+          `\u6865\u4E0B\u58C5\u6C34 \u0394z\u2032 = ${dzp.toFixed(3)} m\uFF08\u8868 4-3-2 \u7CFB\u6570 ${sit}\uFF09`,
+          `\u6CE2\u6D6A\u8BA1\u5165 (2/3)\u0394h\u2082 = ${waveAdd.toFixed(3)} m\uFF1B\u6CB3\u6E7E\u8D85\u9AD8\uFF1A${bendStr}`,
+          `\u51C0\u7A7A\u5B89\u5168\u503C = ${clr.toFixed(2)} m\uFF08\u8868 4-3-6\uFF09`,
+          curveStr,
+          `H_min = ${Hs.toFixed(2)} + ${dzp.toFixed(2)} + ${waveAdd.toFixed(2)} + ${bendAdd.toFixed(2)} + ${clr.toFixed(2)} = ${Hmin.toFixed(2)} m`
+        ].map((t) => `<div>${t}</div>`).join("");
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u9762\u8BBE\u8BA1\u9AD8\u7A0B\uFF08\u58C5\u6C34+\u51C0\u7A7A\uFF09",
+          { "\u8BBE\u8BA1\u6C34\u4F4D": Hs + " m", "v_M": vM + " m/s", "v_0M": v0M + " m/s" },
+          { "\u58C5\u6C34\u0394z": dz.toFixed(3) + " m", "\u6865\u9762\u9AD8\u7A0B": Hmin.toFixed(2) + " m" },
+          "\u6307\u53572001\u58C5\u6C34\u5F0F + \u88684-3-2/4-3-6"
+        );
+      } catch (e) {
+        out.textContent = "\u2014";
+        detail.innerHTML = "";
+        err.style.display = "block";
+        showErr(err, e);
+      }
     };
   }
   var SYS_KEY = "hongsuan_sys_settings";

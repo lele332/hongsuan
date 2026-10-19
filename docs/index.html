@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.33</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.34</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@
 <!-- 桌面版下载入口 -->
 <div id="dlBar">
   <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
-  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.33</a>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.34</a>
 </div>
 
 
@@ -728,11 +728,13 @@
     <b>为什么不接在线地图：</b>在线底图涉及审图号与边界合规，且离线单文件版断网不可用。这里改为<b>你自己导入地形图/影像截图</b>做底图，比例尺由你在图上标定，全程离线、数据来源你自持。
     <br><b>用法（在线底图）：</b>填入天地图 tk（其官网免费申请）→ 设中心经纬度与级别 → 加载底图 → 选「勾汇水区」沿分水岭点一圈 → 点计算，<b>F 由经纬度直接算出，不需要人工标比例尺</b>。
     <br><b>用法（本地底图）：</b>导入地形图截图 → 标定比例尺 → 勾绘 → 计算（同上）。
+    <br><b>用法（示例地形）：</b>点「载入示例汇水区」一键勾好分水岭与主河沟并算出 F / L / I（示例底图已内置标定：1 像素 = 10 m，即 1:10000）；也可以清掉后自己沿山脊点击勾绘。
     <br><span style="color:var(--red)">合规说明：在线底图仅用于屏幕显示，不随 SVG/计算书导出，也不内置到离线版；不使用 OSM 等境外底图（其境内边界与地名不符合国家标准）。</span>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px">
     <span>底图方式</span>
-    <select id="mapSrc" style="width:150px">
+    <select id="mapSrc" style="width:190px">
+      <option value="demo">内置示例地形（教学演示）</option>
       <option value="online">在线底图（天地图）</option>
       <option value="local">本地图片（离线可用）</option>
     </select>
@@ -751,8 +753,11 @@
       <button class="btn ghost" id="mapZoomIn">＋</button>
     </span>
     <span id="mapLocalCtl" style="display:none">
-      <input type="file" id="mapImg" accept="image/*" style="font-size:12px">
-    </span>
+        <input type="file" id="mapImg" accept="image/*" style="font-size:12px">
+      </span>
+      <span id="mapDemoCtl" style="display:none">
+        <button class="btn" id="mapDemo">载入示例汇水区（预勾好分水岭）</button>
+      </span>
     <select id="mapMode" style="width:130px">
       <option value="calib">① 标定比例尺</option>
       <option value="poly">② 勾汇水区</option>
@@ -982,6 +987,50 @@
             <div id="rockOut" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
           </details>
         </div>
+      </div>
+    </details>
+<details id="deckBox" style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥前壅水与桥面设计高程（壅水 + 波浪 + 净空 · 桥高控制）</summary>
+      <div style="margin-top:10px">
+        <div class="hint" style="margin-top:0">
+          桥孔压缩水流 → 桥上游水位抬高（壅水）。桥面（梁底）最低高程：
+          <b>H<sub>min</sub> = H<sub>s</sub> + Δz′ + (2/3)Δh₂ + (1/2)Δh<sub>湾</sub> + 净空值</b>。
+          桥前最大壅水 <b>Δz = K·K<sub>N</sub>·(v<sub>M</sub>² − v<sub>0M</sub>²)/(2g)</b>（《公路工程水文勘测设计指南》2001 推荐式）：v<sub>M</sub>=冲刷后桥下平均流速（=设计流量÷冲刷后桥下过水面积），v<sub>0M</sub>=天然状态下桥孔部分平均流速。
+          桥下壅水 Δz′ 按洪水情势取值（表 4-3-2）：一般情况 0.5Δz；暴涨暴落·土质坚实取 Δz；涨落缓慢·土质松软不计。计算水位 = 设计水位 + 壅水、浪高等（表 4-3-6 注①）。
+        </div>
+        <div class="row">
+          <div><label>设计水位 H<sub>s</sub>（m）</label><input type="number" id="dkHs" value="100.00" step="any"></div>
+          <div><label>冲刷后桥下平均流速 v<sub>M</sub>（m/s）</label><input type="number" id="dkVM" value="3.0" step="any" min="0.01"></div>
+          <div><label>天然桥孔平均流速 v<sub>0M</sub>（m/s）</label><input type="number" id="dkV0M" value="2.0" step="any" min="0"></div>
+          <div><label>定床壅水系数 K<sub>N</sub>（查表）</label><input type="number" id="dkKN" value="1.0" step="0.01" min="0.01"></div>
+          <div><label>河床修正系数 K（土质 0.5 / 岩石·铺砌 1.0）</label><input type="number" id="dkK" value="0.5" step="0.05" min="0.01"></div>
+        </div>
+        <div class="row">
+          <div><label>桥下壅水情势（表 4-3-2）</label><select id="dkSit" style="width:210px">
+            <option value="0.5">一般情况（Δz′ = 0.5Δz）</option>
+            <option value="1">暴涨暴落·坚实不冲（Δz′ = Δz）</option>
+            <option value="0">涨落缓慢·松软易冲（不计）</option>
+          </select></div>
+          <div><label>调查波浪高 Δh₂（m，计入 2/3；无资料填 0）</label><input type="number" id="dkWave" value="0" step="any" min="0"></div>
+          <div><label>河湾平均流速 v（m/s，可空）</label><input type="number" id="dkWV" step="any" min="0"></div>
+          <div><label>水面宽 B（m，可空）</label><input type="number" id="dkWB" step="any" min="0"></div>
+          <div><label>河湾曲率半径 R（m，可空）</label><input type="number" id="dkWR" step="any" min="0.01"></div>
+        </div>
+        <div class="row">
+          <div><label>桥下净空类型（表 4-3-6）</label><select id="dkClr" style="width:240px">
+            <option value="0.50">梁底·洪水期无大漂流物（0.50）</option>
+            <option value="1.50">梁底·洪水期有大漂流物（1.50）</option>
+            <option value="1.00">梁底·有泥石流（1.00）</option>
+            <option value="0.25">支承垫石顶面（0.25）</option>
+            <option value="0.25">拱脚（0.25）</option>
+          </select></div>
+          <div><label>河床比降 i（小数，算壅水曲线全长，可空）</label><input type="number" id="dkI" step="any" min="0"></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn" id="dkGo">计算桥面设计高程</button></div>
+        </div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">桥面（梁底）最低设计高程 H<sub>min</sub>（m）</div><div class="v" id="dkOut">—</div></div>
+        <div id="dkDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        <div class="err" id="dkErr"></div>
+        <div class="hint">急流河槽（F_r &gt; 1.0）不出现壅水曲线，改计墩前水流冲击高度，本模块暂不自动判别，请按教材判断后自行取值。</div>
       </div>
     </details>
   <h3 style="margin:18px 0 0;font-size:14px">设计洪水过程线（规范 6.6 同倍比放大·辅助）</h3>
@@ -1399,7 +1448,7 @@
 
 <script>
 (function(){
-  var EXPECT = "1.0.33";
+  var EXPECT = "1.0.34";
   function hsCacheChk(){
     try{
       var v = window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.version;
