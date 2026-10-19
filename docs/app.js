@@ -7972,7 +7972,7 @@ function textToTable(text, source) {
     }
     const near = (r.nearList || [{ sp: r.nearestSp, d: r.distKm }]).slice(0, 3)
       .map((x) => "S\u209a=" + x.sp + "（" + x.d.toFixed(0) + " km）").join("、");
-    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>该点插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考，请对照底图原图等值线读数校核" : "");
+    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>该点插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考" : r.distKm > 50 ? "<br>标注密度中等（最近 " + r.distKm.toFixed(0) + " km），建议对照底图校核" : "<br>✓ 标注密度较好（最近 " + r.distKm.toFixed(0) + " km）");
     const btn = $("spFillBtn");
     if (btn) btn.onclick = () => {
       $("rcSp").value = r.sp.toFixed(0);

@@ -280,7 +280,7 @@
   canvas, img { max-width: 100% !important; height: auto !important; }
   #spMap { height: 55vh !important; min-height: 320px !important; }
   details#spMapPanel.sp-fullscreen #spMap { height: var(--spFsH, calc(100vh - 170px)) !important; min-height: 0 !important; }
-  details#spMapPanel.sp-fullscreen #spInfoBox { display: none !important; }
+  details#spMapPanel.sp-fullscreen #spInfoBox { position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 100000; background: rgba(15,23,42,0.92); border-radius: 10px; padding: 10px 14px; display: block !important; }
 }
 
   /* 桌面版下载入口 */
@@ -1324,6 +1324,7 @@
 
 </body>
 </html>
+
 
 
 
