@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   if (document.getElementById("dlOverlay")) return;
-  var HS_RELEASE = "v1.0.35";
+  var HS_RELEASE = "v1.0.36";
   function syncReleaseText() {
     try {
       var btn = document.getElementById("dlBtn");
