@@ -701,9 +701,38 @@
   <div id="noDataBox" style="display:none">
     <h2>无资料地区（规范 6.4）</h2>
     <div class="hint" style="margin-top:0">推理公式适用于汇水面积 &lt;100 km²（6.4.2），参数采用地区暴雨径流图表值；求算的设计流量应有历史洪水验证（6.4.1）。</div>
-    <div class="row">
+    <!-- 公路科研所1980版推理公式（教材方法） -->
+      <details open style="margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:10px 14px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:var(--blue)">📐 推理公式（公路科研所 1980 版·教材式） Q<sub>p</sub> = 0.278·(S<sub>p</sub>−μ)/τ<sup>n</sup>·F</summary>
+        <div class="hint" style="margin-top:8px;font-size:12px">《水力学与桥涵水文》教材式推理公式。μ 由 K₁·Sp<sup>β₁</sup> 自动计算（表11-2），τ 由 K₃·(L/√I)<sup>α₁</sup> 自动计算（表11-5），n 按 τ 自动选取（τ&lt;1h→n₁，1~6h→n₂，&gt;6h→n₃）。选择省域后系数自动填充。</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px">
+          <span>省域/分区：</span><select id="gskZone" style="width:180px;border:1px solid var(--border);border-radius:8px;padding:4px 8px;background:var(--bg);color:var(--text)"></select>
+          <span>北/南方：</span><select id="gskRegion" style="width:80px"><option value="north">北方</option><option value="south">南方</option></select>
+          <span style="color:var(--text2)">系数：</span>
+          <span>K₁</span><input type="number" id="gskK1" value="1.23" step="0.01" style="width:60px">
+          <span>β₁</span><input type="number" id="gskB1" value="0.61" step="0.01" style="width:60px">
+          <span>K₃</span><input type="number" id="gskK3" value="0.55" step="0.01" style="width:60px">
+          <span>α₁</span><input type="number" id="gskAlpha1" value="0.75" step="0.01" style="width:60px">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;font-size:12px">
+          <span>暴雨递减指数：</span>
+          <span>n₁</span><input type="number" id="gskN1" value="0.55" step="0.01" style="width:56px">
+          <span>n₂</span><input type="number" id="gskN2" value="0.65" step="0.01" style="width:56px">
+          <span>n₃</span><input type="number" id="gskN3" value="0.75" step="0.01" style="width:56px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>雨力 S<sub>p</sub>（mm/h）</label><input type="number" id="gskSp" value="80" step="any"></div>
+          <div><label>汇水面积 F（km²）</label><input type="number" id="gskF" value="3.94" step="0.01" min="0.01"></div>
+          <div><label>主河沟长 L（km）</label><input type="number" id="gskL" value="2.5" step="0.1" min="0.1"></div>
+          <div><label>坡度 I（‰）</label><input type="number" id="gskI" value="15" step="1" min="1"></div>
+        </div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">推理公式 Q<sub>p</sub>（m³/s）· 公路科研所1980版</div><div class="v" id="gskOut">—</div></div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:4px" id="gskDetail"></div>
+        <div class="err" id="gskErr"></div>
+      </details>
+      <div class="row" style="margin-top:12px">
       <div>
-        <label style="font-weight:500;color:var(--text)">推理公式 Q = 0.278·ψ·(S<sub>p</sub>/τ<sup>n</sup>)·F</label>
+        <label style="font-weight:500;color:var(--text)">简化推理公式 Q = 0.278·ψ·(S<sub>p</sub>/τ<sup>n</sup>)·F</label>
         <div class="row"><div><label>雨力 S<sub>p</sub>（mm/h）</label><input type="number" id="rcSp" value="80" step="any"></div>
         <div><label>衰减指数 n</label><input type="number" id="rcN" value="0.65" step="0.01" min="0"></div></div>
         <div class="row"><div><label>径流系数 ψ</label><input type="number" id="rcPsi" value="0.85" step="0.01" min="0.01" max="1"></div>
@@ -712,8 +741,9 @@
         <div class="metric hl" style="margin-top:10px"><div class="k">推理公式 Q<sub>p</sub>（m³/s）</div><div class="v" id="rcOut">—</div></div>
         <div class="err" id="rcErr"></div>
       </div>
-      <div>
-        <label style="font-weight:500;color:var(--text)">径流厚度法 Q = ψ·(h−z)<sup>1.5</sup>·F<sup>0.8</sup>·βγδ <span style="color:#34c759;font-size:11px">✓ JTG/T D65-04-2007 形式，三公开算例锚定</span></label>
+      <details style="margin-top:8px">
+        <summary style="cursor:pointer;font-weight:500;font-size:13px;color:var(--text3)">📋 径流厚度法 Q = ψ·(h−z)<sup>1.5</sup>·F<sup>0.8</sup>·βγδ（JTG/T 3365-02 新规范对照，点击展开）</summary>
+        <div> Q = ψ·(h−z)<sup>1.5</sup>·F<sup>0.8</sup>·βγδ <span style="color:#34c759;font-size:11px">✓ JTG/T D65-04-2007 形式，三公开算例锚定</span></label>
         <div class="row"><div><label>地貌系数 ψ</label><input type="number" id="rdPhi" value="0.1" step="any"></div>
         <div><label>径流厚度 h（mm）</label><input type="number" id="rdH" value="44" step="any"></div>
         <div><label>滞留厚度 z（mm）</label><input type="number" id="rdZ" value="10" step="any"></div></div>
@@ -767,6 +797,7 @@
             <span id="cbZoneOut" style="color:var(--text2);margin-left:6px"></span>
           </td></tr>
         </table>
+        </details>
         <details id="spMapPanel" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">🗺️ 暴雨雨力 S<sub>p</sub>（1% / 4%）等值线地图 · 行政区定位查 S<sub>p</sub></summary>
           <div class="hint" style="margin-top:10px">在同一张地图上叠加<b>全国暴雨雨力 S<sub>p</sub> 等值线</b>与<b>行政区划边界</b>：先点地图定位到你桥位所在的省/市（会显示行政区名称与经纬度），再点桥位附近位置，软件自动按最近等值线标注插值出该点的 S<sub>p</sub>，点「填入 S<sub>p</sub>」直接用于推理公式。地图已叠加<b>配准后的原图扫描底图</b>，可用上方按钮切换 S<sub>p</sub>（1%）/ S<sub>p</sub>（4%）两套数据（与设计频率对应，默认 1%）。</div>

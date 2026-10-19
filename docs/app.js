@@ -2704,6 +2704,132 @@
     return p.psi * Math.pow(p.h - p.z, 3 / 2) * Math.pow(p.F, 4 / 5) * p.beta * p.gamma * p.delta;
   }
 
+  // src/core/gskRational.ts — 公路科研所1980版推理公式（教材式）
+  // Qp = 0.278 × (Sp − μ) / τ^n × F
+  // μ = K1·Sp^β1 (北方) 或 K2·Sp^β2·F^(−λ) (南方)
+  // τ = K3·(L/√I)^α1 (北方) 或 K4·(L/√I)^α2 (南方)
+  // n: τ<1h→n1, 1~6h→n2, 6~24h→n3
+
+  var GSK_ZONES = {
+    "hb": { name: "河北", regions: [
+      { id: "hb-1", name: "平原区", zone: 1, k1: 1.23, b1: 0.61 },
+      { id: "hb-2", name: "冀北山区", zone: 2, k1: 0.95, b1: 0.60 },
+      { id: "hb-3", name: "冀西北盆区", zone: 3, k1: 1.15, b1: 0.58 },
+      { id: "hb-4", name: "冀西山区", zone: 4, k1: 1.12, b1: 0.56 },
+      { id: "hb-5", name: "坝上高原区", zone: 5, k1: 1.52, b1: 0.50 }
+    ]},
+    "sx": { name: "山西", regions: [
+      { id: "sx-1", name: "煤矿塌陷和森林覆盖较好地区", zone: 1, k1: 0.85, b1: 0.98 },
+      { id: "sx-2", name: "裸露石山区", zone: 2, k1: 0.25, b1: 0.98, lambda: 0.08 }
+    ]},
+    "custom": { name: "手动输入系数", regions: [
+      { id: "custom-1", name: "自定义", zone: 0, k1: 1.0, b1: 0.6 }
+    ]}
+  };
+
+  function gskCalcMu(sp, k1, b1) {
+    return k1 * Math.pow(sp, b1);
+  }
+  function gskCalcMuSouth(sp, k2, b2, F, lambda) {
+    return k2 * Math.pow(sp, b2) * Math.pow(F, -lambda);
+  }
+  function gskCalcTau(L, I, k3, alpha1) {
+    return k3 * Math.pow(L / Math.sqrt(I), alpha1);
+  }
+  function gskSelectN(tau) {
+    if (tau < 1) return "n1";
+    if (tau < 6) return "n2";
+    return "n3";
+  }
+  function gskRationalFormula(p) {
+    const { sp, F, L, I, k1, b1, k3, alpha1, n1, n2, n3, isSouth, k2, b2, lambda } = p;
+    if (![sp, F, L, I, k1, b1, k3, alpha1, n1, n2, n3].every(Number.isFinite)) {
+      throw new Error("推理公式（公路科研所）输入必须为有限数");
+    }
+    if (sp <= 0) throw new Error("雨力 Sp 必须为正");
+    if (F <= 0) throw new Error("汇水面积 F 必须为正");
+    if (L <= 0) throw new Error("主河沟长度 L 必须为正");
+    if (I <= 0) throw new Error("主河沟坡度 I 必须为正");
+    // Step 1: Calculate τ
+    const tau = gskCalcTau(L, I, k3, alpha1);
+    if (tau <= 0) throw new Error("汇流时间 τ 计算异常");
+    // Step 2: Select n based on τ
+    const nKey = gskSelectN(tau);
+    const n = nKey === "n1" ? n1 : nKey === "n2" ? n2 : n3;
+    // Step 3: Calculate μ
+    let mu;
+    if (isSouth) {
+      if (![k2, b2, lambda].every(Number.isFinite)) throw new Error("南方模式需要 K2, β2, λ");
+      mu = gskCalcMuSouth(sp, k2, b2, F, lambda);
+    } else {
+      mu = gskCalcMu(sp, k1, b1);
+    }
+    if (mu >= sp) throw new Error(`损失参数 μ=${mu.toFixed(1)} ≥ Sp=${sp.toFixed(1)}，该区域不产流，请检查参数`);
+    // Step 4: Calculate Q
+    const q = 0.278 * ((sp - mu) / Math.pow(tau, n)) * F;
+    return { q, tau, mu, n, nKey, sp };
+  }
+  // GSK formula UI handlers
+  (function initGsk() {
+    const zoneSel = $("gskZone");
+    if (!zoneSel) return;
+    // Populate zones
+    let opts = "<option value=\"\">—选择省域—</option>";
+    for (const [key, prov] of Object.entries(GSK_ZONES)) {
+      for (const reg of prov.regions) {
+        opts += "<option value=\"" + reg.id + "\">" + prov.name + "·" + reg.name + "</option>";
+      }
+    }
+    zoneSel.innerHTML = opts;
+    zoneSel.onchange = () => {
+      const regId = zoneSel.value;
+      for (const prov of Object.values(GSK_ZONES)) {
+        const reg = prov.regions.find((r) => r.id === regId);
+        if (reg) {
+          $("gskK1").value = reg.k1;
+          $("gskB1").value = reg.b1;
+          break;
+        }
+      }
+    };
+    const calcGsk = () => {
+      const err = $("gskErr");
+      const out = $("gskOut");
+      const detail = $("gskDetail");
+      try {
+        if (err) err.textContent = "";
+        const params = {
+          sp: +$("gskSp").value,
+          F: +$("gskF").value,
+          L: +$("gskL").value,
+          I: +$("gskI").value,
+          k1: +$("gskK1").value,
+          b1: +$("gskB1").value,
+          k3: +$("gskK3").value,
+          alpha1: +$("gskAlpha1").value,
+          n1: +$("gskN1").value,
+          n2: +$("gskN2").value,
+          n3: +$("gskN3").value,
+          isSouth: $("gskRegion").value === "south"
+        };
+        const r = gskRationalFormula(params);
+        if (out) out.textContent = r.q.toFixed(2);
+        if (detail) {
+          detail.textContent = "τ=" + r.tau.toFixed(2) + "h → 选" + r.nKey + "=" + (r.nKey === "n1" ? params.n1 : r.nKey === "n2" ? params.n2 : params.n3).toFixed(2) + "；μ=" + r.mu.toFixed(1) + "mm/h；Sp−μ=" + (r.sp - r.mu).toFixed(1) + "mm/h";
+        }
+        logCalc("推理公式·公路科研所1980版", { Sp: params.sp, F: params.F, L: params.L, I: params.I, K1: params.k1, β1: params.b1 }, { Qp: r.q.toFixed(2) + " m³/s" }, "《水力学与桥涵水文》式(11-19)");
+      } catch (e) {
+        if (out) out.textContent = "—";
+        if (err) err.textContent = e instanceof Error ? e.message : String(e);
+      }
+    };
+    // Wire up inputs for auto-calc
+    ["gskSp","gskF","gskL","gskI","gskK1","gskB1","gskK3","gskAlpha1","gskN1","gskN2","gskN3","gskRegion"].forEach((id) => {
+      const el = $(id);
+      if (el) { el.addEventListener("input", calcGsk); el.addEventListener("change", calcGsk); }
+    });
+  })();
+
   // src/core/waterSurface.ts
   var G = 9.8;
   function trapA(g, y) {
