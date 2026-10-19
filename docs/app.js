@@ -7972,7 +7972,7 @@ function textToTable(text, source) {
     }
     const near = (r.nearList || [{ sp: r.nearestSp, d: r.distKm }]).slice(0, 3)
       .map((x) => "S\u209a=" + x.sp + "（" + x.d.toFixed(0) + " km）").join("、");
-    let p3Html = "";
+    let p3Html = "", cvHtml = "", crossWarn = "", spGrid = null;
     try {
       const p3d = (window.HONGSUAN_ATLAS_P3_PARAMS || {}).durations || {};
       const dur = p3d["60min"];
@@ -7984,19 +7984,30 @@ function textToTable(text, source) {
           const freqPct = spDataset === "1" ? 1 : 4;
           const phi = phiPIII(freqPct / 100, cs);
           const hGrid = m.value * (1 + cv.value * phi);
-          p3Html = "<br><span style=\"font-size:12px;color:var(--text3)\">格网精算（" + freqPct + "%, 最近格网 " + Math.max(m.distKm, cv.distKm).toFixed(0) + " km）：H<sub>60min</sub> ≈ <b style=\"color:var(--green)\">" + hGrid.toFixed(0) + " mm</b></span>";
+          spGrid = hGrid;
+          cvHtml = " · Cv ≈ <b>" + cv.value.toFixed(2) + "</b>";
+          p3Html = "<br><span style=\"font-size:12px;color:var(--text3)\">格网精算（" + freqPct + "%, 最近格网 " + Math.max(m.distKm, cv.distKm).toFixed(0) + " km）：H<sub>60min</sub> ≈ <b style=\"color:var(--green)\">" + hGrid.toFixed(0) + " mm</b>" + cvHtml + "</span>";
+          const pctDiff = Math.abs(hGrid - r.sp) / Math.max(r.sp, 1) * 100;
+          if (pctDiff > 20) crossWarn = "<br><span style=\"color:#eab308\">⚠️ 交叉校核：等值线 vs 格网偏差 " + pctDiff.toFixed(0) + "%，请人工对照底图确认</span>";
         }
       }
     } catch(e3) {}
-    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>等值线插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考" : r.distKm > 50 ? "<br>标注密度中等（最近 " + r.distKm.toFixed(0) + " km）" : "<br>✓ 标注密度较好（最近 " + r.distKm.toFixed(0) + " km）") + p3Html;
+    const grade = r.distKm > 120 ? "⚠️ 稀疏" : r.distKm > 50 ? "中等" : "✓ 较好";
+    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>等值线插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button><br>数据密度：" + grade + "（最近标注 " + r.distKm.toFixed(0) + " km）" + p3Html + crossWarn;
     const btn = $("spFillBtn");
     if (btn) btn.onclick = () => {
       $("rcSp").value = r.sp.toFixed(0);
       calcMethodC();
       box.innerHTML = box.innerHTML.replace("<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>", "<span style=\"color:#34c759\">✓ 已填入 Sp=" + r.sp.toFixed(0) + "</span>");
     };
+    if (spMap && spMarker) {
+      const q = String.fromCharCode(34);
+      const popHtml = "<div style=" + q + "font-size:13px;line-height:1.6" + q + "><b>S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）</b> ≈ <span style=" + q + "color:#2563eb;font-weight:700" + q + ">" + r.sp.toFixed(0) + " mm/h</span>" + (spGrid ? "<br><span style=" + q + "font-size:12px;color:#64748b" + q + ">格网精算：" + spGrid.toFixed(0) + " mm" + cvHtml + "</span>" : "") + "<br><span style=" + q + "font-size:11px;color:#94a3b8" + q + ">最近标注 " + r.distKm.toFixed(0) + " km</span></div>";
+      spMarker.bindPopup(popHtml).openPopup();
+    }
   }
-  function spRefreshContours() {
+
+function spRefreshContours() {
     if (!spMap) return;
     if (spContourLayer) {
       spMap.removeLayer(spContourLayer);
@@ -8020,6 +8031,61 @@ function textToTable(text, source) {
         }
       }
     ).addTo(spMap);
+    /* Color legend */
+    if (!document.getElementById("spLegend")) {
+      const legendDiv = L.DomUtil.create("div", "sp-legend");
+      legendDiv.id = "spLegend";
+      legendDiv.style.cssText = "background:rgba(15,23,42,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 12px;font-size:11px;color:#f8fafc;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,0.3)";
+      legendDiv.innerHTML = "<b>Sp (mm/h)</b><br>" +
+        "<span style=\"color:#1a1a2e;font-weight:700\">■</span> 10-30 &nbsp;" +
+        "<span style=\"color:#2563eb;font-weight:700\">■</span> 40-60 &nbsp;" +
+        "<span style=\"color:#60a5fa;font-weight:700\">■</span> 70-90 &nbsp;" +
+        "<span style=\"color:#22c55e;font-weight:700\">■</span> 100-120 &nbsp;" +
+        "<span style=\"color:#eab308;font-weight:700\">■</span> 130-160";
+      const legendCtl = L.control({ position: "bottomleft" });
+      legendCtl.onAdd = function() { return legendDiv; };
+      legendCtl.addTo(spMap);
+    }
+    /* Vector contour lines: group points by sp, connect nearest same-value points */
+    if (spDataset !== "grid") {
+      const spGroups = {};
+      feats.forEach((f) => {
+        const sp = f.properties?.sp;
+        if (!sp) return;
+        if (!spGroups[sp]) spGroups[sp] = [];
+        spGroups[sp].push(f.geometry.coordinates);
+      });
+      const contourLineLayer = L.layerGroup();
+      const contourColors = {10:"#1a1a2e",20:"#1e3a5f",30:"#2563eb",40:"#2563eb",50:"#2563eb",60:"#3b82f6",70:"#60a5fa",80:"#60a5fa",90:"#93c5fd",100:"#22c55e",110:"#22c55e",120:"#4ade80",130:"#eab308",140:"#eab308",150:"#f59e0b",160:"#ef4444"};
+      Object.keys(spGroups).forEach((sp) => {
+        const pts = spGroups[sp].map((c) => [c[1], c[0]]);
+        if (pts.length < 2) return;
+        const color = contourColors[sp] || "#64748b";
+        // Simple nearest-neighbor chain to approximate contour line
+        const used = new Set();
+        for (let i = 0; i < pts.length; i++) {
+          if (used.has(i)) continue;
+          used.add(i);
+          const chain = [pts[i]];
+          let cur = i;
+          for (let j = 0; j < pts.length; j++) {
+            if (used.has(j)) continue;
+            let best = -1, bestD = 0.8; // max 0.8 degree gap
+            for (let k2 = 0; k2 < pts.length; k2++) {
+              if (used.has(k2)) continue;
+              const d = Math.hypot(pts[k2][0]-pts[cur][0], pts[k2][1]-pts[cur][1]);
+              if (d < bestD) { bestD = d; best = k2; }
+            }
+            if (best >= 0) { used.add(best); chain.push(pts[best]); cur = best; }
+            else break;
+          }
+          if (chain.length >= 2) {
+            L.polyline(chain, { color: color, weight: 1.5, opacity: 0.5, dashArray: "4,4" }).bindTooltip("Sp=" + sp + " mm/h", {sticky:true}).addTo(contourLineLayer);
+          }
+        }
+      });
+      contourLineLayer.addTo(spMap);
+    }
     if (st) st.textContent = "已载入 S\u209a（" + dsName + "）标注 " + feats.length + " 点 + 配准扫描底图";
   }
   function spClearAdminLayers() {
