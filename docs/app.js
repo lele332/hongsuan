@@ -2767,21 +2767,82 @@
     ]
   };
 
-  /* 经验公式（1980年代初制定，两个公式） */
+  /* 经验公式（20世纪80年代初制定，式11-24/11-25） */
   function gskExpFormula1(p) {
-    // 经验公式一：Q = C · F^n
-    const { C, F, n } = p;
-    if (![C, F, n].every(Number.isFinite)) throw new Error("经验公式一输入不完整");
+    // 式(11-24)：Qp = γ·(Sp − μ)^m · F^λ1，γ/m/λ1 查表 11-6
+    const { gamma, sp, mu, m, F, lambda1 } = p;
+    if (![gamma, sp, mu, m, F, lambda1].every(Number.isFinite)) throw new Error("经验公式一输入不完整");
     if (F <= 0) throw new Error("汇水面积 F 必须为正");
-    return C * Math.pow(F, n);
+    if (mu >= sp) throw new Error("损失参数 μ ≥ Sp，该区域不产流，请检查参数");
+    return gamma * Math.pow(sp - mu, m) * Math.pow(F, lambda1);
   }
   function gskExpFormula2(p) {
-    // 经验公式二：Q = C · K · F^n · Q_ref^(1-n)（含重现期折算）
-    const { C, K, F, n, Qref } = p;
-    if (![C, K, F, n, Qref].every(Number.isFinite)) throw new Error("经验公式二输入不完整");
-    if (F <= 0 || Qref <= 0) throw new Error("F 和 Q_ref 必须为正");
-    return C * K * Math.pow(F, n) * Math.pow(Qref, 1 - n);
+    // 式(11-25)：Qp = C·Sp^β·F^λ2，C/β/λ2 查表 11-7
+    const { C, sp, beta, F, lambda2 } = p;
+    if (![C, sp, beta, F, lambda2].every(Number.isFinite)) throw new Error("经验公式二输入不完整");
+    if (sp <= 0 || F <= 0) throw new Error("Sp 和 F 必须为正");
+    return C * Math.pow(sp, beta) * Math.pow(F, lambda2);
   }
+  /* 表 11-6（式11-24）：γ / m / λ1（部分省区，摘自《水力学与桥涵水文》表 11-6） */
+  var EXP1_ZONES = [
+    { label: "四川·盆地丘陵区（I≤2‰）", gamma: 0.086, m: 1.18, lambda1: 0.712 },
+    { label: "四川·盆地丘陵区（2‰≤I≤10‰）", gamma: 0.105, m: 1.18, lambda1: 0.730 },
+    { label: "四川·盆地丘陵区（I≥10‰）", gamma: 0.124, m: 1.18, lambda1: 0.747 },
+    { label: "四川·盆缘山区、青衣江区（I≤10‰）", gamma: 0.102, m: 1.20, lambda1: 0.724 },
+    { label: "四川·盆缘山区、青衣江区（10‰≤I≤20‰）", gamma: 0.123, m: 1.20, lambda1: 0.745 },
+    { label: "四川·盆缘山区、青衣江区（I≥20‰）", gamma: 0.142, m: 1.20, lambda1: 0.788 },
+    { label: "河南·n值分区①", gamma: 0.22, m: 0.98, lambda1: 0.86 },
+    { label: "河南·n值分区②", gamma: 0.66, m: 1.03, lambda1: 0.65 },
+    { label: "河南·n值分区③", gamma: 0.76, m: 1.00, lambda1: 0.67 },
+    { label: "河南·n值分区④", gamma: 0.28, m: 1.07, lambda1: 0.81 },
+    { label: "表11-6续·待核省名（丘陵区）", gamma: 0.308, m: 1.32, lambda1: 0.60 },
+    { label: "表11-6续·待核省名（山区）", gamma: 0.542, m: 1.32, lambda1: 0.60 },
+    { label: "表11-6续·待核省名（林区）", gamma: 0.085, m: 1.32, lambda1: 0.75 },
+    { label: "表11-6续·待核省名（平原区）", gamma: 0.08, m: 1.08, lambda1: 0.96 },
+    { label: "表11-6续·待核省名（丘陵区B）", gamma: 0.14, m: 1.08, lambda1: 0.96 },
+    { label: "表11-6续·待核省名（山区B）", gamma: 0.27, m: 1.08, lambda1: 0.96 },
+    { label: "表11-6续·待核省名（I>15‰，P=4%）", gamma: 0.00012, m: 2.75, lambda1: 0.896 },
+    { label: "表11-6续·待核省名（I>15‰，P=2%）", gamma: 0.00014, m: 2.75, lambda1: 0.896 },
+    { label: "表11-6续·待核省名（I>15‰，P=1%）", gamma: 0.00016, m: 2.75, lambda1: 0.896 },
+    { label: "表11-6续·待核省名（I=5~15‰，P=4%）", gamma: 0.00048, m: 2.75, lambda1: 1.0 },
+    { label: "表11-6续·待核省名（I=5~15‰，P=2%）", gamma: 0.00055, m: 2.75, lambda1: 1.0 },
+    { label: "表11-6续·待核省名（I=5~15‰，P=1%）", gamma: 0.0007, m: 2.75, lambda1: 1.0 },
+    { label: "表11-6续·待核省名（I<5‰，P=4%）", gamma: 0.00018, m: 2.75, lambda1: 0.965 },
+    { label: "表11-6续·待核省名（I<5‰，P=2%）", gamma: 0.00019, m: 2.75, lambda1: 0.965 },
+    { label: "表11-6续·待核省名（I<5‰，P=1%）", gamma: 0.0002, m: 2.75, lambda1: 0.965 }
+  ];
+  /* 表 11-7（式11-25）：C / β / λ2（部分省区，摘自《水力学与桥涵水文》表 11-7） */
+  var EXP2_ZONES = [
+    { label: "山西·石山黄土丘陵植被差（C=0.24~0.20）", C: 0.24, beta: 1.0, lambda2: 0.78 },
+    { label: "山西·植被一般土石山（C=0.19~0.16）", C: 0.19, beta: 1.0, lambda2: 0.78 },
+    { label: "山西·植被较好含煤矿漏水区（C=0.15~0.12）", C: 0.15, beta: 1.0, lambda2: 0.78 },
+    { label: "四川·盆地丘陵区（I≤10‰）", C: 0.125, beta: 1.10, lambda2: 0.723 },
+    { label: "四川·盆地丘陵区（I>10‰）", C: 0.145, beta: 1.10, lambda2: 0.723 },
+    { label: "四川·盆缘山区、青衣江区（I≤10‰）", C: 0.140, beta: 1.14, lambda2: 0.737 },
+    { label: "四川·盆缘山区、青衣江区（I>10‰）", C: 0.160, beta: 1.14, lambda2: 0.737 },
+    { label: "表11-7续·待核省名（I>15‰，P=4%）", C: 0.000292, beta: 2.414, lambda2: 0.896 },
+    { label: "表11-7续·待核省名（I>15‰，P=2%）", C: 0.000315, beta: 2.414, lambda2: 0.896 },
+    { label: "表11-7续·待核省名（I>15‰，P=1%）", C: 0.000336, beta: 2.414, lambda2: 0.896 },
+    { label: "表11-7续·待核省名（I=5~15‰，P=4%）", C: 0.000127, beta: 2.414, lambda2: 1.0 },
+    { label: "表11-7续·待核省名（I=5~15‰，P=2%）", C: 0.000132, beta: 2.414, lambda2: 1.0 },
+    { label: "表11-7续·待核省名（I=5~15‰，P=1%）", C: 0.00015, beta: 2.414, lambda2: 1.0 },
+    { label: "表11-7续·待核省名（I<5‰，P=4%）", C: 0.000235, beta: 2.414, lambda2: 0.965 },
+    { label: "表11-7续·待核省名（I<5‰，P=2%）", C: 0.000266, beta: 2.414, lambda2: 0.965 },
+    { label: "表11-7续·待核省名（I<5‰，P=1%）", C: 0.000275, beta: 2.414, lambda2: 0.965 },
+    { label: "吉林·松花江/图们江/牡丹江水系·山岭", C: 0.075, beta: 0.80, lambda2: 1.12 },
+    { label: "吉林·松花江/图们江/牡丹江水系·丘陵", C: 0.035, beta: 0.80, lambda2: 1.12 },
+    { label: "吉林·松花江/图们江/牡丹江水系·平原", C: 0.0135, beta: 0.80, lambda2: 1.12 },
+    { label: "吉林·拉林河/饮马河水系·山岭", C: 0.31, beta: 0.80, lambda2: 1.37 },
+    { label: "浙江·钱塘江流域·浙北地区", C: 0.01, beta: 1.37, lambda2: 1.11 },
+    { label: "浙江·钱塘江流域·其他", C: 0.02, beta: 1.37, lambda2: 1.11 },
+    { label: "福建·平原区", C: 0.030, beta: 1.25, lambda2: 0.90 },
+    { label: "福建·丘陵区", C: 0.034, beta: 1.25, lambda2: 0.90 },
+    { label: "福建·浅山区", C: 0.050, beta: 1.25, lambda2: 0.90 },
+    { label: "福建·深山区", C: 0.071, beta: 1.25, lambda2: 0.90 },
+    { label: "贵州·平原丘陵区", C: 0.016, beta: 1.112, lambda2: 0.985 },
+    { label: "贵州·浅山区", C: 0.030, beta: 1.112, lambda2: 0.985 },
+    { label: "贵州·深山区", C: 0.056, beta: 1.112, lambda2: 0.985 }
+  ];
 
   function gskCalcMu(sp, k1, b1) {
     return k1 * Math.pow(sp, b1);
@@ -2869,6 +2930,7 @@
           isSouth: $("gskRegion").value === "south"
         };
         const r = gskRationalFormula(params);
+        window.__hsLastGskMu = r.mu;
         if (out) out.textContent = r.q.toFixed(2);
         if (detail) {
           detail.textContent = "τ=" + r.tau.toFixed(2) + "h → 选" + r.nKey + "=" + (r.nKey === "n1" ? params.n1 : r.nKey === "n2" ? params.n2 : params.n3).toFixed(2) + "；μ=" + r.mu.toFixed(1) + "mm/h；Sp−μ=" + (r.sp - r.mu).toFixed(1) + "mm/h";
@@ -2906,18 +2968,32 @@
   (function initExp() {
     const calc1 = () => {
       try {
-        const r = gskExpFormula1({ C: +$("exp1C").value, F: +$("exp1F").value, n: +$("exp1N").value });
+        const r = gskExpFormula1({ gamma: +$("exp1Gamma").value, sp: +$("exp1Sp").value, mu: +$("exp1Mu").value, m: +$("exp1M").value, F: +$("exp1F").value, lambda1: +$("exp1Lam").value });
         $("exp1Out").textContent = r.toFixed(2);
       } catch(e) { $("exp1Out").textContent = "—"; }
     };
     const calc2 = () => {
       try {
-        const r = gskExpFormula2({ C: +$("exp2C").value, K: +$("exp2K").value, F: +$("exp2F").value, n: +$("exp2N").value, Qref: +$("exp2Qref").value });
+        const r = gskExpFormula2({ C: +$("exp2C").value, sp: +$("exp2Sp").value, beta: +$("exp2Beta").value, F: +$("exp2F").value, lambda2: +$("exp2Lam").value });
         $("exp2Out").textContent = r.toFixed(2);
       } catch(e) { $("exp2Out").textContent = "—"; }
     };
-    ["exp1C","exp1N","exp1F"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc1); el.addEventListener("change", calc1); } });
-    ["exp2C","exp2K","exp2N","exp2F","exp2Qref"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc2); el.addEventListener("change", calc2); } });
+    const z1 = $("exp1Zone"), z2 = $("exp2Zone");
+    if (z1) {
+      z1.innerHTML = '<option value="">—选择省域/分区（自动填 γ、m、λ₁）—</option>' + EXP1_ZONES.map((z, i) => '<option value="' + i + '">' + z.label + '</option>').join("");
+      z1.addEventListener("change", () => { const z = EXP1_ZONES[+z1.value]; if (z) { $("exp1Gamma").value = z.gamma; $("exp1M").value = z.m; $("exp1Lam").value = z.lambda1; calc1(); } });
+    }
+    if (z2) {
+      z2.innerHTML = '<option value="">—选择省域/分区（自动填 C、β、λ₂）—</option>' + EXP2_ZONES.map((z, i) => '<option value="' + i + '">' + z.label + '</option>').join("");
+      z2.addEventListener("change", () => { const z = EXP2_ZONES[+z2.value]; if (z) { $("exp2C").value = z.C; $("exp2Beta").value = z.beta; $("exp2Lam").value = z.lambda2; calc2(); } });
+    }
+    const pull1 = () => { const sp = $("gskSp"); if (sp && $("exp1Sp")) $("exp1Sp").value = sp.value; const mu = window.__hsLastGskMu; if (typeof mu === "number" && isFinite(mu) && $("exp1Mu")) $("exp1Mu").value = mu.toFixed(1); calc1(); };
+    const pull2 = () => { const sp = $("gskSp"); if (sp && $("exp2Sp")) $("exp2Sp").value = sp.value; calc2(); };
+    const b1 = $("exp1Pull"), b2 = $("exp2Pull");
+    if (b1) b1.addEventListener("click", pull1);
+    if (b2) b2.addEventListener("click", pull2);
+    ["exp1Gamma","exp1M","exp1Lam","exp1Sp","exp1Mu","exp1F"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc1); el.addEventListener("change", calc1); } });
+    ["exp2C","exp2Beta","exp2Lam","exp2Sp","exp2F"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", calc2); el.addEventListener("change", calc2); } });
   })();
 
 // src/core/waterSurface.ts

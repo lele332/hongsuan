@@ -1,8 +1,8 @@
 /* 泓算网页版 - 构建信息（构建脚本生成，请勿手工改） */
 window.__HS_BUILD_INFO = {
-  "version": "1.0.21",
-  "release": "v1.0.21",
-  "commit": "d174277",
+  "version": "1.0.27",
+  "release": "v1.0.27",
+  "commit": "387ae54",
   "builtAt": "2026-10-19",
-  "cacheVersion": "hongsuan-v1-0-21-d174277"
+  "cacheVersion": "hongsuan-v1-0-27-387ae54"
 };

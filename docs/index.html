@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.21</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.27</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -800,30 +800,41 @@
         </details>
         <details style="margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:10px 14px">
           <summary style="cursor:pointer;font-weight:600;font-size:14px;color:var(--blue)">📐 经验公式（20世纪80年代初·公路科研所制定）</summary>
-          <div class="hint" style="margin-top:8px;font-size:12px">在制定推理公式的基础上，又制定了简单的小流域暴雨径流的经验公式，适用于汇水面积较小的地区。</div>
+          <div class="hint" style="margin-top:8px;font-size:12px">在制定推理公式的基础上，又制定了简单的小流域暴雨径流经验公式（式 11-24、11-25）。γ、m、λ₁ 查表 11-6，C、β、λ₂ 查表 11-7；可从下拉选择省域/分区自动填充系数。</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
-            <div style="flex:1;min-width:260px;border:1px solid var(--border);border-radius:10px;padding:10px">
-              <label style="font-weight:600;font-size:13px;color:var(--text)">经验公式一　Q = C·F<sup>n</sup></label>
+            <div style="flex:1;min-width:280px;border:1px solid var(--border);border-radius:10px;padding:10px">
+              <label style="font-weight:600;font-size:13px;color:var(--text)">经验公式一（式 11-24）　Q<sub>p</sub> = γ·(S<sub>p</sub>−μ)<sup>m</sup>·F<sup>λ₁</sup></label>
+              <div style="margin-top:6px"><select id="exp1Zone" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:4px 8px;background:var(--bg);color:var(--text)"></select></div>
               <div class="row" style="margin-top:6px">
-                <div><label>系数 C</label><input type="number" id="exp1C" value="12" step="any"></div>
-                <div><label>指数 n</label><input type="number" id="exp1N" value="0.75" step="any"></div>
+                <div><label>γ 地貌系数</label><input type="number" id="exp1Gamma" value="0.086" step="any"></div>
+                <div><label>指数 m</label><input type="number" id="exp1M" value="1.18" step="any"></div>
+                <div><label>指数 λ₁</label><input type="number" id="exp1Lam" value="0.712" step="any"></div>
+              </div>
+              <div class="row" style="margin-top:6px">
+                <div><label>S<sub>p</sub>（mm/h）</label><input type="number" id="exp1Sp" value="80" step="any"></div>
+                <div><label>μ（mm/h）</label><input type="number" id="exp1Mu" value="15" step="any"></div>
                 <div><label>F（km²）</label><input type="number" id="exp1F" value="3.94" step="0.01" min="0.01"></div>
               </div>
-              <div class="metric" style="margin-top:8px"><div class="k">Q（m³/s）</div><div class="v" id="exp1Out">—</div></div>
+              <div style="margin-top:6px"><button class="fillBtn" id="exp1Pull">⬅ 带入推理公式的 S<sub>p</sub> 与 μ</button></div>
+              <div class="metric" style="margin-top:8px"><div class="k">Q<sub>p</sub>（m³/s）</div><div class="v" id="exp1Out">—</div></div>
             </div>
-            <div style="flex:1;min-width:260px;border:1px solid var(--border);border-radius:10px;padding:10px">
-              <label style="font-weight:600;font-size:13px;color:var(--text)">经验公式二　Q = C·K·F<sup>n</sup>·Q<sub>ref</sub><sup>(1−n)</sup></label>
+            <div style="flex:1;min-width:280px;border:1px solid var(--border);border-radius:10px;padding:10px">
+              <label style="font-weight:600;font-size:13px;color:var(--text)">经验公式二（式 11-25）　Q<sub>p</sub> = C·S<sub>p</sub><sup>β</sup>·F<sup>λ₂</sup></label>
+              <div style="margin-top:6px"><select id="exp2Zone" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:4px 8px;background:var(--bg);color:var(--text)"></select></div>
               <div class="row" style="margin-top:6px">
-                <div><label>系数 C</label><input type="number" id="exp2C" value="12" step="any"></div>
-                <div><label>系数 K</label><input type="number" id="exp2K" value="1" step="any"></div>
-                <div><label>指数 n</label><input type="number" id="exp2N" value="0.75" step="any"></div>
-                <div><label>F（km²）</label><input type="number" id="exp2F" value="3.94" step="0.01"></div>
-                <div><label>Q<sub>ref</sub></label><input type="number" id="exp2Qref" value="100" step="any"></div>
+                <div><label>系数 C</label><input type="number" id="exp2C" value="0.24" step="any"></div>
+                <div><label>指数 β</label><input type="number" id="exp2Beta" value="1.0" step="any"></div>
+                <div><label>指数 λ₂</label><input type="number" id="exp2Lam" value="0.78" step="any"></div>
               </div>
-              <div class="metric" style="margin-top:8px"><div class="k">Q（m³/s）</div><div class="v" id="exp2Out">—</div></div>
+              <div class="row" style="margin-top:6px">
+                <div><label>S<sub>p</sub>（mm/h）</label><input type="number" id="exp2Sp" value="80" step="any"></div>
+                <div><label>F（km²）</label><input type="number" id="exp2F" value="3.94" step="0.01" min="0.01"></div>
+              </div>
+              <div style="margin-top:6px"><button class="fillBtn" id="exp2Pull">⬅ 带入推理公式的 S<sub>p</sub></button></div>
+              <div class="metric" style="margin-top:8px"><div class="k">Q<sub>p</sub>（m³/s）</div><div class="v" id="exp2Out">—</div></div>
             </div>
           </div>
-          <div class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">C、n（及 K、Q_ref）按各省（自治区）交通设计院经验公式分区表取值，表中系数待你提供书页后补充。</div>
+          <div class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">表中「待核省名」分区系数数值已按教材表 11-6 / 11-7 录入，省名请对照你手上的书核对后使用；其余省区可在输入框手动填入表中数值。</div>
         </details>
         <details id="spMapPanel" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">🗺️ 暴雨雨力 S<sub>p</sub>（1% / 4%）等值线地图 · 行政区定位查 S<sub>p</sub></summary>
