@@ -6634,7 +6634,7 @@
   function hsOcrServers() {
     const list = Array.isArray(window.HS_OCR_SERVERS) && window.HS_OCR_SERVERS.length
       ? window.HS_OCR_SERVERS
-      : ["https://ocr.csuft-sce.cn/ocr", "https://hs-ocr.2014797056.workers.dev/ocr", "http://120.26.35.167:9005/ocr"];
+      : ["https://ocr.csuft-sce.cn/ocr", "https://hongsuan-pages.pages.dev/ocr", "http://120.26.35.167:9005/ocr"];
     const pageHttps = location.protocol === "https:";
     // HTTPS 页面禁止访问 HTTP 接口（混合内容），直接过滤避免报错
     return list.filter((u) => !pageHttps || String(u).indexOf("https://") === 0);
