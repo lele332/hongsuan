@@ -323,4 +323,9 @@
       alert("报告生成失败：" + (e instanceof Error ? e.message : String(e)));
     });
   };
+
+  var _fieBtn = document.getElementById("fieReportBtn");
+  if (_fieBtn) _fieBtn.addEventListener("click", function () {
+    if (typeof window.HONGSUAN_FIE_DOWNLOAD === "function") window.HONGSUAN_FIE_DOWNLOAD();
+  });
 })();

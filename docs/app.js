@@ -5353,39 +5353,35 @@
   function esc(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
-  var DEMO_SCALE = { pixelDistance: 100, realDistanceM: 1000 };
-  var DEMO_POLY = [
-    {x:150,y:120},{x:280,y:90},{x:400,y:122},{x:470,y:200},{x:500,y:300},
-    {x:460,y:400},{x:360,y:450},{x:250,y:430},{x:160,y:360},{x:120,y:250}
-  ];
-  var DEMO_RIVER = [
-    {x:210,y:140},{x:255,y:200},{x:318,y:278},{x:368,y:352},{x:410,y:432},{x:432,y:505}
-  ];
+  var DEMO_SCALE = { pixelDistance: 100, realDistanceM: 840.6 };
+  var DEMO_POLY = [{x:678.4,y:209.8}, {x:629.4,y:145.8}, {x:543.4,y:94.2}, {x:525.4,y:94.2}, {x:472.9,y:131.2}, {x:448.9,y:131.8}, {x:421.9,y:112.8}, {x:386.9,y:112.8}, {x:375.4,y:101.2}, {x:337.9,y:94.2}, {x:308.4,y:149.2}, {x:221.6,y:183.0}, {x:235.6,y:201.0}, {x:231.1,y:225.0}, {x:243.6,y:247.5}, {x:242.1,y:287.0}, {x:274.4,y:286.8}, {x:293.6,y:301.0}, {x:296.9,y:343.2}, {x:325.9,y:350.8}, {x:366.4,y:331.2}, {x:435.9,y:355.2}, {x:510.4,y:396.8}, {x:534.9,y:397.2}, {x:545.1,y:429.0}, {x:536.1,y:457.0}, {x:554.9,y:465.8}, {x:620.4,y:434.2}, {x:647.1,y:403.5}, {x:641.1,y:329.0}, {x:658.1,y:287.0}, {x:678.4,y:268.2}];
+  var DEMO_RIVER = [{x:383.4,y:151.5}, {x:412.4,y:161.0}, {x:473.4,y:211.5}, {x:470.4,y:271.0}, {x:450.4,y:294.5}, {x:460.4,y:334.0}, {x:490.4,y:345.5}, {x:519.9,y:336.0}, {x:538.4,y:353.5}, {x:580.9,y:365.5}, {x:611.4,y:357.5}, {x:666.4,y:369.0}, {x:691.4,y:347.5}, {x:691.9,y:307.0}, {x:712.4,y:290.5}];
+  var DEMO_H = { h1: 528.3, h2: 245.7 };
   function demoTerrainSvg() {
-    const hills = [
-      [95,85,75,48],[185,65,95,52],[85,225,62,42],[250,55,115,46],[560,105,85,52],
-      [665,215,95,62],[725,385,105,66],[560,470,92,52],[120,475,82,46],[810,120,70,44]
-    ];
-    const ring1 = hills.map((g) => `<ellipse cx="${g[0]}" cy="${g[1]}" rx="${g[2]}" ry="${g[3]}" fill="none" stroke="#cdc5ae" stroke-width="1.6"/>`).join("");
-    const ring2 = hills.map((g) => `<ellipse cx="${g[0]}" cy="${g[1]}" rx="${g[2]*0.55}" ry="${g[3]*0.55}" fill="none" stroke="#d9d2bd" stroke-width="1"/>`).join("");
     const riverD = DEMO_RIVER.map((p) => `${p.x},${p.y}`).join(" ");
+    const polyD = DEMO_POLY.map((p) => `${p.x},${p.y}`).join(" ");
+    const o = DEMO_RIVER[0];
     return [
-      '<rect x="0" y="0" width="900" height="560" fill="#f1eee3"/>',
-      ring1, ring2,
-      `<polyline points="${riverD}" fill="none" stroke="#7fb3d5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`,
-      `<polyline points="${riverD}" fill="none" stroke="#2e86c1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
-      '<line x1="432" y1="520" x2="456" y2="520" stroke="#b03a2e" stroke-width="4"/>',
-      '<line x1="432" y1="514" x2="432" y2="526" stroke="#b03a2e" stroke-width="2"/>',
-      '<line x1="456" y1="514" x2="456" y2="526" stroke="#b03a2e" stroke-width="2"/>',
-      '<text x="462" y="524" font-size="12" fill="#b03a2e">桥位</text>',
-      '<line x1="50" y1="528" x2="150" y2="528" stroke="#444" stroke-width="3"/>',
-      '<line x1="50" y1="522" x2="50" y2="534" stroke="#444" stroke-width="2"/>',
-      '<line x1="150" y1="522" x2="150" y2="534" stroke="#444" stroke-width="2"/>',
-      '<text x="52" y="518" font-size="11" fill="#444">0            1 km（1:10000，1 像素 = 10 m）</text>',
-      '<path d="M858 38 L866 58 L858 52 L850 58 Z" fill="#444"/>',
-      '<text x="853" y="74" font-size="12" fill="#444">N</text>',
-      '<text x="20" y="30" font-size="14" font-weight="600" fill="#4a4a44">示例地形图（教学演示数据 · 非真实地形）</text>',
-      '<text x="20" y="52" font-size="12" fill="#6b6b62">蓝色 = 主河沟 · 红色 = 桥位 · 虚线山脊即分水岭：沿山脊点一圈勾汇水区</text>'
+      '<image href="assets/demo_basemap.jpg" x="0" y="0" width="900" height="560" preserveAspectRatio="none"/>',
+      `<polygon points="${polyD}" fill="#378add" fill-opacity="0.18" stroke="#185fa5" stroke-width="2.5" stroke-dasharray="7 4"/>`,
+      `<polyline points="${riverD}" fill="none" stroke="#2e86c1" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      `<line x1="${o.x - 12}" y1="${o.y}" x2="${o.x + 12}" y2="${o.y}" stroke="#b03a2e" stroke-width="4"/>`,
+      `<line x1="${o.x - 12}" y1="${o.y - 6}" x2="${o.x - 12}" y2="${o.y + 6}" stroke="#b03a2e" stroke-width="2"/>`,
+      `<line x1="${o.x + 12}" y1="${o.y - 6}" x2="${o.x + 12}" y2="${o.y + 6}" stroke="#b03a2e" stroke-width="2"/>`,
+      `<text x="${o.x + 16}" y="${o.y + 4}" font-size="12" font-weight="600" fill="#ffd7d0" stroke="#7a1d12" stroke-width="0.6">\u6865\u4F4D</text>`,
+      '<rect x="0" y="0" width="900" height="58" fill="#ffffff" fill-opacity="0.82"/>',
+      '<text x="14" y="24" font-size="14" font-weight="600" fill="#3a3a34">\u793A\u4F8B\u6D41\u57DF \xB7 \u6E56\u5357\u6D4F\u9633\u5927\u56F4\u5C71\u771F\u5B9E\u6D41\u57DF\uFF08\u536B\u661F\u5F71\u50CF + DEM \u6C34\u6587\u5206\u6790\u52FE\u7ED8\uFF09</text>',
+      '<text x="14" y="46" font-size="12" fill="#5a5a52">\u84DD\u8272 = \u771F\u5B9E\u4E3B\u6CB3\u6C9F \xB7 \u84DD\u8272\u865A\u7EBF = DEM \u81EA\u52A8\u5212\u5B9A\u7684\u771F\u5B9E\u5206\u6C34\u5CAD \xB7 \u7EA2\u8272 = \u6865\u4F4D \xB7 \u53EF\u6E05\u9664\u540E\u81EA\u5DF1\u6CBF\u5C71\u810A\u52FE\u7ED8</text>',
+      '<rect x="36" y="512" width="300" height="42" fill="#000000" fill-opacity="0.45"/>',
+      '<line x1="48" y1="526" x2="167" y2="526" stroke="#ffffff" stroke-width="2"/>',
+      '<line x1="48" y1="520" x2="48" y2="532" stroke="#ffffff" stroke-width="2"/>',
+      '<line x1="167" y1="520" x2="167" y2="532" stroke="#ffffff" stroke-width="2"/>',
+      '<text x="48" y="546" font-size="11" fill="#ffffff">0 \u2014 1 km\uFF081:8400 \xB7 1 \u50CF\u7D20 \u2248 8.4 m\uFF09</text>',
+      '<rect x="842" y="34" width="38" height="48" fill="#000000" fill-opacity="0.45"/>',
+      '<path d="M856 42 L863 58 L856 53 L849 58 Z" fill="#ffffff"/>',
+      '<text x="852" y="74" font-size="12" font-weight="600" fill="#ffffff">N</text>',
+      '<rect x="616" y="540" width="278" height="16" fill="#000000" fill-opacity="0.45"/>',
+      '<text x="622" y="552" font-size="9" fill="#ffffff">\u5F71\u50CF \xA9 Esri, Maxar, Earthstar Geographics</text>'
     ].join("");
   }
   function renderMap() {
@@ -5420,7 +5416,7 @@
     }
     const mode = $("mapMode").value;
     const tip = mode === "calib" ? "\u5728\u56FE\u4E0A\u70B9\u4E24\u70B9\uFF0C\u6807\u51FA\u4E00\u6BB5\u5DF2\u77E5\u5B9E\u9645\u8DDD\u79BB" : mode === "poly" ? "\u6CBF\u5206\u6C34\u5CAD\u4F9D\u6B21\u70B9\u51FB\uFF0C\u56F4\u51FA\u6C47\u6C34\u533A" : "\u4ECE\u4E0A\u6E38\u5230\u51FA\u53E3\u4F9D\u6B21\u70B9\u51FB\u4E3B\u6CB3\u6C9F\u4E2D\u5FC3\u7EBF";
-    parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${esc(tip)}</text>`);
+    if (!isDemo()) parts.push(`<text x="12" y="24" font-size="13" fill="#5f5e5a">${esc(tip)}</text>`);
     $("mapCanvas").innerHTML = parts.join("");
   }
   if ($("mapCanvas")) {
@@ -5464,7 +5460,7 @@
       $("mapScaleTip").textContent = "";
       if (isDemo()) {
         mapState.scale = { pixelDistance: DEMO_SCALE.pixelDistance, realDistanceM: DEMO_SCALE.realDistanceM };
-        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 = 10 m（1:10000）";
+        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 ≈ 8.41 m（1:8400 · Esri 卫星影像）";
       }
       renderMap();
     };
@@ -5472,8 +5468,8 @@
       $("mapMode").value = "poly";
       mapState.poly = DEMO_POLY.map((p) => ({ x: p.x, y: p.y }));
       mapState.river = DEMO_RIVER.map((p) => ({ x: p.x, y: p.y }));
-      $("mapH1").value = "486";
-      $("mapH2").value = "402";
+      $("mapH1").value = String(DEMO_H.h1);
+      $("mapH2").value = String(DEMO_H.h2);
       renderMap();
       $("mapGo").click();
     };
@@ -5558,7 +5554,7 @@
       $("mapDemoCtl").style.display = demo ? "inline" : "none";
       if (demo) {
         mapState.scale = { pixelDistance: DEMO_SCALE.pixelDistance, realDistanceM: DEMO_SCALE.realDistanceM };
-        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 = 10 m（1:10000）";
+        $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 ≈ 8.41 m（1:8400 · Esri 卫星影像）";
       }
       renderMap();
     };

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.34</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.35</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@
 <!-- 桌面版下载入口 -->
 <div id="dlBar">
   <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
-  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.34</a>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.35</a>
 </div>
 
 
@@ -728,13 +728,13 @@
     <b>为什么不接在线地图：</b>在线底图涉及审图号与边界合规，且离线单文件版断网不可用。这里改为<b>你自己导入地形图/影像截图</b>做底图，比例尺由你在图上标定，全程离线、数据来源你自持。
     <br><b>用法（在线底图）：</b>填入天地图 tk（其官网免费申请）→ 设中心经纬度与级别 → 加载底图 → 选「勾汇水区」沿分水岭点一圈 → 点计算，<b>F 由经纬度直接算出，不需要人工标比例尺</b>。
     <br><b>用法（本地底图）：</b>导入地形图截图 → 标定比例尺 → 勾绘 → 计算（同上）。
-    <br><b>用法（示例地形）：</b>点「载入示例汇水区」一键勾好分水岭与主河沟并算出 F / L / I（示例底图已内置标定：1 像素 = 10 m，即 1:10000）；也可以清掉后自己沿山脊点击勾绘。
+    <br><b>用法（示例地形）：</b>点「载入示例汇水区」一键勾好分水岭与主河沟并算出 F / L / I；示例流域 = 湖南浏阳大围山 Esri 卫星影像（1 像素 ≈ 8.4 m），蓝色分水岭由真实 DEM 水文分析自动划定；也可以清掉后自己沿山脊点击勾绘。
     <br><span style="color:var(--red)">合规说明：在线底图仅用于屏幕显示，不随 SVG/计算书导出，也不内置到离线版；不使用 OSM 等境外底图（其境内边界与地名不符合国家标准）。</span>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px">
     <span>底图方式</span>
     <select id="mapSrc" style="width:190px">
-      <option value="demo">内置示例地形（教学演示）</option>
+      <option value="demo">示例流域（真实卫星影像 · 大围山）</option>
       <option value="online">在线底图（天地图）</option>
       <option value="local">本地图片（离线可用）</option>
     </select>
@@ -1448,7 +1448,7 @@
 
 <script>
 (function(){
-  var EXPECT = "1.0.34";
+  var EXPECT = "1.0.35";
   function hsCacheChk(){
     try{
       var v = window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.version;
