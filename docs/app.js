@@ -3,6 +3,14 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // 【修复 v1.0.30】$ 助手必须在所有 UI init 之前可用（initGsk 在 L2958 就调用 $，
+  // 而原定义在 L3199 —— v1.0.25 起整页初始化被 TypeError 炸断，界面全部失灵）
+  var $ = (id) => {
+    const el = document.getElementById(id);
+    if (!el) throw new Error("\u754C\u9762\u5143\u7D20\u4E0D\u5B58\u5728\uFF1A" + id);
+    return el;
+  };
+
   // src/core/phi.ts
   function gammaln(x) {
     const g = 7;
