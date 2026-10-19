@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.28</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.29</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@
 <!-- 桌面版下载入口 -->
 <div id="dlBar">
   <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
-  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.28</a>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.29</a>
 </div>
 
 
@@ -330,7 +330,7 @@
   <button id="mSeries" class="on">流量系列适线</button>
   <button id="mParams">直接参数模式</button>
   <button id="mHist">历史洪水位法</button>
-  <button id="mNoData">无资料地区</button>
+  <button id="mNoData">暴雨资料推算</button>
     <button id="mMap">地图量算</button>
 <button id="mHydro">设计洪水过程线</button>
     <button id="mHelp">帮助</button>
@@ -699,7 +699,7 @@
   </div>
 
   <div id="noDataBox" style="display:none">
-    <h2>无资料地区（规范 6.4）</h2>
+    <h2>暴雨资料推算（规范 6.4）</h2>
     <div class="hint" style="margin-top:0">推理公式适用于汇水面积 &lt;100 km²（6.4.2），参数采用地区暴雨径流图表值；求算的设计流量应有历史洪水验证（6.4.1）。</div>
     <!-- 公路科研所1980版推理公式（教材方法） -->
       <details open style="margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:10px 14px">
@@ -838,10 +838,10 @@
         </details>
         <details id="spMapPanel" style="margin-top:12px">
           <summary style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">🗺️ 暴雨雨力 S<sub>p</sub>（1% / 4%）等值线地图 · 行政区定位查 S<sub>p</sub></summary>
-          <div class="hint" style="margin-top:10px">在同一张地图上叠加<b>全国暴雨雨力 S<sub>p</sub> 等值线</b>与<b>行政区划边界</b>：先点地图定位到你桥位所在的省/市（会显示行政区名称与经纬度），再点桥位附近位置，软件自动按最近等值线标注插值出该点的 S<sub>p</sub>，点「填入 S<sub>p</sub>」直接用于推理公式。地图已叠加<b>配准后的原图扫描底图</b>，可用上方按钮切换 S<sub>p</sub>（1%）/ S<sub>p</sub>（4%）两套数据（与设计频率对应，默认 1%）。</div>
+          <div class="hint" style="margin-top:10px">在同一张地图上叠加<b>全国暴雨雨力 S<sub>p</sub> 等值线</b>与<b>行政区划边界</b>：先点地图定位到你桥位所在的省/市（会显示行政区名称与经纬度），再点桥位附近位置，软件自动按最近等值线标注插值出该点的 S<sub>p</sub>，点「填入 S<sub>p</sub>」直接用于推理公式。地图已叠加<b>配准后的原图扫描底图</b>，可用上方按钮切换 S<sub>p</sub>（1%）/ S<sub>p</sub>（4%）两套数据（与设计频率对应，默认 1%）。支持<b>县级定位</b>：输入县名直接缩放到该县边界并自动插值 Sp。</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px">
             <span>快速定位省份：</span><select id="spProvSel" style="width:140px"></select>
-            <span style="color:var(--text2)">数据集：</span>
+            <span>县级定位：</span><input id="spCountyQ" list="spCountyList" placeholder="输入县名" style="width:100px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:12px;background:var(--bg);color:var(--text)"><datalist id="spCountyList"></datalist><button id="spCountyGo" class="fillBtn">定位</button><span style="color:var(--text2)">数据集：</span>
             <button id="spDs1" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">S<sub>p</sub>（1%）</button>
             <button id="spDs4" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">S<sub>p</sub>（4%）</button>
             <button id="spGridBtn" style="border:1px solid var(--border);border-radius:8px;padding:3px 10px;background:var(--bg);color:var(--blue);font-size:12px;cursor:pointer">图集格网（60min）</button>

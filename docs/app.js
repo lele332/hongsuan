@@ -8308,7 +8308,18 @@ function textToTable(text, source) {
     }
   }
 
-function spRefreshContours() {
+function spChaikin(pts) {
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+      out.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+  function spRefreshContours() {
     if (!spMap) return;
     if (spContourLayer) {
       spMap.removeLayer(spContourLayer);
@@ -8358,6 +8369,7 @@ function spRefreshContours() {
       });
       const contourLineLayer = L.layerGroup();
       const contourColors = {10:"#1a1a2e",20:"#1e3a5f",30:"#2563eb",40:"#2563eb",50:"#2563eb",60:"#3b82f6",70:"#60a5fa",80:"#60a5fa",90:"#93c5fd",100:"#22c55e",110:"#22c55e",120:"#4ade80",130:"#eab308",140:"#eab308",150:"#f59e0b",160:"#ef4444"};
+      const longestChain = {};
       Object.keys(spGroups).forEach((sp) => {
         const pts = spGroups[sp].map((c) => [c[1], c[0]]);
         if (pts.length < 2) return;
@@ -8381,8 +8393,16 @@ function spRefreshContours() {
             else break;
           }
           if (chain.length >= 2) {
-            L.polyline(chain, { color: color, weight: 1.5, opacity: 0.5, dashArray: "4,4" }).bindTooltip("Sp=" + sp + " mm/h", {sticky:true}).addTo(contourLineLayer);
+            L.polyline(spChaikin(chain), { color: color, weight: 2, opacity: 0.75 }).bindTooltip("S\u209a=" + sp + " mm/h", { sticky: true }).addTo(contourLineLayer);
+            if (!longestChain[sp] || chain.length > longestChain[sp].length) longestChain[sp] = chain;
           }
+        }
+      });
+      Object.keys(longestChain).forEach((sp) => {
+        const lc = longestChain[sp];
+        if (lc.length >= 4) {
+          const mid = lc[Math.floor(lc.length / 2)];
+          L.tooltip({ permanent: true, direction: "top", opacity: 0.85 }).setLatLng(mid).setContent("S\u209a=" + sp).addTo(contourLineLayer);
         }
       });
       contourLineLayer.addTo(spMap);
@@ -8486,6 +8506,58 @@ function spRefreshContours() {
         spLoadAdminGeo(String(adcode), f.properties.name, "city");
       };
     }
+    // 县级定位（全国 2859 县级区划索引）
+    var spCountyIndex = null, spCountyFocusLayer = null;
+    const spCountyEnsure = async () => {
+      if (spCountyIndex) return spCountyIndex;
+      const res = await fetch("assets/sp_counties.json");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      spCountyIndex = await res.json();
+      return spCountyIndex;
+    };
+    const cq = $("spCountyQ"), cl = $("spCountyList"), cgo = $("spCountyGo");
+    if (cq && cl) {
+      cq.addEventListener("focus", async () => {
+        try {
+          const idx = await spCountyEnsure();
+          if (!cl.options.length) cl.innerHTML = idx.map((e) => '<option value="' + e.n + '">' + e.p + "·" + (e.c || "") + "</option>").join("");
+        } catch (e2) {}
+      });
+      cq.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && cgo) cgo.click(); });
+    }
+    if (cgo) cgo.onclick = async () => {
+      const st = $("spMapStatus");
+      try {
+        if (!spMap) return;
+        const idx = await spCountyEnsure();
+        const q = (cq.value || "").trim();
+        if (!q) return;
+        const hit = idx.find((e) => e.n === q) || idx.find((e) => e.n.indexOf(q) === 0) || idx.find((e) => e.n.indexOf(q) >= 0);
+        if (!hit) { if (st) st.textContent = "未找到县名：" + q; return; }
+        let geo = spCityCache[hit.a];
+        if (!geo) {
+          const res = await fetch("https://geo.datav.aliyun.com/areas_v3/bound/" + hit.a + ".json");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          geo = await res.json();
+          spCityCache[hit.a] = geo;
+        }
+        const feat = geo.type === "Feature" ? geo : (geo.features || [])[0];
+        if (!feat) throw new Error("边界数据为空");
+        if (spCountyFocusLayer) { try { spMap.removeLayer(spCountyFocusLayer); } catch (e5) {} }
+        spCountyFocusLayer = L.geoJSON(feat, { style: () => ({ color: "#7c3aed", weight: 2.5, fillColor: "#a78bfa", fillOpacity: 0.12 }) }).addTo(spMap);
+        spCurrentAdmin = hit.p + "·" + (hit.c || "") + "·" + hit.n;
+        const bb2 = spCountyFocusLayer.getBounds();
+        spMap.fitBounds(bb2, { padding: [24, 24] });
+        const cc = bb2.getCenter();
+        spLastPoint = { lat: cc.lat, lng: cc.lng };
+        if (!spMarker) spMarker = L.circleMarker(cc, { radius: 7, color: "#d32f2f", weight: 2, fillColor: "#ff5252", fillOpacity: 0.9 }).addTo(spMap);
+        else spMarker.setLatLng(cc);
+        spUpdateInfo(cc.lat, cc.lng, spCurrentAdmin);
+        if (st) st.textContent = "已定位：" + spCurrentAdmin;
+      } catch (e5) {
+        if (st) st.textContent = "县级定位需联网：" + (e5 && e5.message ? e5.message : e5);
+      }
+    };
     const bDs1 = $("spDs1"), bDs4 = $("spDs4");
     const bGrid = $("spGridBtn");
     if (bDs1) bDs1.onclick = () => spSetDataset("1");
