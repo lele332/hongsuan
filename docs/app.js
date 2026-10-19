@@ -6679,7 +6679,7 @@
         }
         const arr = d && (d.results || d.data);
         if (arr) {
-          const t = tessClusterTable(rapidBoxesToWords(arr));
+          if (t && t.ok) return { ok: true, ncol: t.ncol, rows: t.rows, conf: t.conf, cells: t.cells, engine: "rapidocr-server" };
         }
       } catch {
         // 服务器不可用/超时 → 尝试下一个端点
@@ -7025,7 +7025,7 @@ function textToTable(text, source) {
     const n = Number(m[1]);
     return n >= 1800 && n <= 2100 ? n : null;
   }
-function buildColumnPairs(rows) {
+  function buildColumnPairs(rows) {
     const width = tableWidth(rows);
     const candidates = [];
     for (let y = 0; y < width; y++) {
@@ -7034,15 +7034,28 @@ function buildColumnPairs(rows) {
         let count = 0;
         let header = 0;
         let adjacent = 0;
+        let badLen = 0;
+        const years = [];
         for (const r of rows) {
           const yv = parseYearValue(r[y] || "");
           const fv = parseFlowValue(r[q] || "");
           if (yv != null && fv != null) count++;
           if (/年份/.test(r[y] || "") && /流量/.test(r[q] || "")) header += 10;
+          if (yv != null) {
+            years.push(yv);
+            const digits = String(cleanCell(r[y] || "")).replace(/\D/g, "");
+            if (digits.length > 4) badLen++;
+          }
         }
         if (count < 2) continue;
         if (q === y + 1) adjacent += 2;
-        candidates.push({ yearCol: y, flowCol: q, count, score: count * 2 + header + adjacent });
+        // 年份列单调递增加成：真实年流量表的年份几乎总是逐行增大
+        let mono = 0;
+        for (let i = 1; i < years.length; i++) if (years[i] > years[i - 1]) mono++;
+        const monoRatio = years.length > 2 ? mono / (years.length - 1) : 0;
+        const monoBonus = Math.round(monoRatio * 8);
+        // 序号/编码列惩罚：值超过4位数字（测站编码等）直接重罚
+        candidates.push({ yearCol: y, flowCol: q, count, score: count * 2 + header + adjacent + monoBonus - badLen * 10 });
       }
     }
     candidates.sort((a, b) => b.score - a.score || b.count - a.count);
@@ -7293,9 +7306,11 @@ function buildColumnPairs(rows) {
         cv.width = Math.max(1, Math.round(img.naturalWidth * s));
         cv.height = Math.max(1, Math.round(img.naturalHeight * s));
         const ctx = cv.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, cv.width, cv.height);
         ctx.drawImage(img, 0, 0, cv.width, cv.height);
         cv.style.display = "block";
-        ocrImageDataUrl = cv.toDataURL("image/png");
+        ocrImageDataUrl = cv.toDataURL("image/jpeg", 0.9);
         resolve();
       };
       img.onerror = () => reject(new Error("\u56FE\u7247\u8BFB\u53D6\u5931\u8D25"));
