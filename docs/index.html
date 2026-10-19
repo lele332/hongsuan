@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>泓算 · 桥涵设计流量推求 v1.0.32</title>
+<title>泓算 · 桥涵设计流量推求 v1.0.33</title>
 <link rel="stylesheet" href="libs/leaflet/leaflet.css">
 <script defer src="libs/jszip.min.js"></script>
 <script defer src="libs/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@
 <!-- 桌面版下载入口 -->
 <div id="dlBar">
   <span class="dlTxt">网页版为功能演示 · 识别精度有限，完整离线版请下载桌面端</span>
-  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.32</a>
+  <a id="dlBtn" href="https://github.com/lele332/hongsuan/releases/latest" target="_blank" rel="noopener">📲 下载桌面版 v1.0.33</a>
 </div>
 
 
@@ -332,7 +332,7 @@
   <button id="mHist">历史洪水位法</button>
   <button id="mNoData">暴雨资料推算</button>
     <button id="mMap">地图量算</button>
-<button id="mHydro">设计洪水过程线</button>
+<button id="mHydro">大、中桥孔径计算</button>
     <button id="mHelp">帮助</button>
 </div></div>
 
@@ -419,187 +419,10 @@
       <div style="font-size:11.5px;color:var(--text3);margin-top:10px;line-height:1.6">↓ 下方「P-Ⅲ 适线（海森机率格纸）」是经验点据与理论曲线；「适线调整」里可修改 C<sub>v</sub> 并重选 M=C<sub>s</sub>/C<sub>v</sub>，C<sub>s</sub>=M·C<sub>v</sub> 自动重算、曲线实时重绘（例 3-1-1 人工适线采用 C<sub>v</sub>=0.49、M=3.0、C<sub>s</sub>=1.47）。</div>
     </div>
 
-    <details id="openBox" style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥孔最小净长度（规范第 7 章 · 桥孔设计）</summary>
-      <div style="margin-top:10px">
-        <div class="hint" style="margin-top:0">
-          公式 7.2.1-1（河槽宽度公式）：<b>L<sub>j</sub> = K<sub>q</sub>·(Q<sub>p</sub>/Q<sub>c</sub>)<sup>n₃</sup>·B<sub>c</sub></b>，
-          适用于开阔、顺直微弯、分汊、弯曲河段及滩槽可分的不稳定河段；K<sub>q</sub>、n₃ 按表 7.2.1 取。
-          <span style="color:var(--red)">峡谷河段按地形布孔、不作此计算；宽滩河段与滩槽难分不稳定河段另有公式，待规范原文录入后补齐。</span>
+      <div class="hint">
+          📌 桥孔最小净长度与墩台冲刷计算已移至「大、中桥孔径计算」标签页（整条计算链的落脚点）。
         </div>
-        <table class="ltab"><tr><th colspan="4">表 7.2.1 K<sub>q</sub>、n₃ 值</th></tr>
-          <tr><td>稳定（开阔、顺直微弯）</td><td>Kq=0.84</td><td>n₃=0.90</td><td><button class="fillBtn" id="reach0">选用</button></td></tr>
-          <tr><td>次稳定（分汊、弯曲）</td><td>Kq=0.95</td><td>n₃=0.87</td><td><button class="fillBtn" id="reach1">选用</button></td></tr>
-          <tr><td>不稳定（滩、槽可分）</td><td>Kq=0.69</td><td>n₃=1.59</td><td><button class="fillBtn" id="reach2">选用</button></td></tr>
-        </table>
-        <div class="row">
-          <div><label>设计流量 Q<sub>p</sub>（m³/s）</label><input type="number" id="opQp" value="5500" step="any" min="0.01"></div>
-          <div><label>河槽流量 Q<sub>c</sub>（m³/s）</label><input type="number" id="opQc" value="4722" step="any" min="0.01"></div>
-          <div><label>河槽宽度 B<sub>c</sub>（m）</label><input type="number" id="opBc" value="159.98" step="any" min="0.01"></div>
-          <div><label>河段类型</label><select id="opReach" style="width:150px">
-            <option value="stable">稳定（开阔、顺直微弯）</option>
-            <option value="substable">次稳定（分汊、弯曲）</option>
-            <option value="unstable">不稳定（滩、槽可分）</option>
-            <option value="wide">宽滩河段（单宽流量公式）</option>
-            <option value="indist">滩、槽难分的不稳定河段</option>
-          </select></div>
-        </div>
-        <div class="row" id="opWideRow" style="display:none">
-          <div><label>河滩流量 Q<sub>t</sub>（m³/s，缺省 = Qp−Qc）</label><input type="number" id="opQt" step="any" placeholder="留空则按 Qp−Qc"></div>
-        </div>
-        <div class="row" id="opIndRow" style="display:none">
-          <div><label>2% 频率流量 Q<sub>2%</sub>（m³/s）</label><input type="number" id="opQ2" value="619.3" step="any" min="0.01"></div>
-          <div><label>年最大流量均值 Q̄（m³/s）</label><input type="number" id="opQm" value="350" step="any" min="0.01"></div>
-          <div><label>泥沙平均粒径 d̄（m，注意是米）</label><input type="number" id="opD50" value="0.010" step="any" min="0.0001"></div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <button class="btn" id="opUseQ">用当前设计流量</button>
-          <button class="btn" id="opGo">计算桥孔最小净长度</button>
-        </div>
-        <div class="metric hl" style="margin-top:10px"><div class="k">桥孔最小净长度 L<sub>j</sub>（m）</div><div class="v" id="opOut">—</div></div>
-        <div id="opDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-        <div class="err" id="opErr"></div>
-        <div class="hint">规范 7.2.2：最小净长度只是下限，最终桥长还需结合桥位地形、河床地质、桥前壅水、冲刷深度、引道纵坡与台后填土高度综合论证确定。</div>
-      </div>
-    </details>
-
-    <details id="scourBox" style="margin-top:10px">
-      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥下一般冲刷（规范第 8 章）</summary>
-      <div style="margin-top:10px">
-        <div class="row" style="margin-top:0">
-          <div><label>河床类型</label><select id="scSoil" style="width:220px">
-            <option value="nonclay">非黏性土（64-1 修正式 8.3.1-4）</option>
-            <option value="clay">黏性土（8.3.2）</option>
-          </select></div>
-          <div><label>黏性土计算部位</label><select id="scPart" style="width:180px">
-            <option value="channel">河槽部分（指数 5/8）</option>
-            <option value="floodplain">河滩部分（指数 6/7）</option>
-          </select></div>
-          <div><label>单宽流量集中系数 A</label><input type="number" id="scAclay" value="1.1" step="0.01" min="1" max="1.2"></div>
-          <div><label>液性指数 I<sub>L</sub>（0.16~1.19）</label><input type="number" id="scIL" value="0.50" step="0.01" min="0.16" max="1.19"></div>
-        </div>
-        <div class="hint" style="margin-top:6px" id="scHintNonclay">
-          公式 8.3.1-4（非黏性土河槽，冲止流速原理）：
-          <b>h<sub>p</sub> = [ A·(Q₂/(μ·B<sub>cj</sub>))·(h<sub>mc</sub>/h<sub>cq</sub>)<sup>5/3</sup> ÷ (E·d̄<sup>1/6</sup>) ]<sup>3/5</sup></b>
-          <span style="color:var(--red)">非黏性土仅河槽部分；河滩部分（8.3.1-5）未实现。</span>
-        </div>
-        <div class="hint" style="margin-top:6px;display:none" id="scHintClay">
-          公式 8.3.2（黏性土河床，分河槽 / 河滩）：
-          <b>h<sub>p</sub> = [ A·(Q/(μ·B))·(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> ÷ (0.33·(1/I<sub>L</sub>)) ]<sup>5/8 或 6/7</sup></b>
-          <span style="color:var(--text3)">黏性土按液性指数 I<sub>L</sub> 反映抗冲性（软土冲得更深）。A=1.0~1.2，I<sub>L</sub>=0.16~1.19。</span>
-        </div>
-        <div class="row">
-          <div><label>河槽设计流量 Q₂（m³/s）</label><input type="number" id="scQ2" value="4722" step="any" min="0.01"></div>
-          <div><label>侧向压缩系数 μ</label><input type="number" id="scMu" value="0.97" step="0.01" min="0.01" max="1"></div>
-          <div><label>桥孔过水净宽 B<sub>cj</sub>（m）</label><input type="number" id="scBcj" value="150" step="any" min="0.01"></div>
-        </div>
-        <div class="row">
-          <div><label>河槽最大水深 h<sub>mc</sub>（m）</label><input type="number" id="scHmc" value="12.39" step="any" min="0.01"></div>
-          <div><label>桥下平均水深 h<sub>cq</sub>（m）</label><input type="number" id="scHcq" value="9.49" step="any" min="0.01"></div>
-          <div><label>泥沙平均粒径 d̄（mm）</label><input type="number" id="scD50" value="0.14" step="any" min="0.001"></div>
-          <div><label>汛期含沙量 ρ（kg/m³）</label><input type="number" id="scRho" value="5" step="any" min="0"></div>
-        </div>
-        <div class="row" style="align-items:flex-end">
-          <div><label>集中系数 A</label><input type="number" id="scA" value="1.05" step="0.01" min="0.01"></div>
-          <div><label>造床河宽 B<sub>d</sub>（m）</label><input type="number" id="scBd" value="160" step="any" min="0.01"></div>
-          <div><label>造床平均水深 H<sub>z</sub>（m）</label><input type="number" id="scHz" value="9.5" step="any" min="0.01"></div>
-          <div><button class="btn" id="scCalcA">算 A</button></div>
-        </div>
-        <div id="scATip" style="font-size:12px;color:var(--text2)"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <button class="btn" id="scUseQ">用当前设计流量</button>
-          <button class="btn" id="scGo">计算一般冲刷</button>
-        </div>
-        <div class="metric hl" style="margin-top:10px"><div class="k">冲刷后最大水深 h<sub>p</sub>（m）</div><div class="v" id="scOut">—</div></div>
-        <div id="scDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-        <div class="err" id="scErr"></div>
-
-        <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
-          <div class="hint" style="margin-top:0">
-            <b>墩台局部冲刷（8.4.1，65-2 式）</b>：
-            h<sub>b</sub> = K<sub>ξ</sub>·K<sub>η2</sub>·B<sub>1</sub><sup>0.6</sup>·h<sub>p</sub><sup>0.15</sup>·[(v−v<sub>0</sub>′)/v<sub>0</sub>]<sup>n₂</sup>；
-            K<sub>η2</sub>=0.0023d̄<sup>2.2</sup>+0.375d̄<sup>0.24</sup>，v<sub>0</sub>=0.28(d̄+0.7)<sup>0.5</sup>，v<sub>0</sub>′=0.12(d̄+0.5)<sup>0.55</sup>，n<sub>2</sub>=(v<sub>0</sub>/v)<sup>0.23+0.19lg d̄</sup>
-          </div>
-          <div class="row">
-            <div><label>行近流速 v（m/s）</label><input type="number" id="lsV" value="3.14" step="any" min="0.01"></div>
-            <div><label>桥墩计算宽度 B<sub>1</sub>（m）</label><input type="number" id="lsB1" value="1.5" step="any" min="0.01"></div>
-            <div><label>墩形系数 K<sub>ξ</sub>（点开下方「墩形速查」直接取值）</label><input type="number" id="lsKxi" value="1" step="0.01" min="0.01"></div>
-          </div>
-          <details style="margin-top:8px">
-            <summary style="cursor:pointer;font-size:13px;color:var(--blue)">墩形速查：附录 C 表 C 全 12 种墩形（点数值自动填入 K<sub>ξ</sub>）</summary>
-            <div id="pierQuick" style="margin-top:6px"></div>
-          </details>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-            <button class="btn" id="lsUseV">用一般冲刷结果推算 v</button>
-            <button class="btn" id="lsGo">计算局部冲刷</button>
-          </div>
-          <div class="metric hl" style="margin-top:10px"><div class="k">局部冲刷深度 h<sub>b</sub>（m）</div><div class="v" id="lsOut">—</div></div>
-          <div id="lsDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-          <div class="err" id="lsErr"></div>
-
-          <div style="border-top:1px dashed var(--border);margin-top:14px;padding-top:10px">
-            <h4 style="margin:0 0 6px;font-size:13px;color:var(--text)">桥台局部冲刷（规范 8.4.3，可选）</h4>
-            <div class="hint" style="margin-top:0">
-              <b>8.4.3-1</b>（阻水面积法）hs = 1.95·Fr<sup>0.2</sup>·A<sub>z</sub><sup>0.5</sup>·C<sub>A</sub>·C<sub>α</sub>；
-              <b>8.4.3-2</b>（水深法）h<sub>b</sub> = 1.17·K<sub>ξ</sub>·k<sub>α</sub>·h<sub>p</sub>·(l/h<sub>p</sub>)<sup>0.6</sup>·(d<sub>0</sub>/h<sub>p</sub>)<sup>−0.15|−0.10</sup>·[(v−v'<sub>0</sub>)²/(g·h<sub>p</sub>)]<sup>0.15</sup>
-              <br><span style="color:var(--red)">台形系数 K<sub>ξ</sub>、形状系数 C<sub>A</sub> 按表 8.4.3 手填（软件不内置该表）。</span>
-            </div>
-            <div class="row">
-              <div><label>公式</label><select id="abFormula" style="width:250px">
-                <option value="f1">8.4.3-1 阻水面积法（hs）</option>
-                <option value="f2">8.4.3-2 一般冲刷后水深法（hb）</option>
-              </select></div>
-              <div><label>河道平均流速 v（m/s）</label><input type="number" id="abV" value="3.81" step="any" min="0.01"></div>
-              <div><label>河道平均水深 h（m）</label><input type="number" id="abH" value="4.22" step="any" min="0.01"></div>
-            </div>
-            <div class="row">
-              <div><label>阻水面积 A<sub>z</sub>（m²）</label><input type="number" id="abAz" value="13.00" step="any" min="0.01"></div>
-              <div><label>桥台形状系数 C<sub>A</sub></label><input type="number" id="abCA" value="0.95" step="any" min="0.01"></div>
-              <div><label>交角 α（度，≤90）</label><input type="number" id="abAlpha" value="90" step="1" min="1" max="90"></div>
-            </div>
-            <div class="row" id="ab2Row" style="display:none">
-              <div><label>台形系数 K<sub>ξ</sub>（表8.4.3）</label><input type="number" id="abKxi" value="0.42" step="any" min="0.01"></div>
-              <div><label>一般冲刷后水深 h<sub>p</sub>（m）</label><input type="number" id="abHp" value="5.0" step="any" min="0.01"></div>
-              <div><label>桥台长度 l（m，垂直流向）</label><input type="number" id="abL" value="25.5" step="any" min="0.01"></div>
-              <div><label>泥沙粒径 d<sub>0</sub>（mm）</label><input type="number" id="abD0" value="0.42" step="any" min="0.001"></div>
-              <div><label>起冲流速 v'<sub>0</sub>（m/s）</label><input type="number" id="abV0s" value="1.0" step="any" min="0"></div>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-              <button class="btn" id="abGo">计算桥台局部冲刷</button>
-            </div>
-            <div class="metric hl" style="margin-top:10px"><div class="k">桥台局部冲刷深度（m）</div><div class="v" id="abOut">—</div></div>
-            <div id="abDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-            <div class="err" id="abErr"></div>
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <div><label>自然演变冲刷（m，无资料填 0）</label><input type="number" id="tsNat" value="0" step="any" min="0"></div>
-            <div style="display:flex;align-items:flex-end"><button class="btn" id="tsGo">汇总总冲刷深度</button></div>
-          </div>
-          <div class="metric" style="margin-top:8px"><div class="k">总冲刷深度（m）</div><div class="v" id="tsOut">—</div></div>
-          <div id="tsNote" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-
-          <details style="margin-top:10px">
-            <summary style="cursor:pointer;font-size:13px;color:var(--blue)">岩石河床基底埋深（附录 D 表 D —— 岩石河床不适用表 8.6.2）</summary>
-            <div class="row" style="margin-top:6px">
-              <div><label>岩石类别（附录 D）</label><select id="rockCls">
-                <option value="Ⅰ">Ⅰ 极软岩（强度 <5 MPa）</option>
-                <option value="Ⅱ₁">Ⅱ₁ 软岩（5~15 MPa）</option>
-                <option value="Ⅱ₂">Ⅱ₂ 软岩·较软岩（15~30 MPa）</option>
-                <option value="Ⅲ">Ⅲ 硬质岩（>30 MPa）</option>
-              </select></div>
-              <div><label>施工枯水季平均水位至岩面距离</label><select id="rockBand">
-                <option value="lt2">h &lt; 2 m</option>
-                <option value="2to10">h = 2~10 m</option>
-                <option value="gt10">h &gt; 10 m</option>
-              </select></div>
-              <div style="display:flex;align-items:flex-end"><button class="btn" id="rockGo">查建议入岩深度</button></div>
-            </div>
-            <div id="rockOut" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-          </details>
-        </div>
-      </div>
-    </details>
+      
   </div>
   <div id="paramsBox" style="display:none">
     <h2>统计参数（适线采用值）</h2>
@@ -978,7 +801,190 @@
 </div>
 
 <div id="hydroBox" style="display:none">
-  <h2>设计洪水过程线 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范 6.6 同倍比放大法，k<sub>g</sub> = Q<sub>p</sub> / Q<sub>典峰</sub></span></h2>
+  <h2>大、中桥孔径计算 <span style="font-weight:400;font-size:12.5px;color:var(--text3)">—— 规范第 7 章桥孔设计 · 第 8 章墩台冲刷与基础埋深（整条计算链的落脚点）</span></h2>
+  <div class="hint" style="margin-top:0">① 上游模块得到设计流量 Q<sub>p</sub>（适线 / 推理公式 / 经验公式）→ ② 桥孔最小净长度 L<sub>j</sub>（7.2.1：河槽宽度公式 / 宽滩河段 / 滩槽难分）→ ③ 一般冲刷 h<sub>p</sub>（64-1）与墩台、桥台局部冲刷（65-2 / 8.4.3）→ ④ 总冲刷深度与基础埋深（8.6.2 / 附录 D）。设计洪水过程线（6.6）在本页底部作辅助。</div>
+<details id="openBox" style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥孔最小净长度（规范第 7 章 · 桥孔设计）</summary>
+      <div style="margin-top:10px">
+        <div class="hint" style="margin-top:0">
+          公式 7.2.1-1（河槽宽度公式）：<b>L<sub>j</sub> = K<sub>q</sub>·(Q<sub>p</sub>/Q<sub>c</sub>)<sup>n₃</sup>·B<sub>c</sub></b>，
+          适用于开阔、顺直微弯、分汊、弯曲河段及滩槽可分的不稳定河段；K<sub>q</sub>、n₃ 按表 7.2.1 取。
+          <span style="color:var(--red)">峡谷河段按地形布孔、不作此计算；宽滩河段与滩槽难分不稳定河段另有公式，待规范原文录入后补齐。</span>
+        </div>
+        <table class="ltab"><tr><th colspan="4">表 7.2.1 K<sub>q</sub>、n₃ 值</th></tr>
+          <tr><td>稳定（开阔、顺直微弯）</td><td>Kq=0.84</td><td>n₃=0.90</td><td><button class="fillBtn" id="reach0">选用</button></td></tr>
+          <tr><td>次稳定（分汊、弯曲）</td><td>Kq=0.95</td><td>n₃=0.87</td><td><button class="fillBtn" id="reach1">选用</button></td></tr>
+          <tr><td>不稳定（滩、槽可分）</td><td>Kq=0.69</td><td>n₃=1.59</td><td><button class="fillBtn" id="reach2">选用</button></td></tr>
+        </table>
+        <div class="row">
+          <div><label>设计流量 Q<sub>p</sub>（m³/s）</label><input type="number" id="opQp" value="5500" step="any" min="0.01"></div>
+          <div><label>河槽流量 Q<sub>c</sub>（m³/s）</label><input type="number" id="opQc" value="4722" step="any" min="0.01"></div>
+          <div><label>河槽宽度 B<sub>c</sub>（m）</label><input type="number" id="opBc" value="159.98" step="any" min="0.01"></div>
+          <div><label>河段类型</label><select id="opReach" style="width:150px">
+            <option value="stable">稳定（开阔、顺直微弯）</option>
+            <option value="substable">次稳定（分汊、弯曲）</option>
+            <option value="unstable">不稳定（滩、槽可分）</option>
+            <option value="wide">宽滩河段（单宽流量公式）</option>
+            <option value="indist">滩、槽难分的不稳定河段</option>
+          </select></div>
+        </div>
+        <div class="row" id="opWideRow" style="display:none">
+          <div><label>河滩流量 Q<sub>t</sub>（m³/s，缺省 = Qp−Qc）</label><input type="number" id="opQt" step="any" placeholder="留空则按 Qp−Qc"></div>
+        </div>
+        <div class="row" id="opIndRow" style="display:none">
+          <div><label>2% 频率流量 Q<sub>2%</sub>（m³/s）</label><input type="number" id="opQ2" value="619.3" step="any" min="0.01"></div>
+          <div><label>年最大流量均值 Q̄（m³/s）</label><input type="number" id="opQm" value="350" step="any" min="0.01"></div>
+          <div><label>泥沙平均粒径 d̄（m，注意是米）</label><input type="number" id="opD50" value="0.010" step="any" min="0.0001"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" id="opUseQ">用当前设计流量</button>
+          <button class="btn" id="opGo">计算桥孔最小净长度</button>
+        </div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">桥孔最小净长度 L<sub>j</sub>（m）</div><div class="v" id="opOut">—</div></div>
+        <div id="opDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        <div class="err" id="opErr"></div>
+        <div class="hint">规范 7.2.2：最小净长度只是下限，最终桥长还需结合桥位地形、河床地质、桥前壅水、冲刷深度、引道纵坡与台后填土高度综合论证确定。</div>
+      </div>
+    </details>
+
+    <details id="scourBox" style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:500">桥下一般冲刷（规范第 8 章）</summary>
+      <div style="margin-top:10px">
+        <div class="row" style="margin-top:0">
+          <div><label>河床类型</label><select id="scSoil" style="width:220px">
+            <option value="nonclay">非黏性土（64-1 修正式 8.3.1-4）</option>
+            <option value="clay">黏性土（8.3.2）</option>
+          </select></div>
+          <div><label>黏性土计算部位</label><select id="scPart" style="width:180px">
+            <option value="channel">河槽部分（指数 5/8）</option>
+            <option value="floodplain">河滩部分（指数 6/7）</option>
+          </select></div>
+          <div><label>单宽流量集中系数 A</label><input type="number" id="scAclay" value="1.1" step="0.01" min="1" max="1.2"></div>
+          <div><label>液性指数 I<sub>L</sub>（0.16~1.19）</label><input type="number" id="scIL" value="0.50" step="0.01" min="0.16" max="1.19"></div>
+        </div>
+        <div class="hint" style="margin-top:6px" id="scHintNonclay">
+          公式 8.3.1-4（非黏性土河槽，冲止流速原理）：
+          <b>h<sub>p</sub> = [ A·(Q₂/(μ·B<sub>cj</sub>))·(h<sub>mc</sub>/h<sub>cq</sub>)<sup>5/3</sup> ÷ (E·d̄<sup>1/6</sup>) ]<sup>3/5</sup></b>
+          <span style="color:var(--red)">非黏性土仅河槽部分；河滩部分（8.3.1-5）未实现。</span>
+        </div>
+        <div class="hint" style="margin-top:6px;display:none" id="scHintClay">
+          公式 8.3.2（黏性土河床，分河槽 / 河滩）：
+          <b>h<sub>p</sub> = [ A·(Q/(μ·B))·(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> ÷ (0.33·(1/I<sub>L</sub>)) ]<sup>5/8 或 6/7</sup></b>
+          <span style="color:var(--text3)">黏性土按液性指数 I<sub>L</sub> 反映抗冲性（软土冲得更深）。A=1.0~1.2，I<sub>L</sub>=0.16~1.19。</span>
+        </div>
+        <div class="row">
+          <div><label>河槽设计流量 Q₂（m³/s）</label><input type="number" id="scQ2" value="4722" step="any" min="0.01"></div>
+          <div><label>侧向压缩系数 μ</label><input type="number" id="scMu" value="0.97" step="0.01" min="0.01" max="1"></div>
+          <div><label>桥孔过水净宽 B<sub>cj</sub>（m）</label><input type="number" id="scBcj" value="150" step="any" min="0.01"></div>
+        </div>
+        <div class="row">
+          <div><label>河槽最大水深 h<sub>mc</sub>（m）</label><input type="number" id="scHmc" value="12.39" step="any" min="0.01"></div>
+          <div><label>桥下平均水深 h<sub>cq</sub>（m）</label><input type="number" id="scHcq" value="9.49" step="any" min="0.01"></div>
+          <div><label>泥沙平均粒径 d̄（mm）</label><input type="number" id="scD50" value="0.14" step="any" min="0.001"></div>
+          <div><label>汛期含沙量 ρ（kg/m³）</label><input type="number" id="scRho" value="5" step="any" min="0"></div>
+        </div>
+        <div class="row" style="align-items:flex-end">
+          <div><label>集中系数 A</label><input type="number" id="scA" value="1.05" step="0.01" min="0.01"></div>
+          <div><label>造床河宽 B<sub>d</sub>（m）</label><input type="number" id="scBd" value="160" step="any" min="0.01"></div>
+          <div><label>造床平均水深 H<sub>z</sub>（m）</label><input type="number" id="scHz" value="9.5" step="any" min="0.01"></div>
+          <div><button class="btn" id="scCalcA">算 A</button></div>
+        </div>
+        <div id="scATip" style="font-size:12px;color:var(--text2)"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" id="scUseQ">用当前设计流量</button>
+          <button class="btn" id="scGo">计算一般冲刷</button>
+        </div>
+        <div class="metric hl" style="margin-top:10px"><div class="k">冲刷后最大水深 h<sub>p</sub>（m）</div><div class="v" id="scOut">—</div></div>
+        <div id="scDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        <div class="err" id="scErr"></div>
+
+        <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
+          <div class="hint" style="margin-top:0">
+            <b>墩台局部冲刷（8.4.1，65-2 式）</b>：
+            h<sub>b</sub> = K<sub>ξ</sub>·K<sub>η2</sub>·B<sub>1</sub><sup>0.6</sup>·h<sub>p</sub><sup>0.15</sup>·[(v−v<sub>0</sub>′)/v<sub>0</sub>]<sup>n₂</sup>；
+            K<sub>η2</sub>=0.0023d̄<sup>2.2</sup>+0.375d̄<sup>0.24</sup>，v<sub>0</sub>=0.28(d̄+0.7)<sup>0.5</sup>，v<sub>0</sub>′=0.12(d̄+0.5)<sup>0.55</sup>，n<sub>2</sub>=(v<sub>0</sub>/v)<sup>0.23+0.19lg d̄</sup>
+          </div>
+          <div class="row">
+            <div><label>行近流速 v（m/s）</label><input type="number" id="lsV" value="3.14" step="any" min="0.01"></div>
+            <div><label>桥墩计算宽度 B<sub>1</sub>（m）</label><input type="number" id="lsB1" value="1.5" step="any" min="0.01"></div>
+            <div><label>墩形系数 K<sub>ξ</sub>（点开下方「墩形速查」直接取值）</label><input type="number" id="lsKxi" value="1" step="0.01" min="0.01"></div>
+          </div>
+          <details style="margin-top:8px">
+            <summary style="cursor:pointer;font-size:13px;color:var(--blue)">墩形速查：附录 C 表 C 全 12 种墩形（点数值自动填入 K<sub>ξ</sub>）</summary>
+            <div id="pierQuick" style="margin-top:6px"></div>
+          </details>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn" id="lsUseV">用一般冲刷结果推算 v</button>
+            <button class="btn" id="lsGo">计算局部冲刷</button>
+          </div>
+          <div class="metric hl" style="margin-top:10px"><div class="k">局部冲刷深度 h<sub>b</sub>（m）</div><div class="v" id="lsOut">—</div></div>
+          <div id="lsDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+          <div class="err" id="lsErr"></div>
+
+          <div style="border-top:1px dashed var(--border);margin-top:14px;padding-top:10px">
+            <h4 style="margin:0 0 6px;font-size:13px;color:var(--text)">桥台局部冲刷（规范 8.4.3，可选）</h4>
+            <div class="hint" style="margin-top:0">
+              <b>8.4.3-1</b>（阻水面积法）hs = 1.95·Fr<sup>0.2</sup>·A<sub>z</sub><sup>0.5</sup>·C<sub>A</sub>·C<sub>α</sub>；
+              <b>8.4.3-2</b>（水深法）h<sub>b</sub> = 1.17·K<sub>ξ</sub>·k<sub>α</sub>·h<sub>p</sub>·(l/h<sub>p</sub>)<sup>0.6</sup>·(d<sub>0</sub>/h<sub>p</sub>)<sup>−0.15|−0.10</sup>·[(v−v'<sub>0</sub>)²/(g·h<sub>p</sub>)]<sup>0.15</sup>
+              <br><span style="color:var(--red)">台形系数 K<sub>ξ</sub>、形状系数 C<sub>A</sub> 按表 8.4.3 手填（软件不内置该表）。</span>
+            </div>
+            <div class="row">
+              <div><label>公式</label><select id="abFormula" style="width:250px">
+                <option value="f1">8.4.3-1 阻水面积法（hs）</option>
+                <option value="f2">8.4.3-2 一般冲刷后水深法（hb）</option>
+              </select></div>
+              <div><label>河道平均流速 v（m/s）</label><input type="number" id="abV" value="3.81" step="any" min="0.01"></div>
+              <div><label>河道平均水深 h（m）</label><input type="number" id="abH" value="4.22" step="any" min="0.01"></div>
+            </div>
+            <div class="row">
+              <div><label>阻水面积 A<sub>z</sub>（m²）</label><input type="number" id="abAz" value="13.00" step="any" min="0.01"></div>
+              <div><label>桥台形状系数 C<sub>A</sub></label><input type="number" id="abCA" value="0.95" step="any" min="0.01"></div>
+              <div><label>交角 α（度，≤90）</label><input type="number" id="abAlpha" value="90" step="1" min="1" max="90"></div>
+            </div>
+            <div class="row" id="ab2Row" style="display:none">
+              <div><label>台形系数 K<sub>ξ</sub>（表8.4.3）</label><input type="number" id="abKxi" value="0.42" step="any" min="0.01"></div>
+              <div><label>一般冲刷后水深 h<sub>p</sub>（m）</label><input type="number" id="abHp" value="5.0" step="any" min="0.01"></div>
+              <div><label>桥台长度 l（m，垂直流向）</label><input type="number" id="abL" value="25.5" step="any" min="0.01"></div>
+              <div><label>泥沙粒径 d<sub>0</sub>（mm）</label><input type="number" id="abD0" value="0.42" step="any" min="0.001"></div>
+              <div><label>起冲流速 v'<sub>0</sub>（m/s）</label><input type="number" id="abV0s" value="1.0" step="any" min="0"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <button class="btn" id="abGo">计算桥台局部冲刷</button>
+            </div>
+            <div class="metric hl" style="margin-top:10px"><div class="k">桥台局部冲刷深度（m）</div><div class="v" id="abOut">—</div></div>
+            <div id="abDetail" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+            <div class="err" id="abErr"></div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <div><label>自然演变冲刷（m，无资料填 0）</label><input type="number" id="tsNat" value="0" step="any" min="0"></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn" id="tsGo">汇总总冲刷深度</button></div>
+          </div>
+          <div class="metric" style="margin-top:8px"><div class="k">总冲刷深度（m）</div><div class="v" id="tsOut">—</div></div>
+          <div id="tsNote" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;font-size:13px;color:var(--blue)">岩石河床基底埋深（附录 D 表 D —— 岩石河床不适用表 8.6.2）</summary>
+            <div class="row" style="margin-top:6px">
+              <div><label>岩石类别（附录 D）</label><select id="rockCls">
+                <option value="Ⅰ">Ⅰ 极软岩（强度 <5 MPa）</option>
+                <option value="Ⅱ₁">Ⅱ₁ 软岩（5~15 MPa）</option>
+                <option value="Ⅱ₂">Ⅱ₂ 软岩·较软岩（15~30 MPa）</option>
+                <option value="Ⅲ">Ⅲ 硬质岩（>30 MPa）</option>
+              </select></div>
+              <div><label>施工枯水季平均水位至岩面距离</label><select id="rockBand">
+                <option value="lt2">h &lt; 2 m</option>
+                <option value="2to10">h = 2~10 m</option>
+                <option value="gt10">h &gt; 10 m</option>
+              </select></div>
+              <div style="display:flex;align-items:flex-end"><button class="btn" id="rockGo">查建议入岩深度</button></div>
+            </div>
+            <div id="rockOut" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+          </details>
+        </div>
+      </div>
+    </details>
+  <h3 style="margin:18px 0 0;font-size:14px">设计洪水过程线（规范 6.6 同倍比放大·辅助）</h3>
   <div class="row">
     <div style="flex:1.4">
       <label>典型洪水过程线（每行：时间h,流量，支持空格/逗号分隔）</label>
@@ -1393,7 +1399,7 @@
 
 <script>
 (function(){
-  var EXPECT = "1.0.32";
+  var EXPECT = "1.0.33";
   function hsCacheChk(){
     try{
       var v = window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.version;
