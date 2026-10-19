@@ -1,6 +1,6 @@
 {
   "name": "hongsuan-web",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "private": true,
   "description": "Hongsuan web build and checks",
   "scripts": {

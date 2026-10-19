@@ -43,4 +43,11 @@ let download = fs.readFileSync(downloadPath, "utf8");
 download = download.replace(/var HS_RELEASE\s*=\s*"[^"]+";/, `var HS_RELEASE = "${info.release}";`);
 fs.writeFileSync(downloadPath, download);
 
+const indexPath = path.join(docsDir, "index.html");
+let indexHtml = fs.readFileSync(indexPath, "utf8");
+indexHtml = indexHtml
+  .replace(/(<title>泓算 · 桥涵设计流量推求 )v[\d.]+/, `$1${info.release}`.replace(`$1`, `$1`))
+  .replace(/(📲 下载桌面版 )v[\d.]+/, `$1${info.release}`.replace(`$1`, `$1`));
+fs.writeFileSync(indexPath, indexHtml);
+
 console.log(`build info updated: ${info.release} ${commit} ${cacheVersion}`);

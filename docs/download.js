@@ -5,7 +5,15 @@
 (function () {
   "use strict";
   if (document.getElementById("dlOverlay")) return;
-  var HS_RELEASE = "v1.0.18";
+  var HS_RELEASE = "v1.0.19";
+  function syncReleaseText() {
+    try {
+      var btn = document.getElementById("dlBtn");
+      if (btn) btn.textContent = "📲 下载桌面版 " + HS_RELEASE;
+      document.title = "泓算 · 桥涵设计流量推求 " + HS_RELEASE;
+    } catch (e) {}
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", syncReleaseText); else syncReleaseText();
   var GH = "https://github.com/lele332/hongsuan/releases/download/" + HS_RELEASE + "/";
   var ASSETS = {
     x64: "HongSuan-Setup-" + HS_RELEASE + "-x64.exe",
