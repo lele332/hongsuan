@@ -7972,7 +7972,23 @@ function textToTable(text, source) {
     }
     const near = (r.nearList || [{ sp: r.nearestSp, d: r.distKm }]).slice(0, 3)
       .map((x) => "S\u209a=" + x.sp + "（" + x.d.toFixed(0) + " km）").join("、");
-    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>该点插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考" : r.distKm > 50 ? "<br>标注密度中等（最近 " + r.distKm.toFixed(0) + " km），建议对照底图校核" : "<br>✓ 标注密度较好（最近 " + r.distKm.toFixed(0) + " km）");
+    let p3Html = "";
+    try {
+      const p3d = (window.HONGSUAN_ATLAS_P3_PARAMS || {}).durations || {};
+      const dur = p3d["60min"];
+      if (dur && Array.isArray(dur.mean) && Array.isArray(dur.cv)) {
+        const m = p3Interpolate(dur.mean, lat, lng);
+        const cv = p3Interpolate(dur.cv, lat, lng);
+        if (m && cv) {
+          const cs = 3.5 * cv.value;
+          const freqPct = spDataset === "1" ? 1 : 4;
+          const phi = phiPIII(freqPct / 100, cs);
+          const hGrid = m.value * (1 + cv.value * phi);
+          p3Html = "<br><span style=\"font-size:12px;color:var(--text3)\">格网精算（" + freqPct + "%, 最近格网 " + Math.max(m.distKm, cv.distKm).toFixed(0) + " km）：H<sub>60min</sub> ≈ <b style=\"color:var(--green)\">" + hGrid.toFixed(0) + " mm</b></span>";
+        }
+      }
+    } catch(e3) {}
+    box.innerHTML = "📍 经纬度：" + lat.toFixed(3) + ", " + lng.toFixed(3) + admin + "｜最近标注：" + near + "<br>等值线插值 S<sub>p</sub>（" + (spDataset === "1" ? "1%" : "4%") + "）≈ <b style=\"color:var(--blue);font-size:15px\">" + r.sp.toFixed(0) + " mm/h</b>　<button class=\"fillBtn\" id=\"spFillBtn\">填入 S<sub>p</sub></button>" + (r.distKm > 120 ? "<br>⚠️ 该处标注较稀疏（最近标注 " + r.distKm.toFixed(0) + " km），结果仅供参考" : r.distKm > 50 ? "<br>标注密度中等（最近 " + r.distKm.toFixed(0) + " km）" : "<br>✓ 标注密度较好（最近 " + r.distKm.toFixed(0) + " km）") + p3Html;
     const btn = $("spFillBtn");
     if (btn) btn.onclick = () => {
       $("rcSp").value = r.sp.toFixed(0);
