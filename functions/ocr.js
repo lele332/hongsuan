@@ -14,7 +14,7 @@ export async function onRequestOptions() {
 export async function onRequestPost({ request }) {
   try {
     const body = await request.text();
-    const upstream = await fetch("http://120.26.35.167:9005/ocr", {
+    const upstream = await fetch("http://ocr.hongsuan.online:9005/ocr", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body
