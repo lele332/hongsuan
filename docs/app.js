@@ -2718,7 +2718,7 @@
   // τ = K3·(L/√I)^α1 (北方) 或 K4·(L/√I)^α2 (南方)
   // n: τ<1h→n1, 1~6h→n2, 6~24h→n3
 
-  /* 表11-2 损失参数分区系数指数（部分省份，其余待补充） */
+  /* 损失参数分区系数指数（部分省份，其余待补充） */
   var GSK_ZONES = {
     "hb": { name: "河北", regions: [
       { id: "hb-1", name: "平原区", zone: "I", k1: 1.23, b1: 0.61 },
@@ -2736,7 +2736,7 @@
     ]}
   };
 
-  /* 表11-3 土壤植被分类（用于确定损失参数分区等级） */
+  /* 土壤植被分类（用于确定损失参数分区等级） */
   var GSK_SOIL_CLASS = [
     { cls: "I", desc: "黏土、黏壤土", desc2: "渗透性很弱，植被差" },
     { cls: "II", desc: "壤土", desc2: "渗透性弱" },
@@ -2746,7 +2746,7 @@
     { cls: "VI", desc: "卵石、碎石", desc2: "渗透性极强" }
   ];
 
-  /* 表11-4 n值分区（部分省份，τ<1h→n1, 1~6h→n2, >6h→n3） */
+  /* 暴雨递减指数 n 值分区（部分省份，τ<1h→n1, 1~6h→n2, >6h→n3） */
   var GSK_N_VALUES = {
     "华北": { n1: 0.55, n2: 0.65, n3: 0.75 },
     "东北": { n1: 0.50, n2: 0.65, n3: 0.75 },
@@ -2757,27 +2757,95 @@
     custom: { n1: 0.55, n2: 0.65, n3: 0.75 }
   };
 
-  /* 表11-5 汇流时间系数和指数值（部分） */
-  var GSK_TAU_COEF = {
-    north: [
-      { region: "华北平原", k3: 0.55, alpha1: 0.75 },
-      { region: "华北山区", k3: 0.45, alpha1: 0.80 },
-      { region: "东北平原", k3: 0.60, alpha1: 0.70 },
-      { region: "西北山区", k3: 0.40, alpha1: 0.85 },
-      { region: "自定义", k3: 0.55, alpha1: 0.75 }
-    ],
-    south: [
-      { region: "江南丘陵", k4: 0.35, alpha2: 0.80 },
-      { region: "华南山地", k4: 0.30, alpha2: 0.85 },
-      { region: "四川盆地", k4: 0.40, alpha2: 0.75 },
-      { region: "云贵高原", k4: 0.35, alpha2: 0.80 },
-      { region: "自定义", k4: 0.35, alpha2: 0.80 }
-    ]
-  };
+  /* 汇流时间分区和系数指数（据《桥涵水文》全表录入；北方 τ=K3·(L/√I)^α1，南方 τ=K4·(L/√I)^α2·Sp^(−β3)） */
+  var GSK_TAU_COEF = [
+    { prov: "河北", kind: "north", rows: [
+      { name: "河北平原", k: 0.70, a: 0.41 },
+      { name: "冀北山区", k: 0.65, a: 0.38 },
+      { name: "冀西北盆地", k: 0.58, a: 0.39 },
+      { name: "冀西山区", k: 0.54, a: 0.40 },
+      { name: "坝上高原", k: 0.45, a: 0.18 },
+      { name: "土石山覆盖的林区", k: 0.15, a: 0.42 }
+    ]},
+    { prov: "山西", kind: "north", rows: [
+      { name: "煤矿塌陷漏水区和严重风化区", k: 0.13, a: 0.42 },
+      { name: "黄土丘陵区", k: 0.10, a: 0.42 }
+    ]},
+    { prov: "四川", kind: "south", rows: [
+      { name: "盆地丘陵区（I≤10‰）", k: 3.67, a: 0.620, b3: 0.203 },
+      { name: "青衣江区（I>10‰）", k: 3.67, a: 0.516, b3: 0.203 },
+      { name: "盆缘山区及西昌区（I≤15‰）", k: 3.29, a: 0.696, b3: 0.239 },
+      { name: "盆缘山区（I>15‰）", k: 3.29, a: 0.536, b3: 0.239 }
+    ]},
+    { prov: "安徽", kind: "south", rows: [
+      { name: "Ⅰ区（I>15‰，F＜90km²）", k: 37.5, a: 0.925, b3: 0.725 },
+      { name: "Ⅰ区（I>15‰，F＞90km²）", k: 26.3, a: 0.925, b3: 0.725 },
+      { name: "Ⅱ区（I=10‰~15‰）", k: 11, a: 0.512, b3: 0.395 },
+      { name: "Ⅲ区（I=5‰~10‰）", k: 29, a: 0.810, b3: 0.544 },
+      { name: "Ⅳ区（I<5‰）", k: 14.3, a: 0.30, b3: 0.330 }
+    ]},
+    { prov: "湖南", kind: "north", rows: [
+      { name: "湘资水系", k: 5.59, a: 0.380 },
+      { name: "沅水水系", k: 3.79, a: 0.197 },
+      { name: "澧水水系", k: 1.57, a: 0.636 }
+    ]},
+    { prov: "宁夏", kind: "north", rows: [
+      { name: "山区", k: 0.14, a: 0.44 },
+      { name: "丘陵区", k: 0.38, a: 0.21 }
+    ]},
+    { prov: "广西", kind: "north", rows: [
+      { name: "山区", k: 0.56, a: 0.306 },
+      { name: "丘陵区", k: 0.42, a: 0.419 }
+    ]},
+    { prov: "甘肃", kind: "north", rows: [
+      { name: "平原区", k: 0.96, a: 0.71 },
+      { name: "丘陵区", k: 0.62, a: 0.71 },
+      { name: "山区", k: 0.39, a: 0.71 }
+    ]},
+    { prov: "吉林", kind: "north", rows: [
+      { name: "Ⅰ区", k: 0.00035, a: 1.40 },
+      { name: "Ⅱ区", k: 0.032, a: 0.84 },
+      { name: "Ⅲ区", k: 0.022, a: 1.45 }
+    ]},
+    { prov: "河南", kind: "north", rows: [
+      { name: "Ⅰ区", k: 0.73, a: 0.32 },
+      { name: "Ⅱ区", k: 0.038, a: 0.75 },
+      { name: "Ⅲ区（按河南省n值分区）", k: 0.63, a: 0.15 },
+      { name: "Ⅳ区", k: 0.80, a: 0.20 }
+    ]},
+    { prov: "青海", kind: "north", rows: [
+      { name: "东部区", k: 0.871, a: 0.75 },
+      { name: "内陆区", k: 0.96, a: 0.747 }
+    ]},
+    { prov: "新疆", kind: "north", rows: [
+      { name: "50km²＜F＜200km²", k: 0.60, a: 0.65 },
+      { name: "F＞200km²", k: 0.20, a: 0.65 }
+    ]},
+    { prov: "浙江", kind: "south", rows: [
+      { name: "浙北地区", k: 72.0, a: 0.187, b3: 0.90 },
+      { name: "浙东南沿海区", k: 72.0, a: 0.187, b3: 0.90 },
+      { name: "浙西南、西北山区及中部丘陵区", k: 72.0, a: 0.187, b3: 0.90 },
+      { name: "杭嘉湖平原边缘（地势平缓）", k: 105.0, a: 0.187, b3: 0.90 }
+    ]},
+    { prov: "内蒙古", kind: "north", rows: [
+      { name: "大兴安岭中段及余脉山地丘陵区", k: 0.537, a: 0.16, kNote: "0.334~0.537" },
+      { name: "黄河流域山地丘陵区", k: 0.537, a: 0.16, kNote: "0.334~0.537" }
+    ]},
+    { prov: "福建", kind: "south", rows: [
+      { name: "平原区", k: 1.8, a: 0.48, b3: 0.51 },
+      { name: "丘陵区", k: 2.0, a: 0.48, b3: 0.51 },
+      { name: "山区", k: 2.6, a: 0.48, b3: 0.51 }
+    ]},
+    { prov: "贵州", kind: "north", rows: [
+      { name: "平丘区", k: 0.080, a: 0.713 },
+      { name: "浅山区", k: 0.193, a: 0.713 },
+      { name: "深山区", k: 0.302, a: 0.713 }
+    ]}
+  ];
 
-  /* 经验公式（20世纪80年代初制定，式11-24/11-25） */
+  /* 经验公式一/二（20世纪80年代初制定） */
   function gskExpFormula1(p) {
-    // 式(11-24)：Qp = γ·(Sp − μ)^m · F^λ1，γ/m/λ1 查表 11-6
+    // 经验公式一：Qp = γ·(Sp − μ)^m · F^λ1，γ/m/λ1 查经验公式一系数表
     const { gamma, sp, mu, m, F, lambda1 } = p;
     if (![gamma, sp, mu, m, F, lambda1].every(Number.isFinite)) throw new Error("经验公式一输入不完整");
     if (F <= 0) throw new Error("汇水面积 F 必须为正");
@@ -2785,13 +2853,13 @@
     return gamma * Math.pow(sp - mu, m) * Math.pow(F, lambda1);
   }
   function gskExpFormula2(p) {
-    // 式(11-25)：Qp = C·Sp^β·F^λ2，C/β/λ2 查表 11-7
+    // 经验公式二：Qp = C·Sp^β·F^λ2，C/β/λ2 查经验公式二系数表
     const { C, sp, beta, F, lambda2 } = p;
     if (![C, sp, beta, F, lambda2].every(Number.isFinite)) throw new Error("经验公式二输入不完整");
     if (sp <= 0 || F <= 0) throw new Error("Sp 和 F 必须为正");
     return C * Math.pow(sp, beta) * Math.pow(F, lambda2);
   }
-  /* 表 11-6（式11-24）：γ / m / λ1（部分省区，摘自《水力学与桥涵水文》表 11-6） */
+  /* 经验公式一系数表：γ / m / λ1（部分省区，摘自《水力学与桥涵水文》） */
   var EXP1_ZONES = [
     { label: "四川·盆地丘陵区（I≤2‰）", gamma: 0.086, m: 1.18, lambda1: 0.712 },
     { label: "四川·盆地丘陵区（2‰≤I≤10‰）", gamma: 0.105, m: 1.18, lambda1: 0.730 },
@@ -2828,7 +2896,7 @@
     { label: "内蒙古·大青山西端山区（P=2%）", gamma: 0.00112, m: 0.41, lambda1: 0.55 },
     { label: "内蒙古·大青山西端山区（P=1%）", gamma: 0.0015, m: 0.41, lambda1: 0.55 }
   ];
-  /* 表 11-7（式11-25）：C / β / λ2（部分省区，摘自《水力学与桥涵水文》表 11-7） */
+  /* 经验公式二系数表：C / β / λ2（部分省区，摘自《水力学与桥涵水文》） */
   var EXP2_ZONES = [
     { label: "山西·石山黄土丘陵植被差（C=0.24~0.20）", C: 0.24, beta: 1.0, lambda2: 0.78 },
     { label: "山西·植被一般土石山（C=0.19~0.16）", C: 0.19, beta: 1.0, lambda2: 0.78 },
@@ -2867,8 +2935,12 @@
   function gskCalcMuSouth(sp, k2, b2, F, lambda) {
     return k2 * Math.pow(sp, b2) * Math.pow(F, -lambda);
   }
-  function gskCalcTau(L, I, k3, alpha1) {
-    return k3 * Math.pow(L / Math.sqrt(I), alpha1);
+  function gskCalcTau(L, I, k3, alpha1, sp, b3) {
+    let tau = k3 * Math.pow(L / Math.sqrt(I), alpha1);
+    if (sp !== undefined && b3 !== undefined && Number.isFinite(+b3) && +b3 > 0) {
+      tau *= Math.pow(+sp, -(+b3)); // 南方汇流时间：τ = K4·(L/√I)^α2·Sp^(−β3)
+    }
+    return tau;
   }
   function gskSelectN(tau) {
     if (tau < 1) return "n1";
@@ -2876,7 +2948,7 @@
     return "n3";
   }
   function gskRationalFormula(p) {
-    const { sp, F, L, I, k1, b1, k3, alpha1, n1, n2, n3, isSouth, k2, b2, lambda } = p;
+    const { sp, F, L, I, k1, b1, k3, alpha1, n1, n2, n3, isSouth, k2, b2, lambda, b3 } = p;
     if (![sp, F, L, I, k1, b1, k3, alpha1, n1, n2, n3].every(Number.isFinite)) {
       throw new Error("推理公式（公路科研所）输入必须为有限数");
     }
@@ -2884,8 +2956,11 @@
     if (F <= 0) throw new Error("汇水面积 F 必须为正");
     if (L <= 0) throw new Error("主河沟长度 L 必须为正");
     if (I <= 0) throw new Error("主河沟坡度 I 必须为正");
-    // Step 1: Calculate τ
-    const tau = gskCalcTau(L, I, k3, alpha1);
+    // Step 1: Calculate τ（北方 K₃·(L/√I)^α1；南方 K₄·(L/√I)^α2·Sp^(−β3)）
+    if (isSouth && !(Number.isFinite(+b3) && +b3 > 0)) {
+      throw new Error("南方模式需要 β₃（Sp 指数）：请用「汇流分区」下拉选择省域分区，或手动填入表中数值");
+    }
+    const tau = isSouth ? gskCalcTau(L, I, k3, alpha1, sp, b3) : gskCalcTau(L, I, k3, alpha1);
     if (tau <= 0) throw new Error("汇流时间 τ 计算异常");
     // Step 2: Select n based on τ
     const nKey = gskSelectN(tau);
@@ -2893,7 +2968,7 @@
     // Step 3: Calculate μ
     let mu;
     if (isSouth) {
-      if (![k2, b2, lambda].every(Number.isFinite)) throw new Error("南方模式需要 K2, β2, λ");
+      if (![k2, b2, lambda].every(Number.isFinite) || k2 <= 0 || b2 <= 0 || lambda <= 0) throw new Error("南方模式需要 K₂、β₂、λ（损失参数）：请查损失参数分区系数表手动填入");
       mu = gskCalcMuSouth(sp, k2, b2, F, lambda);
     } else {
       mu = gskCalcMu(sp, k1, b1);
@@ -2944,7 +3019,11 @@
           n1: +$("gskN1").value,
           n2: +$("gskN2").value,
           n3: +$("gskN3").value,
-          isSouth: $("gskRegion").value === "south"
+          isSouth: $("gskRegion").value === "south",
+          b3: (function () { const el = $("gskB3"); return el ? +el.value : NaN; })(),
+          k2: (function () { const el = $("gskK2"); return el ? +el.value : NaN; })(),
+          b2: (function () { const el = $("gskB2"); return el ? +el.value : NaN; })(),
+          lambda: (function () { const el = $("gskLam"); return el ? +el.value : NaN; })()
         };
         const r = gskRationalFormula(params);
         window.__hsLastGskMu = r.mu;
@@ -2952,33 +3031,42 @@
         if (detail) {
           detail.textContent = "τ=" + r.tau.toFixed(2) + "h → 选" + r.nKey + "=" + (r.nKey === "n1" ? params.n1 : r.nKey === "n2" ? params.n2 : params.n3).toFixed(2) + "；μ=" + r.mu.toFixed(1) + "mm/h；Sp−μ=" + (r.sp - r.mu).toFixed(1) + "mm/h";
         }
-        logCalc("推理公式·公路科研所1980版", { Sp: params.sp, F: params.F, L: params.L, I: params.I, K1: params.k1, β1: params.b1 }, { Qp: r.q.toFixed(2) + " m³/s" }, "《水力学与桥涵水文》式(11-19)");
+        logCalc("推理公式·公路科研所1980版", { Sp: params.sp, F: params.F, L: params.L, I: params.I, K1: params.k1, β1: params.b1 }, { Qp: r.q.toFixed(2) + " m³/s" }, "《水力学与桥涵水文》推理公式（公路科研所 1980 版）");
       } catch (e) {
         if (out) out.textContent = "—";
         if (err) err.textContent = e instanceof Error ? e.message : String(e);
       }
     };
     // Wire up inputs for auto-calc
-    ["gskSp","gskF","gskL","gskI","gskK1","gskB1","gskK3","gskAlpha1","gskN1","gskN2","gskN3","gskRegion"].forEach((id) => {
+    ["gskSp","gskF","gskL","gskI","gskK1","gskB1","gskK3","gskAlpha1","gskN1","gskN2","gskN3","gskRegion","gskB3","gskK2","gskB2","gskLam"].forEach((id) => {
       const el = $(id);
       if (el) { el.addEventListener("input", calcGsk); el.addEventListener("change", calcGsk); }
     });
   })();
 
-  // GSK zone → K3/alpha1 auto-fill based on region
+  // 汇流分区下拉（省→分区）→ 自动填 K3/α1/β3 并切南北
   (function initGskTau() {
     const regionSel = $("gskRegion");
-    if (!regionSel) return;
-    const updateTau = () => {
-      const isSouth = regionSel.value === "south";
-      const coefs = isSouth ? GSK_TAU_COEF.south : GSK_TAU_COEF.north;
-      // Use first entry as default
-      if (coefs.length > 0) {
-        $("gskK3").value = isSouth ? (coefs[0].k4 || 0.35) : (coefs[0].k3 || 0.55);
-        $("gskAlpha1").value = isSouth ? (coefs[0].alpha2 || 0.80) : (coefs[0].alpha1 || 0.75);
-      }
-    };
-    regionSel.addEventListener("change", updateTau);
+    const zoneSel = $("gskTauZone");
+    if (!regionSel || !zoneSel) return;
+    zoneSel.innerHTML = '<option value="">—选择省份·分区（自动填汇流系数）—</option>' + GSK_TAU_COEF.map((p, pi) =>
+      '<optgroup label="' + p.prov + '">' + p.rows.map((r, ri) =>
+        '<option value="' + pi + ':' + ri + '">' + r.name + (r.kNote ? "（K=" + r.kNote + "）" : "") + '</option>'
+      ).join("") + '</optgroup>'
+    ).join("");
+    zoneSel.addEventListener("change", () => {
+      if (!zoneSel.value) return;
+      const parts = zoneSel.value.split(":");
+      const p = GSK_TAU_COEF[+parts[0]];
+      const r = p && p.rows[+parts[1]];
+      if (!r) return;
+      regionSel.value = p.kind;
+      $("gskK3").value = r.k;
+      $("gskAlpha1").value = r.a;
+      const b3el = $("gskB3");
+      if (b3el) b3el.value = (r.b3 !== undefined ? r.b3 : "");
+      $("gskK3").dispatchEvent(new Event("change", { bubbles: true }));
+    });
   })();
 
     // Exp formula handlers
