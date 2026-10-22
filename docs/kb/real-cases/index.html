@@ -1,0 +1,1362 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="面向桥涵水文计算的规范速查与工程知识库（离线可用）">
+      
+      
+        <meta name="author" content="泓算 HongSuan">
+      
+      
+      
+        <link rel="prev" href="../spec-index/">
+      
+      
+        <link rel="next" href="../sources/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>真实工程算例库 - 泓算 · 桥涵水文知识库</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="泓算 · 桥涵水文知识库" class="md-header__button md-logo" aria-label="泓算 · 桥涵水文知识库" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            泓算 · 桥涵水文知识库
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              真实工程算例库
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../spec-index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  规范条文速查
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  真实工程算例库
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../sources/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  数据来源
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  常见问题
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../validation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  验证记录
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../handover/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  交接文档
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="泓算 · 桥涵水文知识库" class="md-nav__button md-logo" aria-label="泓算 · 桥涵水文知识库" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    泓算 · 桥涵水文知识库
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spec-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    规范条文速查
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    真实工程算例库
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    真实工程算例库
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#g9907" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G9907 韶山高速南延线（韶山至湘乡段）涉河桥梁洪水影响评价报告（报批稿）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="G9907 韶山高速南延线（韶山至湘乡段）涉河桥梁洪水影响评价报告（报批稿）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阻水与壅水（报告 §5.2）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        湖南暴雨洪水查算手册推理公式（报告 §5.1）—— 查算手册体系的真实取参范例
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-64-265-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        冲刷计算（报告 §5.4）—— 64-2/65-2 真实成果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#313-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        东山水闸水位流量关系（报告表 3.1.3-1）—— 真实率定曲线
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        城步至龙胜（湘桂界）高速公路防洪补救补偿措施设计报告
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        泓算待办与锚点状态
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-10-22commit-2ed03d1c1c43aa2b89f84" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-10-22（下午轮）三遗留待办闭环（commit 2ed03d1/c1c43aa/2b89f84）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        桂东县境内涉河桥涵防洪评价报告（送审稿）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="桂东县境内涉河桥涵防洪评价报告（送审稿）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4-14-39-p237-239" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        表 4-14 涉河桥梁阻水比统计表（39 项，p237-239）—— 已结构化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-18-p10-clayscour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        表 4-18 冲刷深度成果表（P=10%，黏性土河床）—— clayScour 潜在锚点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#422b11-b6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        壅水计算表（§4.2.2，B11 与 B6 双法并列）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        地理参数表（推理公式参数域）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#doc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        永顺水厂水资源论证报告（doc，已转文本）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-10-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        环评三件套（2026-10-22 盘点，水力锚点价值低）
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    数据来源
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    常见问题
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    验证记录
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handover/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    交接文档
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#g9907" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G9907 韶山高速南延线（韶山至湘乡段）涉河桥梁洪水影响评价报告（报批稿）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="G9907 韶山高速南延线（韶山至湘乡段）涉河桥梁洪水影响评价报告（报批稿）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阻水与壅水（报告 §5.2）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        湖南暴雨洪水查算手册推理公式（报告 §5.1）—— 查算手册体系的真实取参范例
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-64-265-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        冲刷计算（报告 §5.4）—— 64-2/65-2 真实成果
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#313-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        东山水闸水位流量关系（报告表 3.1.3-1）—— 真实率定曲线
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        城步至龙胜（湘桂界）高速公路防洪补救补偿措施设计报告
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        泓算待办与锚点状态
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-10-22commit-2ed03d1c1c43aa2b89f84" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-10-22（下午轮）三遗留待办闭环（commit 2ed03d1/c1c43aa/2b89f84）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        桂东县境内涉河桥涵防洪评价报告（送审稿）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="桂东县境内涉河桥涵防洪评价报告（送审稿）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4-14-39-p237-239" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        表 4-14 涉河桥梁阻水比统计表（39 项，p237-239）—— 已结构化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-18-p10-clayscour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        表 4-18 冲刷深度成果表（P=10%，黏性土河床）—— clayScour 潜在锚点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#422b11-b6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        壅水计算表（§4.2.2，B11 与 B6 双法并列）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        地理参数表（推理公式参数域）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#doc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        永顺水厂水资源论证报告（doc，已转文本）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-10-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        环评三件套（2026-10-22 盘点，水力锚点价值低）
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="_1">真实工程算例库（防洪评价报告实测/实算数据）<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>数据来源：用户提供的三份真实项目报告（2026-10-22 接入）。这些数值既是泓算模块的
+金标准验证锚点，也是理解规范公式在真实项目中如何取参的范例。</p>
+</blockquote>
+<h2 id="g9907">G9907 韶山高速南延线（韶山至湘乡段）涉河桥梁洪水影响评价报告（报批稿）<a class="headerlink" href="#g9907" title="Permanent link">&para;</a></h2>
+<p>项目概况：长株潭都市圈环线 G9907 南延线，7 座涉水桥梁，其中涟水特大桥（跨涟水）、
+韶山铁路跨线桥（跨韶河）有桥墩落在河道内。计算依据：SL/T 808-2025《洪水影响评价
+技术导则》、DB43/T 388-2011《湖南省涉河桥梁水利技术规定（暂行）》、JTG C30-2015。</p>
+<h3 id="52">阻水与壅水（报告 §5.2）<a class="headerlink" href="#52" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>桥名</th>
+<th>河道</th>
+<th>水位(m)</th>
+<th>Q(m³/s)</th>
+<th>现状过水面积(m²)</th>
+<th>现状河宽(m)</th>
+<th>阻水面积(m²)</th>
+<th>阻水率(%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>韶山铁路跨线桥</td>
+<td>韶河</td>
+<td>48.45</td>
+<td>398</td>
+<td>87.45</td>
+<td>27.47</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>涟水特大桥</td>
+<td>涟水 p=5%</td>
+<td>44.47</td>
+<td>4520</td>
+<td>2233.83</td>
+<td>243.5</td>
+<td>49.96</td>
+<td>2.24</td>
+</tr>
+<tr>
+<td>涟水特大桥</td>
+<td>涟水 5%规划</td>
+<td>44.67</td>
+<td>4520</td>
+<td>2282.58</td>
+<td>244.0</td>
+<td>51.40</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>壅高与壅水长度（SL/T 808-2025 附录 A 公式 A.2.3 / A.2.3-4）：</p>
+<table>
+<thead>
+<tr>
+<th>桥名</th>
+<th>设计水位(m)</th>
+<th>壅高 ΔZ(m)</th>
+<th>水面比降 I0</th>
+<th>壅水范围 Ly(m)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>涟水特大桥</td>
+<td>44.47</td>
+<td>0.023</td>
+<td>0.000274</td>
+<td>167.88</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>壅水长度公式 Ly = 2·ΔZM / I0（I0 取跨河断面上下游 15km 平均坡降）</li>
+<li>泓算验证：阻水比 2.2365%≈2.24% ✓；Ly=2×0.023/0.000274=167.88m ✓（backwater.test.cjs 20/20）</li>
+</ul>
+<h3 id="51">湖南暴雨洪水查算手册推理公式（报告 §5.1）—— 查算手册体系的真实取参范例<a class="headerlink" href="#51" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>韶山铁路跨线桥、刘家新屋大桥</th>
+<th>石屋场/六塘冲/富家冲大桥</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>暴雨一致区</td>
+<td>第 7 区（图一）</td>
+<td>第 7 区</td>
+</tr>
+<tr>
+<td>点面折算 α（图二十二）</td>
+<td>0.94</td>
+<td>0.94</td>
+</tr>
+<tr>
+<td>24h 点雨量均值(mm)</td>
+<td>107.38</td>
+<td>100.65</td>
+</tr>
+<tr>
+<td>Cv</td>
+<td>0.40</td>
+<td>0.35</td>
+</tr>
+<tr>
+<td>Cs/Cv</td>
+<td>3.5</td>
+<td>3.5</td>
+</tr>
+<tr>
+<td>Kp：0.33%/1%/10%/50%</td>
+<td>2.66/2.31/1.53/0.91</td>
+<td>2.66/2.11/1.47/0.83</td>
+</tr>
+<tr>
+<td>设计暴雨(mm)：0.33%/1%/10%/50%</td>
+<td>285.63/248.05/164.29/97.72</td>
+<td>—/212.37/147.96/83.54</td>
+</tr>
+</tbody>
+</table>
+<p>短历时暴雨指数（百年一遇，图三十六/三十七）：<strong>n2=0.638，n3=0.702</strong>。</p>
+<p>时程分配公式（H24面 为面雨量）：</p>
+<ul>
+<li>H1 = H24面 × 24^(n3−1) × 6^(n2−n3)</li>
+<li>H3 = H24面 × 24^(n3−1) × 6^(n2−n3) × 3^(1−n2)</li>
+<li>H6 = H24面 × 24^(n3−1) × 6^(1−n3)</li>
+<li>H12 = H24面 × 24^(n3−1) × 12^(1−n3)</li>
+<li>H24 = H24面 × 24^(n3−1) × 24^(1−n3)</li>
+</ul>
+<p>实算锚点：H24面=243.09mm → H1=84.7 / H3=125.13 / H6=160.82 / H12=197.72 / H24=243.09（mm）✓</p>
+<p>产流：产流分区<strong>第Ⅱ区</strong>（图四十），初损 I0=32mm，地表径流系数 φ 查表十一，概化雨型 7 区。
+推理公式验证点：撇洪沟排水涵闸 F=1.6km² → 同频设计洪水 Q=6.74 m³/s（报告 p61）。</p>
+<h3 id="54-64-265-2">冲刷计算（报告 §5.4）—— 64-2/65-2 真实成果<a class="headerlink" href="#54-64-265-2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>一般冲刷：JTG C30-2015 <strong>64-2 简化式</strong>，20 年一遇 → <strong>0.42m</strong></li>
+<li>局部冲刷：<strong>65-2 式</strong>（非黏性土；参数 Kξ 墩形系数、B1 计算宽度、d̄ 床沙平均粒径、
+  Kη2 河床颗粒影响系数、v/v0/v0′/n2），黏性土另按规范公式</li>
+<li>成果：20 年一遇 <strong>一般冲刷+局部冲刷 = 1.75~2.14m</strong></li>
+<li>行近流速：采用 64-2 时按规范 8.3.3 墩前行近流速公式</li>
+<li>岸坡冲刷：SL/T 808-2025 导则公式</li>
+</ul>
+<h3 id="313-1">东山水闸水位流量关系（报告表 3.1.3-1）—— 真实率定曲线<a class="headerlink" href="#313-1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>水位(m)</th>
+<th>35.7</th>
+<th>35.9</th>
+<th>36.3</th>
+<th>36.7</th>
+<th>37.1</th>
+<th>38</th>
+<th>39.1</th>
+<th>40.1</th>
+<th>41.1</th>
+<th>42.1</th>
+<th>43.1</th>
+<th>44.1</th>
+<th>45.1</th>
+<th>46.1</th>
+<th>47.1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q(m³/s)</td>
+<td>0</td>
+<td>16.1</td>
+<td>80</td>
+<td>160</td>
+<td>250</td>
+<td>560</td>
+<td>1000</td>
+<td>1490</td>
+<td>2050</td>
+<td>2690</td>
+<td>3370</td>
+<td>4090</td>
+<td>4830</td>
+<td>5580</td>
+<td>6350</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>大(1)型水闸，正常蓄水位 40.6m（2016 年关闸蓄水），闸址集雨面积 6193km²</li>
+<li>调度：入库 ≤2900 m³/s 按闸门开度控泄；&gt;2900 m³/s 全开行洪</li>
+<li>5% 设计洪水最大下泄 4740 m³/s（2017 年调洪成果）</li>
+</ul>
+<h2 id="_2">城步至龙胜（湘桂界）高速公路防洪补救补偿措施设计报告<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>设计流量：2015 版《湖南省暴雨洪水查算手册》+ 河道特征值，<strong>推理公式</strong>求得</li>
+<li>短历时暴雨：4 区概化雨型；F~H24面 关系求面雨量</li>
+<li>阻水：落叶湾巫水特大桥（P=5%）、独宿溪中桥、刀背冲大桥、泮水互通 A 匝道桥有桥墩阻水；
+  界 1 号/界 2 号/芙蓉河大桥桥墩不阻水</li>
+<li>壅水补偿：6 座桥两岸均无堤防 → 不考虑壅水补偿</li>
+<li>补救措施：按各河段条件确定护坡/护岸型式；溪沟拓宽减少冲刷；桥墩阻水需补救的河段逐段设计</li>
+</ul>
+<h2 id="_3">泓算待办与锚点状态<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>事项</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B6 壅水+阻水比双源验证</td>
+<td>✅ 已闭环（20/20）</td>
+</tr>
+<tr>
+<td>SL/T808-2025 附录 A η 表原文复核</td>
+<td>⬜ 壅高 0.023m 复算闭环关键</td>
+</tr>
+<tr>
+<td>64-2 简化式（一般冲刷）</td>
+<td>✅ 已实现（8.3.1-1，2026-10-22；0.42m 锚点待 OCR 附图闭环）</td>
+</tr>
+<tr>
+<td>查算手册推理公式模块</td>
+<td>✅ 已实现（2026-10-22：时程分配链+7区雨型+净雨+推理公式；黄金锚点 H₁=84.1/H₂₄=243.09 与报告表 5.1-6 逐时段一致；正文 84.7 系笔误）</td>
+</tr>
+<tr>
+<td>水位流量关系模块</td>
+<td>✅ 已实现（2026-10-22：东山水闸 15 点率定曲线内置；log-log 双向插值；Q=4740→Z=44.986 调洪锚点）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-10-22commit-2ed03d1c1c43aa2b89f84">2026-10-22（下午轮）三遗留待办闭环（commit 2ed03d1/c1c43aa/2b89f84）<a class="headerlink" href="#2026-10-22commit-2ed03d1c1c43aa2b89f84" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>G9907 冲刷 0.42m 闭环</strong>：附图册图号 NYX-CS-HP-SW-11（p31）桥位断面里程-高程提取，
+   积分 A=2232.77m²（报告 2233.83，偏差 0.05%）、hcm=11.81m；64-2 参数复原
+   （μ=1.0、Bcg=250.7m）→ hy=0.42m 精确复现（scour642.test 黄金3）</li>
+<li><strong>SL/T808-2025 附录A 原表命中</strong>：表A.2.3-1 η 双条件（河流特征×Q阻/Q设）+
+   表A.2.3-2 V_M 土质表 → backwater.js etaSLT808/vmSLT808/slt808Backwater；
+   G9907 壅高 0.023m 复核通过（打包版 UI 亦 PASS）；B11 表单加河流类型下拉</li>
+<li><strong>4区推理公式</strong>：蒿吉坪桥梁（省水利厅官网论文）θ=15.11/τ=4.551h/Q₁%=325 全锚点闭环 +
+   rationalTrial 试算引擎；城步表2.2-11 全 19 桥 22 行数据录入（1 行桥名待原 PDF 核对）</li>
+<li>2026-10-22（晚）更新：表 4-14 已结构化录入（gd414.test 63/63）；阻水比页构造示例已换 G9907 涟水真实值；
+   仍缺：4 区概化雨型百分比、65-2 输入（d̄/Kξ/B1，桂东用黏性土公式无此参数）</li>
+</ol>
+<h2 id="_4">桂东县境内涉河桥涵防洪评价报告（送审稿）<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>桂东至新田（宁远）高速桂东至郴州段，17 座评价桥梁（广东省交通规划设计研究院）。
+46 页扫描件，2026-10-22 全文 OCR（kb-gd-ocr.txt）+ 表 4-14 坐标化重建。</p>
+<h3 id="4-14-39-p237-239">表 4-14 涉河桥梁阻水比统计表（39 项，p237-239）—— 已结构化<a class="headerlink" href="#4-14-39-p237-239" title="Permanent link">&para;</a></h3>
+<ul>
+<li>结构化数据：<code>portable/tests/gd-t414-piers.json</code>（39 行：桥名/桥墩/水位/流量/A现/A阻/A建/阻水比/备注）</li>
+<li>回归锚点：<code>portable/tests/gd414.test.cjs</code>（<strong>63/63 PASS</strong>）：</li>
+<li>面积守恒 A现−A建=A阻（19/19 阻水行；seq15 原表自身不自洽 9.07≠9.01 已如实标注）</li>
+<li>阻水比=A阻/A现×100 逐行复核（blockageRatio 复算 ≤0.03）</li>
+<li>极值锚点：最大阻水比 <strong>27.62%</strong>（摇钱埂大桥右线 14#，超 7% 控制指标→改移沟补救）</li>
+<li>兰塘大桥 20 年一遇 Q=324.3m³/s（表注：其余均 10 年一遇）</li>
+<li>典型值：学堂埂大桥右线 2#（A现=50.44、A阻=1.47、比 2.91%）；张家山大桥左线 7#（比 20.23%）</li>
+<li>高阻水比行多带"改移沟"备注（补救措施与阻水比联动）</li>
+</ul>
+<h3 id="4-18-p10-clayscour">表 4-18 冲刷深度成果表（P=10%，黏性土河床）—— clayScour 潜在锚点<a class="headerlink" href="#4-18-p10-clayscour" title="Permanent link">&para;</a></h3>
+<p>总冲刷=一般+局部 逐行自洽（OCR 重建校验通过）：
+学堂埂左线 1.66=0.56+1.10；右线 0.75=0.61+0.14；张家山 6#7# 2.37=0.75+1.62；
+张家山 10# 3.91=0.78+3.13；11# 3.29=0.84+2.45；右线 3.13≈0.52+2.62；
+摇钱埂左线 3# 0.66=0.40+0.26；6#7# 0.91≈0.66+0.26；右线 2# 3.16=1.07+2.09；
+4# 1.52=0.79+0.73；6# 1.07=0.97+0.10；13# 3.21=0.85+2.36；14# 3.53=1.81+1.72；
+15# 3.07=1.96+1.11；白洞左线 3.25≈1.91+1.35；9#10# 1.21=0.75+0.46</p>
+<h3 id="422b11-b6">壅水计算表（§4.2.2，B11 与 B6 双法并列）<a class="headerlink" href="#422b11-b6" title="Permanent link">&para;</a></h3>
+<p>学堂埂大桥左线（2#~3#）：B11=0.096m、B6=0.14m（backwater.test 学堂埂 ΔZ=0.0962 锚点来源）；
+右线（2#~3#）：B11=0.01、B6=0.03；张家山 6#7# B11=0.437/B6=1.15 等——B6/B11 双法对比的真实工程取值范例</p>
+<h3 id="_5">地理参数表（推理公式参数域）<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>学堂埂大桥 F=19.31km²/L=14.32km；张家山 F=21.46；摇钱埂 F=21.74/41.47 等
+——西口河、砂坑河、流源河、淇江流域参数集（供 catchment 合理性校验；J 列 OCR 待精核）</p>
+<h2 id="doc">永顺水厂水资源论证报告（doc，已转文本）<a class="headerlink" href="#doc" title="Permanent link">&para;</a></h2>
+<p>永顺县城供水（猛洞河流域），顺水站 F=1035km²（1957 年建站）。
+<strong>P-Ⅲ 完整频率曲线锚点（表 4.2.1-1）</strong>：年均流量均值 27.1m³/s、Cv=0.34、Cs/Cv=2.5：
+P=0.01%/1%/10%/50%/90%/95%/97% → 78.8/54/39.4/25.8/16.4/14.5/13.3 m³/s
+（27.1×Kp 逐档复算吻合）；P=95% 枯水 Q=14.5m³/s（1994 实测 14.3 佐证）
+——频率适线/枯水频率模块的真实锚点</p>
+<h2 id="2026-10-22">环评三件套（2026-10-22 盘点，水力锚点价值低）<a class="headerlink" href="#2026-10-22" title="Permanent link">&para;</a></h2>
+<ul>
+<li>G9907 环评报告书（征求意见稿，445 页）：无水力计算数据</li>
+<li>G4 京港澳株洲王十万至耒阳大市扩容环评（745 页）：洪市中桥 壅高 0.03m/壅水范围 40m（Ly=2ΔZ/I0 自洽，I0=0.0015）</li>
+<li>南县至益阳高速（变更）环评（495 页）：无水力计算数据</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

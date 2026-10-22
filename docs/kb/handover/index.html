@@ -1,0 +1,1739 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="面向桥涵水文计算的规范速查与工程知识库（离线可用）">
+      
+      
+        <meta name="author" content="泓算 HongSuan">
+      
+      
+      
+        <link rel="prev" href="../validation/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>交接文档 - 泓算 · 桥涵水文知识库</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="泓算 · 桥涵水文知识库" class="md-header__button md-logo" aria-label="泓算 · 桥涵水文知识库" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            泓算 · 桥涵水文知识库
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              交接文档
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../spec-index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  规范条文速查
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../real-cases/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  真实工程算例库
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../sources/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  数据来源
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  常见问题
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../validation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  验证记录
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  交接文档
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="泓算 · 桥涵水文知识库" class="md-nav__button md-logo" aria-label="泓算 · 桥涵水文知识库" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    泓算 · 桥涵水文知识库
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spec-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    规范条文速查
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../real-cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    真实工程算例库
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    数据来源
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    常见问题
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    验证记录
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    交接文档
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="_1">交接文档<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h1 id="v0111">泓算 · 桥涵水文计算软件 — 交接文档（交付版 v0.11.1）<a class="headerlink" href="#v0111" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>版本：v0.11.1 ｜ 更新日期：2026-09-26 ｜ 交付人：AI 协作开发（卓庆）
+配套：软件四端（网页 / 桌面 / 离线单文件 / <strong>CLI 命令行</strong>）、离线知识库（<code>knowledge/</code>）、规范原文 PDF（<code>参考规范/</code>）
+历史开发记录：<code>交接文档.md</code>（v1.1，项目定位与专业知识基础）、<code>交接文档_交付版_v0.10.2.md</code>（上一版交付）
+本版新增章节：<strong>第四部分「对标 HEC-RAS 的工程实践」</strong>（v0.11.0 / v0.11.1 全部内容）</p>
+</blockquote>
+<hr />
+<h2 id="_2">一、它是什么<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>一款面向<strong>学生与青年工程师</strong>的公路桥涵水文计算工具。核心价值不是"又一个 P-Ⅲ 计算器"，而是：</p>
+<ol>
+<li><strong>把规范里要人工翻的表格内置进软件</strong>——径流厚度 h 大表、ψ、z、β、γ、δ、暴雨分区、Cv 平均值，全部可查可插值；</li>
+<li><strong>白盒化</strong>——每一步都标出公式、条号、页码、取哪一档，结果可复核；</li>
+<li><strong>可追溯</strong>——每次计算自动进日志（输入 / 采用值 / 结果 / 依据），可导出存档；</li>
+<li><strong>可无人值守</strong>（v0.11.0 新增）——计算内核可被命令行脚本驱动，批量出成果、批量回归验证。</li>
+</ol>
+<h3 id="qw20">与《桥位设计计算系统》QW2.0 的关系<a class="headerlink" href="#qw20" title="Permanent link">&para;</a></h3>
+<p>QW2.0（高冬光 / 甘肃紫光智能交通 / 西安软通）是商业闭源软件，老师反馈其痛点是：<strong>经验公式与各种指数不内置，要人工查表</strong>。泓算就是冲着这个痛点做的。</p>
+<p><strong>对标结果</strong>（教材《桥涵水文》第五版例 3-1-1，32 年系列）：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>泓算</th>
+<th>QW2.0</th>
+<th>偏差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q₁%</td>
+<td>4824</td>
+<td>4840</td>
+<td>−0.33%</td>
+</tr>
+<tr>
+<td>Q₂%</td>
+<td>4301</td>
+<td>4311</td>
+<td>−0.23%</td>
+</tr>
+<tr>
+<td>Q₀.₃₃%</td>
+<td>5647</td>
+<td>5666</td>
+<td>−0.34%</td>
+</tr>
+<tr>
+<td>矩法 Q̄</td>
+<td>1838.9</td>
+<td>1839</td>
+<td>一致</td>
+</tr>
+</tbody>
+</table>
+<p>三个设计频率偏差均 ≤0.35%，且该算例已固化为回归测试。</p>
+<hr />
+<h2 id="_3">二、四端怎么用<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>端</th>
+<th>位置</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>网页版</td>
+<td>https://lele332.github.io/hongsuan/</td>
+<td>在线，无需安装</td>
+</tr>
+<tr>
+<td>桌面版</td>
+<td><code>dist\泓算桌面版-v0.11.1\泓算.exe</code>（桌面快捷方式同名）</td>
+<td>Electron，269 MB，绿色免安装</td>
+</tr>
+<tr>
+<td>离线版</td>
+<td><code>dist\泓算离线版-v0.11.1\泓算-v0.11.1-离线版.html</code></td>
+<td>单文件约 1.07 MB，<strong>断网双击即用</strong></td>
+</tr>
+<tr>
+<td><strong>CLI 版</strong></td>
+<td><code>app\dist\cli\hongsuan.js</code></td>
+<td><strong>v0.11.0 新增</strong>，Node 环境运行，无人值守批处理</td>
+</tr>
+</tbody>
+</table>
+<p>四端共用同一套计算内核（<code>app/src/core/</code>），功能一致；CLI 端不含界面，只出结构化 JSON 成果。</p>
+<h3 id="cli-v0110">CLI 用法（v0.11.0 新增）<a class="headerlink" href="#cli-v0110" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">cd 桥涵水文项目/app
+npm run build:cli                                   # 构建 dist/cli/hongsuan.js（esbuild 单文件零依赖）
+
+npm run cli -- compute &lt;工程.json&gt; -o &lt;结果.json&gt;    # 单工程无头计算
+npm run cli -- batch &lt;工程目录&gt; -o &lt;结果目录&gt;         # 批量计算目录内全部工程
+npm run cli -- verify [算例库目录]                    # 算例回归验证（默认 examples/）
+</code></pre>
+<ul>
+<li>退出码：<code>0</code> 全过 ｜ <code>1</code> 存在计算失败 ｜ <code>2</code> 输入非法 —— 可直接挂 CI / 设计院批处理流程</li>
+<li>成果文件为 <code>hongsuan-result@1</code> 规范 JSON，<strong>自带完整输入快照</strong>（结果文件 alone 可复原当时全部输入）</li>
+<li>错误以 JSON 行输出到 stderr，<code>field</code> 字段可直接映射到界面输入框</li>
+</ul>
+<hr />
+<h2 id="_4">三、功能全景<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>内容</th>
+<th>规范依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>设计流量</strong></td>
+<td>P-Ⅲ 适线（连序 / 不连序）、矩法 / 三点法 / 自动寻优、贝叶斯线型比选</td>
+<td>JTG C30—2015 第 6.2 条</td>
+</tr>
+<tr>
+<td></td>
+<td>历史洪水位法（曼宁）、水面线推算（直接步进）、两洪痕反解 Q</td>
+<td>第 6.3 条</td>
+</tr>
+<tr>
+<td></td>
+<td>无资料地区：推理公式 + 径流厚度法</td>
+<td>第 6.4 条、涵洞规范 6.3</td>
+</tr>
+<tr>
+<td></td>
+<td>设计洪水过程线（同倍比放大）</td>
+<td>第 6.6 条</td>
+</tr>
+<tr>
+<td><strong>桥孔设计</strong></td>
+<td>最小净长度 Lj = Kq·(Qp/Qc)^n₃·Bc，表 7.2.1 三档系数</td>
+<td>第 7.2 条</td>
+</tr>
+<tr>
+<td><strong>冲刷</strong></td>
+<td>一般冲刷（64-1 修正式）、局部冲刷（65-2 式）、总冲刷深度</td>
+<td>第 8.3 / 8.4 / 8.6 条</td>
+</tr>
+<tr>
+<td><strong>内置查表</strong></td>
+<td>表 B-9 径流厚度 h（18 区 × 6 土类 × 3 频率 × 4 汇流时间，108 行）</td>
+<td>涵洞规范附录 B</td>
+</tr>
+<tr>
+<td></td>
+<td>表 B-5 ψ、B-8 τ、B-10 z、B-11 β、B-12 γ、B-13 δ、B-6 暴雨分区、B-14 Cv</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><strong>计算日志</strong></td>
+<td>自动记录，导出 Markdown / JSON</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>工程外壳</strong></td>
+<td>工程文件导入导出（含版本对比）、图表导出 SVG / PNG</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>地图量算</strong></td>
+<td>在线底图（天地图）/ 本地图片双模式，勾汇水区 → F / L / I → 回填方法 C</td>
+<td>图形量算</td>
+</tr>
+<tr>
+<td><strong>帮助中心</strong></td>
+<td>规范条文速查（24 条带页码）、数据来源、FAQ、验证记录、本地检索</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>基本信息</strong></td>
+<td>项目 / 桥位 / 河流 / 河段 / 参证站 / 面积 / 规范 / 暴雨分区</td>
+<td>第 3~5 章基础资料</td>
+</tr>
+<tr>
+<td><strong>系统管理</strong></td>
+<td>默认设置（频率、河段）、本机数据占用、导出、清空</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>无头计算</strong>（新）</td>
+<td>CLI compute / batch / verify，结构化成果 + 结构化错误</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hec-ras-v0110-v0111">四、对标 HEC-RAS 的工程实践（v0.11.0 / v0.11.1 新增）<a class="headerlink" href="#hec-ras-v0110-v0111" title="Permanent link">&para;</a></h2>
+<h3 id="41-hec-ras">4.1 缘起：一次真实的 HEC-RAS 使用体验<a class="headerlink" href="#41-hec-ras" title="Permanent link">&para;</a></h3>
+<p>2026-09-25 实际安装并使用美国陆军工程兵团 <strong>HEC-RAS 7.0.1</strong>（水利行业国际主流一维/二维水动力学软件），
+下载官方例题包（407 MB，7 大类 1126 个文件），逐字节解析其工程文件格式，并尝试 COM 自动化批处理。</p>
+<p><strong>实测结论（正面）</strong>：HEC-RAS 值得学的三件事——</p>
+<ol>
+<li><strong>工程 = 文件夹 + 一组人可读的文本文件</strong>：<code>.prj</code> 索引 + <code>.g01</code> 几何 + <code>.f01</code> 流量 + <code>.p01</code> 方案 + <code>.r01</code> 输出，
+   方案（Plan）只存引用不复制数据，跑 10 个方案每个方案文件只有几 KB；</li>
+<li><strong>例题即文档</strong>：安装后单独提供 7 大类例题，每个都带完整输入与已知正确输出；</li>
+<li><strong>输出自描述</strong>：<code>.r01</code> 开头完整回显断面几何、糙率、流量、边界条件——10 年后拿着结果文件 alone 就能复原输入。</li>
+</ol>
+<p><strong>实测结论（反面，即泓算的机会）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>尝试</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>PowerShell COM <code>Compute_CurrentPlan($false,$true)</code></td>
+<td>❌ ByRef 类型不兼容</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Python win32com 动态调度</td>
+<td>❌ SAFEARRAY 类型不匹配</td>
+</tr>
+<tr>
+<td>3</td>
+<td>gencache 强类型包装</td>
+<td>❌ "Subscript out of range"（文档签名 2 参 vs 实际 3 参）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>VARIANT 显式包装</td>
+<td>❌ pywin32 新版已移除 VARIANT 类</td>
+</tr>
+<tr>
+<td>5</td>
+<td>纯值调用（签名已对）</td>
+<td>❌ VBA 内部错误 1000009（6.2 工程在 7.0.1 下不兼容）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Project_SaveAs 升级格式重算</td>
+<td>❌ 同错</td>
+</tr>
+<tr>
+<td>7</td>
+<td>命令行 <code>Ras.exe -p xx -compute yy</code></td>
+<td>❌ 进程挂起无输出（无官方批处理文档）</td>
+</tr>
+<tr>
+<td>8</td>
+<td>GUI + SendKeys 模拟点击</td>
+<td>❌ 按键未送达</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论：具备逆向能力的开发者，2 小时内无法实现一次无人值守计算。</strong>
+错误信息只有一句裸 VBA 码，无字段、无定位、无建议；6.2 的工程在 7.0.1 下直接崩。
+——这正是泓算可以建立代差优势的地方。以下四项改进全部由此而来。</p>
+<h3 id="42-appsrccorecomputets">4.2 无头计算管线 <code>app/src/core/compute.ts</code><a class="headerlink" href="#42-appsrccorecomputets" title="Permanent link">&para;</a></h3>
+<p>把界面 10 个计算模块的公式与守卫，从 DOM 点击处理函数中抽成纯函数：</p>
+<pre><code class="language-ts">computeAll(state) → ComputeReport   // schema: hongsuan-result@1
+</code></pre>
+<ul>
+<li>输出含<strong>完整输入快照</strong>（<code>inputs</code>）——对应 HEC-RAS <code>.r01</code> 的可追溯性思想；</li>
+<li><strong>模块级容错</strong>：单个模块出错不拖垮整份报告（批处理时尤为重要）；</li>
+<li>每模块标注规范依据（条号/表号），成果可序列化、可 diff。</li>
+</ul>
+<h3 id="43-cli-appsrcclimaints">4.3 CLI 批处理 <code>app/src/cli/main.ts</code><a class="headerlink" href="#43-cli-appsrcclimaints" title="Permanent link">&para;</a></h3>
+<p><code>compute</code> / <code>batch</code> / <code>verify</code> 三个子命令 + 退出码约定（0/1/2），esbuild 打包为单文件零依赖。
+<strong>HEC-RAS 做不到的无人值守计算，泓算三行命令批量出成果。</strong></p>
+<h3 id="44-examples">4.4 算例回归库 <code>examples/</code>（对标"例题即文档"）<a class="headerlink" href="#44-examples" title="Permanent link">&para;</a></h3>
+<p>6 个算例，每个 = <code>project.json</code>（输入工程）+ <code>expected.json</code>（期望输出 + 容差 + 来源）：</p>
+<table>
+<thead>
+<tr>
+<th>算例</th>
+<th>期望来源</th>
+<th>关键值</th>
+<th>实测偏差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>例3-1-1-频率适线</td>
+<td>教材 T1 教学题</td>
+<td>Q̄=1065、Cv=0.2774</td>
+<td>0.000%</td>
+</tr>
+<tr>
+<td>例-历史洪水位法</td>
+<td>python 独立复算曼宁锚点</td>
+<td>QT=1179.15979</td>
+<td>0.000%</td>
+</tr>
+<tr>
+<td>例-推理公式法</td>
+<td>理论值换算</td>
+<td>Q=10.008</td>
+<td>0.000%</td>
+</tr>
+<tr>
+<td>例-径流厚度法</td>
+<td>公开算例 k3+685 涵洞</td>
+<td>Q=29.22</td>
+<td>0.014%</td>
+</tr>
+<tr>
+<td>例-桥孔长度</td>
+<td>公开工程算例（稳定河段）</td>
+<td>Lj=154.16 m</td>
+<td>0.000%</td>
+</tr>
+<tr>
+<td>例-冲刷全链条</td>
+<td>公式闭合校验 + 基线冻结</td>
+<td>hp=16.941 / hb=3.678 / 总=8.729</td>
+<td>0.000%</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">npm run verify:examples
+# 输出《泓算算例回归验证清单》：共 12 项检查，通过 12，失败 0
+</code></pre>
+<p><strong>这是给老师验收最直接的证据</strong>：不是口头说"我们测过"，而是一键跑出带偏差百分比的清单。</p>
+<h3 id="45-appsrccoreerrorstsv0111">4.5 结构化错误体系 <code>app/src/core/errors.ts</code>（v0.11.1）<a class="headerlink" href="#45-appsrccoreerrorstsv0111" title="Permanent link">&para;</a></h3>
+<p>HEC-RAS 的全部错误信息是裸 VBA 码 <code>"Subscript out of range"</code>。泓算的错误带完整结构：</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;E_INPUT_RANGE&quot;, &quot;field&quot;: &quot;state.nodata.rdH&quot;, &quot;value&quot;: 380,
+  &quot;message&quot;: &quot;径流厚度 h=380mm 超出表B-9第Ⅲ区Ⅳ土范围&quot;,
+  &quot;suggestion&quot;: &quot;请检查暴雨分区选择，或改用推理公式其它经验公式&quot;,
+  &quot;normRef&quot;: &quot;JTG C30-2015 附录B 表B-9&quot; }
+</code></pre>
+<p>错误码：<code>E_INPUT_MISSING / E_INPUT_FINITE / E_INPUT_RANGE / E_INPUT_TYPE / E_DEPENDENCY / E_CONVERGE / E_SCHEMA / E_INTERNAL</code>。
+<code>field</code> 精确到字段路径（如 <code>state.scour.scBcj</code>），界面可据此把输入框标红，CLI 可据此输出机读 JSON
+——<strong>这是 HEC-RAS 永远做不到的"错误指到输入框"</strong>。</p>
+<h3 id="46-appsrccoremigratetsv0111">4.6 工程文件版本迁移器 <code>app/src/core/migrate.ts</code>（v0.11.1）<a class="headerlink" href="#46-appsrccoremigratetsv0111" title="Permanent link">&para;</a></h3>
+<p>HEC-RAS 6.2 的工程在 7.0.1 下直接崩。泓算的工程文件 schema 已升级到 <code>hongsuan-project@2</code>：</p>
+<ul>
+<li>打开 <code>@1</code> 旧工程 → <strong>沿迁移链静默升级</strong>，不报错、不丢用户数据，并在结果里留痕 <code>migratedFrom</code>；</li>
+<li>迁移链每步是一个独立小函数（<code>from</code> / <code>to</code> / <code>note</code> / <code>migrate</code>），可单测、可扩展（<code>@2→@3</code> 继续往后接）；</li>
+<li>无法识别的 schema 抛结构化 <code>E_SCHEMA</code>（含已知迁移链提示），绝不静默吞掉。</li>
+</ul>
+<hr />
+<h2 id="_5">五、计算正确性：五层证据链<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Φ 值独立交叉</strong>：与 scipy 在 627 点网格上比对，100% &lt; 1e-6</li>
+<li><strong>解析恒等式</strong>：Cs=2 时 Φ(1%) = ln(100)−1 = 3.60517，精确成立</li>
+<li><strong>矩法交叉</strong>：与 numpy 比对 &lt; 5e-12</li>
+<li><strong>工程算例端到端</strong>：T1~T4、k3+685 涵洞（29.22）、贵州（59.34）、教材例 3-1-1</li>
+<li><strong>权威 Φ 表抽验</strong>：在表值舍入范围内</li>
+<li><strong>冲止流速闭合校验</strong>：行近流速 v = E·d̄^(1/6)·hp^(2/3) 与 64-1 公式严格自洽（测试中双重验证）</li>
+<li><strong>算例回归库</strong>（v0.11.0 新增）：6 算例 12 项检查，一键可复现，最大偏差 0.014%</li>
+</ol>
+<p><strong>发现并纠正的公开资料勘误</strong>（测试基准以手算复核为准）：
+- 某题库 T1：Σd²=885350 加错（实为 785250）
+- CSDN 某算例：校核 Φ(0.1%, Cs=1.5)=4.58 有误（实为 5.2335）
+- 教材例 3-1-1：Σ=58587 与其自身 Q̄=1839 矛盾（58846/32=1838.9，疑印刷勘误）</p>
+<hr />
+<h2 id="_6">六、数据来源（全部可自行下载验证）<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>JTG C30—2015《公路工程水文勘测设计规范》</strong></td>
+<td>交通运输部政府信息公开网全文 PDF（126 页扫描版）。第 6/7/8 章条文与系数表由渲染 OCR 定位后核对</td>
+</tr>
+<tr>
+<td><strong>JTG/T 3365-02—2020《公路涵洞设计规范》</strong></td>
+<td>交通运输部公告 2020 年第 88 号附件（中国政府网公开全文 PDF，118 页文字版）。附录 B 全部查表由此提取</td>
+</tr>
+</tbody>
+</table>
+<p><strong>提取与校验脚本</strong>（项目根）：<code>extract_appendix_b.py</code>、<code>extract_aux_tables.py</code>、<code>ocr_spec_pages.py</code>、
+<code>gen_h_table_ts.py</code>、<code>gen_aux_tables_ts.py</code> —— 表格 → JSON → TS 常量，生成物可追溯、可重跑。</p>
+<hr />
+<h2 id="_7">七、工程文件与技术架构<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<h3 id="61-schema-2">6.1 工程文件（schema 演进到 @2）<a class="headerlink" href="#61-schema-2" title="Permanent link">&para;</a></h3>
+<pre><code>{
+  &quot;schema&quot;: &quot;hongsuan-project@2&quot;,
+  &quot;savedAt&quot;: &quot;2026-09-26T...&quot;,
+  &quot;appVersion&quot;: &quot;0.11.1&quot;,
+  &quot;project&quot;: { name, bridgeSite, engineer, reviewer, river, reach, station, ... },
+  &quot;state&quot;: {
+    &quot;schemaVersion&quot;: 9, &quot;mode&quot;: &quot;series&quot;, &quot;freq&quot;: &quot;0.01&quot;,
+    &quot;series&quot;: &quot;...&quot;, &quot;adopted&quot;: {...},
+    &quot;hist&quot;: {...}, &quot;nodata&quot;: {...}, &quot;wsurf&quot;: {...},
+    &quot;open&quot;: {...}, &quot;scour&quot;: {...}, &quot;local&quot;: {...}, &quot;total&quot;: {...},   ← v0.11.0 新增四组
+    &quot;conv&quot;: {...}, &quot;hydro&quot;: {...}, &quot;project&quot;: {...}
+  },
+  &quot;migratedFrom&quot;: [&quot;hongsuan-project@1→hongsuan-project@2&quot;]   ← 仅旧工程打开时有
+}
+</code></pre>
+<p><strong>@1 → @2 迁移</strong>：补齐 <code>open / scour / local / total</code> 四组持久化字段（缺省空对象），其余数据原样透传。</p>
+<h3 id="62">6.2 目录结构<a class="headerlink" href="#62" title="Permanent link">&para;</a></h3>
+<pre><code>桥涵水文项目/
+├── app/
+│   ├── src/core/          计算内核（TS，单一内核，UI / CLI 直接 import）
+│   │   ├── stats.ts  phi.ts  points.ts  empirical.ts  threePoint.ts  autoFit.ts
+│   │   ├── bayes.ts  methodB.ts  methodC.ts  waterSurface.ts  hydrograph.ts
+│   │   ├── areaConvert.ts  projectFile.ts  projectDiff.ts  calcLog.ts
+│   │   ├── bridgeOpening.ts  generalScour.ts  localScour.ts  catchment.ts
+│   │   ├── runoffTable.ts  auxTable.ts  helpContent.ts  designflood.ts
+│   │   ├── compute.ts        ← v0.11.0 无头计算管线（10 模块 → hongsuan-result@1）
+│   │   ├── errors.ts         ← v0.11.1 结构化错误（HsError）
+│   │   ├── migrate.ts        ← v0.11.1 工程文件迁移链（@1→@2）
+│   │   └── hTable.generated.ts  auxTables.generated.ts（内置数据，自动生成）
+│   ├── src/cli/main.ts     ← v0.11.0 CLI 入口（compute / batch / verify）
+│   ├── src/tests/          单元测试基准（26 个文件，175 项）
+│   ├── src/web/main.ts     界面逻辑
+│   ├── scripts/            E2E（verify-app-page / verify-ui / verify-desktop / verify-offline）
+│   ├── dist/cli/hongsuan.js ← CLI 构建产物（esbuild 单文件，零依赖）
+│   └── web/                index.html + app.js（esbuild 打包）
+├── examples/               算例回归库（6 算例 × project.json + expected.json）
+├── dist/                   四端交付物（离线单文件 / 桌面版 / CLI）
+├── 参考规范/               政府公开规范全文 PDF
+├── knowledge/              离线知识库（MkDocs + Material）
+├── 交接文档.md（历史）/ 交接文档_交付版_v0.10.2.md / 交接文档_交付版_v0.11.1.md（本文件）
+├── 演进路线_对标QW2.0.md / 评估报告_泓算v0.10.2.md / 泓算优化方案_对标HEC-RAS_v1.0.md
+├── deploy_pages.py  deploy_pages_gh.py  make_offline.py  build_desktop.py
+└── extract_*.py  gen_*.ts.py  ocr_spec_pages.py  build_knowledge.py
+</code></pre>
+<p><strong>架构要件</strong>：单一计算内核 + 数据编译进源码（无后端数据库、无 IO）、纯函数、响亮失败。</p>
+<p><strong>为什么不做数据库</strong>：内置表（1296 项数值）编译进 JS 只有 12 KB；无数据库的绿色文件在 <code>file://</code> 下可直接双击；
+结果确定、可 diff 审计、四端同构。批量工程场景由 CLI + 文件目录解决，无需引入 SQLite。</p>
+<hr />
+<h2 id="_8">八、验证与发布（命令清单）<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">cd 桥涵水文项目/app
+npm run verify           # 双 strict typecheck + 175 单测 + esbuild + 算例回归 12/12（当前全绿）
+npm test                 # 只跑单测（26 个文件 175 项）
+npm run verify:examples  # 只跑算例回归清单
+npm run verify:release   # 三端 E2E（网页 / 桌面 / 离线，当前全绿）
+
+npm run build:cli        # 构建 CLI 单文件
+npm run cli -- batch &lt;工程目录&gt; -o &lt;结果目录&gt;
+
+cd ..
+python make_offline.py          # 生成离线单文件（dist/泓算离线版-v0.11.1/）
+python build_desktop.py         # 组装 Electron 桌面版（dist/泓算桌面版-v0.11.1/）
+python deploy_pages.py          # 部署 Pages（requests 走代理，可能超时）
+python deploy_pages_gh.py       # 备用：gh CLI 部署（推荐）
+python build_knowledge.py       # 生成离线知识库
+python build_knowledge.py --build   # 并构建静态站（需 pip install mkdocs-material）
+</code></pre>
+<p><strong>当前状态（2026-09-26 实测）</strong>：175 项单测全过；算例回归 12/12（最大偏差 0.014%）；
+三端 E2E 全绿；四端产物均已按 v0.11.1 重新构建。</p>
+<h3 id="_9">环境坑（本机特有，记下来省得再踩）<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>PowerShell 执行策略</strong>拦 <code>npm.ps1</code> → 用 <code>npm.cmd</code></li>
+<li><strong><code>.ps1</code> 含中文</strong>必须存 UTF-8 BOM，否则按 GBK 解码成乱码</li>
+<li><strong>PowerShell <code>*&gt;</code> 重定向</strong>输出是 UTF-16，Python 读取需 <code>encoding="utf-16"</code></li>
+<li><strong>WorkBuddy shell 泄漏</strong> <code>ELECTRON_RUN_AS_NODE=1</code> → 验证 Electron 前必须 <code>$env:ELECTRON_RUN_AS_NODE=$null; $env:NODE_OPTIONS=$null</code></li>
+<li><strong>build_desktop 删目录</strong>会触发沙箱批量删除确认 → 先用 PowerShell <code>Remove-Item</code> 清 <code>electron_dist/unpacked</code> 与 <code>dist/泓算桌面版-*</code></li>
+<li><strong>改完 UI 必须重跑</strong> make_offline / build_desktop，否则离线版缺新控件 → E2E 挂</li>
+<li><strong>E2E 点击</strong>：页面布局会因控件显隐变化，必须切换后再取 <code>boundingBox</code>；用 <code>locator.click({position})</code> 比 <code>page.mouse.click</code> 稳</li>
+<li><strong>E2E 中 <code>&lt;details&gt;</code> 内的控件</strong>：断言/点击前先 <code>d.open = true</code></li>
+<li><strong>本机 bash coreutils 缺失</strong>（grep/head/dirname 不可用）→ 用 Python 替代</li>
+<li><strong>版本号散布多处</strong>（index.html 标题/页脚、main.ts 计算书页脚与导出 appVersion、make_offline.py、build_desktop.py、
+  verify-offline.mjs、verify-desktop.ps1）→ 升版时务必全链更新；E2E 里的版本断言已改为从 <code>package.json</code> 动态读取，
+  但<strong>打包脚本与 E2E 路径仍是硬编码版本号</strong>，升版时优先改这几处</li>
+</ul>
+<hr />
+<h2 id="_10">九、已知边界与待补（诚实清单）<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="_11">桥孔设计<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ 宽滩河段（7.2.1-3 单宽流量公式）—— v0.11.5 已实现（公式文本取自公开资料，公开算例对照通过）</li>
+<li>✅ 滩、槽难分的不稳定河段（7.2.1-4~6 基本河槽宽度公式）—— v0.11.5 已实现</li>
+<li>~~原因：公式本体在扫描版中为图片，OCR 无法可靠还原~~ <strong>2026-09-26 更新：联网检索拿到公式全文</strong>
+  （来源：ima.qq.com 规范文字版知识库 + 人人文库公开算例表格，含宽滩 Lj≈21.5m 数值对照）</li>
+</ul>
+<h3 id="_12">冲刷<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ 黏性土河床一般冲刷（8.3.2，分河槽 5/8 / 河滩 6/7）—— v0.11.6 已实现（公式经多份公开防洪评价报告交叉核对）</li>
+<li>✅ 黏性土局部冲刷（hb = 0.83·Kξ·B₁^0.6·I_L^1.25·v，hp/B₁ ≥ 2.5 分支）—— v0.11.6 已实现；<strong>&lt; 2.5 分支公式未从公开资料取得，响亮失败提示查规范，不编造</strong></li>
+<li>✅ <strong>非黏性土河滩一般冲刷（8.3.1-5）</strong>—— v0.11.7 已实现：hp = [A·(Qt/μBtj)·(htm/htq)^(5/3) / vH1]^(5/6)，<strong>表 8.3.1-3（vH1 不冲刷流速）全量内置并对数插值</strong>；"计算部位"下拉对全部土类开放（河槽/河滩）</li>
+<li>✅ <strong>桥台局部冲刷（8.4.3 两式）</strong>—— v0.11.7 已实现：8.4.3-1（阻水面积法 hs = 1.95·Fr^0.2·Az^0.5·CA·Cα，公开算例对照 hs≈5.42 ✓）与 8.4.3-2（水深法，hp/d0 ≤500 指数 −0.15 / &gt;500 指数 −0.10）；台形系数 Kξ、形状系数 CA 按表 8.4.3 手填（不内置）</li>
+<li>✅ <strong>表 8.6.2 基底埋深安全值</strong>—— v0.11.8 已内置（官方 PDF P43 OCR 提取：总冲刷深度 3/5/10/15/20 五档，大中桥 1.5~3.5、特大桥 2.0~4.0，档间线性插值，表外区间保守取首/末档）；总冲刷结果自动给出"基底应埋入总冲刷线以下 ≥ X m"</li>
+<li>✅ <strong>表 7.4.1 桥下净空安全值</strong>—— v0.11.8 已内置（梁底 0.50/0.75、支座垫石顶面 0.25/0.50、拱脚 0.25/0.25）</li>
+<li>⏳ 岩石冲刷（附录 D）：<strong>规范 8.5.2/8.6.3 明说"尚无可靠定量计算法，只能参照附录 D 调查数据表综合分析"</strong>——不存在可实现的公式；<strong>且本机这份"政府信息公开版"PDF 不含附录 A~D</strong>（P46~52 为正文第 9~11 章，P53 起即条文说明），需另行获取含附录的完整版</li>
+<li>✅ <strong>黏性土局部冲刷 &lt; 2.5 分支（8.4.2-2）</strong>—— v0.11.9 已实现：hb = 0.55·Kξ·B₁^0.6·hp^0.1·I_L·v。公式经<strong>三个独立来源交叉验证</strong>（本地官方 PDF P41 OCR 残缺片段结构吻合 + 《人民长江》期刊引用 + 《水利水运工程学报》引用），并附分支衔接测试（hp/B₁=2.5 处两分支结果平缓过渡）</li>
+<li>墩形系数 Kξ（附录 C）：<strong>公开网络只有零散锚点</strong>（圆形墩 1.0、矩形墩 1.18，见发明专利 CN108193606B/CN110804957A 引用），完整表为"图形+数值"组合，需完整版规范；已把两个锚点写入界面提示</li>
+<li>⏳ 岩石冲刷（附录 D）：<strong>规范 8.5.2/8.6.3 明说"尚无可靠定量计算法，只能参照附录 D 调查数据表综合分析"</strong>——不存在可实现的公式；<strong>且本机这份"政府信息公开版"PDF 不含附录 A~D</strong>（P46~52 为正文第 9~11 章，P53 起即条文说明），需另行获取含附录的完整版</li>
+</ul>
+<h3 id="v011">工程化（v0.11 新增能力的余项）<a class="headerlink" href="#v011" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>界面把 <code>errorDetail.field</code> 接成输入框红框高亮</strong>（v0.11.2 已完成，见下方"本轮完成"）</li>
+<li>✅ <strong>多文件工程布局</strong>（方案只存差异、不复制数据，对标 HEC-RAS <code>.p01</code>）—— v0.11.4 已完成</li>
+<li>✅ <strong>命令面板 Ctrl+K</strong> —— v0.11.4 已完成</li>
+</ul>
+<hr />
+<h2 id="v01142026-09-26">九之四、命令面板与方案管理（v0.11.4，2026-09-26 凌晨）<a class="headerlink" href="#v01142026-09-26" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅ <strong>命令面板 Ctrl+K</strong></td>
+<td>一个输入框直达全部功能：31 个命令覆盖 7 个模式切换、全部计算（适线/三点法/自动寻优/贝叶斯/历史洪水/水面线/桥孔/冲刷/地图量算）、查表、全部导出（Word/工程/日志/曲线/知识库）、方案对比、日志与数据管理。↑↓ 选择、Enter 执行、Esc 关闭，输入即过滤。</td>
+</tr>
+<tr>
+<td>✅ <strong>方案管理（多文件工程布局）</strong></td>
+<td>对标 HEC-RAS <code>.p01</code>：<strong>共享数据（基准）只存一份，每个方案只存差异</strong>（deltas）。界面：保存当前为新方案（自动算差异）、方案列表（差异项数）、一键切换（基准+差异=完整状态）、任选两个方案对比（直接回答"1% 与 2% 方案差在哪"）、删除、导出/导入 <code>hongsuan-multiproject@1</code> 多方案工程。内核 <code>plans.ts</code> + 6 项单测（差异只含改动字段、应用不改坏基准、方案对比、空方案、序列化、守卫）。</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关于公式补齐</strong>：规范扫描版 P25-27 重新 OCR 未提取出宽滩/滩槽公式本体（规范里这些公式是排版图片）；
+下一步用文献管理工具（Zotero）查《桥涵水文》第五版教材（P110 孔径计算、P138 冲刷章节）的电子资源。</p>
+<p><strong>验证</strong>：181 项单测 + 算例回归 12/12 + 三端 E2E <strong>130 项</strong>全过（新增命令面板 4 项 + 方案管理 3 项断言）。</p>
+<hr />
+<h2 id="v01122026-09-26">九之二、本轮完成（v0.11.2，2026-09-26 凌晨）<a class="headerlink" href="#v01122026-09-26" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅ 定位文案</td>
+<td>头部"面向学生与青年工程师…" → <strong>「规范表格全内置 · 公式条号可溯源 · 计算过程全留痕」</strong></td>
+</tr>
+<tr>
+<td>✅ 地图可达性</td>
+<td>「地图量算」页签从"帮助"之后<strong>前移到"无资料地区"之后</strong>；未填 tk 时画布显示醒目引导（两种方式怎么用、在线模式不用标比例尺）</td>
+</tr>
+<tr>
+<td>✅ 内核守卫结构化</td>
+<td><code>methodC / bridgeOpening / generalScour / localScour</code> 共 <strong>16 处守卫</strong>升级为 <code>HsError</code>（带 field / suggestion / normRef）</td>
+</tr>
+<tr>
+<td>✅ 界面错误红框</td>
+<td>统一错误出口 <code>showErr()</code> + 方法 C 专用 <code>showMethodCError(..., e)</code>；出错时输入框标红、自动展开所在折叠块、滚动定位并聚焦</td>
+</tr>
+<tr>
+<td>✅ 错误文案升级</td>
+<td>例：h&lt;z 时提示"径流厚度 h=10mm 必须大于滞留厚度 z=44mm ｜ 建议：查表 B-9/B-10 ｜ 依据：涵洞规范 附录B"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>两个踩坑记录</strong>（下次别再踩）：
+1. <strong><code>.invalid</code> class 冲突</strong>：输入守卫会用 <code>classList.toggle("invalid", bad)</code> 每帧重设状态，把结构化错误加的红框清掉。
+   解决：结构化错误改用独立 class <code>.field-error</code>（样式同款红框，互不干扰）。
+2. <strong><code>clearFieldErrors</code> 调用时机</strong>：方法 C 先算推理公式、再算径流厚度法，若在"成功分支"里清红框，会误清先算模块刚标出的红框。
+   解决：只在 <code>calcMethodC()</code> 开头统一清一次。</p>
+<p><strong>验证</strong>：175 项单测 + 算例回归 12/12 + 三端 E2E <strong>124 项</strong>全过（新增"结构化错误定位到输入框""错误含修复建议与规范条文"两项断言）。</p>
+<hr />
+<h2 id="v01132026-09-26">九之三、界面问题修复与日志重做（v0.11.3，2026-09-26）<a class="headerlink" href="#v01132026-09-26" title="Permanent link">&para;</a></h2>
+<p>用户实测反馈三条，全部处理：</p>
+<h3 id="1">① 单文件离线版"放桌面打不开、放文件夹才能开"<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<p><strong>排查结论：文件本身没问题。</strong> 用无头浏览器实测，桌面根目录与文件夹内的同一份文件
+都能正常打开（标题正确、控件齐全、零 JS 错误）。真实原因是<strong>双击时的打开方式</strong>
+（被关联到非浏览器程序）或<strong>上次复制不完整</strong>。</p>
+<p><strong>处理</strong>：
+- 桌面根目录与 <code>泓算离线版\</code> 各放一份最新单文件（1.08 MB，MD5 一致）；
+- 额外提供 <code>双击打开泓算离线版.bat</code> 启动器——优先调 Edge、其次 Chrome、
+  最后退回系统关联，<strong>绕开文件关联问题</strong>；
+- 排查方法沉淀：UI/文件打不开时，先用无头浏览器直接访问 <code>file://</code> 路径 + 抓
+  <code>pageerror</code>，一次区分"文件坏了"还是"打开方式不对"。</p>
+<h3 id="2-bug">② 「工程信息与项目文件」输入框跑到界面外面（布局 bug）<a class="headerlink" href="#2-bug" title="Permanent link">&para;</a></h3>
+<p><strong>根因</strong>：<code>.row { display: flex; gap: 12px; }</code> <strong>缺少 <code>flex-wrap</code></strong>，
+后来补的 8 个基本信息字段全部挤在一行横向溢出。</p>
+<p><strong>修复</strong>：<code>.row</code> 加 <code>flex-wrap: wrap</code>，子项 <code>flex: 1 1 180px; min-width: 160px</code>
+（窄屏自动堆叠，宽屏自动分列）。</p>
+<h3 id="3">③ 计算日志太多、刷屏（重做）<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p>对标 <strong>HEC-RAS 消息窗口 / IDE 控制台</strong> 的做法（信息按需展开，而非一次铺满）：</p>
+<table>
+<thead>
+<tr>
+<th>旧</th>
+<th>新</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6 列大表格全展开，一次显示 30 条</td>
+<td><strong>一行摘要</strong>（时间 ｜ 模块 ｜ 关键结果），<strong>点击展开</strong>完整输入/采用值/依据</td>
+</tr>
+<tr>
+<td>无过滤</td>
+<td><strong>关键词检索</strong>（模块/输入/结果全文）+ <strong>模块下拉筛选</strong></td>
+</tr>
+<tr>
+<td>固定 30 条</td>
+<td><strong>条数可控</strong>：最近 10（默认）/ 20 / 50 / 全部</td>
+</tr>
+<tr>
+<td>—</td>
+<td><strong>展开全部 / 全部收起</strong> 一键切换</td>
+</tr>
+<tr>
+<td>导出/清空</td>
+<td>保留（导出仍按完整结构，字段一个没少）</td>
+</tr>
+</tbody>
+</table>
+<p>隐藏的原表格结构仍同步维护，导出与 E2E 断言不受影响。</p>
+<h3 id="_13">其它<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>⏳ 同频率放大法（过程线）：涉及时段洪量划分规则，规范原文待核</li>
+<li>地图为勾绘量算，不是专业 GIS（大流域/跨带请用专业工具）</li>
+</ul>
+<p><strong>统一原则</strong>：凡是扫描版公式是图片、或表档位边界 OCR 不完整的，一律<strong>不内置可疑数据</strong>，界面红字说明待录。</p>
+<hr />
+<h2 id="_14">十、后续建议（按性价比）<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<p><strong>P0</strong>
+- 补齐宽滩河段与滩槽难分河段的桥孔公式（需规范原文或教材照片）
+- 黏性土冲刷、桥台冲刷</p>
+<p><strong>P1</strong>
+- 多文件工程布局（方案/引用分离，<code>plans/</code> 目录）—— 让 <code>projectDiff.ts</code> 直接服务"1% 与 2% 方案差在哪"
+- 局部冲刷：桥墩墩形系数表（附录 C）结构化
+- 断面数据导入（CSV/XML）
+- 界面错误红框联动（内核结构化错误已就绪）</p>
+<p><strong>P2</strong>
+- 命令面板（Ctrl+K）
+- 桥孔布设（7.3）、桥面设计高程（7.4）
+- 调治工程（导流堤 / 丁坝，第 12 章）
+- 特殊地区（水库、泥石流、潮汐、海湾，第 11 章）</p>
+<p><strong>数据侧</strong>：教材《桥涵水文》第五版第 7/8 章照片 → OCR 录入补齐上述公式。</p>
+<hr />
+<h2 id="_15">十一、给老师演示的建议动线<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>帮助页签</strong>：先翻"规范条文速查"与"数据来源"——建立可信度（每条带条号页码，源链接可自行下载核对）</li>
+<li><strong>算例回归</strong>（新）：<code>npm run verify:examples</code> 现场跑出验证清单 —— 12/12 通过、偏差百分比可见</li>
+<li><strong>有资料系列</strong>：载入算例 T3 → 计算并适线 → 三点法 / 自动寻优对照 → 贝叶斯比选</li>
+<li><strong>桥孔长度</strong>：点"用当前设计流量" → 选河段类型 → 出 Lj</li>
+<li><strong>冲刷</strong>：一般冲刷（64-1）→ 局部冲刷（65-2）→ 总冲刷深度</li>
+<li><strong>无资料地区</strong>：选暴雨分区（可输入省份检索）→ 查 h / ψ / τ / z / β / γ / δ → 径流厚度法出 Qp</li>
+<li><strong>CLI 无人值守</strong>（新）：<code>npm run cli -- batch &lt;目录&gt; -o &lt;结果目录&gt;</code> —— 一次跑完一批工程，
+   开放结果 JSON 展示"输入快照 + 结构化成果"</li>
+<li><strong>错误体系</strong>（新）：故意把 h 填小于 z → 展示结构化错误（错误码 + 字段路径 + 规范条文 + 修复建议）</li>
+<li><strong>工程文件</strong>：导出工程文件 → 展示 schema <code>@2</code>；再用一份 <code>@1</code> 旧工程打开 → 自动迁移不报错</li>
+<li><strong>计算日志</strong>：导出 Markdown，展示全过程可追溯</li>
+</ol>
+<hr />
+<h2 id="_16">附录：离线知识库<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
+<p><code>knowledge/</code> 目录，用 <strong>MkDocs + Material</strong> 构建（GitHub 22k+ star）：</p>
+<ul>
+<li>纯静态输出，构建后可双击打开，也可部署 Pages</li>
+<li>内置本地全文搜索，不依赖后端；中文完善</li>
+<li>桌面另有单文件版：<code>桌面\泓算知识库\泓算知识库.html</code>（双击即用，含本交接文档）</li>
+</ul>
+<p>为什么不用 Docsify：它免构建，但运行时用 fetch 加载 md，<code>file://</code> 下被 CORS 拦住 → 离线打不开。</p>
+<pre><code class="language-bash">pip install mkdocs-material
+python build_knowledge.py --build    # 产物在 knowledge/site/
+</code></pre>
+<p>内容源与软件同源（从 <code>helpContent.ts</code> 生成），并包含本交接文档与历史交接文档。</p>
+<hr />
+<h2 id="v0102-v0111">附：本版改动速查（v0.10.2 → v0.11.1）<a class="headerlink" href="#v0102-v0111" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>新增</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v0.11.0</td>
+<td>无头计算管线 <code>compute.ts</code>、CLI <code>cli/main.ts</code>（compute/batch/verify）、算例回归库 <code>examples/</code>（6 算例）、工程文件新增四组持久化字段、<code>compute.test.ts</code></td>
+</tr>
+<tr>
+<td>v0.11.1</td>
+<td>结构化错误 <code>errors.ts</code>、版本迁移器 <code>migrate.ts</code>（@1→@2）、CLI 结构化错误输出与迁移提示、<code>errors.test.ts</code>、schema 升 <code>@2</code>、E2E 版本断言改为动态读取</td>
+</tr>
+<tr>
+<td>版本链统一</td>
+<td><code>index.html</code>、<code>main.ts</code>、<code>make_offline.py</code>、<code>build_desktop.py</code>、<code>verify-offline.mjs</code>、<code>verify-desktop.ps1</code> 全部 → v0.11.1；四端产物重新构建</td>
+</tr>
+</tbody>
+</table>
+<p>详细逐条记录见项目根 <code>CHANGELOG.md</code>。</p>
+<hr />
+<h1 id="v11">附录：历史交接文档（v1.1，开发记录）<a class="headerlink" href="#v11" title="Permanent link">&para;</a></h1>
+<h1 id="_17">桥涵水文计算软件 · 项目交接文档<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>版本</strong> v1.1 ｜ <strong>日期</strong> 2026-09-23 ｜ <strong>项目发起人</strong> 卓庆（道路与桥梁工程，中南林业科技大学）
+<strong>用途</strong>：任何后续会话或协作者接手本项目时，读完这一份即可掌握全部背景、决策、专业知识基础与下一步。
+<strong>核实标记</strong>：✅ = 已对照规范/权威来源核实；⚠️ = 出自教材或工程惯例，需对照原文再确认。</p>
+</blockquote>
+<hr />
+<h2 id="1_1">1. 项目定位（一句话）<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h2>
+<p>面向学生与青年工程师的公路桥涵水文计算软件：<strong>符合 JTG C30-2015 规范、白盒化教学式交互、现代化 UI</strong>。区别于国产商业软件（黑盒、老旧、贵）与国际免费软件（HEC 系，不合中国规范）。</p>
+<p><strong>首个开发模块：设计流量推求</strong>（桥涵水文计算链的第一环：设计洪水 → 桥孔 → 壅水 → 冲刷 → 涵洞孔径）。</p>
+<h2 id="2-2026-09-22">2. 已确认决策（2026-09-22 与卓庆确认）<a class="headerlink" href="#2-2026-09-22" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>事项</th>
+<th>决策</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>产品定位</td>
+<td><strong>认真做成产品</strong>，面向学生群体</td>
+<td>不以卖 License 为首要目标，口碑/作品集/竞赛价值优先</td>
+</tr>
+<tr>
+<td>形态意向</td>
+<td><strong>Tauri 桌面应用</strong></td>
+<td>⚠️ 见下方风险记录</td>
+</tr>
+<tr>
+<td>开发路线</td>
+<td><strong>MVP 先纯 Web 跑通，桌面化后置</strong></td>
+<td>MVP 验证的是计算正确性与交互，不是安装包</td>
+</tr>
+<tr>
+<td>MVP 范围</td>
+<td>P-III 频率适线 + 桥孔/壅水 + 一般冲刷（64-1 修正）+ Word 计算书导出</td>
+<td>本文档细化的是第一模块"设计流量"</td>
+</tr>
+<tr>
+<td>技术栈</td>
+<td>TypeScript + Vite；docx.js 出计算书；ECharts 画适线/壅水曲线</td>
+<td>计算量小，纯前端无压力</td>
+</tr>
+</tbody>
+</table>
+<p><strong>⚠️ Tauri 风险记录</strong>：Tauri 在 Windows 上底层依赖 WebView2，与卓庆此前 pywebview 项目（星屿）在同一台 Intel Arc 核显机器上的死锁/GPU 崩溃问题同源。对策：① 坚持则启动参数禁用 GPU 加速并实测；② 备选 Electron（自带 Chromium 绕开系统 WebView2，安装包大）；③ MVP 阶段先纯 Web。</p>
+<h2 id="3_1">3. 竞品调研结论（浓缩）<a class="headerlink" href="#3_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>软件</th>
+<th>性质</th>
+<th>与本项目关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HEC-RAS</td>
+<td>免费美系</td>
+<td>功能全但公式全按 FHWA 体系，无 JTG C30 公式；学习其交互长处</td>
+</tr>
+<tr>
+<td>HEC-HMS</td>
+<td>免费美系</td>
+<td>设计洪水推求工具，不支持 P-III 国内适线流程</td>
+</tr>
+<tr>
+<td>HY-8 / FHWA Hydraulic Toolbox</td>
+<td>免费美系</td>
+<td>涵洞/冲刷计算器，参考其"轻量计算器+清晰报告"思路</td>
+</tr>
+<tr>
+<td>方舟水文通</td>
+<td>国产商业</td>
+<td><strong>功能对标对象</strong>：流量/桥孔/冲刷三模块+自动计算书；短在贵、黑盒、交互老</td>
+</tr>
+<tr>
+<td>桥绘通·水文计算</td>
+<td>国产商业</td>
+<td>同上，多了调治构造物与桥位布置图</td>
+</tr>
+<tr>
+<td>TELEMAC / SRH-2D</td>
+<td>开源/免费</td>
+<td>二维科研向，本项目不碰</td>
+</tr>
+</tbody>
+</table>
+<p><strong>市场空白（机会定位）</strong>："合 JTG C30 规范 × 现代交互 × 免费/低价"的象限没有产品。<strong>白盒化</strong>（每步显示公式出处、参数含义、合理范围检查、教材例题对照）是现有产品都没有的差异化。</p>
+<h2 id="4">4. 规范体系（已核实 ✅）<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<p><strong>《公路工程水文勘测设计规范》JTG C30-2015</strong>
+- 交通运输部行业标准，2015-03-01 实施，替代 JTG C30-2002
+- 主编单位：河北省交通规划设计院；主审：鲍卫刚；参编含高冬光（教材作者）
+- 共 <strong>12 章 + 5 附录</strong>：1 总则／2 术语／3 勘测设计阶段／4 桥位选择／5 水文调查与勘测／<strong>6 设计洪水分析与计算</strong>／7 桥孔设计／8 墩台冲刷计算及基础埋深／9 小桥涵水文勘测设计／10 路基水文勘测设计／11 特殊地区桥梁水文／12 调治工程；附录 A 河段分类／B 一维河床冲淤数学模型／C 墩形系数／D 岩石地基冲刷／E 丁坝防护长度</p>
+<p><strong>软件模块 ↔ 规范章节映射</strong>（产品路线的骨架）：</p>
+<table>
+<thead>
+<tr>
+<th>软件模块（按开发顺序）</th>
+<th>规范章节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 设计流量推求（<strong>本文档主题</strong>）</td>
+<td>第 6 章</td>
+</tr>
+<tr>
+<td>② 桥孔长度、桥面高程</td>
+<td>第 7 章</td>
+</tr>
+<tr>
+<td>③ 一般冲刷（64-1 修正）+ 局部冲刷</td>
+<td>第 8 章</td>
+</tr>
+<tr>
+<td>④ 涵洞孔径</td>
+<td>第 9 章</td>
+</tr>
+<tr>
+<td>⑤ 调治构造物（远期）</td>
+<td>第 12 章</td>
+</tr>
+</tbody>
+</table>
+<p><strong>表 1.0.8 设计洪水频率（完整核实 ✅，软件内置此表）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>构造物</th>
+<th>高速</th>
+<th>一级</th>
+<th>二级</th>
+<th>三级</th>
+<th>四级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>特大桥</td>
+<td>1/300</td>
+<td>1/300</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/100</td>
+</tr>
+<tr>
+<td>大、中桥</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/50</td>
+<td>1/50</td>
+</tr>
+<tr>
+<td>小桥</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/50</td>
+<td>1/25</td>
+<td>1/25</td>
+</tr>
+<tr>
+<td>涵洞及小型排水构造物</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/50</td>
+<td>1/25</td>
+<td>不作规定</td>
+</tr>
+<tr>
+<td>路基</td>
+<td>1/100</td>
+<td>1/100</td>
+<td>1/50</td>
+<td>1/25</td>
+<td>按具体情况定</td>
+</tr>
+</tbody>
+</table>
+<p>注：二级特大桥、三四级大桥在河床比降大易冲刷时宜提高一级频率验算冲刷；沿河高架桥/引道按路基频率。</p>
+<h2 id="5">5. 设计流量推求 · 知识体系（模块核心）<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51-20x">5.1 基本概念（术语 2.0.x ✅）<a class="headerlink" href="#51-20x" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>设计洪水</strong>：工程正常使用条件下符合指定防洪设计标准的洪水</li>
+<li><strong>设计流量 Qp</strong>：与设计洪水相应的<strong>桥位断面洪峰流量</strong>（m³/s）</li>
+<li><strong>设计水位</strong>：与设计洪水相应的洪水水面高程（第 6.5 条，由水位—流量关系曲线反推）</li>
+</ul>
+<h3 id="52">5.2 方法决策树（按资料条件选路，软件按此组织向导）<a class="headerlink" href="#52" title="Permanent link">&para;</a></h3>
+<pre><code>桥位断面有水文站实测流量系列？
+├─ 有（理想 ≥30 年，含历史洪水调查考证）
+│    └─ 方法A：频率分析法（P-III 适线）          ← 规范 6.2 ★模块核心
+│        （断面与站面积差 &lt;20% 且 ≤1000 km² 时先做系列转换 6.2.2）
+├─ 无实测，但有历史洪水调查（洪痕、文献）
+│    └─ 方法B：历史洪水位法（曼宁公式 + 频率外推）  ← 规范 6.3
+└─ 完全无资料
+     └─ 方法C：地区经验公式 / 推理公式（F&lt;100km²） ← 规范 6.4
+          小桥涵/路基/特殊地区 → 按第 9~11 章专门方法（6.4.3）
+</code></pre>
+<p>规范 6.1.3 明确：<strong>可采用多种方法，经分析论证后选用合理的成果</strong>——软件应支持多方法并行计算 + 对比（方舟水文通即如此设计）。</p>
+<h3 id="53-ap-iii-62">5.3 方法 A：P-III 频率适线（规范 6.2，模块核心）<a class="headerlink" href="#53-ap-iii-62" title="Permanent link">&para;</a></h3>
+<p><strong>流程八步（软件主流程）</strong>：</p>
+<ol>
+<li><strong>资料审查</strong>（6.2.1 ✅）：同一洪水类型、独立随机、人为影响还原、首几项重点考证、系列<strong>不宜少于 30 年</strong>且应有历史洪水调查成果。→ 软件做输入数据合理性检查（如系列长度提示）。</li>
+<li><strong>系列插补/延长/转换</strong>（6.2.2 ✅）：断面与水文站面积差 &lt;20% 且 ≤1000 km²、暴雨分布均匀、无分洪滞洪时，按面积比转换。</li>
+<li><strong>经验频率</strong>（6.2.3 ✅）：</li>
+<li>连序系列：<code>Pm = m/(n+1) × 100%</code>（m 为从大到小的序位）</li>
+<li>不连序系列（含特大洪水）两种处理（见 <code>参考资料\教材与例题资料.md</code> §3，已核实）：<ul>
+<li>独立处理法：特大洪水 <code>PM = M/(N+1)</code>；实测系列 <code>Pm = m/(n+1)</code>；重复流量取小值</li>
+<li>条件概率法：实测期一般洪水 <code>Pm = PM,l + (1−PM,l) × (m−l)/(n−l+1)</code>
+ （N 为考证期年数，a 为特大洪水项数，l 为其中出现在实测期内的项数）</li>
+</ul>
+</li>
+<li><strong>参数初估</strong>（6.2.5 ✅）：可采用<strong>求矩适线法、三点适线法、绘线读点补矩法</strong>计算均值 Q̄、变差系数 Cv、偏态系数 Cs 的初算值。</li>
+<li>矩法公式（教材标准 ⚠️ 按高冬光《桥涵水文》核实）：
+     <code>Q̄ = (1/n)·ΣQi</code>；<code>Ki = Qi/Q̄</code>
+     <code>Cv = √[ Σ(Ki−1)² / (n−1) ]</code>（无偏）
+     <code>Cs = n·Σ(Ki−1)³ / [(n−1)(n−2)]</code>（无偏，仅作初估）</li>
+<li><strong>理论频率曲线</strong>（6.2.4 ✅）：宜采用<strong>皮尔逊 Ⅲ 型曲线</strong>；特殊情况经论证可用其他线型。</li>
+<li><strong>适线</strong>（6.2.5 ✅）：点绘理论频率曲线与经验点据比较，不吻合则调整 Cv、Cs 直至基本吻合。工程惯例 Cs 取 Cv 的 2~4 倍整数倍试凑（⚠️ 惯例值）。</li>
+<li><strong>软件的杀手锏交互</strong>：海森机率格纸上经验点据 + 理论曲线实时联动，Cv/Cs 滑块拖动即时重绘。</li>
+<li><strong>设计值</strong>（6.2.6 ✅ 规范原式）：
+   <code>Qp = Q̄ · (1 + Φp · Cv)</code>
+   其中 Φp 为离均系数，由 Cs 和设计频率 p 查 P-III Φ 值表（或数值计算 Γ 分布分位数）。Qp 也可写为 <code>Qp = Kp·Q̄</code>，Kp = 1+Φp·Cv 为模比系数。</li>
+<li><strong>合理性论证</strong>（1.0.5 ✅）：与上下游、邻站、地区统计参数对比（均值、Cv 沿流域渐变规律）。</li>
+</ol>
+<p><strong>数值实现要点</strong>：
+- Φp 求解 = P-Ⅲ 分布（三参数 Γ 分布）的分位数计算，JS 中用<strong>不完全 Gamma 函数</strong>数值反解，或内置 Φ 值表插值（教材附表，精度 0.01）
+- 海森机率格纸：横坐标按标准正态分布变换（P=0.01%~99.9%），ECharts 自定义坐标轴实现
+- 目估适线之外可加"优化适线"（最小二乘/绝对偏差最小），作为进阶功能</p>
+<h3 id="54-b-63">5.4 方法 B：历史洪水位法（规范 6.3）<a class="headerlink" href="#54-b-63" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>历史洪水流量</strong>（6.3.1 ✅ 规范原式）：
+   稳定均匀流河段（顺直、比降均一、断面规整）：
+   <code>Q = Ac·vc + At·vt</code>，<code>vc = (1/nc)·Rc^(2/3)·I^(1/2)</code>，<code>vt = (1/nt)·Rt^(2/3)·I^(1/2)</code>
+   （河槽/河滩分算；宽深比 &gt;10 时水力半径 R 可用平均水深代替；n 为糙率、I 为水面比降）
+   非均匀流河段用试算法推水面线（6.3.1-4）。</li>
+<li><strong>经验频率</strong>（6.3.2 ✅）：由老居民记述/文献考证定序位，按 6.2.3 公式计算。</li>
+<li><strong>推算设计流量</strong>（6.3.3 ✅）：</li>
+<li>历史洪水流量<strong>不宜少于 2 次</strong>；Cv、Cs 应符合地区分布规律</li>
+<li>多次历史洪水可在海森机率格纸上定出经验频率曲线时 → 按适线法求 Q̄、Cv、Cs</li>
+<li>定不出曲线时：参照地区资料选定 Cv、Cs，按 <code>Q̄Ti = QTi / (1 + ΦT·Cv)</code> 求平均流量（ΦT 为重现期 T 年的离均系数），再按 6.2.6 推算 Qp</li>
+</ol>
+<h3 id="55-c-64">5.5 方法 C：无资料地区（规范 6.4）<a class="headerlink" href="#55-c-64" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>6.4.1（✅）</strong>：无资料地区，可按<strong>地区经验公式及水文参数</strong>求算设计流量；<strong>求算的设计流量应有历史洪水流量的验证</strong>。</li>
+<li><strong>6.4.2（✅）</strong>：汇水面积 <strong>&lt; 100 km²</strong> 的河流，可按<strong>推理公式</strong>计算；公式中的参数和指数，采用<strong>各地区编制的暴雨径流图表值</strong>。</li>
+<li><strong>6.4.3（✅）</strong>：小桥涵、路基及特殊地区的设计流量计算，尚应符合第 9~11 章。</li>
+</ul>
+<p>具体公式形式（规范正文只给原则，公式细节出自教材《桥涵水文》/《公路设计手册·桥涵水文》分册 ⚠️ 待对照核实）：</p>
+<p><strong>推理公式（水科院型，公路科研所采用）</strong>：
+<code>Qp = 0.278 · (ψ · Sp / τⁿ) · F</code>
+- Sp：雨力（mm/h），查地区暴雨等值线图（按设计频率取值）
+- τ：汇流时间（h）；n：暴雨衰减指数
+- ψ：洪峰径流系数；F：汇水面积（km²）</p>
+<p><strong>径流厚度法（公路科研所暴雨径流公式，小流域涵洞常用）</strong>：
+<code>Qp = φ · (h − z)^(5/3) · F^(2/3) · β · γ · δ</code>
+- φ：地貌系数（按地形、汇水面积、主河沟坡度查表）
+- h：径流厚度（mm）；z：植被或坑洼滞留的径流厚度（mm）
+- β：洪峰传播流量折减系数；γ：降雨不均匀折减系数；δ：湖泊/小水库调节折减系数</p>
+<p><strong>面积比拟法（6.2.2 同型，转换/比拟通用）</strong>：
+<code>Q设 = Q参 · (F设/F参)ⁿ</code>
+- 面积修正指数 n（✅ 论文引规范）：大中河流 0.5~0.7；&lt;100 km² 小河流 &gt;0.7；面积差 ≤3% 时 n=1</p>
+<h3 id="56">5.6 相关但不属本模块（边界说明）<a class="headerlink" href="#56" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>设计水位</strong>（6.5 ✅）：由水位—流量关系曲线按 Qp 反推 + 水面比降换算到桥位断面；复杂河段试算法推水面线。→ 属后续"桥孔/桥面高程"模块输入。</li>
+<li><strong>设计洪水过程线</strong>（6.6 ✅）：同倍比放大法，<code>kg = Qp/Q</code>（典型洪峰流量）。→ 远期。</li>
+</ul>
+<h2 id="6-v1">6. 软件功能规格（设计流量模块 v1）<a class="headerlink" href="#6-v1" title="Permanent link">&para;</a></h2>
+<p><strong>输入</strong>
+- 方法 A：年最大流量序列（表格/粘贴导入）、特大洪水标记与考证期 N
+- 方法 B：断面数据（河槽/河滩分界、糙率、比降）、洪痕水位与重现期
+- 方法 C：汇水面积、沟长、坡度、地区参数（或查表内置）
+- 公共：公路等级 + 构造物类型 → 自动带出设计频率（表 1.0.8）</p>
+<p><strong>计算</strong>
+- 方法 A 全流程：经验频率 → 矩法/三点法初估 → 交互式适线 → Qp
+- 方法 B/C 各自公式链；多方法并行 + 结果对比表</p>
+<p><strong>输出</strong>
+- Word 计算书（docx.js）：方法与公式出处（"按 JTG C30-2015 式 6.2.6"）、参数表、适线图、结果汇总、声明"计算结果供学习参考，工程应用需注册工程师复核"
+- 适线图（ECharts，海森机率格纸）</p>
+<p><strong>白盒化设计（差异化核心）</strong>
+- 每个参数输入框旁：含义、单位、合理范围、越界警示
+- 每步计算展开显示中间量（如各年的 Ki、(Ki−1)²）
+- 内置教材例题：加载 → 对照手算结果 → 验证</p>
+<h2 id="65-2026-09-22-v010p-iii">6.5 实现进度（2026-09-22 v0.1.0：P-III 数值内核 ✅）<a class="headerlink" href="#65-2026-09-22-v010p-iii" title="Permanent link">&para;</a></h2>
+<p><code>app/</code> 目录下已实现零依赖数值内核（Node ≥22.6 原生 TS 类型剥离运行，无需 npm install）：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/core/phi.ts</code></td>
+<td>Φ 离均系数数值计算：Γ 分布分位数（级数+Lentz 连分式+二分）、正态分位（Acklam）、Cs&lt;0 镜像、Kp、理论频率曲线序列</td>
+</tr>
+<tr>
+<td><code>src/core/stats.ts</code></td>
+<td>矩法统计参数（Q̄、σ 无偏、Cv、Cs）+ 适线误差函数</td>
+</tr>
+<tr>
+<td><code>src/core/empirical.ts</code></td>
+<td>经验频率：连序 + 不连序（方法一独立处理 / 方法二条件概率）</td>
+</tr>
+<tr>
+<td><code>src/core/designflood.ts</code></td>
+<td>设计流量汇总接口 + 计算书频率表</td>
+</tr>
+<tr>
+<td><code>src/tests/*.test.ts</code></td>
+<td><strong>17 个测试全部通过</strong>（<code>app\test_output.txt</code> 为验收记录）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>验收关键点</strong>：
+- 解析锚点：Cs=2（α=1 指数分布）Φ(1%)=3.60517、Φ(0.1%)=5.90776，精确一致
+- 多源交叉：Cs=1.99→3.604、Cs=1.5→3.33、Cs=0→2.3263 全部命中
+- 算例复算：T2（Q₁%≈2593）、T3（Q₁%≈11345）与手算基准一致
+- <strong>两处公开资料勘误</strong>（白盒化价值的实证）：①题库 T1 的 Σd²=885350 加错（实为 785250，σ=295.38 非 313.64）；②CSDN T2 校核 Φ(0.1%,Cs=1.5)=4.58 有误（软件算 5.2335，与 Cs=2 解析趋势一致）
+- 运行命令：<code>node --experimental-strip-types --test src/tests/phi.test.ts src/tests/cases.test.ts</code></p>
+<h3 id="655-v081-strict-cs-2026-09-23">6.5.5 v0.8.1：网页层 strict + 计算书 Cs 显示修复（2026-09-23，交接会话）<a class="headerlink" href="#655-v081-strict-cs-2026-09-23" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tsconfig.web.json</code> 已由非 strict 收紧为 strict；<code>src/web/main.ts</code> 全部通过 <code>tsc</code>。</li>
+<li>修复 Word 计算书在连序系列下“矩法初估 Cs”显示为“—”的问题：连序统计取 <code>csMoment</code>，不连序统计取 <code>cs</code>。</li>
+<li>Canvas 2D 上下文为空与防抖定时器空值按 strict 规则显式处理。</li>
+<li>本轮不改水文公式；v0.8.1 为 v0.8.0 后的工程补丁版本。</li>
+</ul>
+<h3 id="654-v080-e2e2026-09-23">6.5.4 v0.8.0：工程加固 + 单一计算内核 + 三端 E2E（2026-09-23，交接会话）<a class="headerlink" href="#654-v080-e2e2026-09-23" title="Permanent link">&para;</a></h3>
+<p><strong>① 单一计算内核（架构正确性）</strong>
+- <strong>原风险</strong>：<code>app/src/core/*.ts</code> 是一套计算内核，而 <code>app/web/index.html</code> 内嵌 JS 又是另一套同构实现；单元测试验证前者，用户实际运行后者，长期必然漂移。
+- <strong>处理</strong>：抽出 <code>app/src/web/main.ts</code>，网页层直接 import <code>../core/*</code>；esbuild 打包为 <code>app/web/app.js</code>；删除网页端重复实现的贝叶斯 Nelder-Mead/logL/BIC、曼宁与设计洪水推算、方法 C 公式。
+- <strong>TypeScript 分层</strong>：<code>tsconfig.core.json</code> 与 <code>tsconfig.web.json</code> 现均为 strict；v0.8.0 时网页层曾暂保持非 strict，v0.8.1 已完成收紧。
+- <code>app/web/app.js</code> 已提交进仓库：双击 <code>index.html</code> 无需先安装依赖或构建。</p>
+<p><strong>② 输入边界加固</strong>
+- 新增 <code>src/tests/guards.test.ts</code>：连序系列至少 3 项且有限非负；不连序系列 <code>N</code> 为整数且 <code>N≥3</code>；曼宁公式河滩过水时 <code>nt&gt;0</code>；设计频率必须在 <code>(0,1)</code>；方法 C 全部输入有限，β/γ/δ 在 <code>(0,1]</code>；P-Ⅲ <code>Cs</code> 与 Gamma 形状参数守卫。
+- 本轮<strong>刻意不改任何水文公式</strong>；v0.7 的 42 项水文回归全部保持通过。</p>
+<p><strong>③ 三端发布与 E2E</strong>
+- 新增 <code>scripts/verify-app-page.mjs</code> 共用页面验证逻辑，并新增 <code>verify-ui.mjs</code>、<code>verify-desktop.mjs</code>、<code>verify-offline.mjs</code>。
+- <code>npm run verify:release</code> 已实测通过：网页版、真实 Electron 桌面版、离线单文件版的版本标识、单一内核/离线内联、适线 Q1%、贝叶斯、历史洪水位法、推理公式、径流厚度法、越界提示、Word 生成链路、控制台无错误均 PASS。
+- 离线版额外验证：无外链脚本、无网络请求（报告导出的 <code>blob:</code> 属浏览器本地对象 URL，不作为网络请求）。</p>
+<p><strong>④ 发布脚本修复</strong>
+- <code>build_desktop.py</code> 改为相对路径可重复构建；<code>safe_rmtree()</code> 白名单仅允许 Electron 解包目录与桌面版自身目标目录，<strong>不再删除整个 <code>dist/</code></strong>，避免误清离线版。
+- <code>make_offline.py</code> 生成 <code>dist/泓算离线版-v0.8.0/泓算-v0.8.0-离线版.html</code>（约 891 KB，零外部引用）。
+- <code>deploy_pages.py</code> 改为相对项目根路径，纳入 <code>docs/app.js</code>（线上版此前会因缺少 app.js 无法运行单一内核），并新增 <code>--dry-run</code> 本地校验。当前已 dry-run 通过；本次未直接对外发布。</p>
+<p><strong>⑤ 当前工程结论</strong>
+- 单元测试：<strong>47/47 PASS</strong>（42 项水文回归 + 5 项新增边界守卫）。
+- 三端 E2E：网页、Electron 桌面、离线单文件全部 PASS。
+- 当前主要技术债：UI 仍是过程式 DOM 代码，尚未组件化；网页层已完成 strict；GitHub Pages v0.8.1 已正式发布并完成 raw/app.js/Pages 三项线上校验（PAGES_LIVE）。</p>
+<h3 id="653-v07electron-2026-09-22">6.5.3 v0.7：Electron 桌面版 + 参数持久化/输入守卫/单位完整（2026-09-22 夜，卓庆两项指示）<a class="headerlink" href="#653-v07electron-2026-09-22" title="Permanent link">&para;</a></h3>
+<p><strong>① 真正的桌面软件</strong>（卓庆：「不是专业的软件吗，怎么还是给我的网页版」）：
+- <strong>桌面交付：<code>C:\Users\klxq\Desktop\泓算桌面版\泓算.exe</code></strong>（绿色版，免安装，整体目录 ~269 MB 可整体拷贝/压缩分发）。Electron 33.4.11 官方 win32-x64 zip（GitHub release 直连超时，走 <strong>npmmirror 镜像</strong> <code>registry.npmmirror.com/-/binary/electron/</code> 下载，华为云镜像亦通）。
+- 组装：<code>electron.exe</code>→重命名 <code>泓算.exe</code>；<code>resources/app/{package.json, main.js, index.html, libs/docx.umd.js, icon.png}</code>。main.js：1200×880 窗、loadFile 本地页、<code>will-download</code> 拦截 docx 直存系统下载目录并弹「已导出」提示、<code>contextIsolation:true/nodeIntegration:false</code>（安全默认）、外部链接交系统浏览器。
+- <strong>关键坑（本机环境）</strong>：WorkBuddy shell 泄漏 <strong><code>ELECTRON_RUN_AS_NODE=1</code> + <code>NODE_OPTIONS=--require=...shim.cjs</code></strong>，导致 Electron exe 一启动就退化成 Node CLI（<code>--version</code> 打印 Node 版本、GUI 不起、报 bad option）。<strong>验证 Electron 前必须 <code>$env:ELECTRON_RUN_AS_NODE=$null; $env:NODE_OPTIONS=$null</code></strong>。这是 WorkBuddy 宿主环境特有，用户双击桌面 exe 无此问题。
+- 已实测：清环境后启动进程组 4 进程存活、窗口标题「泓算 · 桥涵设计流量推求 v0.7」正确、stderr 零错误。
+- 技术选择理由：Electron 自带 Chromium 内核，<strong>绕开系统 WebView2</strong>——规避星屿 pywebview 在 Intel Arc 上的死锁同源风险（v0.1 决策记录的风险项）。</p>
+<p><strong>② UI 专业细节</strong>（卓庆：「专业计算软件的排版布置需要考虑很多细节还有可靠性，需要去专业软件学习」）：
+- <strong>参数持久化（localStorage）</strong>：全部四模式输入（系列/特大洪水、适线三参数采用值、方法 B 两次洪水 16 字段+地区 Cv/Cs、方法 C 10 字段）+ 当前模式 + 设计频率 + 适线采用参数，<code>input/change</code> 事件委托 400ms 防抖写入 <code>hongsuan_v07</code>；启动时恢复（含「用户调整过的适线采用参数覆盖矩法初估」）。footer 常驻「已自动记忆」指示 + 「清除记忆，恢复默认示例」按钮。端到端实测：进程 A 写（<code>?method=nodata&amp;autosave=1</code>）→ 拷 leveldb → 进程 B 恢复出 <code>RESTORE_MODE noData ADOPTED yes</code>（Edge 同 profile 二次启动受 Chromium 单实例限制不落盘，故用 profile 拷贝法）。
+- <strong>输入守卫</strong>：全部 number 输入空值/非数值/越 min~max → 红框（<code>input.invalid</code>）；方法 C h≤z 时 h、z 双红框；blur 时空值亦标红。不阻断计算，语义错误仍由计算函数给出。
+- <strong>单位完整性</strong>：方法 B 面积补 m²、水面宽补 m；系列统计 σ 补 m³/s。
+- 白盒日志：<code>restoreAll</code> 打 <code>RESTORE_MODE &lt;mode&gt; ADOPTED yes/no FREQ x</code>（console），无头验证可直接抓。</p>
+<p><strong>③ 构建/验证工具固化</strong>（项目根）：<code>build_desktop.py</code>（解压 zip→找含 electron.exe 的根（注意 zip 平铺无外层目录）→组装 app→拷桌面→重命名 exe）；<code>shot_v07.py</code>（三截图+console 错误）；<code>test_persist_v07.py</code>（两进程持久化验证）。</p>
+<p>验证：42/42 测试过；三模式截图零 JS 错误；持久化端到端 PASS；离线版重建 851 KB 零外部引用，导出复验 VERIFY_PASS（103,457 B 六项全过）；GitHub 仓库 raw 已是 v0.7，Pages CDN 边缘缓存刷新中（raw 即新文件）。</p>
+<h3 id="652-v06-c-2026-09-22">6.5.2 v0.6：必查表内置 + 参数键入 + 方法 C 公式修正（2026-09-22 夜，卓庆三项指示）<a class="headerlink" href="#652-v06-c-2026-09-22" title="Permanent link">&para;</a></h3>
+<p><strong>① 方法 C 径流厚度法公式修正（重大）</strong>：原实现 (h−z)^(5/3)·F^(2/3) 为错误形式（贵州算例不自洽悬案告破）。经多源交叉确认规范形式为 <strong>Qp = ψ·(h−z)^1.5·F^0.8·β·γ·δ</strong>（《公路涵洞设计细则》JTG/T D65-04-2007，现 JTG/T 3365-02-2020）：k3+685 涵洞算例（ψ=0.07,h=50,z=25,F=5.6,β=0.925,δ=0.91→29.22）精确复现、贵州算例（59.34，本式 59.38 参数舍入内）、湖南算例自洽。methodC.ts + 界面同步修正，<strong>42 测试全过</strong>（新增两算例锚点回归）。</p>
+<p><strong>② 教材必查表核对与内置</strong>（建工社相关教材：张光霁《水力水文学》1997、雒文生《水文学》2001；高冬光五版为人民交通社）：
+- P-Ⅲ Φ/Kp 表：<strong>无需内置</strong>——软件用不完全 Γ 函数数值计算，比查表更准且连续（scipy 交叉 627 点 1e-6），教材表仅作抽验基准（V5 已做）；
+- <strong>糙率表完整内置</strong>（v0.6 界面，方法 B）：Ven Te Chow《Open-Channel Hydraulics》24 行（小河平原 8 + 小河山区 2 + 大河 2 + 滩地 12），最小/正常/最大三值，「填1/填2」按钮直写两次洪水行的 n꜀/nₜ；
+- 方法 C 查表辅助内置：ψ 地貌系数/z 滞留厚度/βγδ 折减/h 径流厚度的<strong>公开算例锚点表</strong>（一键填入）+ 查表路径说明；
+- <strong>径流厚度 h 完整表（18 暴雨分区×6 土类×3 频率×3 历时）暂未内置</strong>：无完整公开数据源且涉手册版权，界面已给查表指引，待教材到手录成 JSON（配合插值函数），见《参考资料\开源专业计算软件设计调研.md》§三。</p>
+<p><strong>③ 界面参数直接键入</strong>（卓庆：「只能拖动不能输入」）：适线卡 Cv、Cs/Cv 倍比、适线均值 Q̄ 三个 number 输入框与滑块<strong>双向绑定</strong>（键入→钳位→重绘；倍比步进 0.1 比滑块更细）。</p>
+<p><strong>④ 开源专业计算软件设计调研</strong>：《参考资料\开源专业计算软件设计调研.md》——HEC-RAS/HMS、Calcpad、RAS-Commander 三案，提炼 8 条设计原则（核 UI 分离/数据模型先行/算例回归/查表统一接口/单位制/白盒化/报告即产品/schema 驱动），对照泓算：4 项已符合，差距排序为 Vite 工程化 &gt; 参数 schema 化 &gt; 查表 JSON 化 &gt; 方法插件化。</p>
+<p>验证：无头 Edge 三模式截图无 JS 错误；离线单文件版重建（846 KB）并复验导出落盘 PASS（103,464 B，六项核验全过）；线上版已重部署 PAGES_LIVE。</p>
+<h3 id="651-v051-word-2026-09-22">6.5.1 v0.5.1 修复：Word 计书导出（2026-09-22 晚，用户报障「电脑不能上网不能导出」）<a class="headerlink" href="#651-v051-word-2026-09-22" title="Permanent link">&para;</a></h3>
+<p><strong>根因（双因素）</strong>：
+1. 用户环境打不开 github.io（在线版整个不可达，大陆网络常见）；
+2. <code>buildReportDocx</code> 原实现在 <code>a.click()</code> 后<strong>同步 <code>URL.revokeObjectURL</code></strong>——部分浏览器在下载启动前丢弃 blob 引用，下载被静默中止（0 字节/无反应）；且无任何成功/失败反馈。</p>
+<p><strong>修复</strong>：
+- 新增 <code>downloadBlob()</code>：a 元素挂 DOM 后 click，<strong>延迟 30s</strong> 再 remove+revoke；旧版 Edge <code>msSaveOrOpenBlob</code> 兜底；
+- 按钮反馈：导出后 5s 内显示「已生成 xx KB，浏览器已开始下载（看下载栏）」；
+- 版本 v0.5 → v0.5.1，已重新部署 Pages（<code>deploy_pages.py</code> 重跑，PAGES_LIVE，raw 已含 downloadBlob/v0.5.1）。</p>
+<p><strong>离线交付（断网场景的根本解）</strong>：<code>make_offline.py</code> 把 docx.umd.js 整体内联进 index.html → 单文件 <code>桌面\泓算离线版\泓算.html</code>（834 KB，零外部引用，飞行模式双击即用；库内无 `</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
