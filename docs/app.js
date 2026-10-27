@@ -1440,7 +1440,7 @@
       I = dh / (L * 1e3);
       Ipermille = I * 1e3;
     }
-    if (F > 30) warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519");
+    if (F > 30) warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u5F84\u6D41\u539A\u5EA6\u6CD5 \u4F1A\u62A5\u9519");
     if (!(F > 0)) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u9876\u70B9\u987A\u5E8F\u4E0E\u662F\u5426\u95ED\u5408");
     return {
       F: Math.round(F * 1e4) / 1e4,
@@ -1482,7 +1482,7 @@
       Ipermille = I * 1e3;
     }
     if (F > 30) {
-      warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u65B9\u6CD5 C \u4F1A\u62A5\u9519\uFF0C\u8BF7\u6539\u7528\u5176\u4ED6\u65B9\u6CD5");
+      warnings.push("\u6C47\u6C34\u9762\u79EF >30 km\xB2\uFF1A\u89C4\u8303\u5F84\u6D41\u5F62\u6210\u6CD5\u9650 F\u226430 km\xB2\uFF0C\u5F84\u6D41\u539A\u5EA6\u6CD5 \u4F1A\u62A5\u9519\uFF0C\u8BF7\u6539\u7528\u5176\u4ED6\u65B9\u6CD5");
     }
     if (F <= 0) warnings.push("\u6C47\u6C34\u9762\u79EF\u91CF\u7B97\u4E3A 0\uFF1A\u8BF7\u68C0\u67E5\u591A\u8FB9\u5F62\u662F\u5426\u95ED\u5408\u3001\u6BD4\u4F8B\u5C3A\u662F\u5426\u6B63\u786E");
     return {
@@ -1543,7 +1543,7 @@
       title: "\u56DB\u3001\u65E0\u8D44\u6599\u5730\u533A\u4E0E\u6DB5\u6D1E\u6C34\u6587\uFF08\u6DB5\u6D1E\u89C4\u8303\uFF09",
       spec: "JTG/T 3365-02\u20142020",
       items: [
-        { no: "6.3", title: "\u5F84\u6D41\u5F62\u6210\u6CD5\uFF08\u65B9\u6CD5 C \u4E4B\u4E00\uFF09", summary: "Qp = \u03C8\xB7(h\u2212z)^1.5\xB7F^0.8\xB7\u03B2\xB7\u03B3\xB7\u03B4\uFF1B\u9002\u7528\u6C47\u6C34\u9762\u79EF\u4E0D\u5927\u4E8E 30 km\xB2 \u7684\u5C0F\u6D41\u57DF\u3002", page: "P37" },
+        { no: "6.3", title: "\u5F84\u6D41\u5F62\u6210\u6CD5\uFF08\u65E0\u8D44\u6599\u5730\u533A\u6CD5\uFF09", summary: "Qp = \u03C8\xB7(h\u2212z)^1.5\xB7F^0.8\xB7\u03B2\xB7\u03B3\xB7\u03B4\uFF1B\u9002\u7528\u6C47\u6C34\u9762\u79EF\u4E0D\u5927\u4E8E 30 km\xB2 \u7684\u5C0F\u6D41\u57DF\u3002", page: "P37" },
         { no: "\u8868 B-9", title: "\u5F84\u6D41\u539A\u5EA6 h\uFF08\u5DF2\u5185\u7F6E\u5168\u8868\uFF09", summary: "18 \u66B4\u96E8\u5206\u533A \xD7 \u571F\u7684\u7C7B\u5C5E \u2160~\u2165 \xD7 \u9891\u7387 1%/2%/4% \xD7 \u6C47\u6D41\u65F6\u95F4 30/45/60/80 min\uFF0C\u5171 108 \u884C\uFF0C\u652F\u6301 \u03C4 \u7EBF\u6027\u4E0E\u9891\u7387\u5BF9\u6570\u63D2\u503C\u3002", page: "P104~107" },
         { no: "\u8868 B-5 / B-8", title: "\u03C8 \u4E0E\u6C47\u6D41\u65F6\u95F4 \u03C4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u03C8 \u6309\u5730\u5F62\u4E0E\u4E3B\u6CB3\u6C9F\u5761\u5EA6\u3001\u6C47\u6C34\u9762\u79EF\u6863\u53D6\uFF1B\u03C4 \u6309 F \u5206\u6863\uFF1AF\u226410\u219230\u300110<F\u226420\u219245\u300120<F\u226430\u219280 min\u3002", page: "P100 / P104" },
         { no: "\u8868 B-10~B-13", title: "z\u3001\u03B2\u3001\u03B3\u3001\u03B4\uFF08\u5DF2\u5185\u7F6E\uFF09", summary: "\u6EDE\u7559\u539A\u5EA6 z \u6309\u5730\u9762\u7279\u5F81\uFF1B\u03B2 \u6309\u91CD\u5FC3\u8DDD\u6DB5\u4F4D\u8DDD\u79BB\u4E0E\u5730\u5F62\uFF1B\u03B3 \u6309\u6C47\u6D41\u65F6\u95F4\u4E0E\u6C47\u6C34\u533A\u5C3A\u5BF8\u53CA\u6C14\u5019\u533A\uFF1B\u03B4 \u6309\u6E56\u6CCA\u7387\u3002", page: "P108~109" },
@@ -1580,7 +1580,8 @@
     { q: "\u67E5\u51FA\u7684 h \u540E\u9762\u6807\u6CE8\u300C\u5916\u63A8\u300D\u662F\u4EC0\u4E48\u610F\u601D\uFF1F", a: "\u8868\u5217\u9891\u7387\u53EA\u6709 1%/2%/4%\uFF08\u91CD\u73B0\u671F 100/50/25 \u5E74\uFF09\u3002\u4F60\u8F93\u5165\u7684\u9891\u7387\u5728\u8868\u5916\u65F6\uFF0C\u8F6F\u4EF6\u6309\u5BF9\u6570\u9891\u7387\u8F74\u5916\u63A8\u7ED9\u51FA\u53C2\u8003\u503C\uFF0C\u5E76\u660E\u786E\u6807\u6CE8\uFF0C\u4E0D\u80FD\u5F53\u8868\u503C\u7528\u3002" },
     { q: "\u6865\u5B54\u957F\u5EA6\u7B97\u51FA\u6765\u5C31\u662F\u6700\u7EC8\u6865\u957F\u5417\uFF1F", a: "\u4E0D\u662F\u3002\u89C4\u8303 7.2.2 \u660E\u786E\u6700\u5C0F\u51C0\u957F\u5EA6\u53EA\u662F\u4E0B\u9650\uFF0C\u8FD8\u9700\u7ED3\u5408\u5730\u5F62\u3001\u5730\u8D28\u3001\u58C5\u6C34\u3001\u51B2\u5237\u3001\u7EB5\u5761\u7EFC\u5408\u8BBA\u8BC1\u3002" },
     { q: "\u51B2\u5237\u8BA1\u7B97\u91CC K\u03BE \u600E\u4E48\u53D6\uFF1F", a: "\u6309\u89C4\u8303\u9644\u5F55 C \u4F9D\u58A9\u5F62\uFF08\u5706\u7AEF\u5F62\u3001\u5C16\u7AEF\u5F62\u3001\u77E9\u5F62\u7B49\uFF09\u67E5\u8868\u3002\u8F6F\u4EF6\u4E0D\u5185\u7F6E\u8BE5\u8868\uFF0C\u9ED8\u8BA4 1.0 \u5E76\u63D0\u793A\u590D\u6838\u3002" },
-    { q: "\u4E3A\u4EC0\u4E48\u67D0\u4E9B\u7CFB\u6570\u8868\u6CA1\u5185\u7F6E\uFF1F", a: "\u51E1\u662F\u626B\u63CF\u7248\u4E2D\u516C\u5F0F\u672C\u4F53\u4E3A\u56FE\u7247\u3001\u6216\u8868\u683C\u6863\u4F4D\u8FB9\u754C OCR \u4E0D\u5B8C\u6574\u7684\uFF0C\u4E00\u5F8B\u4E0D\u5185\u7F6E\u53EF\u7591\u6570\u636E\uFF0C\u754C\u9762\u4F1A\u7EA2\u5B57\u8BF4\u660E\u5F85\u5F55\u3002" }
+    { q: "\u4E3A\u4EC0\u4E48\u67D0\u4E9B\u7CFB\u6570\u8868\u6CA1\u5185\u7F6E\uFF1F", a: "\u51E1\u662F\u626B\u63CF\u7248\u4E2D\u516C\u5F0F\u672C\u4F53\u4E3A\u56FE\u7247\u3001\u6216\u8868\u683C\u6863\u4F4D\u8FB9\u754C OCR \u4E0D\u5B8C\u6574\u7684\uFF0C\u4E00\u5F8B\u4E0D\u5185\u7F6E\u53EF\u7591\u6570\u636E\uFF0C\u754C\u9762\u4F1A\u7EA2\u5B57\u8BF4\u660E\u5F85\u5F55\u3002" },
+    { q: "\u6CB3\u52BF\u6A21\u5757\u7684\u963B\u6C34\u6BD4\u3001\u603B\u51B2\u5237\u6DF1\u5EA6\u4ECE\u54EA\u91CC\u6765\uFF1F", a: "\u70B9\u300C\u4ECE\u8BA1\u7B97\u75D5\u8FF9\u5F15\u7528\u300D\u6309\u94AE\u81EA\u52A8\u5E26\u5165\u6700\u65B0\u58C5\u6C34\uFF08\u963B\u6C34\u6BD4 d\uFF09\u4E0E\u603B\u51B2\u5237\uFF08\u4E00\u822C+\u5C40\u90E8+\u81EA\u7136\u6F14\u53D8\uFF09\u6210\u679C\uFF0C\u4E5F\u53EF\u624B\u52A8\u586B\u5199\uFF1B\u6F14\u53D8\u8D8B\u52BF\u7684\u5224\u65AD\u65B9\u6CD5\u89C1\u5E2E\u52A9\u300C\u4E94\u3001\u6CB3\u52BF\u7A33\u5B9A\u5206\u6790\u300D\u3002" }
   ];
   var HELP_VALIDATION = [
     "\u6559\u6750\u300A\u6865\u6DB5\u6C34\u6587\u300B\u7B2C\u4E94\u7248\u4F8B 3-1-1 \u5BF9\u6807\u300A\u6865\u4F4D\u8BBE\u8BA1\u8BA1\u7B97\u7CFB\u7EDF\u300BQW2.0\uFF1AQ\u2081% 4824 / 4840\uFF0CQ\u2082% 4301 / 4311\uFF0CQ\u2080.\u2083\u2083% 5647 / 5666\uFF0C\u504F\u5DEE\u5747 \u22640.35%",
@@ -1710,6 +1711,41 @@
       vzTheory: Math.round(vzTheory * 1e3) / 1e3,
       warnings
     };
+  }
+
+  // src/core/scour642.ts —— 64-2 简化式（JTG C30—2015 公式 8.3.1-1）
+  // hp = 1.04·(Ad·Q2/Qc)^0.90·[Bc/((1−λ)·μ·Bcg)]^0.66·hcm
+  function generalScour642(input) {
+    const { Q2, Qc, Ad, Bc, lambda, mu, Bcg, hcm } = input;
+    const warnings = [];
+    if (!Number.isFinite(Q2) || Q2 <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scQ2", value: Q2, message: "设计流量 Q2 必须为正（m³/s）", suggestion: "点「用当前设计流量」引用上游成果", normRef: "JTG C30—2015 第8.3.1条" });
+    if (!Number.isFinite(Qc) || Qc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scQc", value: Qc, message: "天然河槽流量 Qc 必须为正（m³/s）", suggestion: "填建桥前河槽通过的流量（断面流量分配）", normRef: "JTG C30—2015 公式8.3.1-1" });
+    if (!Number.isFinite(Ad) || Ad <= 0) throw new Error("单宽流量集中系数 Ad 必须为正");
+    if (!Number.isFinite(Bc) || Bc <= 0) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scBc", value: Bc, message: "河槽宽度 Bc 必须为正（m）", suggestion: "填天然断面河槽水面宽", normRef: "JTG C30—2015 公式8.3.1-1" });
+    if (!Number.isFinite(lambda) || lambda <= 0 || lambda >= 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scLambda", value: lambda, message: "桥墩阻水比 λ 应在 (0,1) 区间", suggestion: "λ = 墩台阻水面积 / 桥孔过水面积（可用阻水比模块结果）", normRef: "JTG C30—2015 公式8.3.1-1" });
+    if (!Number.isFinite(mu) || mu <= 0 || mu > 1) throw new HsError({ code: "E_INPUT_RANGE", field: "state.scour.scMu", value: mu, message: "侧向压缩系数 μ 应在 (0,1]", suggestion: "按设计流速与单孔净跨径查表 8.3.1-1", normRef: "JTG C30—2015 表8.3.1-1" });
+    if (!Number.isFinite(Bcg) || Bcg <= 0) throw new Error("河槽部分桥孔过水净宽 Bcg 必须为正（m）");
+    if (!Number.isFinite(hcm) || hcm <= 0) throw new Error("河槽最大水深 hcm 必须为正（m）");
+    if (Ad > 1.8) warnings.push("Ad>1.8 时规范允许采用 1.8（山前变迁、游荡、宽滩河段）");
+    if (Bcg > Bc) warnings.push("桥孔净宽 Bcg 大于河槽宽度 Bc，请核对断面数据");
+    const t1 = (Ad * Q2) / Qc;
+    const t2 = Bc / ((1 - lambda) * mu * Bcg);
+    const hp = 1.04 * Math.pow(t1, 0.9) * Math.pow(t2, 0.66) * hcm;
+    const hy = hp - hcm;
+    if (hy < 0) warnings.push("计算冲刷深度为负：hp 小于冲刷前水深 hcm，请核对断面与流量数据");
+    return {
+      hp: Math.round(hp * 1e3) / 1e3,
+      hy: Math.round(hy * 1e3) / 1e3,
+      t1: Math.round(t1 * 1e3) / 1e3,
+      t2: Math.round(t2 * 1e3) / 1e3,
+      warnings
+    };
+  }
+  function approachVelocity642(Vc, hp, hc) {
+    if (!Number.isFinite(Vc) || Vc <= 0) throw new Error("天然河槽平均流速 Vc 必须为正（m/s）");
+    if (!Number.isFinite(hp) || hp <= 0) throw new Error("一般冲刷后最大水深 hp 必须为正（m）");
+    if (!Number.isFinite(hc) || hc <= 0) throw new Error("河槽平均水深 hc 必须为正（m）");
+    return Vc * Math.pow(hp / hc, 2 / 3);
   }
 
   // src/core/localScour.ts
@@ -3287,7 +3323,8 @@
         return "exact";
       }
     })(),
-    pts: []
+    pts: [],
+    paramsReady: false
   };
   var fitTrials = [];
   var fitTrialSeq = 0;
@@ -3383,17 +3420,7 @@
     <tbody>${rows}</tbody>
   </table>`;
     {
-      const csExact = state.params.cs;
-      const csRounded = Math.round(csExact * 10) / 10;
-      let note = "";
-      if (state.calcMode === "textbook") {
-        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u{1F4D8} \u5F53\u524D\u4E3A<b>\u6559\u6750\u67E5\u8868\u6A21\u5F0F</b>\uFF1AC<sub>s</sub>=${csExact.toFixed(2)} \u5DF2\u6309\u6559\u6750\u89C4\u5219\u5706\u6574\u4E3A ${csRounded.toFixed(1)} \u540E\u67E5 \u03A6 \u8868\uFF0C\u7ED3\u679C\u4E0E\u6559\u6750\u7B97\u6CD5\u4E00\u81F4\u3002</div>`;
-      } else if (Math.abs(csExact - csRounded) > 1e-9) {
-        const phiR = phiPIII(state.freq, csRounded);
-        const qR = state.params.mean * (1 + phiR * state.params.cv);
-        note = `<div style="margin-top:6px;font-size:11.5px;color:var(--text3);line-height:1.6">\u2139 \u6559\u6750\u67E5 \u03A6 \u8868\u65F6\u901A\u5E38\u628A C<sub>s</sub> \u5706\u6574\u5230 0.1\uFF08\u5982\u4F8B 3-1-1 \u7684 C<sub>s</sub>=1.47 \u5706\u6574\u4E3A 1.5\uFF0CQ<sub>p</sub>\u2248${fmt(qR, 0)}\uFF09\uFF1B\u5F53\u524D\u4E3A<b>\u7CBE\u786E\u8BA1\u7B97\u6A21\u5F0F</b>\uFF0C\u65E0\u5706\u6574\u8BEF\u5DEE\uFF0C\u5DEE\u5F02\u7EA6 0.3% \u5C5E\u6B63\u5E38\u3002\u53EF\u70B9\u4E0A\u65B9"\u6559\u6750\u67E5\u8868"\u6309\u94AE\u5207\u6362\u3002</div>`;
-      }
-      if (note) box.innerHTML += note;
+
     }
     box.onclick = (ev) => {
       const tr = ev.target.closest("tr[data-p]");
@@ -3410,7 +3437,7 @@
     const be = $("modeExact");
     const bt = $("modeTextbook");
     if (!be || !bt) return;
-    const on = "background:var(--blue);color:#fff;border-color:var(--blue)";
+    const on = "background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--blue)";
     be.setAttribute("style", state.calcMode === "exact" ? on : "");
     bt.setAttribute("style", state.calcMode === "textbook" ? on : "");
   }
@@ -3432,6 +3459,7 @@
     applyCalcModeUi();
   }
   function render() {
+    if (!state.paramsReady) { clearParamsUi(); return; }
     const { params, freq } = state;
     $("cvShow").textContent = params.cv.toFixed(3);
     $("csShow").textContent = params.cs.toFixed(2);
@@ -3449,7 +3477,7 @@
     renderSamplingError();
     logRenderOnce();
     stateCompare.A = {
-      label: "\u65B9\u6CD5A \xB7 P-\u2162 \u9891\u7387\u9002\u7EBF",
+      label: "P-\u2162 \u9891\u7387\u9002\u7EBF\uFF08\u6709\u8D44\u6599\uFF09",
       q,
       freqLabel: freqLabelOf(freq),
       note: `Q\u0304=${fmt(params.mean, 1)}, Cv=${params.cv.toFixed(3)}, Cs=${params.cs.toFixed(2)}`
@@ -3522,12 +3550,17 @@
       if (pt.kind === "hist") {
         s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
       } else {
-        s += `<circle cx="${px}" cy="${py}" r="4" fill="#1d1d1f"/>`;
+        const dotColor = (document.body && document.body.classList && document.body.classList.contains('hs-dark')) ? '#9FD8F2' : '#1d1d1f';
+        s += `<circle cx="${px}" cy="${py}" r="4" fill="${dotColor}"/>`;
       }
     }
     s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
     s += `<line id="chy" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
     $("chart").innerHTML = s;
+    try {
+      const em = document.getElementById("chartEmpty");
+      if (em) em.style.display = "none";
+    } catch (e) {}
     chartQLo = qLo;
     chartQHi = qHi;
     bindChartHover();
@@ -3659,6 +3692,8 @@
     $("cvSlider").value = Math.min(Math.max(st.cv, 0.05), 1.2);
     $("ratioSlider").value = 2;
     state.params = { mean: st.mean, cv: st.cv, cs: 2 * st.cv };
+    state.paramsReady = true;
+    state.cvMoment = st.cv;
     syncParamInputs();
     $("stMean").textContent = fmt(st.mean, 1);
     $("stSigma").textContent = fmt(st.sigma, 1);
@@ -3680,7 +3715,23 @@
     $("qrTitle").textContent = `\u77E9\u6CD5\u8BA1\u7B97\u7ED3\u679C\uFF08\u7CFB\u5217 n=${st.n}\uFF0C\u03A3=${fmt(st.mean * st.n, 0)}${"a" in st ? `\uFF0C\u542B\u7279\u5927\u6D2A\u6C34 a=${stAny.a}` : ""}\uFF09\u2014\u2014\u4F8B 3-1-1 \u6559\u6750\u7CFB\u5217\u4E3A n=32\u3001\u03A3=58,854\u3001Q\u0304=1,839\uFF0C\u5BF9\u4E0D\u4E0A\u8BF4\u660E\u6709\u6570\u8F93\u9519`;
     el.style.display = "block";
   }
+  function clearParamsUi() {
+    ["cvShow", "csShow", "ratioShow", "outQ", "outPhi", "outKp", "outB", "outSigma", "stSse"].forEach((id) => { if ($(id)) $(id).textContent = "\u2014"; });
+    $("outQFreq").textContent = freqLabelOf(state.freq);
+    const linkage = $("paramLinkage");
+    if (linkage) linkage.innerHTML = "\u8BF7\u5148\u8F93\u5165 Q\u0304 / C<sub>v</sub> / C<sub>s</sub> \u53C2\u6570\uFF0C\u8F93\u5165\u540E\u81EA\u52A8\u8BA1\u7B97\u9891\u7387\u66F2\u7EBF\u3002";
+    const table = $("freqQTable");
+    if (table) table.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12.5px">等待输入统计参数。</div>';
+  }
   function syncParamInputs() {
+    if (!state.paramsReady) {
+      ["inMean", "inCv", "inCs"].forEach((id) => { if ($(id)) $(id).value = ""; });
+      if ($("meanIn")) $("meanIn").value = "";
+      if ($("cvIn")) $("cvIn").value = "";
+      if ($("ratioIn")) $("ratioIn").value = "";
+      clearParamsUi();
+      return;
+    }
     $("inMean").value = state.params.mean.toFixed(1);
     $("inCv").value = state.params.cv.toFixed(3);
     $("inCs").value = state.params.cs.toFixed(2);
@@ -3701,12 +3752,14 @@
     const cv = +e.target.value;
     const ratio = +$("ratioSlider").value;
     state.params = { ...state.params, cv, cs: cv * ratio };
+    state.paramsReady = true;
     syncParamInputs();
     render();
   };
   $("ratioSlider").oninput = (e) => {
     const ratio = +e.target.value;
     state.params = { ...state.params, cs: state.params.cv * ratio };
+    state.paramsReady = true;
     syncParamInputs();
     render();
   };
@@ -3716,6 +3769,7 @@
     cv = Math.min(1.2, Math.max(0.05, cv));
     const ratio = +$("ratioSlider").value;
     state.params = { ...state.params, cv, cs: cv * ratio };
+    state.paramsReady = true;
     $("cvSlider").value = cv;
     render();
   };
@@ -3724,13 +3778,132 @@
     if (!Number.isFinite(ratio) || ratio < 1) return;
     ratio = Math.min(8, Math.max(1, ratio));
     state.params = { ...state.params, cs: state.params.cv * ratio };
+    state.paramsReady = true;
     $("ratioSlider").value = ratio;
     render();
   };
+  /* v1.0.31 界面偏好（设置中心）：主题(含跟随系统) / 缩放 / 字体 / 工作流卡显隐，即时生效并记忆 */
+  {
+    const sysDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const readPref = (k, d) => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } };
+    const applyPrefs = () => {
+      const theme = readPref('hongsuan_theme', 'auto');
+      const zoom = readPref('hongsuan_zoom', '1');
+      const font = readPref('hongsuan_font', 'yahei');
+      const wf = readPref('hongsuan_workflow', 'show');
+      const dark = theme === 'dark' || (theme === 'auto' && sysDark && sysDark.matches);
+      document.body.classList.toggle('hs-dark', !!dark);
+      document.body.classList.toggle('hs-zoom', String(zoom) === '1.15');
+      document.body.classList.toggle('hs-serif', font === 'songti');
+      const fontEn = readPref('hongsuan_font_en', 'segoe');
+      document.body.classList.toggle('hs-fen-consolas', fontEn === 'consolas');
+      document.body.classList.toggle('hs-fen-georgia', fontEn === 'georgia');
+      const rs = document.getElementById('hsRestoreSel');
+      if (rs) rs.value = readPref('hongsuan_restore', '0');
+      const fe = document.getElementById('hsFontEnSel');
+      if (fe) fe.value = fontEn;
+      document.body.classList.toggle('hs-hide-workflow', wf === 'hide');
+      const t = document.getElementById('hsThemeSel'), z = document.getElementById('hsZoomSel');
+      const fnt = document.getElementById('hsFontSel'), w = document.getElementById('hsWorkflowSel');
+      const feSel = document.getElementById('hsFontEnSel'), rsSel = document.getElementById('hsRestoreSel');
+      if (feSel) feSel.onchange = () => { try { localStorage.setItem('hongsuan_font_en', feSel.value); } catch (e) {} applyPrefs(); };
+      if (rsSel) rsSel.onchange = () => { try { localStorage.setItem('hongsuan_restore', rsSel.value); } catch (e) {} };
+      if (t) t.value = theme;
+      if (z) z.value = String(zoom);
+      if (fnt) fnt.value = font;
+      if (w) w.value = wf;
+    };
+    applyPrefs();
+    window.__hsApplyPrefs = applyPrefs;
+    if (sysDark && sysDark.addEventListener) sysDark.addEventListener('change', applyPrefs);
+    const bind = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.onchange = () => { try { localStorage.setItem(key, el.value); } catch (e) {} applyPrefs(); };
+    };
+    bind('hsThemeSel', 'hongsuan_theme');
+    bind('hsZoomSel', 'hongsuan_zoom');
+    bind('hsFontSel', 'hongsuan_font');
+    bind('hsWorkflowSel', 'hongsuan_workflow');
+    const rst = document.getElementById('hsPrefsReset');
+    if (rst) rst.onclick = () => {
+      for (const k of ['hongsuan_theme', 'hongsuan_zoom', 'hongsuan_font', 'hongsuan_workflow', 'hongsuan_hints', 'hongsuan_single_mode', 'hongsuan_last_mode']) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      }
+      applyPrefs();
+      try { localStorage.setItem('hongsuan_hints', 'hide'); } catch (e) {}
+      const hs = document.getElementById('sysHints');
+      if (hs) { hs.value = 'hide'; hs.dispatchEvent(new Event('change')); }
+      const sm = document.getElementById('hsModeSingle');
+      if (sm && document.body.classList.contains('hs-single')) sm.click();
+      if (rst.textContent) { const old = rst.textContent; rst.textContent = '✓ 已恢复默认'; window.setTimeout(() => { rst.textContent = old; }, 1600); }
+    };
+  }
+
+  /* v1.0.31 启动恢复上次界面 */
+  {
+    try {
+      const last = localStorage.getItem('hongsuan_last_mode');
+      if (last && ["series","params","hist","noData","hydro","help","map","backwater","river","report","export","manage","examples","settings"].indexOf(last) >= 0) {
+        if (last !== "series") switchMode(last);
+      }
+    } catch (e) {}
+  }
+
+  /* 说明小字开关：默认隐藏；设置中心「页面说明小字」/ Alt+H 切换；localStorage 记忆（v1.0.20 从顶栏按钮迁入系统管理卡） */
+  {
+    const applyHintMode = (show) => {
+      document.body.classList.toggle("hs-hide-hints", !show);
+      const sel = $("sysHints");
+      if (sel) sel.value = show ? "show" : "hide";
+    };
+    let showHints = false;
+    try { showHints = localStorage.getItem("hongsuan_hints") === "show"; } catch (e) {}
+    applyHintMode(showHints);
+    const hintsSel = $("sysHints");
+    if (hintsSel) {
+      hintsSel.onchange = () => {
+        showHints = hintsSel.value === "show";
+        try { localStorage.setItem("hongsuan_hints", showHints ? "show" : "hide"); } catch (e) {}
+        applyHintMode(showHints);
+      };
+    }
+    window.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "h" || e.key === "H")) {
+        e.preventDefault();
+        const sel = $("sysHints");
+        if (sel) sel.value = sel.value === "show" ? "hide" : "show";
+        sel.dispatchEvent(new Event("change"));
+      }
+    });
+  }
+  /* Cv 童锁：默认锁定（矩法固定）；解锁后可手动调整，重新上锁自动恢复矩法值 */
+  state.cvLocked = true;
+  if ($("cvLock")) {
+    const cvApplyLock = () => {
+      const locked = state.cvLocked;
+      $("cvSlider").disabled = locked;
+      $("cvIn").disabled = locked;
+      $("cvLock").textContent = locked ? "🔒 已锁定（矩法）" : "🔓 已解锁（可调）";
+    };
+    $("cvLock").onclick = () => {
+      state.cvLocked = !state.cvLocked;
+      if (state.cvLocked && typeof state.cvMoment === "number") {
+        const cv = Math.min(1.2, Math.max(0.05, state.cvMoment));
+        state.params = { ...state.params, cv, cs: cv * (+$("ratioSlider").value) };
+    state.paramsReady = true;
+        $("cvSlider").value = cv;
+        syncParamInputs();
+        render();
+      }
+      cvApplyLock();
+    };
+    cvApplyLock();
+  }
   $("meanIn").oninput = (e) => {
     const mean = parseFloat(e.target.value);
     if (Number.isFinite(mean) && mean > 0) {
       state.params = { ...state.params, mean };
+    state.paramsReady = true;
       render();
     }
   };
@@ -3743,6 +3916,7 @@
       const mean = +$("inMean").value, cv = +$("inCv").value, cs = +$("inCs").value;
       if (mean > 0 && cv > 0 && Number.isFinite(cs)) {
         state.params = { mean, cv, cs };
+    state.paramsReady = true;
         $("cvSlider").value = Math.min(Math.max(cv, 0.05), 1.2);
         $("ratioSlider").value = Math.min(Math.max(cs / cv, 1), 8);
         render();
@@ -3756,7 +3930,10 @@
     noData: "mNoData",
     hydro: "mHydro",
     help: "mHelp",
-    map: "mMap"
+    map: "mMap",
+    backwater: "mBackwater",
+    river: "mRiver",
+    report: "mReport"
   };
   var MODE_BOX = {
     series: "seriesBox",
@@ -3765,13 +3942,24 @@
     noData: "noDataBox",
     hydro: "hydroBox",
     help: "helpBox",
-    map: "mapBox"
+    map: "mapBox",
+    backwater: "backwaterBox",
+    river: "riverBox",
+    report: "reportBox",
+    export: "exportBox",
+    manage: "manageBox",
+    examples: "examplesBox",
+    settings: "settingsBox"
   };
   function switchMode(mode) {
     state.mode = mode === "hist" ? "histB" : mode;
     for (const key of Object.keys(MODE_BTN)) {
-      $(MODE_BTN[key]).classList.toggle("on", key === mode);
-      $(MODE_BOX[key]).style.display = key === mode ? "" : "none";
+      const b = $(MODE_BTN[key]);
+      if (b) b.classList.toggle("on", key === mode);
+    }
+    for (const key of Object.keys(MODE_BOX)) {
+      const box = $(MODE_BOX[key]);
+      if (box) box.style.display = key === mode ? "" : "none";
     }
     setFitCardsVisible(mode === "series" || mode === "params");
     if (mode === "params") {
@@ -3780,14 +3968,445 @@
     }
     if (mode === "noData") calcMethodC();
     if (mode === "noData") window.setTimeout(spMapEnsure, 80);
+    if (mode === "report" && window.__HS_WORKFLOW && window.__HS_WORKFLOW.update) window.__HS_WORKFLOW.update();
+    if (mode === "report") renderResultCheck();
     if (mode === "help") renderHelp();
     if (mode === "map") renderMap();
+    if (mode === "export") renderExportCenter();
+    if (mode === "examples") renderExamples();
+    if (mode === "manage") renderManage();
+    document.body.classList.toggle("hs-center-mode", ["export","manage","settings","examples","help","report"].indexOf(mode) >= 0);
+    try { localStorage.setItem("hongsuan_last_mode", mode); } catch (e) {}
+    syncSideTree(mode);
+    /* v1.0.25：切换到整卡模式时滚回内容区顶部，避免停在工作流位置 */
+    const boxEl = $(MODE_BOX[mode] || "");
+    if (boxEl && ["export","examples","manage","settings","help","report","map","hydro","backwater","river","noData","hist","series","params"].indexOf(mode) >= 0) {
+      window.setTimeout(function () {
+        boxEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 40);
+    }
   }
   for (const key of Object.keys(MODE_BTN)) {
-    $(MODE_BTN[key]).onclick = () => switchMode(key);
+    const b = $(MODE_BTN[key]);
+    if (b) b.onclick = () => switchMode(key);
   }
+
+  /* ===== v1.0.18 左侧功能树 ===== */
+  var SIDE_TREE = [
+    {
+      title: "工作流", items: [
+        { mode: "report", label: "报告中心", ico: "report" },
+        { mode: null, label: "水文分析工作流", anchor: "workflowCard", ico: "workflow" }
+      ]
+    },
+    {
+      title: "设计流量", items: [
+        { mode: "series", label: "流量系列适线", ico: "series" },
+        { mode: "params", label: "直接参数模式", ico: "params" },
+        { mode: "hist", label: "历史洪水位法", ico: "hist" },
+        { mode: "noData", label: "暴雨资料推算", ico: "noData" }
+      ]
+    },
+    {
+      title: "桥位分析", items: [
+        { mode: "hydro", label: "孔径·水位·冲刷", ico: "hydro" },
+        { mode: "backwater", label: "壅水 · 阻水比", ico: "backwater" },
+        { mode: "river", label: "河势稳定", ico: "river" }
+      ]
+    },
+    {
+      title: "辅助工具", items: [
+        { mode: "map", label: "地图量算", ico: "map" }
+      ]
+    },
+    {
+      title: "报告与数据", items: [
+        { mode: "export", label: "导出中心", ico: "export" },
+        { mode: "manage", label: "方案与数据管理", ico: "manage" },
+        { mode: "settings", label: "设置中心", ico: "settings" },
+        { mode: "examples", label: "示例中心", ico: "examples" },
+        { mode: "help", label: "帮助中心", ico: "help" }
+      ]
+    }
+  ];
+  const SIDE_ICONS = {
+  "report": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3.5h9l3.5 3.5v13.5h-12.5z\"/><path d=\"M14 3.5V7h3.5\"/><path d=\"M8.5 16.5v-3M11.5 16.5v-5M14.5 16.5v-2\"/></svg>",
+  "workflow": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 3.5h9v13H5z'/><path d='M14 3.5l3 3v10h-3M7.5 7h4M7.5 10h4M7.5 13h2.5' stroke-opacity='.75'/><path d='M15 19.5h4M17 17.5l2 2-2 2' stroke-opacity='.9'/><path d='M4 19.5h7' stroke-opacity='.45'/></svg>",
+  "series": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M3 4v16M3 20h18' stroke-opacity='.55'/><path d='M7 4v16M11 4v16M15 4v16M19 4v16' stroke-opacity='.18'/><path d='M5 19.5c1.5-1.8 3-5.5 4.5-8.5S13 5 15.5 4.5c2-.4 3.5-1.2 4.5-2.5'/><circle cx='8' cy='14.5' r='1.1' fill='currentColor' stroke='none'/><circle cx='12.5' cy='8.5' r='1.1' fill='currentColor' stroke='none'/><circle cx='17' cy='5' r='1.1' fill='currentColor' stroke='none'/></svg>",
+  "params": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='5.5' rx='1.4'/><rect x='3' y='12.5' width='18' height='5.5' rx='1.4'/><path d='M6.5 6.8h4M6.5 15.3h4M15.5 6.8h3M15.5 15.3h3' stroke-opacity='.7'/><path d='M6.5 21h11' stroke-opacity='.4'/></svg>",
+  "hist": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3v18M8 3h2.5v18H8'/><path d='M10.5 6h3M10.5 10h3M10.5 14h3M10.5 18h3' stroke-opacity='.8'/><path d='M8 8.5c3-1.5 6-1.5 10-1M8 12c3-1.5 6-1.5 10-1' stroke-opacity='.6'/><path d='M3 20.5h18'/></svg>",
+  "noData": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5c4 0 8 3.2 8 7.2s-4 7.3-8 7.3-8-3.3-8-7.3 4-7.2 8-7.2z' stroke-opacity='.55'/><path d='M12 7.5c2.4 0 4.8 1.8 4.8 4.2s-2.4 4.3-4.8 4.3-4.8-1.9-4.8-4.3 2.4-4.2 4.8-4.2z' stroke-opacity='.8'/><path d='M12 11.2c1 0 1.9.7 1.9 1.6S13 14.4 12 14.4s-1.9-.7-1.9-1.6.9-1.6 1.9-1.6z'/><path d='M12 16.5v3M10.5 19.5h3' stroke-opacity='.7'/></svg>",
+  "hydro": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 6.5h19M5 6.5V4M19 6.5V4'/><path d='M10 6.5v7M14 6.5v7' stroke-opacity='.85'/><path d='M2.5 10.5h19' stroke-opacity='.45'/><path d='M2.5 15.5c3 0 4.5 2.5 7 2.5s2-2 4.5-2 4 2.5 5.5 2.5' /><path d='M10 15.5v2.5M14 15.5v2.5' stroke-opacity='.85'/><path d='M2.5 21h19' stroke-opacity='.45'/></svg>",
+  "backwater": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 14.5c4-4.5 7-5.5 9.5-5.5s5.5 1 9.5 5.5' stroke-opacity='.85'/><path d='M2.5 18.5h19' stroke-opacity='.45'/><path d='M12 4v6M12 10l-2-2M12 10l2-2' stroke-opacity='.7'/><path d='M9 14.5v4M15 14.5v4' stroke-opacity='.85'/><path d='M9 4.5h6' stroke-opacity='.5'/></svg>",
+  "river": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M4 3.5c5 0 4 5 8 5s3-5 8-5M4 20.5c5 0 4-5 8-5s3 5 8 5' stroke-opacity='.85'/><path d='M4 8c5 0 4 5 8 5s3-5 8-5M4 16c5 0 4-5 8-5s3 5 8 5' stroke-opacity='.45'/><circle cx='8' cy='11.5' r='1.4'/><circle cx='16' cy='12.5' r='1.4'/></svg>",
+  "map": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 21s-6.5-5.5-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.5 12 21 12 21z\"/><circle cx=\"12\" cy=\"10.5\" r=\"2.2\"/><path d=\"M4.5 19.5l15-15\"/></svg>",
+  "export": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 15v4.5h16V15\"/><path d=\"M12 4.5V15\"/><path d=\"M8 8.5L12 4.5l4 4\"/></svg>",
+  "manage": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5.5\" rx=\"7\" ry=\"2.5\"/><path d=\"M5 5.5v13c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-13\"/><path d=\"M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5\"/></svg>",
+  "settings": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6\"/></svg>",
+  "examples": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"4\" width=\"7.5\" height=\"7.5\" rx=\"1.2\"/><rect x=\"12.5\" y=\"4\" width=\"7.5\" height=\"7.5\" rx=\"1.2\"/><rect x=\"4\" y=\"12.5\" width=\"7.5\" height=\"7.5\" rx=\"1.2\"/><path d=\"M14.5 14.5l3.5 3.5M18 14.5l-3.5 3.5\"/></svg>",
+  "help": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7\"/><path d=\"M12 16.8v.2\"/></svg>"
+};
+  function renderSide() {
+    const host = $("hsTree");
+    if (!host) return;
+    host.innerHTML = "";
+    const singleNow = document.body.classList.contains("hs-single");
+    const hint = document.getElementById("hsModeHint");
+    if (hint) hint.textContent = singleNow ? "单功能模式 · 逐项独立计算，左侧仅显示功能项" : "工作流模式 · 资料分流 → 设计流量 → 复核 → 报告";
+    for (const g of SIDE_TREE) {
+      const wrap = document.createElement("div");
+      wrap.className = "hs-tree-group-wrap";
+      wrap.dataset.group = g.title || "";
+      host.appendChild(wrap);
+      if (g.title) {
+        const gt = document.createElement("div");
+        gt.className = "hs-tree-group";
+        gt.textContent = g.title;
+        wrap.appendChild(gt);
+      }
+      for (const it of g.items) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "hs-tree-item";
+        btn.dataset.mode = it.mode || "";
+        btn.dataset.anchor = it.anchor || "";
+        btn.innerHTML = '<span class="ico"></span><span class="lbl"></span><span class="badge"></span>';
+        btn.children[0].innerHTML = (SIDE_ICONS && SIDE_ICONS[it.ico]) ? SIDE_ICONS[it.ico] : "";
+        btn.children[1].textContent = it.label;
+        btn.onclick = () => {
+          if (it.anchor) {
+            /* v1.0.37：报告中心/其他模式页下先回主工作流视图（series），再滚动定位 */
+            if (document.body.classList.contains("hs-single")) {
+              try { applySingleMode(false); } catch (e) {}
+            }
+            try { if (typeof switchMode === "function") switchMode("series"); } catch (e) {}
+            const el = $(it.anchor);
+            if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+          }
+          if (it.mode) switchMode(it.mode);
+        };
+        wrap.appendChild(btn);
+      }
+    }
+    const helpBtn = $("hsFootHelp");
+    if (helpBtn) helpBtn.onclick = () => switchMode("help");
+    const fbBtn = $("hsFootFeedback");
+    if (fbBtn) fbBtn.onclick = () => { if (window.__hsFeedback && window.__hsFeedback.open) window.__hsFeedback.open(); };
+    const projEdit = $("hsProjEdit");
+    if (projEdit) projEdit.onclick = () => { openProjPage(); };
+    const mw = $("hsModeWf"), ms = $("hsModeSingle");
+    if (mw) mw.onclick = () => applySingleMode(false);
+    if (ms) ms.onclick = () => applySingleMode(true);
+    try { applySingleMode(localStorage.getItem("hongsuan_single_mode") === "1"); } catch (e) {}
+    syncProjName();
+    const pjName = $("pjName");
+    if (pjName) pjName.addEventListener("input", syncProjName);
+    const hsVer = $("hsBrandVer");
+    if (hsVer && window.__HS_BUILD_INFO) {
+      hsVer.textContent = "一站式桥涵水文分析工作台 · v" + (window.__HS_BUILD_INFO.version || "");
+    }
+  }
+  function syncSideTree(mode) {
+    const host = $("hsTree");
+    if (!host) return;
+    const items = host.querySelectorAll(".hs-tree-item");
+    for (const b of items) {
+      b.classList.toggle("on", b.dataset.mode === mode);
+    }
+  }
+
+  /* v1.0.37 工程信息独立全屏页：打开时把 projectCard 搬入全屏页（保留 id 与事件），关闭还原 */
+  var projPageState = { parent: null, next: null };
+  function openProjPage() {
+    const page = document.getElementById("projPage"), host = document.getElementById("projPageHost");
+    const pc = document.getElementById("projectCard");
+    if (!page || !host || !pc) return;
+    if (page.style.display === "block") return;
+    projPageState.parent = pc.parentNode;
+    projPageState.next = pc.nextSibling;
+    pc.open = true;
+    host.appendChild(pc);
+    page.style.display = "block";
+    document.body.style.overflow = "hidden";
+    const msg = document.getElementById("projPageMsg");
+    if (msg) msg.textContent = "";
+  }
+  function closeProjPage() {
+    const page = document.getElementById("projPage"), pc = document.getElementById("projectCard");
+    if (!page || !pc) return;
+    if (projPageState.parent) {
+      projPageState.parent.insertBefore(pc, projPageState.next);
+    }
+    page.style.display = "none";
+    document.body.style.overflow = "";
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    const c = document.getElementById("projPageClose");
+    if (c) c.onclick = closeProjPage;
+    const sv = document.getElementById("projPageSave");
+    if (sv) sv.onclick = function () {
+      const msg = document.getElementById("projPageMsg");
+      const nm = document.getElementById("pjName");
+      if (nm && !String(nm.value || "").trim()) {
+        if (msg) msg.textContent = "项目名称为必填项，请先填写。";
+        nm.focus();
+        return;
+      }
+      try { if (typeof syncProjName === "function") syncProjName(); } catch (e) {}
+      closeProjPage();
+    };
+    document.addEventListener("keydown", function (ev) {
+      const page = document.getElementById("projPage");
+      if (ev.key === "Escape" && page && page.style.display === "block") closeProjPage();
+    });
+  });
+  function syncProjName() {
+    const el = $("hsProjName");
+    if (!el) return;
+    const v = ($("pjName") && $("pjName").value || "").trim();
+    el.textContent = v || "（未命名工程）";
+  }
+  /* 单功能模式：隐藏工作流卡，纯计算器形态（记忆用户选择） */
+  function applySingleMode(on) {
+    document.body.classList.toggle("hs-single", !!on);
+    const a = $("hsModeWf"), b = $("hsModeSingle");
+    if (a) a.classList.toggle("on", !on);
+    if (b) b.classList.toggle("on", !!on);
+    try { localStorage.setItem("hongsuan_single_mode", on ? "1" : "0"); } catch (e) {}
+    // v1.0.37-r2：组显隐由 CSS 接管（body.hs-single），不再全量重建侧边栏（切换零卡顿）
+    try {
+      const hint = document.getElementById("hsModeHint");
+      if (hint) hint.textContent = on ? "单功能模式 · 逐项独立计算，左侧仅显示功能项" : "工作流模式 · 资料分流 → 设计流量 → 复核 → 报告";
+    } catch (e) {}
+  }
+  /* 启动时把常驻卡片迁入「方案与数据管理」/「导出中心」模式容器（DOM 搬移，保留全部 id 与事件） */
+  var cardsMoved = false;
+  function moveCardsToModes() {
+    if (cardsMoved) return;
+    cardsMoved = true;
+    const manage = $("manageBox");
+    const exp = $("exportBox");
+    const settings = $("settingsBox");
+    if (settings) {
+      const shead = document.createElement("h2");
+      shead.textContent = "设置中心";
+      shead.style.marginBottom = "8px";
+      settings.appendChild(shead);
+      /* v1.0.25：设置中心只放默认设置；数据维护已拆到「方案与数据管理」 */
+      const sc = $("sysCard");
+      if (sc) { sc.style.display = ""; settings.appendChild(sc); }
+    }
+    if (manage) {
+      const head = document.createElement("h2");
+      head.textContent = "方案与数据管理";
+      head.style.marginBottom = "8px";
+      manage.appendChild(head);
+      for (const id of ["planCard", "projDiffCard", "calcLogBox", "historyCard", "dataCard"]) {
+        const el = $(id);
+        if (el) { el.style.display = ""; manage.appendChild(el); }
+      }
+    }
+    if (exp) {
+      const pc = $("projectCard");
+      if (pc) { pc.style.display = ""; exp.appendChild(pc); }
+    }
+  }
+
+  /* ===== v1.0.25 折叠面板防跳动：展开/收起后把被点的 summary 钉在视口内 ===== */
+  document.addEventListener("toggle", function (ev) {
+    var d = ev.target;
+    if (!d || d.tagName !== "DETAILS") return;
+    var sm = d.querySelector(":scope > summary");
+    if (!sm) return;
+    var r = sm.getBoundingClientRect();
+    if (r.top < 0 || r.top > window.innerHeight - 40) {
+      sm.scrollIntoView({ block: "nearest" });
+    }
+  }, true);
+
+  /* ===== v1.0.19 结果体检卡（报告中心）+ 工作流步骤角标 ===== */
+  var CHECK_ICON = { ok: "✓", warn: "⚠", bad: "✗" };
+  var CHECK_COLOR = { ok: "#15803d", warn: "#b45309", bad: "#b91c1c" };
+  var CHECK_STEP_KEY = { flow: ["series", "fit", "cv", "qp"], block: ["block", "dz"], scour: ["scour", "scourAd", "scourBcg", "scourHy", "d50"] };
+  function renderResultCheck() {
+    const host = $("resultCheckCard");
+    if (!host) return;
+    let r = null;
+    try {
+      const data = window.__hsReportData ? window.__hsReportData() : null;
+      if (data && window.__hsResultCheck) r = window.__hsResultCheck.check(data);
+    } catch (e) { r = null; }
+    if (!r || !r.items.length) { host.innerHTML = ""; return; }
+    var rows = r.items.map(function (it) {
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px">' +
+        '<span style="color:' + CHECK_COLOR[it.level] + ';font-weight:700;flex:0 0 14px">' + CHECK_ICON[it.level] + '</span>' +
+        '<span style="flex:0 0 96px;color:var(--text2)">' + it.label + '</span>' +
+        '<span style="flex:1">' + it.detail + '</span></div>';
+    }).join("");
+    var head = r.worst === "bad" ? "结果体检：存在警告项，生成报告前请人工复核" : (r.worst === "warn" ? "结果体检：有注意项，建议复核后再采用" : "结果体检：全部通过（初步复核，最终以注册工程师复核为准）");
+    host.innerHTML =
+      '<div class="card" style="margin-top:0;margin-bottom:0">' +
+      '<h2 style="margin-bottom:6px">结果体检 <span style="font-weight:400;font-size:11.5px;color:var(--text3)">初步复核提示 · 依据规范条文与工程经验口径 · 不替代人工复核</span></h2>' +
+      '<div style="font-size:12.5px;color:' + (r.worst ? CHECK_COLOR[r.worst] : "var(--text2)") + ';margin-bottom:4px">' + head + '</div>' +
+      rows + '</div>';
+  }
+
+  /* ===== 河势稳定分析模块（SL/T 808—2021 第 5.4.4 条） ===== */
+  $("riverFillBtn").onclick = function () {
+    var tipEl = $("riverFillTip");
+    tipEl.style.display = "none";
+    try {
+      var RS = window.__hsRiverStability;
+      if (!RS || !RS.collectRiverInputs) throw new Error("riverStability.js 未加载或版本过旧，请重启软件");
+      var logs = [];
+      try { logs = (window.__hsReportData && window.__hsReportData().logs) || []; } catch (e2) { logs = []; }
+      var c = RS.collectRiverInputs(logs);
+      if (c.blockRatio === null && c.scourDepth === null) {
+        tipEl.style.display = "";
+        tipEl.innerHTML = "未找到壅水 / 冲刷计算留痕：请先完成第 5 步（壅水·阻水比）与第 6 步（冲刷验算）的计算，再点此按钮引用；也可直接手动填写。";
+        return;
+      }
+      var parts = [];
+      if (c.blockRatio !== null) { $("rvBlock").value = c.blockRatio; parts.push("阻水比 " + c.blockRatio + " %（来源：" + c.blockSource + "）"); }
+      if (c.scourDepth !== null) { $("rvScour").value = c.scourDepth; parts.push("总冲刷深度 " + c.scourDepth + " m（来源：" + c.scourSource + "）"); }
+      var miss = [];
+      if (c.blockRatio === null) miss.push("阻水比");
+      if (c.scourDepth === null) miss.push("总冲刷深度");
+      tipEl.style.display = "";
+      tipEl.innerHTML = "已引用：" + parts.join("；") + (miss.length ? "。未找到" + miss.join("、") + "留痕，该项请手动填写" : "") + "。";
+    } catch (e) {
+      tipEl.style.display = "";
+      tipEl.textContent = "⚠ " + (e instanceof Error ? e.message : String(e));
+    }
+  };
+  $("riverCalcBtn").onclick = function () {
+    $("riverErr").textContent = "";
+    try {
+      var RS = window.__hsRiverStability;
+      if (!RS) throw new Error("riverStability.js 未加载");
+      var rin = { riverType: $("rvType").value, blockRatio: +$("rvBlock").value, scourDepth: +$("rvScour").value, protection: $("rvProtect").value, trend: $("rvTrend").value };
+      var rr = RS.assess(rin);
+      $("riverOut").textContent = rr.score + " 分 · " + rr.levelText;
+      var frows = rr.factors.map(function (f) { return "<tr><td>" + f.name + "</td><td>" + f.score + "</td><td>" + f.note + "</td></tr>"; }).join("");
+      $("riverDetail").innerHTML =
+        '<table class="ltab"><tr><th>因子</th><th>评分</th><th>说明</th></tr>' + frows + '</table>' +
+        '<div style="margin-top:6px"><b>结论：</b>' + rr.conclusion + '</div>' +
+        '<div style="margin-top:4px"><b>建议：</b><ul style="margin:2px 0;padding-left:18px">' + rr.measures.map(function (m) { return '<li>' + m + '</li>'; }).join("") + '</ul></div>' +
+        '<div style="margin-top:4px;color:var(--text3)">依据：' + rr.basis + '</div>';
+      logCalc("河势稳定分析", { 河型: RS.RIVER_TYPES[rin.riverType].label, 阻水比: rin.blockRatio + " %", 总冲刷深度: rin.scourDepth + " m", 防护: RS.PROTECTIONS[rin.protection].label, 趋势: RS.TRENDS[rin.trend].label }, { 风险评分: rr.score, 影响等级: rr.levelText }, rr.basis);
+    } catch (e) {
+      $("riverErr").textContent = "⚠ " + (e instanceof Error ? e.message : String(e));
+    }
+  };
+  /* ===== 壅水·阻水比模块（B11 + 投影面积法阻水比） ===== */
+  var BW = window.__hsBackwater;
+  function bwAddRow(name, w, d) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><input class="bwName" type="text" value="' + (name || "") + '" style="width:70px"></td>' +
+      '<td><input class="bwW" type="number" value="' + (w != null ? w : "") + '" step="any" min="0" style="width:90px"></td>' +
+      '<td><input class="bwD" type="number" value="' + (d != null ? d : "") + '" step="any" min="0" style="width:90px"></td>' +
+      '<td class="bwA" style="color:var(--text3)">—</td>' +
+      '<td><button class="btn ghost bwDel" style="padding:2px 8px;font-size:11.5px">Del</button></td>';
+    tr.querySelector(".bwDel").onclick = function () { tr.remove(); };
+    var upd = function () {
+      var wv = +tr.querySelector(".bwW").value, dv = +tr.querySelector(".bwD").value;
+      tr.querySelector(".bwA").textContent = (wv > 0 && dv > 0) ? (wv * dv).toFixed(2) : "—";
+    };
+    tr.querySelector(".bwW").oninput = upd;
+    tr.querySelector(".bwD").oninput = upd;
+    $("bwPierRows").appendChild(tr);
+  }
+  function bwReadRows() {
+    var rows = [];
+    var trs = document.querySelectorAll("#bwPierRows tr");
+    for (var i = 0; i < trs.length; i++) {
+      var name = trs[i].querySelector(".bwName").value.trim();
+      var w = trs[i].querySelector(".bwW").value, d = trs[i].querySelector(".bwD").value;
+      if (w === "" && d === "") continue;
+      if (w === "" || d === "") throw new Error("第 " + (i + 1) + " 行：遮挡宽度与水深须成对填写");
+      rows.push({ name: name || String(i + 1), width: +w, depth: +d });
+    }
+    return rows;
+  }
+  $("bwAddPier").onclick = function () { bwAddRow("", "", ""); };
+  $("bwClearPier").onclick = function () { $("bwPierRows").innerHTML = ""; };
+  $("bwDemoPier").onclick = function () {
+    // 真实算例：内置示例桥梁 p=5%（表5.2-1/5.2-2，阻水面积 49.96m² 以单行面积等效录入）
+    $("bwPierRows").innerHTML = "";
+    bwAddRow("示例墩组（面积等效）", 49.96, 1.0);
+    $("bwAreaTotal").value = "2233.83";
+    $("bwVm").value = "1.96"; $("bwV0").value = "1.92";
+    $("bwQset").value = "4520"; $("bwQblocked").value = "101.23";
+    $("bwS").value = "0.000274"; $("bwDzLimit").value = "0.05";
+  };
+  $("bwGo").onclick = function () {
+    $("bwErr").textContent = "";
+    try {
+      var rows = bwReadRows();
+      if (!rows.length) throw new Error("请至少填写一排桥墩的遮挡宽度与水深");
+      var A = +$("bwAreaTotal").value;
+      var pi = BW.evalPiers(rows, A);
+      var qSet = +$("bwQset").value, qBlk = +$("bwQblocked").value;
+      if (!(qSet > 0)) throw new Error("设计流量 Q设 必须为正数");
+      var qRatio = qBlk / qSet * 100;
+      var riverType = $("bwRiverType") ? $("bwRiverType").value : "";
+      var etaWarnHtml = "";
+      var dz;
+      if (riverType) {
+        var er = BW.etaSLT808(riverType, qRatio);
+        var vmv = +$("bwVm").value, v0v = +$("bwV0").value;
+        if (!(vmv > 0) || !(v0v > 0)) throw new Error("流速 Vm / V0 必须为正数");
+        if (vmv <= v0v) throw new Error("建桥后流速 Vm 应大于建桥前流速 V0（否则无壅水）");
+        dz = { eta: er.eta, dz: er.eta * (vmv * vmv - v0v * v0v), vm: vmv, v0: v0v };
+        if (er.warnings.length) etaWarnHtml = "<div style='color:#b45309'>" + er.warnings.join("；") + "</div>";
+      } else {
+        dz = BW.backwaterB11(+$("bwVm").value, +$("bwV0").value, qRatio);
+      }
+      var s = +$("bwS").value;
+      var L = BW.backwaterLength(dz.dz, s);
+      var jd = BW.judgeDz(dz.dz, +$("bwDzLimit").value);
+      $("bwBlockOut").textContent = pi.ratio.toFixed(2) + "%（总阻水 " + pi.totalBlocked.toFixed(2) + " m² / 总过水 " + pi.totalArea.toFixed(2) + " m²）· " + (pi.ok ? "✓ 满足 ≤7%" : "✗ 不满足（>7%，考虑改移沟渠等措施）");
+      $("bwBlockOut").style.color = pi.ok ? "var(--green, #15803d)" : "var(--red, #dc2626)";
+      $("bwDzOut").textContent = dz.dz.toFixed(3) + " m（η=" + dz.eta + "，Q阻/Q设=" + qRatio.toFixed(1) + "%）";
+
+      $("bwLOut").textContent = "L = " + L.toFixed(0) + " m（L=2ΔZ/S）· 壅水判定：" + (jd.ok ? "✓ 满足" : "✗ 不满足") + "（ΔZ " + dz.dz.toFixed(3) + (jd.ok ? " ≤ " : " > ") + jd.limit + " m）";
+      var html = "<b>逐墩阻水面积</b>：<table class='ltab'><tr><th>墩号</th><th>b（m）</th><th>h（m）</th><th>A（m²）</th></tr>";
+      for (var i = 0; i < pi.rows.length; i++) {
+        html += "<tr><td>" + pi.rows[i].name + "</td><td>" + pi.rows[i].width + "</td><td>" + pi.rows[i].depth + "</td><td>" + pi.rows[i].area.toFixed(2) + "</td></tr>";
+      }
+      html += "</table>";
+      html += "<div style='margin-top:4px'>B11：ΔZ = η(Vm²−V0²) = " + dz.eta + "×(" + $("bwVm").value + "²−" + $("bwV0").value + "²) = " + dz.dz.toFixed(4) + " m</div>";
+      $("bwDetail").innerHTML = html;
+      if (etaWarnHtml) $("bwDetail").innerHTML = etaWarnHtml + $("bwDetail").innerHTML;
+      logCalc(
+        "壅水 · 阻水比与壅高",
+        { 墩排组数: String(rows.length), 总过水面积A: A + " m²", 建桥后流速Vm: $("bwVm").value + " m/s", 建桥前流速V0: $("bwV0").value + " m/s", 设计流量Q设: qSet + " m³/s", 阻水流量Q阻: qBlk + " m³/s", 河道比降S: $("bwS").value, 壅高限值: $("bwDzLimit").value + " m", 河型: riverType ? riverType : "未选（B11 经验 η）" },
+        { 阻水比: pi.ratio.toFixed(2) + " %", 壅水高度ΔZ: dz.dz.toFixed(3) + " m", 回水长度L: L.toFixed(0) + " m", 阻水比判定: pi.ok ? "满足 ≤7%" : "不满足 >7%" },
+        riverType ? "SL/T 808—2025 表A.2.3-1（η）+ JTG C30—2015 公式B11" : "JTG C30—2015 公式B11"
+      );
+    } catch (e) {
+      $("bwErr").textContent = "⚠ " + (e instanceof Error ? e.message : String(e));
+    }
+  };
+  $("bwB6Go").onclick = function () {
+    $("bwB6Err").textContent = "";
+    try {
+      var r = BW.backwaterB6(+$("bwQ").value, +$("bwB").value, +$("bwH").value, +$("bwSumB").value, +$("bwXi").value);
+      $("bwB6Out").textContent = r.dz.toFixed(3) + " m（B6 · Vm=" + r.vm.toFixed(3) + "，V0=" + r.v0.toFixed(3) + "，ξ=" + r.xi + "）";
+      logCalc(
+        "壅水 · B6 公式",
+        { 流量Q: $("bwQ").value + " m³/s", 河槽宽度B: $("bwB").value + " m", 水深H: $("bwH").value + " m", 桥孔净宽ΣB: $("bwSumB").value + " m", 阻力系数ξ: $("bwXi").value },
+        { 壅水高度ΔZ: r.dz.toFixed(3) + " m" },
+        "JTG C30—2015 公式B6"
+      );
+    } catch (e) {
+      $("bwB6Err").textContent = "⚠ " + (e instanceof Error ? e.message : String(e));
+    }
+  };
+  bwAddRow("1#", 2.0, 5.0);
   function setFitCardsVisible(v) {
-    for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid"]) {
+    for (const sel of ["#chartCard", "#fitCard", "#bayesCard", "#statsGrid", "#compareCard"]) {
       const el = document.querySelector(sel);
       if (el) el.style.display = v ? "" : "none";
     }
@@ -3804,6 +4423,7 @@
       m = Math.min(8, Math.max(1, m));
       const cs = m * cvFixed;
       state.params = { mean: r.mean, cv: cvFixed, cs };
+    state.paramsReady = true;
       $("ratioSlider").value = String(m);
       syncParamInputs();
       render();
@@ -3850,6 +4470,7 @@
       const mBest = mSAD;
       const sadBest = crit(mBest, sadOfPoints), sseBest = crit(mBest, sseOfPoints);
       state.params = { mean, cv: cvFixed, cs: mBest * cvFixed };
+    state.paramsReady = true;
       $("ratioSlider").value = String(mBest);
       syncParamInputs();
       render();
@@ -3914,6 +4535,7 @@
       for (const [label, fn] of [
         ["\u91C7\u7528", () => {
           state.params = { ...p };
+    state.paramsReady = true;
           $("cvSlider").value = String(p.cv);
           $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
           syncParamInputs();
@@ -3985,6 +4607,7 @@
         const m = Number(btn2.dataset.m);
         if (!Number.isFinite(m) || m <= 0) return;
         state.params = { ...state.params, cs: state.params.cv * m };
+    state.paramsReady = true;
         $("ratioSlider").value = String(Math.min(8, Math.max(1, m)));
         syncParamInputs();
         render();
@@ -4000,6 +4623,7 @@
   function applyFit(mean, cv, cs, msg) {
     const c = Math.min(1.2, Math.max(0.05, cv));
     state.params = { mean, cv: c, cs };
+    state.paramsReady = true;
     $("cvSlider").value = String(c);
     $("ratioSlider").value = String(Math.min(8, Math.max(1, cs / c)));
     syncParamInputs();
@@ -4136,6 +4760,7 @@
     $("inCv").value = "0.331";
     $("inCs").value = "1.99";
     state.params = { mean: 5173.6, cv: 0.331, cs: 1.99 };
+    state.paramsReady = true;
     $("cvSlider").value = 0.331;
     render();
   };
@@ -4221,7 +4846,7 @@
     try {
       const res = designFromHistory(floods, { cv, cs }, state.freq, phiPIII);
       stateCompare.B = {
-        label: "\u65B9\u6CD5B \xB7 \u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5",
+        label: "\u5386\u53F2\u6D2A\u6C34\u4F4D\u6CD5\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09",
         q: res.q,
         freqLabel: freqLabelOf(state.freq),
         note: `${floods.length} \u6B21\u5386\u53F2\u6D2A\u6C34\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09`
@@ -4291,7 +4916,7 @@
       const S0 = +$("wsS0").value / 1e3, L = +$("wsL").value, yDown = +$("wsYc").value, yUp = +$("wsYup").value;
       const s = solveDischargeFromMarks(geom, S0, yDown, yUp, L);
       stateCompare.B2 = {
-        label: "\u65B9\u6CD5B \xB7 \u4E24\u6D2A\u75D5\u53CD\u89E3 Q",
+        label: "\u4E24\u6D2A\u75D5\u53CD\u89E3 Q\uFF08\u66FC\u5B81\u516C\u5F0F\uFF09",
         q: s.Q,
         freqLabel: freqLabelOf(state.freq),
         note: `y\u4E0B=${yDown}m \u2192 y\u4E0A=${yUp}m\uFF0CL=${L}m`
@@ -4535,7 +5160,7 @@
       const Sp = v("rcSp"), n = v("rcN"), psi = v("rcPsi"), tau = v("rcTau"), F = v("rcF");
       const q = rationalFormula({ Sp, n, psi, tau, F });
       stateCompare.C1 = {
-        label: "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        label: "\u63A8\u7406\u516C\u5F0F\uFF08\u65E0\u8D44\u6599\uFF09",
         q,
         freqLabel: freqLabelOf(state.freq),
         note: `F=${F} km\xB2, \u03C4=${tau} h`
@@ -4543,7 +5168,7 @@
       renderCompare();
       showMethodCError("rc", null).textContent = q.toFixed(2);
       logCalc(
-        "\u65B9\u6CD5C \xB7 \u63A8\u7406\u516C\u5F0F",
+        "\u63A8\u7406\u516C\u5F0F\uFF08\u65E0\u8D44\u6599\uFF09",
         { \u96E8\u529BSp: Sp + " mm/h", \u8870\u51CF\u6307\u6570n: n, \u5F84\u6D41\u7CFB\u6570\u03C8: psi, \u6C47\u6D41\u65F6\u95F4\u03C4: tau + " h", \u6C47\u6C34\u9762\u79EFF: F + " km\xB2" },
         { Qp: q.toFixed(2) + " m\xB3/s" },
         "JTG/T 3365-02-2020 \u7B2C6.2\u6761\uFF08\u66B4\u96E8\u63A8\u7406\u6CD5\uFF09"
@@ -4557,7 +5182,7 @@
       $("rdZ").classList.remove("invalid");
       const q = runoffDepthFormula({ psi: phi, h, z, F: F2, beta: b, gamma: g, delta: d });
       stateCompare.C2 = {
-        label: "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        label: "\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF08\u65E0\u8D44\u6599\uFF09",
         q,
         freqLabel: freqLabelOf(state.freq),
         note: `F=${F2} km\xB2, h=${h} mm`
@@ -4565,7 +5190,7 @@
       renderCompare();
       showMethodCError("rd", null).textContent = q.toFixed(2);
       logCalc(
-        "\u65B9\u6CD5C \xB7 \u5F84\u6D41\u539A\u5EA6\u6CD5",
+        "\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF08\u65E0\u8D44\u6599\uFF09",
         {
           \u5730\u8C8C\u7CFB\u6570\u03C8: phi,
           \u5F84\u6D41\u539A\u5EA6h: h + " mm",
@@ -4866,6 +5491,47 @@
     const err = $("scErr"), out = $("scOut"), detail = $("scDetail");
     const vOf = (id) => +$(id).value;
     try {
+      if ($("scSoil")?.value === "nonclay642") {
+        const r = generalScour642({
+          Q2: vOf("scQ2"), Qc: vOf("scQc"), Ad: vOf("scA"), Bc: vOf("scBc"),
+          lambda: vOf("scLambda"), mu: vOf("scMu"), Bcg: vOf("scBcj"), hcm: vOf("scHmc")
+        });
+        lastGeneralHp = r.hp;
+        lastGeneralHy = r.hy;
+        lastScourE = NaN;
+        lastD50 = +$("scD50").value;
+        lastScourMethod = "642";
+        lastScourVc = vOf("scVc");
+        lastScourHc = vOf("scHcq");
+        out.textContent = r.hp.toFixed(2);
+        detail.innerHTML = "";
+        const lines = [
+          `hp = 1.04 · (${vOf("scA")}×${vOf("scQ2")}/${vOf("scQc")})<sup>0.90</sup> · [${vOf("scBc")}/((1−${vOf("scLambda")})×${vOf("scMu")}×${vOf("scBcj")})]<sup>0.66</sup> · ${vOf("scHmc")} = <b>${r.hp.toFixed(2)} m</b>`,
+          `冲刷深度 hy = hp − hcm = <b>${r.hy.toFixed(2)} m</b>｜(Ad·Q₂/Qc) = ${r.t1}，Bc/((1−λ)μBcg) = ${r.t2}`,
+          `依据 JTG C30—2015 公式 8.3.1-1（64-2 简化式）；行近流速推算用 v = Vc·(hp/hc)<sup>2/3</sup>`
+        ];
+        for (const l of lines) {
+          const d = document.createElement("div");
+          d.innerHTML = l;
+          detail.appendChild(d);
+        }
+        for (const w of r.warnings) {
+          const d = document.createElement("div");
+          d.textContent = "提示：" + w;
+          d.style.color = "var(--amber)";
+          detail.appendChild(d);
+        }
+        err.style.display = "none";
+        err.textContent = "";
+        logCalc(
+          "冲刷 · 一般冲刷64-2",
+          { 设计流量Q2: vOf("scQ2") + " m³/s", 天然河槽流量Qc: vOf("scQc") + " m³/s", 集中系数Ad: vOf("scA"), 河槽宽度Bc: vOf("scBc") + " m", 阻水比λ: vOf("scLambda"), 压缩系数μ: vOf("scMu"), 桥孔净宽Bcg: vOf("scBcj") + " m", 最大水深hcm: vOf("scHmc") + " m" },
+          { hp: r.hp.toFixed(2) + " m", 冲刷深度hy: r.hy.toFixed(2) + " m" },
+          "JTG C30—2015 公式8.3.1-1（64-2 简化式）",
+          { "Ad·Q2/Qc": r.t1, "Bc/((1−λ)μBcg)": r.t2 }
+        );
+        return;
+      }
       if ($("scSoil")?.value === "clay") {
         const part = $("scPart").value;
         const r2 = clayGeneralScour({
@@ -4882,6 +5548,7 @@
         lastGeneralHy = r2.depth;
         lastScourE = NaN;
         lastD50 = NaN;
+        lastScourMethod = "other";
         out.textContent = r2.hp.toFixed(2);
         detail.innerHTML = `hp = [ A\xB7(Q/(\u03BC\xB7B))\xB7(h<sub>max</sub>/h<sub>avg</sub>)<sup>5/3</sup> \xF7 (0.33\xB7(1/I<sub>L</sub>)) ]<sup>${r2.exponent}</sup> = <b>${r2.hp.toFixed(2)} m</b><br>\u51B2\u5237\u6DF1\u5EA6 = hp \u2212 h<sub>max</sub> = <b>${r2.depth.toFixed(2)} m</b>\uFF08\u9ECF\u6027\u571F\uFF0C${part === "channel" ? "\u6CB3\u69FD" : "\u6CB3\u6EE9"}\u90E8\u5206\uFF09<br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.2\uFF08\u9ECF\u6027\u571F\u6CB3\u5E8A\uFF09</span>`;
         err.style.display = "none";
@@ -4907,6 +5574,7 @@
         lastGeneralHy = r2.depth;
         lastScourE = NaN;
         lastD50 = NaN;
+        lastScourMethod = "other";
         out.textContent = r2.hp.toFixed(2);
         detail.innerHTML = `hp = [ A\xB7(Qt/(\u03BC\xB7B<sub>tj</sub>))\xB7(h<sub>tm</sub>/h<sub>tq</sub>)<sup>5/3</sup> \xF7 v<sub>H1</sub> ]<sup>5/6</sup> = <b>${r2.hp.toFixed(2)} m</b><br>v<sub>H1</sub> = ${r2.vH1.toFixed(2)} m/s\uFF08${r2.band}\uFF09\uFF5C \u51B2\u5237\u6DF1\u5EA6 = <b>${r2.depth.toFixed(2)} m</b><br><span style="color:var(--text3)">\u4F9D\u636E JTG C30\u20142015 \u516C\u5F0F 8.3.1-5\uFF08\u975E\u9ECF\u6027\u571F\u6CB3\u6EE9\uFF1B\u8868 8.3.1-3 \u5DF2\u5185\u7F6E\u5BF9\u6570\u63D2\u503C\uFF09</span>`;
         err.style.display = "none";
@@ -4923,6 +5591,7 @@
       const rho = +$("scRho").value;
       const { E, band } = sandCoefE(rho);
       const A = +$("scA").value;
+      lastScourMethod = "641";
       const r = generalScour641({ Q2, mu, Bcj, hmc, hcq, E, d50, A });
       lastGeneralHp = r.hp;
       lastGeneralHy = r.hy;
@@ -4974,8 +5643,14 @@
   }
   if ($("scGo")) {
     let syncScSoil = function() {
-      const clay = $("scSoil").value === "clay";
-      $("scHintNonclay").style.display = clay ? "none" : "";
+      const soil = $("scSoil").value;
+      const clay = soil === "clay";
+      const m642 = soil === "nonclay642";
+      $("scHintNonclay").style.display = clay || m642 ? "none" : "";
+      const h2 = $("scHintNonclay2");
+      if (h2) h2.style.display = m642 ? "" : "none";
+      const r2row = $("sc2Row");
+      if (r2row) r2row.style.display = m642 ? "" : "none";
       $("scHintClay").style.display = clay ? "" : "none";
       $("scPart").style.display = "";
       $("scIL").style.display = clay ? "" : "none";
@@ -5009,10 +5684,136 @@
       }
     };
   }
+  // ===== 水位流量关系（率定曲线插值）=====
+  var RC = window.__hsRatingCurve;
+  function calcRatingCurve() {
+    const err = $("rcErr"), out = $("rcOut"), detail = $("rcDetail");
+    try {
+      if (!RC) throw new Error("率定曲线模块未加载（ratingcurve.js）");
+      const curve = RC.parseCurve($("rcTable").value);
+      const method = $("rcMethod").value;
+      const dir = $("rcDir").value;
+      const val = +$("rcIn").value;
+      $("rcOutLabel").textContent = dir === "z2q" ? "对应流量 Q（m³/s）" : "对应水位 Z（m）";
+      let r, label, unitIn, unitOut;
+      if (dir === "z2q") {
+        r = RC.stageToDischarge(val, curve, method);
+        label = "Z=" + val + " m →";
+        unitIn = "m";
+        unitOut = "m³/s";
+      } else {
+        r = RC.dischargeToStage(val, curve, method);
+        label = "Q=" + val + " m³/s →";
+        unitIn = "m³/s";
+        unitOut = "m";
+      }
+      out.textContent = dir === "z2q" ? r.Q.toFixed(2) : r.Z.toFixed(3);
+      detail.innerHTML = "";
+      const lines = [
+        `<b>${label} ${dir === "z2q" ? r.Q.toFixed(2) + " " + unitOut : r.Z.toFixed(3) + " " + unitOut}</b>（${method === "loglog" ? "log-log 插值" : "线性插值"}，曲线 ${curve.stages.length} 点）`,
+        r.warnings.map((w) => `⚠ ${w}`).join("<br>")
+      ].filter(Boolean);
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "水位流量关系 · 率定曲线插值",
+        { 方向: dir === "z2q" ? "水位→流量" : "流量→水位", 输入: val + " " + unitIn, 方法: method === "loglog" ? "log-log" : "线性", 曲线点数: curve.stages.length },
+        { 结果: out.textContent + " " + unitOut },
+        "率定曲线分段插值（内置内置实测率定，内置实测率定数据）"
+      );
+    } catch (e) {
+      out.textContent = "—";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  if ($("rcGo")) {
+    $("rcGo").onclick = calcRatingCurve;
+    $("rcPreset").onclick = () => {
+      $("rcTable").value = [
+        "35.7, 0", "35.9, 16.1", "36.3, 80", "36.7, 160", "37.1, 250", "38, 560",
+        "39.1, 1000", "40.1, 1490", "41.1, 2050", "42.1, 2690", "43.1, 3370",
+        "44.1, 4090", "45.1, 4830", "46.1, 5580", "47.1, 6350"
+      ].join("\n");
+    };
+    $("rcDir").onchange = () => { $("rcIn").value = $("rcDir").value === "z2q" ? "44.99" : "4740"; };
+  }
+
+  // ===== 湖南暴雨洪水查算手册（2015）· 设计暴雨与推理公式 =====
+  var MANUAL = window.__hsManual2015;
+  function calcManual2015() {
+    const err = $("hsaErr"), qOut = $("hsaQOut"), detail = $("hsaDetail");
+    const vOf = (id) => +$(id).value;
+    try {
+      if (!MANUAL) throw new Error("查算手册模块未加载（manual2015.js）");
+      const Hpoint = MANUAL.pointRainfall(vOf("hsaHbar"), vOf("hsaKp"));
+      const Harea = MANUAL.areaRainfall(Hpoint, vOf("hsaAlpha"));
+      const n2 = vOf("hsaN2"), n3 = vOf("hsaN3");
+      const dur = MANUAL.durationRainfalls(Harea, n2, n3);
+      const hd = MANUAL.hourlyDistribution(dur);
+      const I0 = vOf("hsaI0");
+      const nr = MANUAL.netRainSeries(hd.hours, I0);
+      const tau = vOf("hsaTau");
+      const nUsed = tau < 6 ? n2 : n3;
+      const Q = MANUAL.rationalQ(dur.H1, vOf("hsaPhi"), tau, nUsed, vOf("hsaF"));
+      qOut.textContent = Q.toFixed(2);
+      detail.innerHTML = "";
+      const lines = [
+        `H₂₄点 = ${vOf("hsaHbar")}×${vOf("hsaKp")} = <b>${Hpoint.toFixed(2)} mm</b>；H₂₄面 = ×α(${vOf("hsaAlpha")}) = <b>${Harea.toFixed(2)} mm</b>`,
+        `时程分配（mm）：H₁=<b>${dur.H1}</b>｜H₃=${dur.H3}｜H₆=${dur.H6}｜H₁₂=${dur.H12}｜H₂₄=${dur.H24}`,
+        `增量：H₃−H₁=${(dur.H3 - dur.H1).toFixed(1)}｜H₆−H₃=${(dur.H6 - dur.H3).toFixed(1)}｜H₁₂−H₆=${(dur.H12 - dur.H6).toFixed(1)}｜H₂₄−H₁₂=${(dur.H24 - dur.H12).toFixed(1)}`,
+        `7 区概化雨型 24 时段合计 ${hd.total} mm（峰第 13 时段 = ${hd.hours[12]} mm）；扣初损 I₀=${I0} → 净雨合计 <b>${nr.total} mm</b>`,
+        `推理公式：Q = 0.278×φ(${vOf("hsaPhi")})×H₁(${dur.H1})/τ(${tau})^n${tau < 6 ? "₂" : "₃"}×F(${vOf("hsaF")}) = <b>${Q.toFixed(2)} m³/s</b>`,
+        `<span style="color:var(--text3)">黄金锚点：内置示例（百年一遇） → H₁=84.1/H₃=125.13/H₆=160.82/H₁₂=197.72/H₂₄=243.09（报告表 5.1-6 逐时段一致）；撇洪沟涵闸 F=1.6km² → Q=6.74 m³/s（p61）</span>`
+      ];
+      for (const l of lines) {
+        const d = document.createElement("div");
+        d.innerHTML = l;
+        detail.appendChild(d);
+      }
+      err.style.display = "none";
+      err.textContent = "";
+      logCalc(
+        "查算手册 · 设计暴雨与推理公式",
+        { "H̄24": vOf("hsaHbar") + " mm", Kp: vOf("hsaKp"), "α": vOf("hsaAlpha"), n2: n2, n3: n3, "I₀": I0 + " mm", "φ": vOf("hsaPhi"), "τ": tau + " h", F: vOf("hsaF") + " km²" },
+        { "H24点": Hpoint.toFixed(2) + " mm", "H24面": Harea.toFixed(2) + " mm", H1: dur.H1 + " mm", "Qm": Q.toFixed(2) + " m³/s" },
+        "湖南省暴雨洪水查算手册（2015）+ 双源交叉验证",
+        { "净雨合计": nr.total + " mm", "时段合计": hd.total + " mm" }
+      );
+    } catch (e) {
+      qOut.textContent = "—";
+      detail.innerHTML = "";
+      err.style.display = "block";
+      showErr(err, e);
+    }
+  }
+  if ($("hsaGo")) {
+    $("hsaGo").onclick = calcManual2015;
+    $("hsaPreset").onclick = () => {
+      $("hsaHbar").value = "107.38";
+      $("hsaKp").value = "2.31";
+      $("hsaAlpha").value = "0.98"; // 韶河锚点：248.05×0.98=243.09（报告表5.1-6 链条）
+      $("hsaN2").value = "0.638";
+      $("hsaN3").value = "0.702";
+      $("hsaI0").value = "32";
+      $("hsaF").value = "1.6";
+      calcManual2015();
+    };
+  }
+
   var lastGeneralHp = 0;
   var lastGeneralHy = 0;
   var lastScourE = 0.66;
   var lastD50 = 0.14;
+  var lastScourMethod = "641";
+  var lastScourVc = 0;
+  var lastScourHc = 0;
   function buildPierQuick() {
     const box = $("pierQuick");
     if (!box) return;
@@ -5145,7 +5946,15 @@
     $("lsUseV").onclick = () => {
       try {
         if (lastGeneralHp <= 0) throw new Error("\u8BF7\u5148\u5B8C\u6210\u4E00\u822C\u51B2\u5237\u8BA1\u7B97");
-        const v = approachVelocity641(lastScourE, lastD50, lastGeneralHp);
+        let v;
+        if (lastScourMethod === "642") {
+          if (!(lastScourVc > 0)) throw new Error("请先在 64-2 表单中填写天然河槽平均流速 Vc 并完成一般冲刷计算");
+          v = approachVelocity642(lastScourVc, lastGeneralHp, lastScourHc);
+        } else if (lastScourMethod === "641") {
+          v = approachVelocity641(lastScourE, lastD50, lastGeneralHp);
+        } else {
+          throw new Error("行近流速推算需先完成 64-1 或 64-2 一般冲刷计算（黏性土/河滩请手填 v）");
+        }
         $("lsV").value = v.toFixed(3);
         const err = $("lsErr");
         err.style.display = "none";
@@ -5172,6 +5981,12 @@
         d.textContent = "\xB7 " + n;
         note.appendChild(d);
       }
+      logCalc(
+        "冲刷 · 总冲刷深度",
+        { 自然演变冲刷: $("tsNat").value + " m", 一般冲刷深度: (Number.isFinite(lastGeneralHy) ? lastGeneralHy : 0) + " m", 局部冲刷深度: (Number.isFinite(hb) ? hb : 0) + " m" },
+        { 总冲刷深度: r.total.toFixed(2) + " m" },
+        "JTG C30—2015 第8.6.1条（自然演变 + 一般 + 局部冲刷不利组合）"
+      );
       try {
         const dm = burialDelta(r.total, "major");
         const dg = burialDelta(r.total, "grand");
@@ -5239,6 +6054,360 @@
       valBox.appendChild(d);
     }
     helpRendered = true;
+    renderGuides();
+  }
+  /* ===== v1.0.18 功能使用指引（帮助中心内） ===== */
+  var guidesRendered = false;
+  var GUIDES = [
+    { mode: "series", title: "流量系列适线 · 有实测资料", steps: ["在「年最大流量系列」输入框粘贴实测系列——每行一个数、顺序不限，程序自动排序计算；也可用文件识别", "看「矩法初估」给出的 Q̄ / Cv / Cs，适线图自动绘出经验点据与理论曲线", "拖动 Cv 滑杆、修改 M 值（Cs=M×Cv）微调，直到理论曲线与经验点据（尤其大流量点）基本吻合", "在下方选设计洪水频率，读 Qp——即当前工程的设计流量", "成果自动进入计算日志与工作流第 2 步"], tips: "系列宜不少于 30 年；含历史特大洪水时勾选「不连序」填考证期 N；Cs 常按 Cv 的 2~4 倍起步试凑" },
+    { mode: "params", title: "直接参数模式 · 已有采用值", steps: ["适用于已由手算或其他软件得到 Q̄ / Cv / Cs 采用值的复核场景", "直接在三个输入框填写采用值，选择频率后即时读 Qp", "可与适线模式的结果互相印证"], tips: "参数修改即时生效并自动保存" },
+    { mode: "hist", title: "历史洪水位法 · 有洪痕资料", steps: ["填写两次历史洪水的断面数据（河槽/河滩宽、水深、糙率、比降）与洪痕水位", "点「计算」由曼宁公式推出各次历史洪水流量", "填考证期与频率，按规范 6.3.3 推算设计流量 Qp", "水面线推算（SSM）：粘贴断面数据或到「示例中心」载入水面线示例，可试算水面线并把断面要素一键填入冲刷模块"], tips: "历史洪水不宜少于 2 次；糙率可查内置 Ven Te Chow 表一键填入" },
+    { mode: "noData", title: "暴雨资料推算 · 无资料地区", steps: ["选暴雨分区（支持输入省份检索）", "推理公式路：填 Sp / F / L / I / K1 / β1，直接出 Qp", "径流厚度法路：用内置查表（B-9 径流厚度 h、B-10~B-13 折减系数）逐项取参后计算", "两种方法可并行计算、结果对比"], tips: "推理公式适用于汇水面积 <100 km²；查表值超出表列范围时软件会明确标注外推" },
+    { mode: "hydro", title: "孔径 · 水位 · 冲刷（第 7 / 8 章）", steps: ["桥孔设计：填 Qp / Qc / Bc 与河段类型，得最小净长 Lj（三种河段公式自动切换）", "水位复核：率定曲线插值或水面线推算，得设计水位", "冲刷验算：按土类选一般冲刷公式（64-1 / 64-2 / 8.3.2 / 8.3.1-5）→ 局部冲刷（65-2 / 8.4.3）→ 总冲刷深度", "总冲刷结果自动给出基底埋深安全值（表 8.6.2 / 附录 D）", "每一步都写入计算日志，报告中心自动引用"], tips: "行近流速可由一般冲刷成果自动推算；墩形系数 Kξ 用「墩形速查」点值填入" },
+    { mode: "backwater", title: "壅水 · 阻水比", steps: ["逐排填桥墩遮挡宽度与水深，填总过水面积", "填设计流量与河滩路堤阻断流量（上游成果可从计算日志或报告中心查得）", "点「计算」：得阻水比（≤7% 判定）、壅高 ΔZ、回水长度 L", "选河型时走 SL/T 808—2025 η 表，否则按 B11 经验公式"], tips: "阻水比与壅高成果自动留痕，河势模块可一键引用" },
+    { mode: "river", title: "河势稳定（SL/T 808—2021）", steps: ["选河型、岸坡防护、演变趋势（判断方法见模块内折叠指引）", "点「从计算留痕引用阻水比 / 总冲刷深度」自动带入壅水阻水比与总冲刷深度", "点「评价河势稳定影响」得五因子评分、风险等级与防治建议", "成果自动写入报告 4.3.3 / 5.3 节"], tips: "本模块为定性+半定量评价（第 6.5.3 条）；重要河段须数学/物理模型专项论证（第 6.5.1/6.5.2 条）" },
+    { mode: "map", title: "地图量算 · 汇水区", steps: ["在线模式：输入天地图 tk 后用矩形/多边形勾汇水区；离线模式：载入本地图片并标定比例尺", "点「计算」得汇水面积 F、主河沟长 L、平均比降 I", "成果可一键回填到「暴雨资料推算」"], tips: "在线底图仅用于屏幕显示，不随导出；境内边界以国家标准为准" },
+    { mode: "report", title: "报告中心", steps: ["看 8 步工作流闭环检查：哪几步未完成、下一步做什么一目了然", "缺口清单列出报告还缺哪些内容", "闭环后点「生成报告」：自动汇总全部计算留痕，按 JTG C30—2015 + SL/T 808—2021 目录出 Word", "报告中的【待补充】项结合设计资料完善"], tips: "工程信息（项目名/桥位/河流等）在「导出中心」填写或导入，自动进入报告抬头" },
+    { mode: "export", title: "导出中心", steps: ["先在下方「工程信息与项目文件」填（或 JSON 导入）报告抬头字段", "勾选需要导出的内容（可多选）", "点「导出所选」逐项生成文件", "「下载工程信息模板」可拿到标准 JSON 格式，批量导入更快捷"], tips: "计算日志建议随报告一并导出，保证全过程可追溯" },
+    { mode: "manage", title: "方案与数据管理", steps: ["方案管理：把当前状态存为新方案（只存差异），可随时切换、两两对比", "版本对比：任选两个工程文件，直接看输入与成果差异", "系统设置：默认设计频率/河段、本机数据占用、知识库导出", "计算日志与历史：全过程留痕，可导出 Markdown / JSON"], tips: "方案数据只存差异、不复制，对标 HEC-RAS 的 Plan 机制" },
+    { mode: "examples", title: "示例中心", steps: ["左侧切到「示例中心」，查看按功能归类的内置示例", "点某个示例的「载入示例」，软件会切换到对应功能并填入演示数据", "示例数据不会自动进入正式计算，载入后请先核改为本工程数据", "需要逐功能操作说明时，切到「帮助中心」查看功能使用指引"], tips: "正式工作界面默认不展示示例按钮；示例与新手引导集中在示例中心和帮助中心" }
+  ];
+
+  /* v1.0.37-r3 新手引导中心：全功能分步入门（不依赖 driver.js） */
+  function openGuideCenter() {
+    const c = document.getElementById("guideCenter");
+    if (!c) return;
+    c.style.display = "block";
+    renderGuideList();
+  }
+  function closeGuideCenter() {
+    const c = document.getElementById("guideCenter");
+    if (c) c.style.display = "none";
+  }
+  function renderGuideList() {
+    const list = document.getElementById("gcList");
+    if (!list || list.childElementCount) return;
+    for (const g of GUIDES) {
+      const item = document.createElement("div");
+      item.className = "gc-item";
+      item.innerHTML = "<b>" + g.title + "</b><small>" + g.steps.length + " 步入门 · 含注意事项</small>";
+      item.onclick = () => showGuideDetail(g);
+      list.appendChild(item);
+    }
+  }
+  function showGuideDetail(g) {
+    const d = document.getElementById("gcDetail");
+    if (!d) return;
+    d.style.display = "block";
+    d.innerHTML = "<h3 style='margin:0 0 6px;font-size:18px'>" + g.title + "</h3>" +
+      g.steps.map(function (t, i) {
+        return '<div class="gc-step"><span class="n">' + (i + 1) + "</span><span>" + t + "</span></div>";
+      }).join("") +
+      (g.tips ? '<div class="gc-tips"><b>注意：</b>' + g.tips + "</div>" : "") +
+      '<div class="gc-actions"><button class="btn" id="gcGoMode">打开此功能</button>' +
+      '<button class="btn ghost" id="gcBackList">返回列表</button></div>';
+    d.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    document.getElementById("gcGoMode").onclick = function () {
+      closeGuideCenter();
+      try { if (g.mode) switchMode(g.mode); } catch (e) {}
+    };
+    document.getElementById("gcBackList").onclick = function () {
+      d.style.display = "none";
+      document.getElementById("gcList").scrollIntoView({ behavior: "smooth" });
+    };
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    const rp = document.getElementById("tourReplay");
+    if (rp) {
+      // 替换失效的 driver.js 重播：改为打开自研新手引导中心
+      rp.addEventListener("click", function (ev) {
+        try { ev.stopImmediatePropagation(); ev.preventDefault(); } catch (e) {}
+        openGuideCenter();
+      }, true);
+    }
+    const cc = document.getElementById("gcClose");
+    if (cc) cc.onclick = closeGuideCenter;
+    const lm = document.getElementById("btnLMoment");
+    if (lm) lm.onclick = runLMoments;
+    const rf = document.getElementById("btnRatingFit");
+    if (rf) rf.onclick = runRatingFit;
+    const ex = document.getElementById("btnChartSvg");
+    if (ex) ex.onclick = exportChartSvg;
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") closeGuideCenter();
+    });
+  });
+
+  /* v1.0.38 算法注册表（可插拔内核标注） */
+  var ALG_REGISTRY = {
+    stats: { title: "水文统计", engines: [
+      { id: "moment", name: "矩法（P-Ⅲ）", impl: "自研内核", note: "Γ 函数 · 求矩适线 · 不连序" },
+      { id: "lmoment", name: "L 矩法", impl: "Python sidecar", note: "L-矩稳健估计，抗极端值" }
+    ] },
+    rating: { title: "率定曲线", engines: [
+      { id: "linear", name: "线性插值（基线）", impl: "自研", note: "相邻测点线性内插" },
+      { id: "fit", name: "幂函数 / 二次多项式拟合", impl: "Python sidecar", note: "最小二乘 + 残差评估" }
+    ] },
+    ocr: { title: "表格识别", engines: [
+      { id: "rapid", name: "RapidOCR（轻量在线）", impl: "ONNX 运行时", note: "快、小，不含表格结构" },
+      { id: "structure", name: "PP-StructureV3（表格结构）", impl: "Python sidecar（预留）", note: "单元格结构化，需模型包" },
+      { id: "tesseract", name: "Tesseract（离线兜底）", impl: "浏览器 wasm", note: "无模型依赖" }
+    ] },
+    chart: { title: "科学绘图", engines: [
+      { id: "echarts", name: "ECharts（Origin 风格）", impl: "Apache-2.0", note: "出版级：图例/空心点/对数机率轴" }
+    ] }
+  };
+  function kernel(method, params) {
+    if (window.hs && window.hs.kernel) return window.hs.kernel(method, params);
+    return Promise.resolve({ error: "内核通道不可用" });
+  }
+  /* L 矩法：调 Python sidecar，与矩法并列对比 */
+  function runLMoments() {
+    const ta = $("series");
+    const raw = String((ta && ta.value) || "").trim();
+    const arr = raw.split(/[\s,;\n\t]+/).map(Number).filter(function (v) { return isFinite(v) && v > 0; });
+    if (arr.length < 3) { alert("至少 3 个有效流量值才能做 L 矩分析"); return; }
+    const box = $("lmomentBox");
+    if (box) box.style.display = "block";
+    const out = $("lmomentOut");
+    if (out) out.textContent = "正在调用 L 矩内核计算…";
+    kernel("lmoments", { series: arr }).then(function (r) {
+      if (!r || r.error) { if (out) out.textContent = "L 矩内核不可用：" + ((r && r.error) || "未知"); return; }
+      const d = r.result;
+      const cvM = state.lastCv != null ? state.lastCv : (state.moments && state.moments.cv);
+      const csM = state.lastCs != null ? state.lastCs : (state.moments && state.moments.cs);
+      const txt = "L 矩法（n=" + d.n + "）：L-Cv = " + d.lcv.toFixed(4) + "，L-Cs(τ3) = " + d.lskew.toFixed(4) +
+        "，换算 Cs = " + d.csFromL.toFixed(3) + "\n" +
+        "矩法对照：Cv = " + (cvM != null ? (+cvM).toFixed(4) : "—") + "，Cs = " + (csM != null ? (+csM).toFixed(3) : "—") + "\n" +
+        "说明：L 矩对特大值不敏感，短系列/含特大洪水时比矩法稳健；两者成果相差大时建议以 L 矩为主并复核大流量点据。";
+      if (out) out.textContent = txt;
+      const btn = $("lmomentUse");
+      if (btn) btn.onclick = function () {
+        try {
+          if (typeof $("cvIn") !== "undefined" && $("cvIn")) { $("cvIn").value = d.cvFromL.toFixed(3); $("cvIn").dispatchEvent(new Event("input", { bubbles: true })); }
+          if ($("ratioIn")) {
+            const cs = d.csFromL, cv = d.cvFromL;
+            const m = cv > 0 ? (cs / cv) : 2;
+            $("ratioIn").value = Math.min(8, Math.max(1, m)).toFixed(1);
+            $("ratioIn").dispatchEvent(new Event("input", { bubbles: true }));
+          }
+        } catch (e) {}
+      };
+    });
+  }
+  /* 率定曲线拟合：调 sidecar，给出公式/残差与相对线性插值的提升 */
+  function runRatingFit() {
+    const hRaw = String(($("rtH") && $("rtH").value) || "").trim();
+    const qRaw = String(($("rtQ") && $("rtQ").value) || "").trim();
+    const H = hRaw.split(/[\s,;\n\t]+/).map(Number).filter(isFinite);
+    const Q = qRaw.split(/[\s,;\n\t]+/).map(Number).filter(isFinite);
+    if (H.length < 3 || H.length !== Q.length) { alert("需要 ≥3 组同长度的水位 H 与流量 Q（每行一组）"); return; }
+    const out = $("ratingFitOut");
+    if (out) out.textContent = "正在拟合…";
+    kernel("rating_fit", { h: H, q: Q }).then(function (r) {
+      if (!r || r.error) { if (out) out.textContent = "拟合内核不可用：" + ((r && r.error) || "未知"); return; }
+      const d = r.result, b = d[d.best];
+      let f = "";
+      if (d.best === "power") f = "Q = " + b.a.toFixed(4) + " · (H − " + b.h0.toFixed(3) + ")^" + b.b.toFixed(4);
+      else f = "Q = " + b.coef.map(function (c, i) { return (i ? " + " : "") + c.toFixed(4) + (i ? "·H^" + i : ""); }).join("");
+      if (out) out.textContent =
+        "最优模型：" + (d.best === "power" ? "幂函数" : "二次多项式") + "\n" + f +
+        "\n拟合残差 RMSE = " + b.rmse.toFixed(3) + " m³/s（归一化 " + (b.nrmse * 100).toFixed(2) + "%）" +
+        "\n线性插值基线 RMSE = " + d.linearBaseline.rmse.toFixed(3) + " m³/s（归一化 " + (d.linearBaseline.nrmse * 100).toFixed(2) + "%）" +
+        "\n精度提升：" + d.improvePct + "%";
+    });
+  }
+  /* 出版级 SVG 导出（矢量，可直接进 Word/Illustrator） */
+  function exportChartSvg() {
+    try {
+      const svg = document.getElementById("chart");
+      if (svg && svg.outerHTML && svg.outerHTML.indexOf("<circle") >= 0) {
+        const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + svg.outerHTML], { type: "image/svg+xml" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "P-III-适线图.svg";
+        a.click();
+        return;
+      }
+      alert("当前适线图由 ECharts 渲染（无矢量节点）。请在设置中心切换「绘图引擎：SVG 适线图」，或用截图导出 PNG。");
+    } catch (e) { alert("导出失败：" + e.message); }
+  }
+  function renderGuides() {
+    if (guidesRendered) return;
+    const box = $("helpGuides");
+    if (!box) return;
+    guidesRendered = true;
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "14px";
+    const h = document.createElement("h2");
+    h.textContent = "功能使用指引（每个功能怎么用）";
+    h.style.marginBottom = "8px";
+    wrap.appendChild(h);
+    for (const g of GUIDES) {
+      const d = document.createElement("details");
+      d.style.marginTop = "8px";
+      const s = document.createElement("summary");
+      s.style.cursor = "pointer";
+      s.style.fontSize = "13px";
+      s.style.fontWeight = "500";
+      s.style.color = "var(--blue)";
+      s.textContent = g.title;
+      d.appendChild(s);
+      const body = document.createElement("div");
+      body.style.marginTop = "6px";
+      body.innerHTML = '<div style="font-size:12.5px;color:var(--text2)"><b>操作步骤：</b><ol style="margin:4px 0 6px;padding-left:20px">' +
+        g.steps.map((x) => "<li style=\"margin-bottom:3px\">" + x + "</li>").join("") + "</ol>" +
+        '<div style="color:var(--text3)">贴士：' + g.tips + '</div></div>';
+      d.appendChild(body);
+      wrap.appendChild(d);
+    }
+    box.appendChild(wrap);
+  }
+
+  /* ===== v1.0.18 方案与数据管理（常驻卡片已迁入，此函数补充说明卡） ===== */
+  var manageBuilt = false;
+  function renderManage() {
+    const box = $("manageBox");
+    if (!box || manageBuilt) return;
+    manageBuilt = true;
+    const tip = document.createElement("div");
+    tip.className = "hint";
+    tip.style.marginTop = "0";
+    tip.textContent = "方案管理对标 HEC-RAS 的 Plan 机制：共享数据只存一份，每个方案只存差异；版本对比直接回答“两个方案差在哪”。计算日志与计算历史是全过程留痕，可导出随报告附上。";
+    box.appendChild(tip);
+  }
+
+  /* ===== v1.0.18 导出中心 ===== */
+  var EXPORT_ITEMS = [
+    { key: "report", label: "桥涵水文分析报告（Word）", hint: "含 8 步闭环全部计算留痕，按 JTG C30 + SL/T 808 目录", dep: "◆ 建议先完成工作流闭环" },
+    { key: "calcbook", label: "设计流量计算书（Word）", hint: "适线参数、频率成果表、适线图", dep: "◆ 需先有适线成果" },
+    { key: "svg", label: "频率 / 率定曲线（SVG）", hint: "矢量图", dep: "◆ 需先在曲线卡算出" },
+    { key: "sharecard", label: "分享结果卡片（PNG）", hint: "参数与设计流量汇总图", dep: "◆ 需先有适线成果" },
+    { key: "png", label: "频率 / 率定曲线（PNG）", hint: "2 倍像素密度位图", dep: "◆ 需先在曲线卡算出" },
+    { key: "project", label: "工程文件（JSON）", hint: "含全部输入与项目信息，可再导入", dep: "" },
+    { key: "logmd", label: "计算日志（Markdown）", hint: "全过程留痕，建议随报告附上", dep: "" },
+    { key: "logjson", label: "计算日志（JSON）", hint: "机读格式，便于存档与比对", dep: "" },
+    { key: "plans", label: "多方案工程（JSON）", hint: "全部方案（只存差异）", dep: "◆ 需先保存过方案" },
+    { key: "diff", label: "版本对比摘要（Markdown）", hint: "两个方案的差异清单", dep: "◆ 需先执行方案对比" },
+    { key: "sysdata", label: "本机全部数据（JSON 备份）", hint: "参数记忆、默认设置、天地图 tk", dep: "" },
+    { key: "kb", label: "知识库（Markdown）", hint: "规范条文速查与数据来源", dep: "" }
+  ];
+  var EXPORT_MAP = {
+    report: () => { if (window.HONGSUAN_FIE_DOWNLOAD) window.HONGSUAN_FIE_DOWNLOAD(); else throw new Error("报告模块未加载"); },
+    calcbook: () => $("btnReport").click(),
+    svg: () => $("exSvg").click(),
+    sharecard: () => $("shareCardBtn").click(),
+    png: () => $("exPng").click(),
+    project: () => $("btnExportProject").click(),
+    logmd: () => $("logExportMd").click(),
+    logjson: () => $("logExportJson").click(),
+    plans: () => $("planExport").click(),
+    diff: () => $("pdMd").click(),
+    sysdata: () => $("sysExport").click(),
+    kb: () => $("sysKb").click()
+  };
+  var exportBuilt = false;
+  function renderExportCenter() {
+    const box = $("exportBox");
+    if (!box || exportBuilt) return;
+    exportBuilt = true;
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML =
+      '<h2>导出中心</h2>' +
+      '<div class="hint" style="margin-top:0">勾选需要导出的内容后一次导出（浏览器连续下载多个文件时如被拦截，请允许多文件下载）。带 ◆ 的项需要先完成对应计算。工程信息在下方卡片填写或导入，自动进入报告抬头与计算书。</div>' +
+      '<div id="exportList" style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px"></div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">' +
+      '<button class="btn" id="exportGo">导出所选</button>' +
+      '<button class="btn ghost" id="exportTpl" style="margin-top:0">下载工程信息模板（JSON）</button>' +
+      '</div>' +
+      '<div id="exportStatus" style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7"></div>';
+    box.insertBefore(wrap, box.firstChild);
+    const list = $("exportList");
+    for (const it of EXPORT_ITEMS) {
+      const lab = document.createElement("label");
+      lab.style.cssText = "display:flex;gap:7px;align-items:flex-start;font-size:12.5px;color:var(--text);cursor:pointer;padding:5px 8px;border:1px solid var(--border);border-radius:9px";
+      lab.innerHTML = '<input type="checkbox" data-ex="' + it.key + '" style="width:auto;margin-top:2px">' +
+        '<span><b>' + it.label + '</b><br><span style="font-size:11.5px;color:var(--text3)">' + it.hint + (it.dep ? ' <span style="color:var(--amber,#b45309)">' + it.dep + '</span>' : "") + '</span></span>';
+      list.appendChild(lab);
+    }
+    const st = $("exportStatus");
+    const setSt = (msg, ok) => {
+      const line = document.createElement("div");
+      line.style.color = ok ? "#15803d" : "#b91c1c";
+      line.textContent = (ok ? "✓ " : "✗ ") + msg;
+      st.appendChild(line);
+    };
+    $("exportGo").onclick = async () => {
+      st.innerHTML = "";
+      const keys = [];
+      list.querySelectorAll("input[data-ex]").forEach((c) => { if (c.checked) keys.push(c.dataset.ex); });
+      if (!keys.length) { setSt("未勾选任何导出项", false); return; }
+      for (const k of keys) {
+        const it = EXPORT_ITEMS.find((x) => x.key === k);
+        try {
+          const fn = EXPORT_MAP[k];
+          if (!fn) throw new Error("未实现的导出项");
+          fn();
+          setSt(it.label + "：已触发下载", true);
+        } catch (e) {
+          setSt(it.label + "：失败——" + (e instanceof Error ? e.message : String(e)), false);
+        }
+        await new Promise((r) => setTimeout(r, 450));
+      }
+    };
+    $("exportTpl").onclick = () => {
+      const tpl = { name: "", bridgeSite: "", engineer: "", reviewer: "", river: "", reach: "", station: "", stationArea: "", siteArea: "", designFreq: "", spec: "JTG C30—2015", zone: "" };
+      downloadText(JSON.stringify(tpl, null, 2), "泓算-工程信息模板.json", "application/json;charset=utf-8");
+      setSt("已下载工程信息模板；填写后在「工程信息与项目文件」点「导入工程」即可批量带入", true);
+    };
+  }
+
+  /* ===== v1.0.18 示例中心 ===== */
+  var T1_SERIES = "1200\n850\n1500\n900\n1100\n1350\n700\n1000\n1400\n650";
+  var EXAMPLES = [
+    { title: "年最大流量系列（教材算例 T1）", mode: "series", desc: "《桥涵水文（第五版）》表 3-1-1，n=10。载入后自动矩法初估并适线。", run: () => { $("series").value = T1_SERIES; calcFromSeries(); } },
+    { title: "直接参数模式（算例 T3）", mode: "params", desc: "已给定 Q̄ / Cv / Cs 的复核场景演示，载入后直接显示参数复核结果。", run: () => { $("btnT3").click(); } },
+    { title: "扫描件识别（OCR）", mode: "series", desc: "同上算例的扫描件图片，演示文档/图片表格识别填入系列。", run: () => { $("demoScanBtn").click(); } },
+    { title: "水面线 · 中文示例（SI）", mode: "hist", desc: "复式断面标准步长法天然河道算例（方法对齐 HEC-RAS）。", run: () => { $("btnSsmDemoSi").click(); } },
+    { title: "水面线 · HEC-RAS 算例（英制 9 断面）", mode: "hist", desc: "HEC-RAS 官方例题桥河段，英制自动换算 SI。", run: () => { $("btnSsmDemoHec").click(); } },
+    { title: "示例汇水区（山区卫星影像）", mode: "map", desc: "真实 DEM 水文分析预勾分水岭与主河沟，演示 F / L / I 量算。", run: () => { $("mapDemo").click(); } },
+    { title: "查算手册 · 验证算例预置", mode: "help", desc: "百年一遇设计暴雨与推理公式参数一键预置（示例）。", run: () => { $("hsaPreset").click(); } },
+    { title: "率定曲线示例", mode: "hydro", desc: "水位—流量关系实测率定曲线，演示插值查询。", run: () => { $("rcPreset").click(); } },
+    { title: "三角形洪水过程线示例", mode: "hydro", desc: "同倍比放大法设计洪水过程线演示。", run: () => { $("btnHydroSample").click(); } },
+    { title: "壅水 · 示例墩组", mode: "backwater", desc: "内置示例桥梁墩组与面积，演示阻水比与壅高计算。", run: () => { $("bwDemoPier").click(); } }
+  ];
+  var examplesBuilt = false;
+  function renderExamples() {
+    const box = $("examplesBox");
+    if (!box || examplesBuilt) return;
+    examplesBuilt = true;
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.innerHTML = '<h2>示例中心</h2><div class="hint" style="margin-top:0">这里汇总了全部内置示例。点「载入示例」会切换到对应功能并填入演示数据——正式工作时请以自己工程的数据为准，示例数据不会自动进入你的计算。</div>';
+    const grid = document.createElement("div");
+    grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px";
+    for (const ex of EXAMPLES) {
+      const card = document.createElement("div");
+      card.style.cssText = "border:1px solid var(--border);border-radius:10px;padding:10px 12px";
+      card.innerHTML = '<div style="font-size:13px;font-weight:600">' + ex.title + '</div>' +
+        '<div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5">' + ex.desc + '</div>';
+      const btn = document.createElement("button");
+      btn.className = "btn ghost";
+      btn.style.marginTop = "6px";
+      btn.textContent = "载入示例";
+      btn.onclick = () => {
+        switchMode(ex.mode);
+        window.__hsExampleLoaded = ex.title;
+        const bd = document.getElementById("hsExampleBadge");
+        if (bd) { bd.style.display = ""; bd.textContent = "示例 · " + ex.title; }
+        try { ex.run(); } catch (e) { alert("示例载入失败：" + (e instanceof Error ? e.message : String(e))); }
+      };
+      card.appendChild(btn);
+      grid.appendChild(card);
+    }
+    wrap.appendChild(grid);
+    box.appendChild(wrap);
   }
   function svgMarkup() {
     const svg = $("chart");
@@ -5458,7 +6627,7 @@
       `<line x1="${o.x + 12}" y1="${o.y - 6}" x2="${o.x + 12}" y2="${o.y + 6}" stroke="#b03a2e" stroke-width="2"/>`,
       `<text x="${o.x + 16}" y="${o.y + 4}" font-size="12" font-weight="600" fill="#ffd7d0" stroke="#7a1d12" stroke-width="0.6">\u6865\u4F4D</text>`,
       '<rect x="0" y="0" width="900" height="58" fill="#ffffff" fill-opacity="0.82"/>',
-      '<text x="14" y="24" font-size="14" font-weight="600" fill="#3a3a34">\u793A\u4F8B\u6D41\u57DF \xB7 \u6E56\u5357\u6D4F\u9633\u5927\u56F4\u5C71\u771F\u5B9E\u6D41\u57DF\uFF08\u536B\u661F\u5F71\u50CF + DEM \u6C34\u6587\u5206\u6790\u52FE\u7ED8\uFF09</text>',
+      '<text x="14" y="24" font-size="14" font-weight="600" fill="#3a3a34">\u793A\u4F8B\u6D41\u57DF \xB7 \u5C71\u533A\u771F\u5B9E\u6D41\u57DF\uFF08\u536B\u661F\u5F71\u50CF + DEM \u6C34\u6587\u5206\u6790\u52FE\u7ED8\uFF09</text>',
       '<text x="14" y="46" font-size="12" fill="#5a5a52">\u84DD\u8272 = \u771F\u5B9E\u4E3B\u6CB3\u6C9F \xB7 \u84DD\u8272\u865A\u7EBF = DEM \u81EA\u52A8\u5212\u5B9A\u7684\u771F\u5B9E\u5206\u6C34\u5CAD \xB7 \u7EA2\u8272 = \u6865\u4F4D \xB7 \u53EF\u6E05\u9664\u540E\u81EA\u5DF1\u6CBF\u5C71\u810A\u52FE\u7ED8</text>',
       '<rect x="36" y="512" width="300" height="42" fill="#000000" fill-opacity="0.45"/>',
       '<line x1="48" y1="526" x2="167" y2="526" stroke="#ffffff" stroke-width="2"/>',
@@ -5551,6 +6720,15 @@
         $("mapScaleTip").textContent = "示例底图已内置标定：1 像素 ≈ 8.41 m（1:8400 · Esri 卫星影像）";
       }
       renderMap();
+    };
+    $("mapDemo").onclick = () => {
+      $("mapMode").value = "poly";
+      mapState.poly = DEMO_POLY.map((p) => ({ x: p.x, y: p.y }));
+      mapState.river = DEMO_RIVER.map((p) => ({ x: p.x, y: p.y }));
+      $("mapH1").value = String(DEMO_H.h1);
+      $("mapH2").value = String(DEMO_H.h2);
+      renderMap();
+      $("mapGo").click();
     };
     $("mapDemo").onclick = () => {
       $("mapMode").value = "poly";
@@ -5677,13 +6855,68 @@
       const err = $("mapErr");
       if (!mapState.last) {
         err.style.display = "block";
-        err.textContent = "\u8BF7\u5148\u5B8C\u6210\u91CF\u7B97\uFF0C\u518D\u628A F \u586B\u5165\u65B9\u6CD5 C";
+        err.textContent = "\u8BF7\u5148\u5B8C\u6210\u91CF\u7B97";
         return;
       }
-      $("rdF").value = String(mapState.last.F);
+      ["gskF", "rcF", "rdF"].forEach(function (id) { var e = $(id); if (e) e.value = String(mapState.last.F); });
       calcMethodC();
       err.style.display = "none";
-      $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u65B9\u6CD5 C\uFF08\u5F84\u6D41\u539A\u5EA6\u6CD5\uFF09\u5E76\u91CD\u7B97</div>`;
+      $("mapOut").innerHTML += `<div style="color:var(--blue)">\u5DF2\u628A F=${mapState.last.F} km\xB2 \u586B\u5165\u5F84\u6D41\u539A\u5EA6\u6CD5\u5E76\u91CD\u7B97</div>`;
+    };
+  }
+    if ($("dkGo")) {
+    $("dkGo").onclick = () => {
+      const out = $("dkOut"), detail = $("dkDetail"), err = $("dkErr");
+      try {
+        const g = 9.80;
+        const Hs = +$("dkHs").value;
+        const vM = +$("dkVM").value, v0M = +$("dkV0M").value;
+        const KN = +$("dkKN").value, K = +$("dkK").value;
+        if (!Number.isFinite(Hs)) throw new Error("\u8BF7\u586B\u8BBE\u8BA1\u6C34\u4F4D Hs");
+        if (!(vM > 0)) throw new Error("\u51B2\u5237\u540E\u6865\u4E0B\u5E73\u5747\u6D41\u901F v_M \u5FC5\u987B\u5927\u4E8E 0");
+        if (!(vM > v0M)) throw new Error("v_M \u5E94\u5927\u4E8E v_0M\uFF08\u58C5\u6C34\u7531\u6865\u4E0B\u6D41\u901F\u589E\u5927\u4EA7\u751F\uFF09\uFF0C\u8BF7\u6838\u5BF9\u4E24\u4E2A\u6D41\u901F");
+        if (!(KN > 0) || !(K > 0)) throw new Error("\u7CFB\u6570 K_N \u4E0E K \u5FC5\u987B\u5927\u4E8E 0");
+        const dz = K * KN * (vM * vM - v0M * v0M) / (2 * g);
+        const sit = +$("dkSit").value;
+        const dzp = dz * sit;
+        const wave = +$("dkWave").value;
+        const waveAdd = Number.isFinite(wave) && wave > 0 ? wave * 2 / 3 : 0;
+        let bendAdd = 0;
+        let bendStr = "\u672A\u586B\uFF080\uFF09";
+        const wv = +$("dkWV").value, wb = +$("dkWB").value, wr = +$("dkWR").value;
+        if (Number.isFinite(wv) && Number.isFinite(wb) && Number.isFinite(wr) && wv > 0 && wb > 0 && wr > 0) {
+          const dh = wv * wv * wb / (g * wr);
+          bendAdd = dh / 2;
+          bendStr = `\u0394h=v\xB2B/(gR)=${dh.toFixed(3)} m\uFF0C\u8BA1\u5165 1/2 = ${bendAdd.toFixed(3)} m`;
+        }
+        const clr = +$("dkClr").value;
+        const Hmin = Hs + dzp + waveAdd + bendAdd + clr;
+        out.textContent = Hmin.toFixed(2) + " m";
+        const iv = +$("dkI").value;
+        const curveStr = Number.isFinite(iv) && iv > 0
+          ? `\u58C5\u6C34\u66F2\u7EBF\u5168\u957F L\u22482\u0394z/i=${(2 * dz / iv).toFixed(0)} m\uFF08\u4E8C\u6B21\u629B\u7269\u7EBF\u8FD1\u4F3C\uFF1A\u0394z_A=\u0394z\xB7(1\u2212(x/L)\xB2)\uFF09`
+          : "\u58C5\u6C34\u66F2\u7EBF\u5168\u957F\uFF1A\u672A\u586B\u6BD4\u964D i\uFF08\u5168\u957F L\u22482\u0394z/i\uFF09";
+        detail.innerHTML = [
+          `\u6865\u524D\u6700\u5927\u58C5\u6C34 \u0394z = ${dz.toFixed(3)} m\uFF08K=${K}\uFF0CK_N=${KN}\uFF0Cv_M=${vM} m/s\uFF0Cv_0M=${v0M} m/s\uFF09`,
+          `\u6865\u4E0B\u58C5\u6C34 \u0394z\u2032 = ${dzp.toFixed(3)} m\uFF08\u8868 4-3-2 \u7CFB\u6570 ${sit}\uFF09`,
+          `\u6CE2\u6D6A\u8BA1\u5165 (2/3)\u0394h\u2082 = ${waveAdd.toFixed(3)} m\uFF1B\u6CB3\u6E7E\u8D85\u9AD8\uFF1A${bendStr}`,
+          `\u51C0\u7A7A\u5B89\u5168\u503C = ${clr.toFixed(2)} m\uFF08\u8868 4-3-6\uFF09`,
+          curveStr,
+          `H_min = ${Hs.toFixed(2)} + ${dzp.toFixed(2)} + ${waveAdd.toFixed(2)} + ${bendAdd.toFixed(2)} + ${clr.toFixed(2)} = ${Hmin.toFixed(2)} m`
+        ].map((t) => `<div>${t}</div>`).join("");
+        err.style.display = "none";
+        logCalc(
+          "\u6865\u9762\u8BBE\u8BA1\u9AD8\u7A0B\uFF08\u58C5\u6C34+\u51C0\u7A7A\uFF09",
+          { "\u8BBE\u8BA1\u6C34\u4F4D": Hs + " m", "v_M": vM + " m/s", "v_0M": v0M + " m/s" },
+          { "\u58C5\u6C34\u0394z": dz.toFixed(3) + " m", "\u6865\u9762\u9AD8\u7A0B": Hmin.toFixed(2) + " m" },
+          "\u6307\u53572001\u58C5\u6C34\u5F0F + \u88684-3-2/4-3-6"
+        );
+      } catch (e) {
+        out.textContent = "\u2014";
+        detail.innerHTML = "";
+        err.style.display = "block";
+        showErr(err, e);
+      }
     };
   }
     if ($("dkGo")) {
@@ -5775,7 +7008,7 @@
         if (!k) continue;
         bytes += (localStorage.getItem(k) ?? "").length + k.length;
       }
-      $("sysOut").textContent = `\u672C\u673A\u6570\u636E\u7EA6 ${(bytes / 1024).toFixed(1)} KB\uFF08\u542B\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u3001\u9ED8\u8BA4\u8BBE\u7F6E\u3001\u5929\u5730\u56FE tk\uFF09\uFF1B\u8BA1\u7B97\u65E5\u5FD7 ${calcLog.size()} \u6761`;
+      $("sysOut2").textContent = `\u672C\u673A\u6570\u636E\u7EA6 ${(bytes / 1024).toFixed(1)} KB\uFF08\u542B\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u3001\u9ED8\u8BA4\u8BBE\u7F6E\u3001\u5929\u5730\u56FE tk\uFF09\uFF1B\u8BA1\u7B97\u65E5\u5FD7 ${calcLog.size()} \u6761`;
     };
     $("sysExport").onclick = () => {
       const dump = { schema: "hongsuan-local-dump@1", savedAt: (/* @__PURE__ */ new Date()).toISOString() };
@@ -5790,16 +7023,16 @@
         }
       }
       downloadText(JSON.stringify(dump, null, 2), "\u6CD3\u7B97\u672C\u673A\u6570\u636E.json", "application/json;charset=utf-8");
-      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u672C\u673A\u5168\u90E8\u6570\u636E\uFF08JSON\uFF09";
+      $("sysOut2").textContent = "\u5DF2\u5BFC\u51FA\u672C\u673A\u5168\u90E8\u6570\u636E\uFF08JSON\uFF09";
     };
     $("sysReset").onclick = () => {
       if (!confirm("\u5C06\u6E05\u7A7A\u672C\u673A\u4FDD\u5B58\u7684\u53C2\u6570\u8BB0\u5FC6\u3001\u5DE5\u7A0B\u4FE1\u606F\u4E0E\u9ED8\u8BA4\u8BBE\u7F6E\uFF08\u4E0D\u5F71\u54CD\u5DF2\u5BFC\u51FA\u7684\u6587\u4EF6\uFF09\uFF0C\u786E\u5B9A\uFF1F")) return;
       localStorage.clear();
-      $("sysOut").textContent = "\u5DF2\u6E05\u7A7A\u672C\u673A\u6570\u636E\uFF0C\u5237\u65B0\u9875\u9762\u540E\u56DE\u5230\u9ED8\u8BA4\u72B6\u6001";
+      $("sysOut2").textContent = "\u5DF2\u6E05\u7A7A\u672C\u673A\u6570\u636E\uFF0C\u5237\u65B0\u9875\u9762\u540E\u56DE\u5230\u9ED8\u8BA4\u72B6\u6001";
     };
     $("sysKb").onclick = () => {
       downloadText(helpToMarkdown(), "\u6CD3\u7B97\u77E5\u8BC6\u5E93.md", "text/markdown;charset=utf-8");
-      $("sysOut").textContent = "\u5DF2\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown";
+      $("sysOut2").textContent = "\u5DF2\u5BFC\u51FA\u77E5\u8BC6\u5E93 Markdown";
     };
   }
   function helpToMarkdown() {
@@ -5912,7 +7145,7 @@
       { title: "\u5207\u5230 \xB7 \u5730\u56FE\u91CF\u7B97", hint: "\u6A21\u5F0F", run: go("map") },
       { title: "\u5207\u5230 \xB7 \u8BBE\u8BA1\u6D2A\u6C34\u8FC7\u7A0B\u7EBF", hint: "\u6A21\u5F0F", run: go("hydro") },
       { title: "\u5207\u5230 \xB7 \u5E2E\u52A9\u4E0E\u77E5\u8BC6\u5E93", hint: "\u6A21\u5F0F", run: go("help") },
-      { title: "\u8BA1\u7B97\u5E76\u9002\u7EBF\uFF08\u65B9\u6CD5 A\uFF09", hint: "\u8BA1\u7B97", run: click("btnCalc") },
+      { title: "\u8BA1\u7B97\u5E76\u9002\u7EBF", hint: "\u8BA1\u7B97", run: click("btnCalc") },
       { title: "\u4E09\u70B9\u6CD5\u521D\u4F30\u53C2\u6570", hint: "\u8BA1\u7B97", run: click("btnThreePoint") },
       { title: "\u81EA\u52A8\u4F18\u5316\u9002\u7EBF", hint: "\u8BA1\u7B97", run: click("btnAutoFit") },
       { title: "\u7EBF\u578B\u6BD4\u9009\uFF08\u8D1D\u53F6\u65AF\uFF09", hint: "\u8BA1\u7B97", run: click("btnBayes") },
@@ -5925,7 +7158,7 @@
       { title: "\u6C47\u603B\u603B\u51B2\u5237\u6DF1\u5EA6", hint: "\u8BA1\u7B97", run: click("tsGo") },
       { title: "\u8BA1\u7B97\u6865\u53F0\u5C40\u90E8\u51B2\u5237\uFF088.4.3\uFF09", hint: "\u8BA1\u7B97", run: click("abGo") },
       { title: "\u5730\u56FE\uFF1A\u8BA1\u7B97\u6C47\u6C34\u533A F / L / I", hint: "\u8BA1\u7B97", run: click("mapGo") },
-      { title: "\u5730\u56FE\uFF1A\u628A F \u586B\u5165\u65B9\u6CD5 C", hint: "\u8BA1\u7B97", run: click("mapFill") },
+      { title: "\u5730\u56FE\uFF1A\u586B\u5165 F", hint: "\u8BA1\u7B97", run: click("mapFill") },
       { title: "\u67E5\u5F84\u6D41\u539A\u5EA6 h \u5E76\u586B\u5165", hint: "\u67E5\u8868", run: click("lkGo") },
       { title: "\u67E5 \u03C8 / \u03C4 / z / \u03B2 / \u03B3 / \u03B4", hint: "\u67E5\u8868", run: click("cbPsi") },
       { title: "\u5BFC\u51FA Word \u8BA1\u7B97\u4E66", hint: "\u5BFC\u51FA", run: click("btnReport") },
@@ -6388,7 +7621,7 @@
       const kp = 1 + phi * state.params.cv;
       const q = state.params.mean * kp;
       logCalc(
-        "\u65B9\u6CD5A \xB7 P-\u2162\u9002\u7EBF",
+        "P-\u2162\u9002\u7EBF",
         { \u7CFB\u5217\u957F\u5EA6: state.series.length, \u8BBE\u8BA1\u9891\u7387: (state.freq * 100).toFixed(2) + "%", \u4E0D\u8FDE\u5E8F: $("hasExtra").checked ? "\u662F" : "\u5426" },
         { \u03A6: phi.toFixed(3), Kp: kp.toFixed(3), Qp: fmt(q, 0) + " m\xB3/s" },
         "JTG C30-2015 \u7B2C6.2\u6761\uFF08\u76AE\u5C14\u900A\u2162\u578B\uFF09",
@@ -6706,6 +7939,11 @@
     });
   });
   function restoreAll() {
+    // v1.0.37：默认全新启动（不默认恢复上次步骤）。
+    // 仅当设置中心「启动时恢复上次工作状态」= 开（hongsuan_restore=1）才恢复。
+    try {
+      if (localStorage.getItem("hongsuan_restore") !== "1") return null;
+    } catch (e) { return null; }
     let d = null;
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -6840,6 +8078,8 @@
   };
   var urlQ = new URLSearchParams(location.search);
   var restoredMode = restoreAll();
+  moveCardsToModes();
+  renderSide();
   ssmBdSync();
   var urlMethod = urlQ.get("method");
   var startMode = urlMethod === "hist" ? "histB" : urlMethod === "nodata" ? "noData" : urlMethod === "hydro" ? "hydro" : restoredMode || "series";
@@ -6857,6 +8097,7 @@
   }
   if (state.adoptedOverride) {
     state.params = { ...state.adoptedOverride };
+    state.paramsReady = true;
     delete state.adoptedOverride;
     $("cvSlider").value = Math.min(Math.max(state.params.cv, 0.05), 1.2);
     $("ratioSlider").value = Math.min(Math.max(state.params.cs / state.params.cv, 1), 8);
@@ -8080,19 +9321,18 @@ function textToTable(text, source) {
   setupOcr();
   function feedbackTextForButton(btn2) {
     const map = {
-      mSeries: "已切换", mParams: "已切换", mHist: "已切换", mNoData: "已切换", mMap: "已切换", mHydro: "已切换", mHelp: "已打开",
       ocrRun: "已识别", ocrApply: "已填入", ocrClear: "已清空",
-      btnCalc: "已计算", btnThreePoint: "已适线", btnAutoFit: "已适线", btnRecommend: "已推荐", btnPhiTable: "已打开",
-      btnT3: "已载入", btnBayes: "已对比", btnHist: "已计算",
+      btnCalc: "已计算", btnThreePoint: "已适线", btnAutoFit: "已适线", btnRecommend: "已推荐",
+      btnBayes: "已对比", btnHist: "已计算",
       opUseQ: "已使用", opGo: "已计算",
       scCalcA: "已计算", scUseQ: "已使用", scGo: "已计算",
       lsUseV: "已使用", lsGo: "已计算",
       abGo: "已计算", tsGo: "已汇总", rockGo: "已查得",
       btnWsProfile: "已计算", btnWsSolve: "已反解",
-      btnSsmDemoSi: "已载入", btnSsmDemoHec: "已载入", btnSsmRun: "已计算", btnSsmClear: "已清空",
+      btnSsmRun: "已计算", btnSsmClear: "已清空",
       lkGo: "已填入", cbPsi: "已填入", cbTau: "已填入", cbZ: "已填入",
       cbBeta: "已填入", cbGamma: "已填入", cbDelta: "已填入", cbZoneGo: "已查得",
-      logExpandAll: "已展开", logCollapseAll: "已收起", logExportMd: "已导出", logExportJson: "已导出", logClear: "已清空"
+      logExportMd: "已导出", logExportJson: "已导出", logClear: "已清空"
     };
     if (btn2.dataset.feedback) return btn2.dataset.feedback;
     if (map[btn2.id]) return map[btn2.id];
@@ -8338,63 +9578,6 @@ function textToTable(text, source) {
     wrapped.__hongsuanOriginal = original;
     btn2.onclick = wrapped;
   }
-  const __actionClick = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "onclick");
-  if (__actionClick && __actionClick.set && !HTMLButtonElement.prototype.__hongsuanActionPatched) {
-    Object.defineProperty(HTMLButtonElement.prototype, "onclick", {
-      configurable: true,
-      enumerable: __actionClick.enumerable,
-      get() { return __actionClick.get.call(this); },
-      set(value) {
-        if (typeof value === "function" && !value.__hongsuanWrapped) {
-          const wrapped = function (event) {
-            const btn2 = this;
-            if (btn2.dataset.hsNoFeedback === "1") return value.call(this, event);
-            const state = getActionState(btn2);
-            if (state.busy) {
-              event.preventDefault();
-              event.stopPropagation();
-              return;
-            }
-            const before = snapshotActionState();
-            beginAction(btn2);
-            try {
-              const result = value.call(this, event);
-              state.ran = true;
-              if (result && typeof result.then === "function") {
-                Promise.resolve(result).then(() => {
-                  if (!state.explicit) {
-                    const r = evaluateActionResult(btn2, before);
-                    finishAction(btn2, r.level, r.text);
-                  }
-                }, (e) => {
-                  finishAction(btn2, "fail", (e && e.message) || "执行失败");
-                  console.error(e);
-                });
-                return result;
-              }
-              setTimeout(() => {
-                if (!state.explicit) {
-                  const r = evaluateActionResult(btn2, before);
-                  finishAction(btn2, r.level, r.text);
-                }
-              }, 220);
-              return result;
-            } catch (e) {
-              finishAction(btn2, "fail", (e && e.message) || "执行失败");
-              console.error(e);
-            }
-          };
-          wrapped.__hongsuanWrapped = true;
-          wrapped.__hongsuanOriginal = value;
-          __actionClick.set.call(this, wrapped);
-        } else {
-          __actionClick.set.call(this, value);
-        }
-      }
-    });
-    HTMLButtonElement.prototype.__hongsuanActionPatched = true;
-  }
-  document.querySelectorAll("button").forEach((btn2) => __wrapHongsuanButton(btn2));
 
   // ---------- 暴雨雨力 Sp 等值线地图 ----------
   var spMap = null;
@@ -8970,6 +10153,7 @@ function spChaikin(pts) {
     try {
       if (!r || !(r.mean > 0)) return false;
       state.params = { mean: r.mean, cv: r.cv, cs: r.cs };
+    state.paramsReady = true;
       $("cvSlider").value = Math.min(Math.max(r.cv, 0.05), 1.2);
       $("ratioSlider").value = Math.min(Math.max(r.cs / r.cv, 1), 8);
       syncParamInputs();
@@ -8989,15 +10173,19 @@ function spChaikin(pts) {
       const p = state.params;
       const cs = effCs(p.cs);
       const FREQS = [0.05, 0.1, 0.2, 0.5, 1, 2, 3.33, 5, 10, 20, 50, 90];
-      const freqRows = FREQS.map((pp) => {
+      // v1.0.18 空工程守卫：没有系列数据（或统计量）时不产出频率成果，
+      // 避免参数区预填值冒充"已算出 Qp"，让工作流从资料分流真实起步
+      const hasSeries = (state.series || []).length > 0 || !!(state.stats && state.stats.n > 0);
+      const freqRows = hasSeries ? FREQS.map((pp) => {
         const ph = phiPIII(pp / 100, cs);
         const k = 1 + ph * p.cv;
         return [pp, ph, k, p.mean * k];
-      });
+      }) : [];
       return {
         project: typeof currentProject === "function" ? currentProject() : {},
         params: { mean: p.mean, cv: p.cv, cs: p.cs, csEff: cs },
         freq: state.freq,
+        freqRows,
         stats: state.stats ? { n: state.stats.n, mean: state.stats.mean, cv: state.stats.cv, cs: "cs" in state.stats ? state.stats.cs : state.stats.csMoment } : { n: (state.series || []).length },
         series: state.series || [],
         hydro: state.hydro ? { designPeak: state.hydro.designPeak, typicalPeak: state.hydro.typicalPeak, kg: state.hydro.kg, points: state.hydro.points } : null,
@@ -9007,7 +10195,23 @@ function spChaikin(pts) {
       return null;
     }
   };
+  /* v1.0.21 反馈机制重构：不再全局包裹、不再篡改 HTMLButtonElement.prototype.onclick。
+   * 用户规则：反馈只保留给明确的计算动作按钮；导航 / 开关 / 示例载入一律豁免。
+   * 本块置于 IIFE 末尾：保证静态赋值的计算按钮（含 p3Calc 等后段按钮）全部包裹完成；
+   * 白名单外的按钮 onclick 保持原生行为；动态创建的按钮（侧边栏 / Del 等）天然不进反馈。 */
+  var CALC_ACTION_FEEDBACK_IDS = new Set([
+    "btnCalc","btnThreePoint","btnAutoFit","btnRecommend","btnRecordFitTrial","btnBayes","btnHist",
+    "opUseQ","opGo","scUseQ","scGo","lsUseV","lsGo","abGo","tsGo","rockGo",
+    "btnWsProfile","btnWsSolve","btnSsmRun","btnSsmClear",
+    "lkGo","cbPsi","cbTau","cbZ","cbBeta","cbGamma","cbDelta","cbZoneGo",
+    "logExportMd","logExportJson","logClear",
+    "bwGo","bwB6Go","riverCalcBtn","hsReportGenerate","fieReportBtn",
+    "p3Calc","p3UseMap","spFillBtn"
+  ]);
+  document.querySelectorAll("button").forEach((btn2) => {
+    if (btn2.id && CALC_ACTION_FEEDBACK_IDS.has(btn2.id)) __wrapHongsuanButton(btn2);
+  });
+
 })();
 
-
-
+window.__hsAppBooted = true;
