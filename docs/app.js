@@ -3722,6 +3722,36 @@
     if (linkage) linkage.innerHTML = "\u8BF7\u5148\u8F93\u5165 Q\u0304 / C<sub>v</sub> / C<sub>s</sub> \u53C2\u6570\uFF0C\u8F93\u5165\u540E\u81EA\u52A8\u8BA1\u7B97\u9891\u7387\u66F2\u7EBF\u3002";
     const table = $("freqQTable");
     if (table) table.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12.5px">等待输入统计参数。</div>';
+    renderChartEmptyFrame();
+  }
+  // 空态 = 与正式图完全一致的完整坐标框架（四边框/海森刻度/轴标题/图例），仅无点据与曲线
+  function renderChartEmptyFrame() {
+    const chart = $("chart");
+    if (!chart) return;
+    let s = "";
+    s += `<rect x="${PL}" y="${PT}" width="${PR - PL}" height="${PB - PT}" fill="#fdfdfd" stroke="rgba(0,0,0,0.10)" stroke-width="1"/>`;
+    for (const p of XTICKS) {
+      const x = pToX(p / 100);
+      s += `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PB}" stroke="rgba(0,0,0,0.06)"/>`;
+      s += `<text x="${x}" y="${PB + 18}" text-anchor="middle" font-size="11" fill="#6e6e73">${p}</text>`;
+    }
+    for (const t of niceTicks(0, 7000, 6)) {
+      const y = PB - t / 7000 * (PB - PT);
+      s += `<line x1="${PL}" y1="${y}" x2="${PR}" y2="${y}" stroke="rgba(0,0,0,0.06)"/>`;
+      s += `<text x="${PL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6e6e73">${fmt(t, 0)}</text>`;
+    }
+    s += `<text x="${(PL + PR) / 2}" y="${PB + 40}" text-anchor="middle" font-size="12" fill="#1d1d1f">频率 P（%）— 海森机率格纸</text>`;
+    s += `<text x="20" y="${(PT + PB) / 2}" font-size="12" fill="#1d1d1f" transform="rotate(-90 20 ${(PT + PB) / 2})" text-anchor="middle">流量 Q（m³/s）</text>`;
+    const lgY = PT - 8;
+    s += `<g font-size="11.5" fill="#1d1d1f">`;
+    s += `<circle cx="${PR - 208}" cy="${lgY}" r="4" fill="#1d1d1f"/><text x="${PR - 198}" y="${lgY + 4}">经验点据</text>`;
+    s += `<line x1="${PR - 128}" y1="${lgY}" x2="${PR - 100}" y2="${lgY}" stroke="#007AFF" stroke-width="2.5"/><text x="${PR - 94}" y="${lgY + 4}">理论频率曲线</text>`;
+    s += `<circle cx="${PR - 22}" cy="${lgY}" r="5" fill="#fff" stroke="#007AFF" stroke-width="2"/>`;
+    s += `</g>`;
+    s += `<text x="${(PL + PR) / 2}" y="${(PT + PB) / 2 - 14}" text-anchor="middle" font-size="14" fill="#98a6b8">当前暂无数据——粘贴年最大流量系列并点「计算并适线」，或点下方按钮载入示例</text>`;
+    $("chart").innerHTML = s;
+    const em = document.getElementById("chartEmpty");
+    if (em) em.style.display = "none";
   }
   function syncParamInputs() {
     if (!state.paramsReady) {
@@ -3742,6 +3772,8 @@
   $("btnCalc").onclick = calcFromSeries;
   var seriesAutoTimer;
   $("series").addEventListener("input", () => {
+    // 用户开始编辑系列后，不再按“示例”处理工作流状态（桌面 v1.0.38 同步）
+    try { window.__hsDemo = false; } catch (e) {}
     window.clearTimeout(seriesAutoTimer);
     seriesAutoTimer = window.setTimeout(() => {
       const vals = parseSeries($("series").value).values;
@@ -10197,11 +10229,47 @@ function spChaikin(pts) {
     "lkGo","cbPsi","cbTau","cbZ","cbBeta","cbGamma","cbDelta","cbZoneGo",
     "logExportMd","logExportJson","logClear",
     "bwGo","bwB6Go","riverCalcBtn","hsReportGenerate","fieReportBtn",
-    "p3Calc","p3UseMap","spFillBtn"
+    "p3Calc","p3UseMap","spFillBtn","chartEmptyDemo"
   ]);
   document.querySelectorAll("button").forEach((btn2) => {
     if (btn2.id && CALC_ACTION_FEEDBACK_IDS.has(btn2.id)) __wrapHongsuanButton(btn2);
   });
+
+  // 适线图空态引导按钮：一键载入教材 T1 系列并计算，让用户立刻看到成品图
+  {
+    const demoBtn = document.getElementById("chartEmptyDemo");
+    if (demoBtn) {
+      demoBtn.onclick = () => {
+        $("series").value = T1_SERIES;
+        try { calcFromSeries(); } catch (e) { console.error(e); }
+      };
+    }
+    // 启动即呈现完整空坐标框架（不再是空白/说明卡）
+    try { if (!state.paramsReady) renderChartEmptyFrame(); } catch (e) {}
+    // 网页版专属：空态整图可点，点一下即载入示例（移动端不用找按钮）
+  {
+    const chartEl = document.getElementById("chart");
+    if (chartEl) {
+      chartEl.style.cursor = "pointer";
+      chartEl.addEventListener("click", () => {
+        if (!state.paramsReady) {
+          $("series").value = T1_SERIES;
+          try { window.__hsDemo = true; } catch (e) {}
+          try { calcFromSeries(); } catch (e) { console.error(e); }
+        }
+      });
+    }
+  }
+  // 默认载入教材 T1 示例，让适线图开箱即有完整频率曲线（空系列时才载入，不覆盖用户已有输入）
+    try {
+      if (!$("series").value.trim()) {
+        $("series").value = T1_SERIES;
+        // 标记为示例，避免工作流把示例误当真实完成数据（intake/flow 不冒充“已完成”）
+        try { window.__hsDemo = true; } catch (e) {}
+        calcFromSeries();
+      }
+    } catch (e) { console.error("示例载入失败", e); }
+  }
 
 })();
 

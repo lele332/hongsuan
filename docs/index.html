@@ -548,6 +548,11 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   #hsSide .hs-mode-switch button { color: rgba(242,247,247,0.7); }
   #hsSide .hs-mode-switch button.on { background: rgba(255,255,255,0.14); color: #fff; }
   #hsSide #hsModeHint { color: rgba(242,247,247,0.55) !important; }
+  /* 网页版专属：示例按钮呼吸光晕（首屏轻脉冲引导，尊重减动画偏好） */
+  @media (prefers-reduced-motion: no-preference) {
+    #chartEmptyDemo { animation: hsPulse 2.4s ease-in-out 2; }
+    @keyframes hsPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(14,124,134,0.35); } 50% { box-shadow: 0 0 0 6px rgba(14,124,134,0); } }
+  }
   /* 深色模式仍由 body.hs-dark 变量接管，青色主按钮自动跟随 --blue */
 </style>
   <meta name="theme-color" content="#0A2E36">
@@ -1445,7 +1450,10 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
 
 <div class="card" id="chartCard" style="position:relative">
   <div style="font-size:10.5px;color:var(--text3);margin-bottom:2px">科学绘图引擎：ECharts（Origin 风格 · 出版级）</div>
-  <h2>P-Ⅲ 适线（海森机率格纸）</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+    <h2 style="margin:0">P-Ⅲ 适线（海森机率格纸）</h2>
+    <button class="btn ghost demoEntry" id="chartEmptyDemo" style="padding:4px 12px;font-size:12px;margin:0">载入示例（教材 T1）</button>
+  </div>
   <svg id="chart" viewBox="0 0 940 520" style="width:100%;height:auto"></svg>
 <div id="chartEmpty" style="position:absolute;left:0;top:38px;right:0;bottom:0;z-index:3;background:var(--card);display:flex;align-items:center;justify-content:center">
 <svg viewBox="0 0 940 460" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
