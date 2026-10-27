@@ -121,7 +121,33 @@ async function main() {
         console.error(`browser smoke failed: ${expr} => ${JSON.stringify(actual)}`);
       }
     }
-    if (errors.length) {
+    // ---- 移动端视口二次校验（390px 手机模拟）----
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await new Promise(r => setTimeout(r, 1500));
+    const mChecks = [
+      ["document.body.classList.contains('hs-mobile-nav')", true],
+      ["document.getElementById('hsMobileNav').children.length >= 5", true],
+      ["getComputedStyle(document.getElementById('hsMobileNav')).display !== 'none'", true],
+      ["getComputedStyle(document.getElementById('hsTree')).display === 'none'", true],
+      ["parseFloat(getComputedStyle(document.body).fontSize) >= 15", true]
+    ];
+    for (const [expr, expected] of mChecks) {
+      const r = await cdp.send("Runtime.evaluate", { expression: expr, returnByValue: true });
+      const actual = r.result && r.result.value;
+      if (actual !== expected) {
+        failed = true;
+        console.error(`mobile smoke failed: ${expr} => ${JSON.stringify(actual)}`);
+      }
+    }
+    // 底栏点击联动：点第一个功能项后原树对应项应变为 on
+    await cdp.send("Runtime.evaluate", { expression: "document.getElementById('hsMobileNav').children[0].click()", returnByValue: true });
+    await new Promise(r => setTimeout(r, 300));
+    {
+      const r = await cdp.send("Runtime.evaluate", { expression: "document.querySelectorAll('#hsTree .hs-tree-item')[0].classList.contains('on') || document.querySelectorAll('#hsTree .hs-tree-item.on').length > 0", returnByValue: true });
+      if (r.result.value !== true) { failed = true; console.error("mobile smoke failed: bottom-nav click does not drive tree"); }
+    }
+    await cdp.send("Emulation.clearDeviceMetricsOverride");
+        if (errors.length) {
       failed = true;
       console.error("browser smoke failed: runtime errors", errors);
     }

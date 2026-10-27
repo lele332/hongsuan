@@ -376,6 +376,36 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   details#spMapPanel.sp-fullscreen #spInfoBox { position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 100000; background: rgba(15,23,42,0.92); border-radius: 10px; padding: 10px 14px; display: block !important; }
 }
 
+  /* ===== v1.0.38-r2 移动端视觉重构：字号/留白/底部导航（原生 App 手感） ===== */
+  #hsMobileNav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+    display: none; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: #0A2E36; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.18); scrollbar-width: none; }
+  #hsMobileNav::-webkit-scrollbar { display: none; }
+  #hsMobileNav .hs-tree-item { flex: 0 0 auto; color: rgba(242,247,247,0.88); background: transparent; border: 0; white-space: nowrap; }
+  #hsMobileNav .hs-tree-item.on { background: #14A0AD; color: #fff; }
+  #hsMobileNav .hs-foot-btn { flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.18); color: rgba(242,247,247,0.75); background: transparent; white-space: nowrap; }
+  body.hs-mobile-nav { padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important; }
+  body.hs-mobile-nav #hsMobileNav { display: flex; }
+  body.hs-mobile-nav #hsTree { display: none; }
+  body.hs-mobile-nav #hsSide .hs-foot { display: none; }
+  @media (max-width: 760px) {
+    body { font-size: 15px; padding-left: 12px; padding-right: 12px; padding-top: 10px; }
+    header h1 { font-size: 21px; }
+    header p { font-size: 13px; }
+    .card h2 { font-size: 16px; }
+    .card { padding: 14px 12px; }
+    textarea { min-height: 96px; }
+    table { font-size: 13.5px; }
+    .hint, .hs-note { font-size: 12.5px !important; }
+    /* 侧边栏压缩：品牌行横排、工程信息单行 */
+    .hs-brand { display: flex; align-items: center; gap: 6px; padding: 2px 6px 6px; border-bottom: 0; }
+    .hs-brand-ver { margin-top: 0; }
+    .hs-proj { display: flex; align-items: center; gap: 8px; margin: 4px 2px; padding: 6px 8px; }
+    .hs-proj-label { display: none; }
+    .hs-proj-sub { margin-top: 0; flex: 1; justify-content: flex-end; }
+  }
+
   /* ===== v1.0.38 移动端深度适配：键盘 / 触控 / iOS 缩放 ===== */
   @media (max-width: 760px) {
     /* iOS：输入控件字号 <16px 聚焦时会自动放大整页，统一强制 16px */
@@ -2099,6 +2129,8 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   </div>
 </div>
 
+<nav id="hsMobileNav" aria-label="功能导航"></nav>
+
 <script>
 /* v1.0.38 移动端键盘兜底：iOS 键盘弹起时确保聚焦输入框可见（Android 由 viewport interactive-widget 处理） */
 (function () {
@@ -2128,6 +2160,69 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
       }
     });
   }
+})();
+</script>
+<script>
+/* v1.0.38-r2 移动端底部导航：克隆侧边栏功能树到固定底栏（原生 App 手感） */
+(function () {
+  function setup() {
+    var src = document.getElementById("hsTree");
+    var bar = document.getElementById("hsMobileNav");
+    if (!src || !bar || bar.dataset.done) return;
+    bar.dataset.done = "1";
+    var vis = [];
+    function rebuild() {
+      bar.innerHTML = "";
+      vis = [];
+      /* 用 getComputedStyle 判显隐：祖先 display:none 不影响 computed 值，结果与执行顺序无关 */
+      var foot = document.querySelector("#hsSide .hs-foot");
+      var footHidden = foot && getComputedStyle(foot).display === "none";
+      src.querySelectorAll(".hs-tree-item").forEach(function (o) {
+        var wrap = o.closest(".hs-tree-group-wrap");
+        if (wrap && getComputedStyle(wrap).display === "none") return;
+        vis.push(o);
+        var c = o.cloneNode(true);
+        c.removeAttribute("id");
+        bar.appendChild(c);
+      });
+      if (!footHidden) {
+        document.querySelectorAll(".hs-foot-btn").forEach(function (b) {
+          var c = b.cloneNode(true);
+          c.removeAttribute("id");
+          bar.appendChild(c);
+        });
+      }
+    }
+    bar.addEventListener("click", function (ev) {
+      var t = ev.target.closest(".hs-tree-item, .hs-foot-btn");
+      if (!t) return;
+      var kids = Array.prototype.slice.call(bar.children);
+      var idx = kids.indexOf(t);
+      var footBtns = document.querySelectorAll(".hs-foot-btn");
+      var nTree = kids.length - footBtns.length;
+      var orig = idx < nTree ? vis[idx] : footBtns[idx - nTree];
+      if (orig) orig.click();
+      setTimeout(rebuild, 80);
+    });
+    var retries = 0;
+    function apply() {
+      var mobile = window.matchMedia("(max-width: 760px)").matches;
+      if (mobile) {
+        rebuild();
+        document.body.classList.add("hs-mobile-nav");
+        if (vis.length === 0 && retries++ < 12) setTimeout(apply, 400);
+      }
+      else document.body.classList.remove("hs-mobile-nav");
+    }
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", function () { setTimeout(apply, 120); });
+    /* 功能树由 app.js 延迟构建 / 单功能模式切显隐：观察树变化即时重建底栏 */
+    new MutationObserver(function () {
+      if (window.matchMedia("(max-width: 760px)").matches) rebuild();
+    }).observe(src, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+    apply();
+  }
+  setup(); /* 立即执行：readyState 可能停在 interactive，靠 apply() 重试等待功能树构建完成 */
 })();
 </script>
 </body>
