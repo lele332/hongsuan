@@ -6181,7 +6181,7 @@
       { id: "fit", name: "幂函数 / 二次多项式拟合", impl: "Python sidecar", note: "最小二乘 + 残差评估" }
     ] },
     ocr: { title: "表格识别", engines: [
-      { id: "rapid", name: "RapidOCR（轻量在线）", impl: "ONNX 运行时", note: "快、小，不含表格结构" },
+      { id: "rapid", name: "RapidOCR（服务器识别）", impl: "服务器 · 同源 /api/ocr", note: "PP-OCR 同源模型，识别率远超浏览器兜底" },
       { id: "structure", name: "PP-StructureV3（表格结构）", impl: "Python sidecar（预留）", note: "单元格结构化，需模型包" },
       { id: "tesseract", name: "Tesseract（离线兜底）", impl: "浏览器 wasm", note: "无模型依赖" }
     ] },
@@ -8412,10 +8412,10 @@
   function hsOcrServers() {
     const list = Array.isArray(window.HS_OCR_SERVERS) && window.HS_OCR_SERVERS.length
       ? window.HS_OCR_SERVERS
-      : ["https://ocr.csuft-sce.cn/ocr", "https://hongsuan-pages.pages.dev/ocr", "http://120.26.35.167:9005/ocr"];
+      : ["/api/ocr", "https://ocr.csuft-sce.cn/ocr"];
     const pageHttps = location.protocol === "https:";
-    // HTTPS 页面禁止访问 HTTP 接口（混合内容），直接过滤避免报错
-    return list.filter((u) => !pageHttps || String(u).indexOf("https://") === 0);
+    // HTTPS 页面禁混合内容：仅保留 https:// 端点与同源相对路径（nginx 反代 /api/ocr）
+    return list.filter((u) => !pageHttps || String(u).indexOf("https://") === 0 || String(u).charAt(0) === "/");
   }
   function rapidBoxesToWords(results) {
     const words = [];
@@ -8478,10 +8478,6 @@
         const d = await resp.json();
         if (d && d.ok && Array.isArray(d.rows)) {
           return { ok: true, ncol: d.ncol || (d.rows[0] ? d.rows[0].length : 0), rows: d.rows, conf: d.conf || [], cells: d.cells || [], engine: d.engine || "rapidocr-server" };
-        }
-        const arr = d && (d.results || d.data);
-        if (arr) {
-          if (t && t.ok) return { ok: true, ncol: t.ncol, rows: t.rows, conf: t.conf, cells: t.cells, engine: "rapidocr-server" };
         }
       } catch {
         // 服务器不可用/超时 → 尝试下一个端点
