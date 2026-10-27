@@ -1,7 +1,7 @@
-/* 泓算 · 洪水影响评价报告生成器
+/* 泓算 · 桥涵水文分析报告生成器
  * 按《XXX高速公路洪水影响评价》模板的目录结构与排版生成：
  * 章 18pt 宋体加粗 / 节 15pt 加粗 / 正文 12pt；自动填写计算成果，非计算内容留【待补充】占位。
- * 依赖：window.docx（libs/docx.umd.js）、window.__hsReportData()（app.js 数据出口）。
+ * 依赖：docx 组件经 hsEnsureLib 懒加载、window.__hsReportData()（app.js 数据出口）。
  */
 (function () {
   'use strict';
@@ -19,16 +19,16 @@
     return n.getFullYear() + "年" + pad2(n.getMonth() + 1) + "月" + pad2(n.getDate()) + "日";
   }
 
-  function build() {
-    var D = window.docx;
-    if (!D) return Promise.reject(new Error("docx 库未加载（libs/docx.umd.js）"));
+  async function build() {
+    var D = window.docx; /* 网页版：docx.umd.js 随页面加载 */
+    if (!D) return Promise.reject(new Error("docx 组件加载失败"));
     var R = (typeof window.__hsReportData === "function") ? window.__hsReportData() : null;
     if (!R) return Promise.reject(new Error("无法读取泓算计算数据（__hsReportData）"));
     var pj = R.project || {}, p = R.params || {};
     var hasFreq = Number.isFinite(p.mean) && p.mean > 0;
     var projName = pj.name || "";
     var bridgeName = pj.bridgeSite || "";
-    var titlePart = projName ? (projName.replace(/洪水影响评价.*$/, "") + "洪水影响评价报告") : "洪水影响评价报告";
+    var titlePart = projName ? (projName.replace(/洪水影响评价.*$/, "") + "桥涵水文分析报告") : "桥涵水文分析报告";
 
     // ---- 样式与工具 ----
     var F = "宋体";
@@ -80,6 +80,7 @@
     var chongshua = pickLogs(["冲刷"]);
     var shuimianxian = pickLogs(["水面线", "水位", "壅水范围"]);
     var qiaokong = pickLogs(["桥孔", "净空"]);
+    var heshi = pickLogs(["河势"]);
     var logCount = logs.length;
 
     // ---- 各章内容 ----
@@ -96,8 +97,8 @@
       P("（3）《防洪标准》（GB 50201—2014）；", { noIndent: true }),
       P("（4）《公路工程水文勘测设计规范》（JTG C30—2015）；", { noIndent: true }),
       P("（5）《堤防工程设计规范》（GB 50286—2013）；", { noIndent: true }),
-      P("（6）水利部《河道管理范围内建设项目管理的有关规定》及《涉水建设项目洪水影响评价报告编制大纲（试行）》；", { noIndent: true }),
-      P("（7）项目建设依据文件、设计资料及泓算 v1.0.13 水文计算成果。", { noIndent: true }),
+      P("（6）《河道管理范围内建设项目防洪评价报告编制导则》（SL/T 808—2021）及水利部《河道管理范围内建设项目管理的有关规定》；", { noIndent: true }),
+      P("（7）项目建设依据文件、设计资料及泓算 H100 / v1.0.37 水文计算成果。", { noIndent: true }),
       H2("1.3 评价范围"),
       TODO("评价河段范围、长度及控制断面位置"),
       H2("1.4 技术路线及工作内容"),
@@ -133,7 +134,7 @@
         ["设计流量 Qp", hasFreq ? f1(designQ()) + " m³/s" : "【待计算】"],
         ["编制人", pj.engineer || "【待补充】"],
         ["校核人", pj.reviewer || "【待补充】"],
-        ["计算工具", "泓算 v1.0.13（桥涵水文计算，JTG C30—2015）"],
+        ["计算工具", "泓算 H100 / v1.0.37（桥涵水文计算，JTG C30—2015）"],
         ["桥型布置/跨径", "【待补充】"]
       ]),
       P("", { noIndent: true })
@@ -182,6 +183,12 @@
         ch4.push(TODO("请在泓算中完成冲刷计算后重新生成报告（计算记录将自动引用）"));
       }
       if (qiaokong.length) ch4 = ch4.concat(renderLogBlock("桥孔与净空计算成果", qiaokong));
+      ch4.push(H3("4.3.3 河势稳定分析"));
+      if (heshi.length) {
+        ch4 = ch4.concat(renderLogBlock("河势稳定分析成果（半定量评分）", heshi));
+      } else {
+        ch4.push(TODO("请在泓算「河势稳定」模块完成评价后重新生成报告（评分结果将自动引用；SL/T 808—2021 第 5.4.4 条）"));
+      }
     } else {
       ch4 = [
         H1("4 水文、河道演变及洪水影响分析计算"),
@@ -207,7 +214,7 @@
       H2("5.2 防洪标准符合性分析"),
       P(hasFreq ? "本项目设计洪水频率为 " + normLabel(R.freq) + "，对应设计流量 Qp = " + f1(designQ()) + " m³/s，满足《防洪标准》（GB 50201—2014）及《公路工程水文勘测设计规范》（JTG C30—2015）对相应等级建筑物的要求。【梁底高程、桥面标高等复核情况请补充】" : "【待补充：需先完成设计洪水频率计算】"),
       H2("5.3 防洪及河势影响分析"),
-      TODO("结合壅水、冲刷计算成果分析对行洪安全与河势稳定的影响"),
+      (heshi.length ? P("结合泓算河势稳定分析模块的半定量评分成果（详见 4.3.3 节）：" + kvOf(heshi[0].results) + "。评分依据 " + (heshi[0].basis || "SL/T 808—2021 第 5.4.4 条") + "。【可结合壅水、冲刷计算成果及历史河势资料进一步论述】", { noIndent: true }) : TODO("结合壅水、冲刷计算成果分析对行洪安全与河势稳定的影响（可在泓算「河势稳定」模块完成半定量评价）")),
       H2("5.4 国家基本水文站的影响分析"),
       TODO("壅水范围内有无国家基本水文站及影响分析"),
       H2("5.5 工程对现有水利工程与设施的影响分析"),
@@ -234,7 +241,7 @@
       H1("7 结论与建议"),
       H2("7.1 防洪评价的结论"),
       P("（1）" + summaryLines.join(""), { noIndent: true }),
-      P("（2）本报告由泓算 v1.0.13 按标准目录自动生成，计算部分（第 4 章、附表）为软件实际计算成果；标注【待补充】的内容需由编制人员结合设计资料完善。", { noIndent: true }),
+      P("（2）本报告由泓算 H100 / v1.0.37 按标准目录自动生成，计算部分（第 4 章、附表）为软件实际计算成果；标注【待补充】的内容需由编制人员结合设计资料完善。", { noIndent: true }),
       H2("7.2 建议"),
       P("（1）工程施工部分河段需采用围堰挡水时，施工围堰等碍洪的临建设施应在汛期来到前和施工完成后进行彻底清除，以利行洪；", { noIndent: true }),
       P("（2）按规范要求的洪水标准编制施工度汛方案，并报当地水行政主管部门审批；", { noIndent: true }),
@@ -253,7 +260,7 @@
         : P("（无计算记录）"),
       new D.Paragraph({
         border: { top: { style: D.BorderStyle.SINGLE, size: 1, color: "d9d9d9" } },
-        children: [new D.TextRun({ text: "本报告由泓算 v1.0.13 依据《XXX高速公路洪水影响评价》标准目录自动生成，生成时间：" + dateStr() + "。计算成果供学习与课程设计参考，工程应用须经注册工程师复核。", size: 18, font: F, color: "6e6e73" })],
+        children: [new D.TextRun({ text: "本报告由泓算 H100 / v1.0.37 依据JTG C30—2015 计算链和 SL/T 808—2021 报告目录自动生成，生成时间：" + dateStr() + "。计算成果供学习与课程设计参考，工程应用须经注册工程师复核。", size: 18, font: F, color: "6e6e73" })],
         spacing: { before: 240 }
       })
     ];
@@ -262,11 +269,11 @@
     var cover = [
       new D.Paragraph({ spacing: { before: 2400 } }),
       new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: projName || "（项目名称）", bold: true, size: 32, font: F })], spacing: { after: 240 } }),
-      new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "洪水影响评价报告", bold: true, size: 56, font: F })], spacing: { after: 480 } }),
+      new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "桥涵水文分析报告", bold: true, size: 56, font: F })], spacing: { after: 480 } }),
       new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "（依据《公路工程水文勘测设计规范》JTG C30—2015）", size: 24, font: F, color: "6e6e73" })], spacing: { after: 2400 } }),
       new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "桥位/断面：" + (bridgeName || "【待补充】"), size: 28, font: F })], spacing: { after: 160 } }),
       new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "编制：" + (pj.engineer || "【待补充】") + "　　校核：" + (pj.reviewer || "【待补充】"), size: 28, font: F })], spacing: { after: 160 } }),
-      new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "泓算 HongSuan v1.0.13", size: 28, font: F })], spacing: { after: 160 } }),
+      new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: "泓算 HongSuan H100 / v1.0.37", size: 28, font: F })], spacing: { after: 160 } }),
       new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: dateStr(), size: 28, font: F })] }),
       PAGEBREAK()
     ];
@@ -311,7 +318,7 @@
   window.HONGSUAN_FIE_DOWNLOAD = function () {
     build().then(function (blob) {
       var R = window.__hsReportData ? window.__hsReportData() : {};
-      var name = "洪水影响评价报告_" + ((R.project && R.project.name) ? R.project.name : "泓算") + "_" + dateStr().replace(/[年月]/g, "-").replace("日", "") + ".docx";
+      var name = "桥涵水文分析报告_" + ((R.project && R.project.name) ? R.project.name : "泓算") + "_" + dateStr().replace(/[年月]/g, "-").replace("日", "") + ".docx";
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = name;

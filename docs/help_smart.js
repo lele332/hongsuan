@@ -14,14 +14,14 @@
       { s: "式 8.6.2", n: "基础埋深安全值 Δ", u: "m", d: "总冲刷深度 = 自然演变 + 一般 + 局部；大中桥 Δ=1.5~3.5m、特大桥 2.0~4.0m（档间线性插值）。", w: "「大、中桥孔径计算」· 总冲刷深度" },
       { s: "壅水式", n: "桥前最大壅水（《公路工程水文勘测设计指南》2001）", u: "m", d: "Δz = K·KN·(vM²−v0M²)/(2g)；桥面最低高程 = Hs + Δz′ + (2/3)Δh₂ + (1/2)Δh湾 + 净空。", w: "「大、中桥孔径计算」· 桥前壅水与桥面设计高程" }
     ]},
-    { g: "方法 C · 径流厚度法", items: [
+    { g: "径流厚度法（无资料地区）", items: [
       { s: "Qp", n: "设计洪峰流量", u: "m³/s", d: "Qp = ψ·(h−z)^1.5·F^0.8·β·γ·δ。", w: "适用于 F ≤ 30 km² 小流域" },
-      { s: "ψ", n: "径流形成系数（地貌系数）", u: "—", d: "查表 B-5：按地形（平坦/起伏/山岭）与主河沟平均坡度、汇水面积档取值。", w: "方法 C 输入项" },
-      { s: "h", n: "径流厚度", u: "mm", d: "查表 B-9：由暴雨分区 × 土的类别 Ⅰ~Ⅵ × 频率 × 汇流时间 τ（30/45/60/80min）共同决定，共 108 行已内置。", w: "方法 C 输入项" },
-      { s: "z", n: "滞留厚度", u: "mm", d: "查表 B-10：按地面特征（密草 5mm、耕地 10mm 等）取值。", w: "方法 C 输入项" },
-      { s: "β", n: "气候系数", u: "—", d: "查表 B-11：按汇水区重心距涵/桥位距离与地形取值。", w: "方法 C 输入项" },
-      { s: "γ", n: "汇流区系数", u: "—", d: "查表 B-12：按汇流时间 τ 与汇水区尺寸 γw、气候区（东南/西北等）取值。", w: "方法 C 输入项" },
-      { s: "δ", n: "湖泊水库调节系数", u: "—", d: "查表 B-13：按流域内湖泊（水库）面积率取值，无湖泊取 1。", w: "方法 C 输入项" },
+      { s: "ψ", n: "径流形成系数（地貌系数）", u: "—", d: "查表 B-5：按地形（平坦/起伏/山岭）与主河沟平均坡度、汇水面积档取值。", w: "径流厚度法输入项" },
+      { s: "h", n: "径流厚度", u: "mm", d: "查表 B-9：由暴雨分区 × 土的类别 Ⅰ~Ⅵ × 频率 × 汇流时间 τ（30/45/60/80min）共同决定，共 108 行已内置。", w: "径流厚度法输入项" },
+      { s: "z", n: "滞留厚度", u: "mm", d: "查表 B-10：按地面特征（密草 5mm、耕地 10mm 等）取值。", w: "径流厚度法输入项" },
+      { s: "β", n: "气候系数", u: "—", d: "查表 B-11：按汇水区重心距涵/桥位距离与地形取值。", w: "径流厚度法输入项" },
+      { s: "γ", n: "汇流区系数", u: "—", d: "查表 B-12：按汇流时间 τ 与汇水区尺寸 γw、气候区（东南/西北等）取值。", w: "径流厚度法输入项" },
+      { s: "δ", n: "湖泊水库调节系数", u: "—", d: "查表 B-13：按流域内湖泊（水库）面积率取值，无湖泊取 1。", w: "径流厚度法输入项" },
       { s: "F", n: "汇水面积", u: "km²", d: "分水岭包围的地面集水区域面积，可用「地图量算」勾绘自动量出。", w: "全流程起点" }
     ]},
     { g: "推理公式符号", items: [
@@ -57,7 +57,7 @@
   var ROUTE = [
     { t: "① 量算 F", sub: "需要：桥位地图/汇水区边界", nav: "mMap", open: "mapBox", anchor: "mapBox" },
     { t: "② 查雨力 Sp", sub: "需要：地点（省-市-县）+ 频率", nav: "mNoData", open: "noDataBox", anchor: "spMapPanel" },
-    { t: "③ 设计流量 Qp", sub: "三选一：适线 / 推理公式 / 方法 C / 经验公式", nav: "mNoData", open: "noDataBox", anchor: "noDataBox" },
+    { t: "③ 设计流量 Qp", sub: "三选一：适线 / 推理公式 / 径流厚度法 / 经验公式", nav: "mNoData", open: "noDataBox", anchor: "noDataBox" },
     { t: "④ 桥孔净长 Lj", sub: "需要：Qp、Qc、Bc、河段类型", nav: "mHydro", open: "hydroBox", details: "openBox", anchor: "openBox" },
     { t: "⑤ 一般冲刷 hp", sub: "需要：Q2、μ、Bcj、hmc、hcq、d̄ 或黏性土 IL", nav: "mHydro", open: "hydroBox", details: "scourBox", anchor: "scourBox" },
     { t: "⑥ 局部冲刷 hb", sub: "需要：v（可由 hp 推算）、B1、Kξ", nav: "mHydro", open: "hydroBox", details: "scourBox", anchor: "lsGo" },
@@ -242,33 +242,54 @@
     routeHtml += "</div><div style='font-size:11.5px;color:var(--text3);margin-top:6px'>顺序即整条计算链：面积 → 雨力 → 流量 → 孔径 → 冲刷 → 壅水 → 桥面高程。点击任意节点会自动切到对应页面并定位。</div></details></div>";
     hint.insertAdjacentHTML("afterend", routeHtml);
 
-    var symHtml = "<div id='hsSmartSym' style='margin-top:10px'><details open><summary style='cursor:pointer;font-size:13px;color:var(--blue);font-weight:500'>符号词典 · 按分类点选，不用打字</summary><div style='margin-top:8px'>";
-    SYM.forEach(function (grp, gi) {
-      symHtml += "<div style='font-size:12px;font-weight:600;color:var(--text2);margin:8px 0 4px'>" + esc(grp.g) + "</div><div style='display:flex;flex-wrap:wrap;gap:5px'>";
-      grp.items.forEach(function (it, ii) {
-        symHtml += "<button class='btn ghost' data-hssym='" + gi + ":" + ii + "' style='padding:3px 10px;font-size:12.5px'>" + esc(it.s) + "</button>";
-      });
-      symHtml += "</div>";
+/* v1.0.25：符号/公式词条 → 中英对照表格（默认隐藏，点击展开） */
+    var SYM_EN = {
+      "推理公式": "Rational Formula (MOR 1980)", "经验公式一": "Empirical Formula I",
+      "经验公式二": "Empirical Formula II", "式 7.2.1-1": "Eq. 7.2.1-1 (Channel Width)",
+      "式 8.3.1-4": "Eq. 8.3.1-4 (General Scour, 64-1)", "式 8.4.1": "Eq. 8.4.1 (Local Scour, 65-2)",
+      "式 8.6.2": "Eq. 8.6.2 (Foundation Depth)", "壅水式": "Backwater Formula (Guide 2001)",
+      "Qp": "Design peak discharge", "ψ": "Runoff coefficient (geomorphic)",
+      "h": "Runoff depth", "z": "Retention depth", "β": "Climate coefficient",
+      "γ": "Catchment coefficient", "δ": "Lake/reservoir regulation factor",
+      "F": "Catchment area", "Sp": "Rainfall intensity", "τ": "Time of concentration",
+      "μ": "Loss parameter (infiltration rate)", "n": "Rainfall decay exponent",
+      "L": "Main channel length", "I": "Channel slope", "Kq / n3": "Bridge opening coefficients",
+      "Lj": "Minimum clear opening length", "hp": "Max depth after general scour",
+      "v0 / v0′": "Threshold / initial-scour velocity", "Kξ": "Pier shape coefficient",
+      "B1": "Pier design width", "Kη2 / n2": "Sediment coefficient / scour exponent",
+      "d̄": "Mean sediment size", "Δz": "Max backwater height", "Δz′": "Backwater at bridge",
+      "vM / v0M": "Constricted / natural mean velocity", "KN": "Fixed-bed backwater coefficient",
+      "Δh₂": "Wave height", "Hmin": "Min soffit elevation", "i": "Channel bed slope"
+    };
+    var FORMULA_ROWS = [
+      ["推理公式 Qp = 0.278·(Sp−μ)/τ^n·F", "Rational formula for small catchments", "公路科研所 1980 版 / 《水力学与桥涵水文》"],
+      ["经验公式一 Qp = γ·(Sp−μ)^m·F^λ1", "Empirical formula I", "公路科研所 1980 年代初"],
+      ["经验公式二 Qp = C·Sp^β·F^λ2", "Empirical formula II", "公路科研所 1980 年代初"],
+      ["Lj = Kq·(Qp/Qc)^n3·Bc", "Minimum clear opening length", "JTG C30—2015 式 7.2.1-1"],
+      ["hp = [A·(Q2/(μ·Bcj))·(hmc/hcq)^(5/3) ÷ (E·d̄^(1/6))]^(3/5)", "General scour depth (64-1 revised)", "JTG C30—2015 式 8.3.1-4"],
+      ["hb = Kξ·Kη2·B1^0.6·hp^0.15·((v−v0′)/v0)^n2", "Local scour depth (65-2)", "JTG C30—2015 式 8.4.1"],
+      ["总冲刷 = 自然演变 + 一般 + 局部；埋深安全值 Δ", "Total scour & foundation embedment", "JTG C30—2015 式 8.6.2 / 附录 D"],
+      ["Δz = K·KN·(vM²−v0M²)/(2g)", "Bridge backwater height", "《公路工程水文勘测设计指南》2001"],
+      ["Qp = ψ·(h−z)^1.5·F^0.8·β·γ·δ", "Runoff-depth method (small basins, F≤30 km²)", "JTG/T 3365-02-2020 附录 B"]
+    ];
+    var symHtml = "<div id='hsSmartSym' style='margin-top:10px'><details><summary style='cursor:pointer;font-size:13px;color:var(--blue);font-weight:500'>公式与符号（中英对照表 · 默认收起）</summary><div style='margin-top:8px'>";
+    symHtml += "<div style='font-size:12px;font-weight:600;color:var(--text2);margin:6px 0 4px'>公式一览 Formula Index</div>";
+    symHtml += "<table class='ltab' style='width:100%;font-size:12px'><thead><tr><th>公式 Formula</th><th>英文 English</th><th>出处 Source</th></tr></thead><tbody>";
+    FORMULA_ROWS.forEach(function (r) {
+      symHtml += "<tr><td style='font-family:monospace;font-size:11.5px'>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td style='color:var(--text2)'>" + esc(r[2]) + "</td></tr>";
     });
-    symHtml += "</div><div id='hsSymCard' style='display:none;margin-top:8px;border:1px solid var(--border);border-radius:10px;padding:10px'></div></details></div>";
+    symHtml += "</tbody></table>";
+    SYM.forEach(function (grp) {
+      symHtml += "<div style='font-size:12px;font-weight:600;color:var(--text2);margin:10px 0 4px'>" + esc(grp.g) + "</div>";
+      symHtml += "<table class='ltab' style='width:100%;font-size:12px'><thead><tr><th>符号</th><th>中文</th><th>English</th><th>单位</th><th>说明 / 出处</th></tr></thead><tbody>";
+      grp.items.forEach(function (it) {
+        symHtml += "<tr><td style='font-family:monospace;font-weight:600;white-space:nowrap'>" + esc(it.s) + "</td><td>" + esc(it.n) + "</td><td>" + esc(SYM_EN[it.s] || "") + "</td><td>" + esc(it.u) + "</td><td style='color:var(--text2)'>" + it.d + " <span style='color:var(--blue)'>[" + esc(it.w) + "]</span></td></tr>";
+      });
+      symHtml += "</tbody></table>";
+    });
+    symHtml += "</div></details></div>";
     el("hsSmartRoute").insertAdjacentHTML("afterend", symHtml);
 
-    el("hsSmartRoute").addEventListener("click", function (ev) {
-      var t = ev.target.closest("[data-hsroute]");
-      if (t) goto(ROUTE[+t.getAttribute("data-hsroute")]);
-    });
-    el("hsSmartSym").addEventListener("click", function (ev) {
-      var t = ev.target.closest("[data-hssym]");
-      if (!t) return;
-      var p = t.getAttribute("data-hssym").split(":");
-      var it = SYM[+p[0]].items[+p[1]];
-      var card = el("hsSymCard");
-      card.style.display = "block";
-      card.innerHTML = "<div style='font-size:14px;font-weight:700'>" + esc(it.s) + " <span style='font-weight:400;color:var(--text2)'>" + esc(it.n) + "</span></div>" +
-        "<div style='font-size:12px;margin-top:4px'>单位：<b>" + esc(it.u) + "</b></div>" +
-        "<div style='font-size:12.5px;margin-top:4px;line-height:1.55'>" + it.d + "</div>" +
-        "<div style='font-size:11.5px;color:var(--blue);margin-top:6px'>在哪里用：" + esc(it.w) + "</div>";
-    });
 
     STEP_TARGETS.forEach(function (pair) {
       var anchor = el(pair[0]);
@@ -277,7 +298,7 @@
       btn.className = "btn ghost";
       btn.setAttribute("data-hssteps-btn", pair[1]);
       btn.style.cssText = "margin-top:6px;padding:3px 12px;font-size:12px";
-      btn.textContent = "▶ 看计算过程（用当前输入值逐步代入）";
+      btn.textContent = "分步演算（当前输入值）";
       var box = document.createElement("div");
       box.setAttribute("data-hssteps-box", pair[1]);
       box.style.cssText = "display:none;margin-top:6px;font-size:12.5px;border:1px dashed var(--border);border-radius:8px;padding:8px;background:var(--card,#fafafa)";

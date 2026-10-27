@@ -95,7 +95,7 @@ async function main() {
     const errors = [];
     cdp.onEvent((msg) => {
       if (msg.method === "Runtime.exceptionThrown") {
-        errors.push(msg.params.exceptionDetails?.exception?.description || "runtime exception");
+        errors.push((msg.params.exceptionDetails?.url || "?") + ":" + (msg.params.exceptionDetails?.lineNumber ?? "?") + " " + (msg.params.exceptionDetails?.exception?.description || msg.params.exceptionDetails?.text || "runtime exception"));
       }
     });
     await cdp.send("Page.enable");

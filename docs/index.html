@@ -1061,6 +1061,15 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   <svg id="mapCanvas" viewBox="0 0 900 560" style="width:100%;height:auto;border:1px solid var(--border);background:#fff;margin-top:8px"></svg>
   <div id="mapOut" style="font-size:12.5px;margin-top:8px"></div>
   <div class="err" id="mapErr"></div>
+  <div class="card" style="margin-top:10px;padding:12px 16px">
+  <h2 style="font-size:15px;margin:0 0 6px">率定曲线拟合 <span style="font-size:10.5px;color:var(--text3);font-weight:400">内核：Python sidecar（最小二乘 · 幂函数/二次多项式）</span></h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div><label>水位 H（m，每行一个）</label><textarea id="rtH" rows="4" style="width:150px" placeholder="10\n11\n12\n13"></textarea></div>
+    <div><label>流量 Q（m³/s，对应每行）</label><textarea id="rtQ" rows="4" style="width:150px" placeholder="50\n120\n230\n380"></textarea></div>
+    <div style="align-self:flex-end"><button class="btn" id="btnRatingFit" style="padding:6px 18px">拟合并评估</button></div>
+  </div>
+  <pre id="ratingFitOut" style="margin:8px 0 0;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text2)"></pre>
+</div>
 </div>
 
 <div id="reportBox" style="display:none">
@@ -1478,15 +1487,7 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
 </div>
 
   <div id="echartBox"></div>
-  <div class="card" style="margin-top:10px;padding:12px 16px">
-  <h2 style="font-size:15px;margin:0 0 6px">率定曲线拟合 <span style="font-size:10.5px;color:var(--text3);font-weight:400">内核：Python sidecar（最小二乘 · 幂函数/二次多项式）</span></h2>
-  <div style="display:flex;gap:12px;flex-wrap:wrap">
-    <div><label>水位 H（m，每行一个）</label><textarea id="rtH" rows="4" style="width:150px" placeholder="10\n11\n12\n13"></textarea></div>
-    <div><label>流量 Q（m³/s，对应每行）</label><textarea id="rtQ" rows="4" style="width:150px" placeholder="50\n120\n230\n380"></textarea></div>
-    <div style="align-self:flex-end"><button class="btn" id="btnRatingFit" style="padding:6px 18px">拟合并评估</button></div>
-  </div>
-  <pre id="ratingFitOut" style="margin:8px 0 0;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text2)"></pre>
-</div>
+
 <div id="chartReadout" style="font-size:11.5px;color:var(--text3);margin-top:4px;font-variant-numeric:tabular-nums"></div>
   <div class="legend">
     <span><i></i>理论频率曲线（P-Ⅲ，当前采用）</span>

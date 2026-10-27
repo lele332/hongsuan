@@ -157,6 +157,16 @@
         '联系方式': contact || '（未填写）',
         '页面地址': location.href.slice(0, 200),
         '运行版本': (window.__HS_BUILD_INFO && window.__HS_BUILD_INFO.release) || 'unknown',
+        '当前功能': (function () { try { var on = document.querySelector('.hs-tree-item.on'); return on ? on.textContent.trim() : '—'; } catch (e) { return '—'; } })(),
+        '最近计算': (function () {
+          try {
+            var data = window.__hsReportData && window.__hsReportData();
+            return ((data && data.logs) || []).slice(-3).map(function (e) {
+              var r = e.results || {}, k = Object.keys(r)[0];
+              return (e.module || '') + (k ? ' ' + k + '=' + r[k] : '');
+            }).join(' | ') || '—';
+          } catch (e) { return '—'; }
+        })(),
         '构建信息': JSON.stringify(window.__HS_BUILD_INFO || {}).slice(0, 300)
       })
     }).then(function (r) {
