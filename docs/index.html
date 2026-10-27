@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -376,6 +376,28 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   details#spMapPanel.sp-fullscreen #spInfoBox { position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 100000; background: rgba(15,23,42,0.92); border-radius: 10px; padding: 10px 14px; display: block !important; }
 }
 
+  /* ===== v1.0.38 移动端深度适配：键盘 / 触控 / iOS 缩放 ===== */
+  @media (max-width: 760px) {
+    /* iOS：输入控件字号 <16px 聚焦时会自动放大整页，统一强制 16px */
+    input[type=number], input[type=text], input[type=search], input:not([type]), select, textarea {
+      font-size: 16px !important;
+    }
+    /* 聚焦元素预留键盘上方滚动边距，配合 viewport interactive-widget */
+    input, select, textarea { scroll-margin-bottom: 140px; }
+    /* 触控目标 ≥ 40px（Apple HIG / WCAG 2.5.5） */
+    .hs-tree-item { padding: 10px 12px; min-height: 40px; }
+    .hs-foot-btn { padding: 10px 2px; min-height: 40px; font-size: 12.5px; }
+    .hs-mode-switch button { padding: 8px 0; }
+    .btn { padding: 10px 20px; font-size: 14px; min-height: 40px; }
+    .seg button { padding: 8px 14px; font-size: 13px; }
+    .fillBtn { padding: 7px 12px; min-height: 36px; }
+    label { font-size: 13px; }
+    /* 键盘弹起时弹层可滚动，不被顶飞 */
+    #cmdPanel { overflow-y: auto; }
+    /* 刘海屏/手势条安全区 */
+    body { padding-bottom: calc(36px + env(safe-area-inset-bottom)); }
+  }
+
   /* 桌面版下载入口 */
   #dlBar { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     background:#fff; border:1px solid var(--border); border-radius:12px;
@@ -503,8 +525,32 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
     .hs-tree-item { white-space: nowrap; width: auto; flex: 0 0 auto; }
     .hs-proj-sub a { margin-left: 4px; }
   }
+
+  /* ===== v1.0.38 网页版专属配色：水利青主题（与桌面版形成差异） ===== */
+  :root { --blue: #0E7C86; --bg: #F3F6F7; --border: rgba(10,46,54,0.10); }
+  .hs-tree-item:hover { background: rgba(14,124,134,0.08); }
+  #hsSide { background: #0A2E36; border-color: rgba(255,255,255,0.08); }
+  #hsSide .hs-brand-name, #hsSide .hs-brand-gen { color: #F2F7F7; }
+  #hsSide .hs-brand-gen { border-color: rgba(255,255,255,0.28); }
+  #hsSide .hs-brand-ver, #hsSide .hs-proj-label, #hsSide .hs-proj-sub { color: rgba(242,247,247,0.72); }
+  #hsSide .hs-proj-name { color: #F2F7F7; }
+  #hsSide .hs-proj { background: rgba(255,255,255,0.08); }
+  #hsSide .hs-tree-group { color: rgba(242,247,247,0.55); border-color: rgba(255,255,255,0.10); }
+  #hsSide .hs-tree-item { color: rgba(242,247,247,0.88); }
+  #hsSide .hs-tree-item:hover { background: rgba(255,255,255,0.10); }
+  #hsSide .hs-tree-item.on { background: #14A0AD; color: #fff; }
+  #hsSide .hs-proj-sub a { color: #5FD4DC; }
+  #hsSide .hs-dot { background: #3DDC97; }
+  #hsSide .hs-foot { border-color: rgba(255,255,255,0.10); }
+  #hsSide .hs-foot-btn { border-color: rgba(255,255,255,0.18); color: rgba(242,247,247,0.75); }
+  #hsSide .hs-foot-btn:hover { border-color: #5FD4DC; color: #5FD4DC; }
+  #hsSide .hs-mode-switch { background: rgba(255,255,255,0.10); }
+  #hsSide .hs-mode-switch button { color: rgba(242,247,247,0.7); }
+  #hsSide .hs-mode-switch button.on { background: rgba(255,255,255,0.14); color: #fff; }
+  #hsSide #hsModeHint { color: rgba(242,247,247,0.55) !important; }
+  /* 深色模式仍由 body.hs-dark 变量接管，青色主按钮自动跟随 --blue */
 </style>
-  <meta name="theme-color" content="#111113">
+  <meta name="theme-color" content="#0A2E36">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -2044,6 +2090,37 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   </div>
 </div>
 
+<script>
+/* v1.0.38 移动端键盘兜底：iOS 键盘弹起时确保聚焦输入框可见（Android 由 viewport interactive-widget 处理） */
+(function () {
+  var isTouch = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+  if (!isTouch) return;
+  var t = null;
+  function visibleEnough(el) {
+    try {
+      var r = el.getBoundingClientRect();
+      var vv = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      return r.top >= 0 && r.bottom <= vv - 8;
+    } catch (e) { return true; }
+  }
+  document.addEventListener("focusin", function (e) {
+    var el = e.target;
+    if (!el || !el.matches || !el.matches("input, textarea, select")) return;
+    clearTimeout(t);
+    t = setTimeout(function () {
+      if (!visibleEnough(el)) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 320);
+  }, true);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", function () {
+    var a = document.activeElement;
+      if (a && a.matches && a.matches("input, textarea") && !visibleEnough(a)) {
+        a.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    });
+  }
+})();
+</script>
 </body>
 </html>
 
