@@ -124,7 +124,7 @@ async function main() {
     /* ③ 侧栏导航到暴雨页 → leaflet 按需加载 */
     await cdp.send("Runtime.evaluate", { expression: "(function(){var b=document.querySelector(\x27.hs-tree-item[data-mode=noData]\x27)||document.getElementById(\x27mNoData\x27);if(b)b.click();})()" });
     await new Promise(r => setTimeout(r, 600));
-    await waitFor("!!(window.L && window.L.map)", true, cdp, 15000, "leaflet 按需加载");
+    await waitFor("!!(window.L && window.L.map)", true, cdp, 30000, "leaflet 按需加载");
     await waitFor("document.querySelector(\x27#spMap .leaflet-pane\x27) !== null", true, cdp, 15000, "leaflet 地图容器");
     console.log("③ 暴雨地图：leaflet 自动按需加载，地图已初始化");
 

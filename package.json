@@ -10,6 +10,8 @@
     "browser:smoke": "node scripts/browser-smoke.js",
     "test": "npm run check && npm run smoke && npm run lazy",
     "test:browser": "npm run browser:smoke",
-    "lazy": "node scripts/lazy-smoke.js"
+    "lazy": "node scripts/lazy-smoke.js",
+    "mobile": "node scripts/mobile-smoke.js",
+    "mobile:strict": "node scripts/mobile-smoke.js --strict"
   }
 }

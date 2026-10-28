@@ -563,7 +563,13 @@ body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !i
   .hs-mode-switch button { flex: 1; border: 0; background: transparent; padding: 4px 0; font-size: 11.5px; border-radius: 7px; color: var(--text2); cursor: pointer; font-family: inherit; transition: all .15s; }
   .hs-mode-switch button.on { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
   @media (max-width: 900px) {
-    #hsLayout { flex-direction: column; }
+    /* v1.0.38 修复：column 布局下 align-items:flex-start 使子元素按内容宽收缩，
+       主内容被最宽子元素撑出视口被裁（右半屏消失/侧栏偏左的根因） */
+    #hsLayout { flex-direction: column; align-items: stretch; }
+    #hsMain, #hsSide { width: 100%; max-width: 100%; }
+    /* v1.0.38 手机端防溢出：表单控件不超视口，长链接允许断行 */
+    input, select, textarea { max-width: 100%; }
+    a { overflow-wrap: anywhere; }
     #hsSide { width: 100%; flex: none; position: static; max-height: none; }
     .hs-tree { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 4px; }
     .hs-tree-group { display: none; }
