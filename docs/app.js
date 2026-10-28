@@ -3548,10 +3548,10 @@
     for (const pt of pts) {
       const px = pToX(pt.p), py = sy2(pt.q);
       if (pt.kind === "hist") {
-        s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#ff3b30" transform="rotate(45 ${px} ${py})"/>`;
+        s += `<rect x="${px - 5}" y="${py - 5}" width="10" height="10" fill="#fff" stroke="#ff3b30" stroke-width="2" transform="rotate(45 ${px} ${py})"/>`;
       } else {
-        const dotColor = (document.body && document.body.classList && document.body.classList.contains('hs-dark')) ? '#9FD8F2' : '#1d1d1f';
-        s += `<circle cx="${px}" cy="${py}" r="4" fill="${dotColor}"/>`;
+
+        s += `<circle cx="${px}" cy="${py}" r="4.5" fill="#fff" stroke="#007AFF" stroke-width="2"/>`;
       }
     }
     s += `<line id="chx" x1="0" y1="0" x2="0" y2="0" stroke="#007AFF" stroke-width="0.8" stroke-dasharray="3 3" opacity="0"/>`;
@@ -3744,7 +3744,7 @@
     s += `<text x="20" y="${(PT + PB) / 2}" font-size="12" fill="#1d1d1f" transform="rotate(-90 20 ${(PT + PB) / 2})" text-anchor="middle">流量 Q（m³/s）</text>`;
     const lgY = PT - 8;
     s += `<g font-size="11.5" fill="#1d1d1f">`;
-    s += `<circle cx="${PR - 208}" cy="${lgY}" r="4" fill="#1d1d1f"/><text x="${PR - 198}" y="${lgY + 4}">经验点据</text>`;
+    s += `<circle cx="${PR - 208}" cy="${lgY}" r="4" fill="#fff" stroke="#007AFF" stroke-width="2"/><text x="${PR - 198}" y="${lgY + 4}">经验点据</text>`;
     s += `<line x1="${PR - 128}" y1="${lgY}" x2="${PR - 100}" y2="${lgY}" stroke="#007AFF" stroke-width="2.5"/><text x="${PR - 94}" y="${lgY + 4}">理论频率曲线</text>`;
     s += `<circle cx="${PR - 22}" cy="${lgY}" r="5" fill="#fff" stroke="#007AFF" stroke-width="2"/>`;
     s += `</g>`;
@@ -8135,6 +8135,12 @@
   if (new URLSearchParams(location.search).get("autosave") === "1") {
     saveAll();
   }
+  /* v1.0.38-r4：手机端默认折叠所有已展开的功能块，压缩滚动长度（点 summary 随时展开） */
+  try {
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      document.querySelectorAll("details[open]").forEach(function (d) { d.removeAttribute("open"); });
+    }
+  } catch (e) {}
   var ocrImageDataUrl = "";
   var ocrSelectedFile = null;
   var ocrSourceRows = [];

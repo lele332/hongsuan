@@ -231,7 +231,7 @@
     var hint = document.querySelector("#helpBox .hint");
     if (!hint || el("hsSmartRoute")) return;
 
-    var routeHtml = "<div id='hsSmartRoute' style='margin-top:10px'><details open><summary style='cursor:pointer;font-size:13px;color:var(--blue);font-weight:500'>我怎么算桥？· 点击路线图直达（推荐新手从这里开始）</summary>" +
+    var routeHtml = "<div id='hsSmartRoute' style='margin-top:10px'><details"+(window.innerWidth>760?" open":"")+"><summary style='cursor:pointer;font-size:13px;color:var(--blue);font-weight:500'>我怎么算桥？· 点击路线图直达（推荐新手从这里开始）</summary>" +
       "<div style='display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin-top:8px'>";
     ROUTE.forEach(function (r, i) {
       routeHtml += "<div role='button' data-hsroute='" + i + "' style='cursor:pointer;min-width:150px;flex:1 1 150px;border:1px solid var(--border);border-radius:10px;padding:7px 9px;background:var(--card,#fff)'>" +

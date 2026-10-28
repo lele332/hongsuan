@@ -111,7 +111,7 @@
         value: [zOfP(pt.p), pt.q],
         symbol: pt.kind === "hist" ? "diamond" : "circle",
         symbolSize: pt.kind === "hist" ? 11 : 9,
-        itemStyle: { color: pt.kind === "hist" ? "#ff3b30" : "#1d1d1f" },
+        itemStyle: { color: "#fff", borderColor: pt.kind === "hist" ? "#ff3b30" : "#007AFF", borderWidth: 2 },
         ep: pt
       };
     });
