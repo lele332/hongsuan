@@ -625,7 +625,55 @@ body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !i
   <!-- Umami analytics -->
   <!-- Umami analytics -->
   <script defer src="https://cloud.umami.is/script.js" data-website-id="a31f367d-eeb7-42ca-a81f-1ccfcb6fb84e"></script>
-  </head>
+  <style id="hsGlassTheme">
+/* ===== v1.0.38-r5 玻璃质感主题（星屿/HAN 配方：saturate+blur，iOS 风格；渐变水洗零内存成本） ===== */
+html { background:#EDF3F4; }
+html::before { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 88% -8%, rgba(14,124,134,.10), transparent 60%),
+    radial-gradient(900px 620px at -8% 28%, rgba(20,160,173,.08), transparent 60%),
+    radial-gradient(760px 560px at 50% 112%, rgba(91,212,220,.07), transparent 60%);
+  background-attachment: fixed; }
+body { background: transparent; }
+/* 卡片：半透明白 + 精修边框阴影；桌面端加毛玻璃，手机端省 GPU 只用半透明 */
+.card {
+  background: rgba(255,255,255,.70);
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow: 0 1px 2px rgba(10,46,54,.05), 0 10px 30px rgba(10,46,54,.07);
+}
+  @media (min-width: 761px) {
+    .card { -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); }
+  }
+.card:hover { border-color: rgba(14,124,134,.30); box-shadow: 0 2px 4px rgba(10,46,54,.06), 0 14px 36px rgba(10,46,54,.10); }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .card { background: rgba(255,255,255,.93); }
+  }
+/* 侧栏：深青渐变增加纵深 */
+#hsSide { background: linear-gradient(180deg, #0A2E36 0%, #0C3944 100%); }
+/* 移动端底栏与抽屉：招牌深青毛玻璃（内容从下面滚过） */
+#hsMobileNav, #hsMobileDrawer {
+  background: rgba(10,46,54,.78);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border-top: 1px solid rgba(255,255,255,.14);
+}
+/* 主按钮：青色渐变 + 轻光晕 */
+.btn:not(.ghost) { background: linear-gradient(135deg,#139BA6,#0E7C86); box-shadow: 0 2px 10px rgba(14,124,134,.28); }
+.btn:not(.ghost):hover { box-shadow: 0 4px 16px rgba(14,124,134,.38); opacity: 1; filter: brightness(1.05); }
+/* 暗色模式等价玻璃 */
+html:has(body.hs-dark) { background:#0B0E12; }
+html:has(body.hs-dark)::before {
+  background:
+    radial-gradient(1100px 700px at 88% -8%, rgba(20,160,173,.10), transparent 60%),
+    radial-gradient(900px 620px at -8% 28%, rgba(10,46,54,.40), transparent 60%);
+  background-attachment: fixed; }
+body.hs-dark .card { background: rgba(23,26,33,.62); border-color: rgba(255,255,255,.08); box-shadow: 0 1px 2px rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.28); }
+body.hs-dark .card:hover { border-color: rgba(20,160,173,.38); }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body.hs-dark .card { background: rgba(23,26,33,.94); }
+  }
+</style>
+</head>
 <body class="hs-hide-hints">
 
 <div id="hsLayout">
