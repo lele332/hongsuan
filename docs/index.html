@@ -63,6 +63,7 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
 <script defer src="libs/dexie.min.js"></script>
 <script defer src="history.js"></script>
 <script defer src="lazyload.js"></script>
+<script defer src="kb-fit.js"></script>
 <script defer src="libs/driver.min.js"></script>
 <script defer src="chart_echarts.js"></script>
 <script defer src="backwater.js"></script>
@@ -391,6 +392,8 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   #hsMobileScrim.show { display: block; }
   body.hs-mobile-nav { padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important; }
   body.hs-mobile-nav #hsMobileNav { display: flex; }
+/* 键盘弹出：隐藏底部导航/抽屉，防遮挡输入框 */
+body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !important; }
   body.hs-mobile-nav #hsTree { display: none; }
   body.hs-mobile-nav #hsSide .hs-foot { display: none; }
   /* 手机端：浮动反馈球与底栏重复 → 隐藏（反馈在抽屉里） */

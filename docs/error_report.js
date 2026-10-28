@@ -5,6 +5,7 @@
 (function () {
   "use strict";
   var MAX_LOCAL_ERRORS = 30;
+  var serverPosts = 0;
   var reported = new Set();
 
   function buildInfo() {
@@ -53,6 +54,19 @@
     try {
       if (window.umami && typeof window.umami.track === "function") {
         window.umami.track("hs-" + kind, payload);
+      }
+    } catch (e) {}
+
+    try {
+      /* 服务器通道：同源 /api/error，sendBeacon 优先；限频 10 条/会话，失败静默 */
+      if (serverPosts < 10) {
+        serverPosts++;
+        var body = JSON.stringify(payload);
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/error", new Blob([body], { type: "application/json" }));
+        } else {
+          fetch("/api/error", { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true }).catch(function () {});
+        }
       }
     } catch (e) {}
   }
