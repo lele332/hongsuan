@@ -216,12 +216,14 @@
 
   window.__hsEcharts = function (payload) {
     lastData = adaptTicks(payload);
-    var c = ensureChart();
-    if (!c) return;
-    c.setOption(buildOption(lastData), { notMerge: true });
-    try { c.resize(); } catch (e) {}
-    selfCheck();
-    /* 容器布局可能晚于首次渲染，延迟再自愈一次 */
-    window.setTimeout(selfCheck, 350);
+    window.hsLoad("echarts").then(function () {
+      var c = ensureChart();
+      if (!c) return;
+      c.setOption(buildOption(lastData), { notMerge: true });
+      try { c.resize(); } catch (e) {}
+      selfCheck();
+      /* 容器布局可能晚于首次渲染，延迟再自愈一次 */
+      window.setTimeout(selfCheck, 350);
+    }).catch(function (e) { console.error("ECharts 加载失败", e); });
   };
 })();

@@ -8,7 +8,8 @@
     "check": "node scripts/check-all-js.js",
     "smoke": "node scripts/static-smoke.js",
     "browser:smoke": "node scripts/browser-smoke.js",
-    "test": "npm run check && npm run smoke",
-    "test:browser": "npm run browser:smoke"
+    "test": "npm run check && npm run smoke && npm run lazy",
+    "test:browser": "npm run browser:smoke",
+    "lazy": "node scripts/lazy-smoke.js"
   }
 }

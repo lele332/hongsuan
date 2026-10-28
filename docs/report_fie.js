@@ -20,7 +20,8 @@
   }
 
   async function build() {
-    var D = window.docx; /* 网页版：docx.umd.js 随页面加载 */
+    await window.hsLoad("docx");
+    var D = window.docx; /* hsLoad 懒加载 */
     if (!D) return Promise.reject(new Error("docx 组件加载失败"));
     var R = (typeof window.__hsReportData === "function") ? window.__hsReportData() : null;
     if (!R) return Promise.reject(new Error("无法读取泓算计算数据（__hsReportData）"));

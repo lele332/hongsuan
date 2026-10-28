@@ -7719,7 +7719,8 @@
       URL.revokeObjectURL(url);
     }, 3e4);
   }
-  function buildReportDocx() {
+  async function buildReportDocx() {
+    await window.hsLoad("docx");
     const D = window.docx;
     if (!D) {
       alert("docx \u5E93\u672A\u52A0\u8F7D\uFF08web/libs/docx.umd.js\uFF09");
@@ -8155,6 +8156,7 @@
     }
   }
   async function getTessWorker(onStatus) {
+    await window.hsLoad("tesseract");
     const T = window.Tesseract;
     if (!T) throw new Error("\u6D4F\u89C8\u5668\u8BC6\u522B\u5F15\u64CE\u672A\u52A0\u8F7D\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u91CD\u8BD5");
     if (tessWorker) return tessWorker;
@@ -8607,6 +8609,7 @@ function textToTable(text, source) {
     return out;
   }
   async function parseDocx(f) {
+    await window.hsLoad("jszip");
     const JSZip = window.JSZip;
     if (!JSZip) throw new Error("Word \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
     const zip = await JSZip.loadAsync(await f.arrayBuffer());
@@ -8621,6 +8624,7 @@ function textToTable(text, source) {
     return textToTable(ps.join("\n"), "Word \u6587\u672C");
   }
   async function parseWorkbook(f) {
+    await window.hsLoad("xlsx");
     const XLSX = window.XLSX;
     if (!XLSX) throw new Error("Excel \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
         let wb;
@@ -8710,6 +8714,7 @@ function textToTable(text, source) {
     return cv.toDataURL("image/jpeg", 0.94);
   }
   async function parsePdf(f, status) {
+    await window.hsLoad("pdf");
     const pdfjs = window.pdfjsLib;
     if (!pdfjs) throw new Error("PDF \u89E3\u6790\u7EC4\u4EF6\u672A\u52A0\u8F7D\uFF0C\u8BF7\u91CD\u65B0\u542F\u52A8\u8F6F\u4EF6");
     pdfjs.GlobalWorkerOptions.workerSrc = "libs/pdf.worker.min.js";
@@ -9880,6 +9885,10 @@ function spChaikin(pts) {
     }
   }
   function spMapEnsure() {
+    if (spMap || !window.hsLoad) return;
+    window.hsLoad("leaflet").then(function () { spMapInit(); }).catch(function (e) { console.error(e); });
+  }
+  function spMapInit() {
     if (spMap || !window.L) return;
     spMap = L.map("spMap", { zoomSnap: 0.25, attributionControl: false }).setView([35.5, 105], 4);
     spAdminLayer = L.geoJSON(window.HONGSUAN_CHINA_PROVINCES || { type: "FeatureCollection", features: [] }, {
