@@ -1,5 +1,6 @@
 /* 泓算网页版 - 问题反馈与建议（FormSubmit 免费通道，反馈直接发送到作者邮箱） */
 (function () {
+  if (typeof window !== 'undefined' && window.HS_FB_OFF) { return; }
   'use strict';
   // 收件邮箱：首次提交后 FormSubmit 会发一封确认邮件到该邮箱，点击激活后正式生效
   var FEEDBACK_TO = '2014797056@qq.com';
