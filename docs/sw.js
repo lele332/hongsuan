@@ -1,7 +1,7 @@
 /* 泓算 Service Worker：预缓存应用外壳 + 运行时缓存（Workbox 风格策略的轻量实现）
  * 更新方式：改代码时把 CACHE 版本号 +1，旧缓存自动清理。
  */
-const CACHE = "hongsuan-v1-0-37-3962531";
+const CACHE = "hongsuan-v1-0-37-6f682cc";
 const PRECACHE = [
   "./",
   "index.html",
@@ -14,6 +14,8 @@ const PRECACHE = [
   "workflow.js",
   "chart_echarts.js",
   "onboarding.js",
+  "help_smart.js",
+  "pwa.js",
   "build-info.js",
   "error_report.js",
   "tracking.js",
