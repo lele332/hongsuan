@@ -5,7 +5,7 @@
   "description": "Hongsuan web build and checks",
   "scripts": {
     "build": "node scripts/update-build-info.js",
-    "check": "node --check docs/app.js && node --check docs/error_report.js && node --check docs/feedback.js && node --check docs/pwa.js",
+    "check": "node --check docs/app.js && node --check docs/error_report.js && node --check docs/pwa.js",
     "smoke": "node scripts/static-smoke.js",
     "browser:smoke": "node scripts/browser-smoke.js",
     "test": "npm run check && npm run smoke",

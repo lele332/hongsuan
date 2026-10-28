@@ -4122,9 +4122,7 @@
     }
     const helpBtn = $("hsFootHelp");
     if (helpBtn) helpBtn.onclick = () => switchMode("help");
-    const fbBtn = $("hsFootFeedback");
-    if (fbBtn) fbBtn.onclick = () => { if (window.__hsFeedback && window.__hsFeedback.open) window.__hsFeedback.open(); };
-    const projEdit = $("hsProjEdit");
+        const projEdit = $("hsProjEdit");
     if (projEdit) projEdit.onclick = () => { openProjPage(); };
     const mw = $("hsModeWf"), ms = $("hsModeSingle");
     if (mw) mw.onclick = () => applySingleMode(false);

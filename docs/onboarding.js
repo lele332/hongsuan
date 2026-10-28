@@ -53,14 +53,6 @@
           description: "\u70B9\u8FD9\u91CC\u6309\u300A\u6D2A\u6C34\u5F71\u54CD\u8BC4\u4EF7\u62A5\u544A\u300B\u6807\u51C6\u76EE\u5F55\u751F\u6210 Word\uFF0C\u6C34\u6587\u8BA1\u7B97\u7AE0\u8282\u81EA\u52A8\u586B\u5199\uFF1B\u65C1\u8FB9\u8FD8\u6709\u4F20\u7EDF\u8BA1\u7B97\u4E66\u5BFC\u51FA\u3002",
           side: "top", align: "start"
         }
-      },
-      {
-        element: "#hsFootFeedback",
-        popover: {
-          title: "\u2463 \u968F\u65F6\u53CD\u9988",
-          description: "\u9047\u5230\u95EE\u9898\u6216\u6709\u529F\u80FD\u5EFA\u8BAE\uFF1F\u70B9\u53F3\u4E0B\u89D2\u8FD9\u4E2A\u6309\u94AE\u544A\u8BC9\u6211\u4EEC\u3002",
-          side: "left", align: "start"
-        }
       }
     ];
     steps = steps.filter(function (s) { return document.querySelector(s.element); });

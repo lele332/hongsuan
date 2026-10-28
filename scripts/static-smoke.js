@@ -13,7 +13,6 @@ const required = [
   "sw.js",
   "build-info.js",
   "error_report.js",
-  "feedback.js",
   "pwa.js",
   "download.js"
 ];
@@ -23,7 +22,7 @@ for (const file of required) {
 }
 
 const html = read("index.html");
-for (const file of ["build-info.js", "error_report.js", "feedback.js", "pwa.js"]) {
+for (const file of ["build-info.js", "error_report.js", "pwa.js"]) {
   if (!html.includes(`<script defer src="${file}"></script>`)) throw new Error(`index.html missing deferred script: ${file}`);
 }
 
