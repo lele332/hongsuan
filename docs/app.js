@@ -10260,6 +10260,18 @@ function spChaikin(pts) {
           try { window.__hsDemo = true; } catch (e) {}
           try { calcFromSeries(); } catch (e) { console.error(e); }
         }
+      /* v1.0.38-r3：空态遮罩在最上层，点击遮罩同样载入示例（否则空态整图可点失效） */
+      const emptyEl = document.getElementById("chartEmpty");
+      if (emptyEl) {
+        emptyEl.style.cursor = "pointer";
+        emptyEl.addEventListener("click", () => {
+          if (!state.paramsReady) {
+            $("series").value = T1_SERIES;
+            try { window.__hsDemo = true; } catch (e) {}
+            try { calcFromSeries(); } catch (e) { console.error(e); }
+          }
+        });
+      }
       });
     }
   }

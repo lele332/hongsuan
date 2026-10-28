@@ -361,6 +361,7 @@ input, textarea, [contenteditable] { -webkit-user-select: text !important; user-
   table.ltab { white-space: nowrap; }
   #ocrPairTable { max-height: 55vh !important; }
   canvas, img { max-width: 100% !important; height: auto !important; }
+  #echartBox canvas { height: 100% !important; } /* 例外：ECharts 画布需要显式高度，否则被压扁 */
   #spMap { height: 55vh !important; min-height: 320px !important; }
   details#spMapPanel.sp-fullscreen #spMap { height: var(--spFsH, calc(100vh - 170px)) !important; min-height: 0 !important; }
   details#spMapPanel.sp-fullscreen #spInfoBox { position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 100000; background: rgba(15,23,42,0.92); border-radius: 10px; padding: 10px 14px; display: block !important; }
@@ -421,6 +422,10 @@ body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !i
     .hs-proj-sub { margin-top: 0; flex: 1; justify-content: flex-end; }
   }
 
+  /* ===== v1.0.38-r3 适线图空态紧凑：空壳不占位（修复海森格纸下方大留白） ===== */
+  #chartCard:has(#chartEmpty:not([style*="none"])) #chart,
+  #chartCard:has(#chartEmpty:not([style*="none"])) #echartBox { display: none; }
+  #chartEmpty > svg { height: auto; }
   /* ===== v1.0.38 移动端深度适配：键盘 / 触控 / iOS 缩放 ===== */
   @media (max-width: 760px) {
     /* iOS：输入控件字号 <16px 聚焦时会自动放大整页，统一强制 16px */
@@ -432,10 +437,10 @@ body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !i
     /* 触控目标 ≥ 40px（Apple HIG / WCAG 2.5.5） */
     .hs-tree-item { padding: 10px 12px; min-height: 40px; }
     .hs-foot-btn { padding: 10px 2px; min-height: 40px; font-size: 12.5px; }
-    .hs-mode-switch button { padding: 8px 0; }
-    .btn { padding: 10px 20px; font-size: 14px; min-height: 40px; }
-    .seg button { padding: 8px 14px; font-size: 13px; }
-    .fillBtn { padding: 7px 12px; min-height: 36px; }
+    .hs-mode-switch button { padding: 6px 0; }
+    .btn { padding: 7px 13px; font-size: 13px; min-height: 34px; border-radius: 8px; }
+    .seg button { padding: 6px 10px; font-size: 12px; }
+    .fillBtn { padding: 5px 9px; min-height: 30px; }
     label { font-size: 13px; }
     /* 键盘弹起时弹层可滚动，不被顶飞 */
     #cmdPanel { overflow-y: auto; }
@@ -458,7 +463,7 @@ body.hs-kb-open #hsMobileNav, body.hs-kb-open #hsMobileDrawer { display: none !i
 
   .mobileHint{display:block !important}
   #echartBox{width:100%;height:440px}
-  @media (max-width:640px){#echartBox{height:340px}}
+  @media (max-width:640px){#echartBox{height:300px}} /* v1.0.38-r3 340→300 紧凑 */
   body.hs-hide-hints .hint, body.hs-hide-hints .hs-note{display:none !important}
   @media (min-width:761px){.mobileHint{display:none !important}}
 

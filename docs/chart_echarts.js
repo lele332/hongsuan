@@ -40,14 +40,14 @@
         box = document.createElement("div");
         box.id = "echartBox";
         box.style.width = "100%";
-        box.style.height = "440px";
+        box.style.height = (window.innerWidth <= 760 ? "300px" : "440px");
         svg.parentElement.insertBefore(box, svg);
       }
       svg.style.display = "none";
     }
     if (!chart) {
       chart = window.echarts.init(box, null, { renderer: "canvas" });
-      window.addEventListener("resize", function () { chart.resize(); selfCheck(); });
+      window.addEventListener("resize", function () { box.style.height = (window.innerWidth <= 760 ? "300px" : "440px"); chart.resize(); selfCheck(); });
       addResetButton();
       bindReadout();
     }
@@ -216,8 +216,16 @@
 
   window.__hsEcharts = function (payload) {
     lastData = adaptTicks(payload);
+    /* v1.0.38-r3：无点据不渲染（避免空白画布在海森格纸下方占位成"大留白"） */
+    var hasPts = payload && payload.pts && payload.pts.length;
+    if (!hasPts) {
+      if (chart) { try { chart.clear(); } catch (e) {} }
+      if (box) box.style.display = "none";
+      return;
+    }
     window.hsLoad("echarts").then(function () {
       var c = ensureChart();
+      if (box) box.style.display = "";
       if (!c) return;
       c.setOption(buildOption(lastData), { notMerge: true });
       try { c.resize(); } catch (e) {}

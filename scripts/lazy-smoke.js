@@ -122,9 +122,17 @@ async function main() {
     console.log("② 适线图：echarts 自动按需加载，canvas 已渲染");
 
     /* ③ 侧栏导航到暴雨页 → leaflet 按需加载 */
-    await cdp.send("Runtime.evaluate", { expression: "(function(){var b=document.querySelector(\x27.hs-tree-item[data-mode=noData]\x27)||document.getElementById(\x27mNoData\x27);if(b)b.click();})()" });
-    await new Promise(r => setTimeout(r, 600));
-    await waitFor("!!(window.L && window.L.map)", true, cdp, 30000, "leaflet 按需加载");
+    /* 加固：套件连跑时冷启动可能丢点击，循环点击直到地图出现 */
+    {
+      const t0 = Date.now();
+      for (;;) {
+        await cdp.send("Runtime.evaluate", { expression: "(function(){var b=document.querySelector('.hs-tree-item[data-mode=noData]')||document.getElementById('mNoData');if(b)b.click();})()" });
+        await new Promise(r => setTimeout(r, 2000));
+        const rr = await cdp.send("Runtime.evaluate", { expression: "!!(window.L && window.L.map)", returnByValue: true });
+        if (rr.result?.value === true) break;
+        if (Date.now() - t0 > 40000) throw new Error("lazy-smoke failed: leaflet 按需加载 等待超时");
+      }
+    }
     await waitFor("document.querySelector(\x27#spMap .leaflet-pane\x27) !== null", true, cdp, 15000, "leaflet 地图容器");
     console.log("③ 暴雨地图：leaflet 自动按需加载，地图已初始化");
 
