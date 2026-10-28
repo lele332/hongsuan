@@ -126,10 +126,12 @@ async function main() {
     await new Promise(r => setTimeout(r, 1500));
     const mChecks = [
       ["document.body.classList.contains('hs-mobile-nav')", true],
-      ["document.getElementById('hsMobileNav').children.length >= 5", true],
+      ["!!document.querySelector('#hsMobileNav .mHandle')", true],
       ["getComputedStyle(document.getElementById('hsMobileNav')).display !== 'none'", true],
       ["getComputedStyle(document.getElementById('hsTree')).display === 'none'", true],
-      ["parseFloat(getComputedStyle(document.body).fontSize) >= 15", true]
+      ["parseFloat(getComputedStyle(document.body).fontSize) >= 15", true],
+      ["parseInt(getComputedStyle(document.getElementById('hsMobileNav')).zIndex) < 60", true],
+      ["!!document.getElementById('hsMobileDrawer')", true]
     ];
     for (const [expr, expected] of mChecks) {
       const r = await cdp.send("Runtime.evaluate", { expression: expr, returnByValue: true });
@@ -139,14 +141,23 @@ async function main() {
         console.error(`mobile smoke failed: ${expr} => ${JSON.stringify(actual)}`);
       }
     }
-    // 底栏点击联动：点第一个功能项后原树对应项应变为 on
-    await cdp.send("Runtime.evaluate", { expression: "document.getElementById('hsMobileNav').children[0].click()", returnByValue: true });
-    await new Promise(r => setTimeout(r, 300));
+    // 抽屉交互：点把手 → 抽屉展开且功能项 >= 5 → 点第一项 → 原树联动 + 抽屉收起
+    await cdp.send("Runtime.evaluate", { expression: "document.querySelector('#hsMobileNav .mHandle').click()", returnByValue: true });
+    await new Promise(r => setTimeout(r, 400));
     {
-      const r = await cdp.send("Runtime.evaluate", { expression: "document.querySelectorAll('#hsTree .hs-tree-item')[0].classList.contains('on') || document.querySelectorAll('#hsTree .hs-tree-item.on').length > 0", returnByValue: true });
-      if (r.result.value !== true) { failed = true; console.error("mobile smoke failed: bottom-nav click does not drive tree"); }
+      const r = await cdp.send("Runtime.evaluate", { expression: "JSON.stringify({open: document.getElementById('hsMobileDrawer').classList.contains('open'), items: document.querySelectorAll('#hsMobileDrawer .hs-tree-item').length})", returnByValue: true });
+      const st = JSON.parse(r.result.value);
+      if (!st.open || st.items < 5) { failed = true; console.error("mobile smoke failed: drawer", JSON.stringify(st)); }
+    }
+    await cdp.send("Runtime.evaluate", { expression: "document.querySelector('#hsMobileDrawer .hs-tree-item').click()", returnByValue: true });
+    await new Promise(r => setTimeout(r, 400));
+    {
+      const r = await cdp.send("Runtime.evaluate", { expression: "JSON.stringify({on: document.querySelectorAll('#hsTree .hs-tree-item.on').length > 0, closed: !document.getElementById('hsMobileDrawer').classList.contains('open')})", returnByValue: true });
+      const st = JSON.parse(r.result.value);
+      if (!st.on || !st.closed) { failed = true; console.error("mobile smoke failed: drawer click linkage", JSON.stringify(st)); }
     }
     await cdp.send("Emulation.clearDeviceMetricsOverride");
+        await cdp.send("Emulation.clearDeviceMetricsOverride");
         if (errors.length) {
       failed = true;
       console.error("browser smoke failed: runtime errors", errors);
