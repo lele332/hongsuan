@@ -2,7 +2,7 @@
 window.__HS_BUILD_INFO = {
   "version": "1.0.37",
   "release": "v1.0.37",
-  "commit": "fae3f1d",
-  "builtAt": "2026-10-28",
-  "cacheVersion": "hongsuan-v1-0-37-fae3f1d"
+  "commit": "3b1b381",
+  "builtAt": "2026-10-29",
+  "cacheVersion": "hongsuan-v1-0-37-3b1b381"
 };
